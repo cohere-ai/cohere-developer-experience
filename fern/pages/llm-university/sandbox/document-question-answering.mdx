@@ -1,0 +1,141 @@
+---
+title: "REMOVE Document Question Answering"
+slug: "docs/document-question-answering"
+subtitle: "/page/document-question-answering"
+hidden: true
+createdAt: "Sun Apr 30 2023 02:50:21 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Mon Oct 23 2023 14:40:59 GMT+0000 (Coordinated Universal Time)"
+---
+
+# Introduction and Code Repo
+
+In this chapter you'll use the embed and generate endpoints to create a tool that answers questions from a block of text.
+
+The repository for this project is [here](/page/document-question-answering#), and we encourage you to follow the code along with this tutorial.
+
+Searching through large blocks of text to find specific answers can be time-consuming and tedious. Traditional search methods focus on keyword matching, which is not always useful for finding answers. Ideally, a search would focus on the meaning and intent of our search phrase instead of just the keywords.
+
+Large language models (LLMs) make this kind of search—called semantic search—a viable option. This capability is powered by text embeddings, which takes a document and represents its contextual information by a list of numbers, also called vectors.
+
+This Document Question Answering application takes a user’s question about a given document and generates an answer by searching the most semantically similar sections of the document. This is enabled by Cohere’s Embed and Generate endpoints, which provide the means to perform the search and generate the results respectively.
+
+The steps for building the Document Question Answering application are:
+
+- Step 1: Get the User’s Document
+- Step 2: Process the User’s Document
+- Step 3: Create an Embedding Function
+- Step 4: Embed the User Question and Document
+- Step 5: Perform a Similarity Search
+- Step 6: Generate a Response
+
+Read on for more details on each of these steps.
+
+# Step 1: Get the User’s Document
+
+First, we must capture the user’s document to search it. In this application, we’ll allow two different methods of input: raw text and CSV upload. We’re using Streamlit to help run our application, leveraging its input/output ability to create an upload dialog that accepts a CSV file. We’ll also add a text input area for the user to enter text. We control the visibility using a Streamlit Select Box, so only one input method is shown at a time.
+
+```
+option = st.selectbox("Input type", ["TEXT BOX", "CSV"])
+df = None
+if option == "CSV":
+   train_file = st.file_uploader("Upload Training CSV File", help="Accepts a two column csv", type=["csv"])
+   embeddings = None
+if train_file is not None:
+        df, _, _, _ = read_csv_data(train_file)
+elif option == "TEXT BOX":
+    text = st.text_area("Paste the Document")
+    if text != "":
+        df = process_text_input(text)
+```
+
+# Step 2: Process the User’s Document
+
+Before creating the embeddings, we need to process the document into a more easily readable format. We convert the raw text or the CSV file input into custom pandas DataFrames within the respective functions: `process_text_input` and `read_csv_data`.
+
+For the raw text input option, `process_text_input` takes the text input and chunks it into smaller sizes (`CHUNK_SIZE`). This will allow the answer generation part (see Step 6) to select the relevant passages and not exceed the context length limit.
+
+```
+def process_text_input(text: str, run_id: str = None):
+    text = StringIO(text).read()
+    chunks = \[text[i:i + CHUNK_SIZE] for i in range(0, len(text), CHUNK_SIZE)]
+    df = pd.DataFrame.from_dict({'text': chunks})
+    return df
+
+def process_csv_file(st_file_object: Any):
+    df = pd.read_csv(StringIO(st_file_object.getvalue().decode('utf-8')))
+    return df
+```
+
+# Step 3: Create an Embedding Function
+
+We now have a DataFrame containing a chunked version of the document. Next, we’ll use the Cohere Embed endpoint to create embeddings to represent the context of these passages of text.
+
+```
+def embed(list_of_texts):
+    response = co_client.embed(model='small', texts=list_of_texts)
+    return response.embeddings
+```
+
+# Step 4: Embed the User Question and Document
+
+Next we obtain the question from the user via a text input.
+
+Along with the question term, we also allow the user to configure some advanced options — namely `TEMPERATURE` and `MAX_TOKENS`. These options help control the response that the model will generate. We’ll use them later on. Learn more about LLM parameters and their functions on our blog.
+
+Finally, we generate the embeddings of the question and the document (now chunked into passages) via the embed function.
+
+```
+if df is not None:
+  prompt = st.text_input('Ask a question')
+  advanced_options = st.checkbox("Advanced options")
+  if advanced_options:
+    TEMPERATURE = st.slider('temperature', min_value=0.0, max_value=1.0, value=TEMPERATURE)
+    MAX_TOKENS = st.slider('max_tokens', min_value=1, max_value=1000, value=MAX_TOKENS)
+    prompt_embedding = embed([prompt])
+    embeddings = get_embeddings_from_df(df)
+```
+
+# Step 5: Perform a Similarity Search
+
+We then perform a similarity search between the question and the passages of text to determine the most similar passages to the question. To achieve this, we compute the outer product of the normalized embeddings. We use the variable `n` to control the number of most similar passages to select.
+
+```
+def top_n_neighbors_indices(prompt_embedding: np.ndarray, storage_embeddings: np.ndarray, n: int = 5):
+    if isinstance(storage_embeddings, list):
+        storage_embeddings = np.array(storage_embeddings)
+    if isinstance(prompt_embedding, list):
+        storage_embeddings = np.array(prompt_embedding)
+    similarity_matrix = prompt_embedding @ storage_embeddings.T / np.outer(norm(prompt_embedding, axis=-1), norm(storage_embeddings, axis=-1))
+    num_neighbors = min(similarity_matrix.shape[1], n)
+    indices = np.argsort(similarity_matrix, axis=-1)[:, -num_neighbors:]
+    return indices
+```
+
+# Step 6: Generate a Response
+
+We now have a list of the closest matching text passages. However, this doesn’t yet answer the user question. To create a fully formed answer, we need to use these passages and the original question to generate a human-readable response.
+
+We do this by using the closest matching passages and the original question to create a prompt we can pass to the Cohere API’s Generate endpoint. This endpoint then uses the prompt and the LLM to generate a response to the question. We then display this at the bottom of the page.
+
+```
+if df is not None and prompt != "":
+    base_prompt = "Based on the passage above, answer the following question:"
+    prompt_embedding = embed_stuff([prompt])
+    aug_prompts = get_augmented_prompts(np.array(prompt_embedding), embeddings, df)
+    new_prompt = '\n'.join(aug_prompts) + '\n\n' + base_prompt + '\n' + prompt + '\n'
+    print(new_prompt)
+    is_success = False
+    while not is_success:
+        try:
+            response = generate(new_prompt)
+            is_success = True
+        except Exception:
+            aug_prompts = aug_prompts[:-1]
+            new_prompt = '\n'.join(aug_prompts) + '\n' + base_prompt + '\n' + prompt  + '\n'
+
+    st.write(response.generations[0].text)
+```
+
+# Conclusion
+
+Using Cohere’s Embed and Generate endpoints, we’ve created an application that can take any block of text and answer questions from a user about the information within the text.

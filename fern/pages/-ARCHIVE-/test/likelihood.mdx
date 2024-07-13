@@ -1,0 +1,33 @@
+---
+title: "Likelihood"
+slug: "likelihood"
+
+hidden: true
+description: "This document explains how a language model learns to predict the next token in a sentence by analyzing the likelihood of different tokens based on the context of the sentence. The model's mean log likelihood quantifies its level of surprise at the use of a particular token in a sentence."
+image: "../../../assets/images/d834efc-cohere_docs_preview_image_1200x630_copy.jpg"  
+keywords: "likelihood, large language models, generative AI, natural language processing"
+
+createdAt: "Tue Aug 30 2022 15:43:25 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Thu Mar 14 2024 19:18:53 GMT+0000 (Coordinated Universal Time)"
+---
+Our models learn to model language by reading text scraped from the internet. Given a sentence, such as `I like to bake cookies`, the model is asked to repeatedly predict what the next [token](tokens) `[?]` is:
+
+```
+I [?]
+I like [?]
+I like to [?]
+I like to bake [?]
+I like to bake cookies
+```
+
+The model learns that the word `to` is quite likely to follow the word `like` in English, and that the word `cookies` is likely to follow the word `bake`.
+
+### Intuition
+
+(NOTE: throughout we use "likelihood" as a shorthand for "mean token log likelihood". There is a such thing as likelihood in machine learning, but we're referring to the more specific mean token log likelihood.)
+
+The mean log likelihood of a token can be thought of as a number (typically between `-15` and `0`) that quantifies a model's level of surprise that this token was used in a sentence. If a token has a low mean log likelihood, this indicates that the model did not expect this token to be used. Conversely, if a token has a high log likelihood, the model was confident that it would be used. 
+
+For our model, the likelihood of `to` in the sentence `I like to` is roughly -1.5. This is quite high, and means that the model was fairly confident that the tokens `I like` would be followed by the token `to`. Similarly, the likelihood of `cookies` in the sentence `I like to bake cookies` is roughly `-3.5`, a bit lower than the previous example. This makes intuitive sense, as `brownies` or `cake` would have also been reasonable options, but it's still quite high. However, if we change the sentence to `I like to bake chairs` then the likelihood of the token chairs is considerably lower, at around -14. This means the model is extremely surprised at its use within the sentence.
+
+<img src='../../../assets/images/250e7f5-Likelihood_Visual_1.png' alt='discussed.' />

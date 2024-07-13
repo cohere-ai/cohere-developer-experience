@@ -1,0 +1,272 @@
+post:
+  x-fern-audiences: [public]
+  summary: Generate
+  operationId: generate
+  x-fern-streaming:
+    stream-condition: $request.stream
+    response:
+      $ref: './types/Generation.yaml'
+    response-stream:
+      $ref: './types/GenerateStreamedResponse.yaml'
+  parameters:
+    - $ref: './types/RequestSource.yaml'
+  x-readme:
+    samples-languages:
+      - python
+      - java
+      - curl
+      - node
+      - go
+    code-samples:
+      - language: go
+        name: Cohere Go SDK
+        install: go get github.com/cohere-ai/cohere-go/v2
+        code:
+          $ref: './snippets/go/generate-post/main.go'
+      - language: node
+        name: Cohere TypeScript SDK
+        install: npm i cohere-ai
+        code:
+          $ref: ./snippets/node/generate-post.ts
+      - language: python
+        name: Sync
+        install: python -m pip install cohere --upgrade
+        code:
+          $ref: ./snippets/python/generate-post.py
+      - language: python
+        name: Async
+        install: python -m pip install cohere --upgrade
+        code:
+          $ref: ./snippets/python-async/generate-post.py
+      - language: java
+        name: Cohere java SDK
+        install: implementation 'com.cohere:cohere-java:1.0.4'
+        code:
+          $ref: ./snippets/java/app/src/main/java/GeneratePost.java
+      - language: curl
+        name: cURL
+        code:
+          $ref: ./snippets/curl/generate-post.sh
+  responses:
+    '400':
+      $ref: "./errors/BadRequest.yaml"
+    '401':
+      $ref: "./errors/Unauthorized.yaml"
+    '403':
+      $ref: "./errors/Forbidden.yaml"
+    '404':
+      $ref: "./errors/NotFound.yaml"
+    '422':
+      $ref: "./errors/UnprocessableEntity.yaml"
+    '429':
+      $ref: './errors/RateLimit.yaml'
+    '498':
+      $ref: "./errors/InvalidToken.yaml"
+    '499':
+      $ref: "./errors/RequestCancelled.yaml"
+    '500':
+      $ref: "./errors/InternalServerError.yaml"
+    '501':
+      $ref: "./errors/NotImplemented.yaml"
+    '503':
+      $ref: "./errors/ServiceUnavailable.yaml"
+    '504':
+      $ref: "./errors/GatewayTimeout.yaml"
+    '200':
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: './types/Generation.yaml'
+        application/stream+json:
+          schema:
+            $ref: './types/GenerateStreamedResponse.yaml'
+      headers:
+        X-API-Warning:
+          schema:
+            type: string
+            x-fern-audiences: ['public']
+          description: Warning description for incorrect usage of the API
+  description: |
+    <Warning>
+    This API is marked as "Legacy" and is no longer maintained. Follow the [migration guide](/docs/migrating-from-cogenerate-to-cochat) to start using the Chat API.
+    </Warning>
+
+    Generates realistic text conditioned on a given input.
+  requestBody:
+    content:
+      application/json:
+        schema:
+          type: object
+          x-fern-audiences: ['public']
+          x-examples:
+            Example:
+              prompt: Please explain to me how LLMs work
+              max_tokens: 50
+              temperature: 1
+              k: 0
+              p: 0.75
+          properties:
+            prompt:
+              type: string
+              x-fern-audiences: ['public']
+              example: Please explain to me how LLMs work
+              description: |
+                The input text that serves as the starting point for generating the response.
+                Note: The prompt will be pre-processed and modified before reaching the model.
+              writeOnly: true
+            model:
+              type: string
+              x-fern-audiences: ['public']
+              description: |-
+                The identifier of the model to generate with. Currently available models are `command` (default), `command-nightly` (experimental), `command-light`, and `command-light-nightly` (experimental).
+                Smaller, "light" models are faster, while larger models will perform better. [Custom models](/docs/training-custom-models) can also be supplied with their full ID.
+              writeOnly: true
+            num_generations:
+              type: integer
+              x-fern-audiences: ['public']
+              description: |
+                The maximum number of generations that will be returned. Defaults to `1`, min value of `1`, max value of `5`.
+              writeOnly: true
+            stream:
+              type: boolean
+              x-fern-audiences: ['public']
+              description: |
+                When `true`, the response will be a JSON stream of events. Streaming is beneficial for user interfaces that render the contents of the response piece by piece, as it gets generated.
+
+                The final event will contain the complete response, and will contain an `is_finished` field set to `true`. The event will also contain a `finish_reason`, which can be one of the following:
+                - `COMPLETE` - the model sent back a finished reply
+                - `MAX_TOKENS` - the reply was cut off because the model reached the maximum number of tokens for its context length
+                - `ERROR` - something went wrong when generating the reply
+                - `ERROR_TOXIC` - the model generated a reply that was deemed toxic
+            max_tokens:
+              type: integer
+              x-fern-audiences: ['public']
+              description: |
+                The maximum number of tokens the model will generate as part of the response. Note: Setting a low value may result in incomplete generations.
+
+                This parameter is off by default, and if it's not specified, the model will continue generating until it emits an EOS completion token. See [BPE Tokens](/bpe-tokens-wiki) for more details.
+
+                Can only be set to `0` if `return_likelihoods` is set to `ALL` to get the likelihood of the prompt.
+              writeOnly: true
+            truncate:
+              type: string
+              x-fern-audiences: ['public']
+              default: END
+              enum:
+                - NONE
+                - START
+                - END
+              description: |-
+                One of `NONE|START|END` to specify how the API will handle inputs longer than the maximum token length.
+
+                Passing `START` will discard the start of the input. `END` will discard the end of the input. In both cases, input is discarded until the remaining input is exactly the maximum input token length for the model.
+
+                If `NONE` is selected, when the input exceeds the maximum input token length an error will be returned.
+              writeOnly: true
+            temperature:
+              type: number
+              x-fern-audiences: ['public']
+              description: |
+                A non-negative float that tunes the degree of randomness in generation. Lower temperatures mean less random generations. See [Temperature](/temperature-wiki) for more details.
+                Defaults to `0.75`, min value of `0.0`, max value of `5.0`.
+              writeOnly: true
+            seed:
+              x-internal: true
+              x-fern-audiences: ['public']
+              minimum: 0
+              maximum: 18446744073709551615
+              type: integer
+              description: |
+                If specified, the backend will make a best effort to sample tokens
+                deterministically, such that repeated requests with the same
+                seed and parameters should return the same result. However,
+                determinism cannot be totally guaranteed.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+            preset:
+              type: string
+              x-fern-audiences: ['public']
+              example: my-preset-a58sbd
+              description: |
+                Identifier of a custom preset. A preset is a combination of parameters, such as prompt, temperature etc. You can create presets in the [playground](https://dashboard.cohere.com/playground/generate).
+                When a preset is specified, the `prompt` parameter becomes optional, and any included parameters will override the preset's parameters.
+              writeOnly: true
+            end_sequences:
+              type: array
+              x-fern-audiences: ['public']
+              description: The generated text will be cut at the beginning of the earliest
+                occurrence of an end sequence. The sequence will be excluded
+                from the text.
+              items:
+                type: string
+                x-fern-audiences: ['public']
+              writeOnly: true
+            stop_sequences:
+              type: array
+              x-fern-audiences: ['public']
+              description: The generated text will be cut at the end of the earliest
+                occurrence of a stop sequence. The sequence will be included the
+                text.
+              items:
+                type: string
+                x-fern-audiences: ['public']
+              writeOnly: true
+            k:
+              type: integer
+              x-fern-audiences: ['public']
+              description: |
+                Ensures only the top `k` most likely tokens are considered for generation at each step.
+                Defaults to `0`, min value of `0`, max value of `500`.
+              writeOnly: true
+            p:
+              type: number
+              x-fern-audiences: ['public']
+              description: |
+                Ensures that only the most likely tokens, with total probability mass of `p`, are considered for generation at each step. If both `k` and `p` are enabled, `p` acts after `k`.
+                Defaults to `0.75`. min value of `0.01`, max value of `0.99`.
+              writeOnly: true
+            frequency_penalty:
+              type: number
+              x-fern-audiences: ['public']
+              description: |
+                Used to reduce repetitiveness of generated tokens. The higher the value, the stronger a penalty is applied to previously present tokens, proportional to how many times they have already appeared in the prompt or prior generation.
+
+                Using `frequency_penalty` in combination with `presence_penalty` is not supported on newer models.
+              writeOnly: true
+            presence_penalty:
+              type: number
+              x-fern-audiences: ['public']
+              description: |
+                Defaults to `0.0`, min value of `0.0`, max value of `1.0`.
+
+                Can be used to reduce repetitiveness of generated tokens. Similar to `frequency_penalty`, except that this penalty is applied equally to all tokens that have already appeared, regardless of their exact frequencies.
+
+                Using `frequency_penalty` in combination with `presence_penalty` is not supported on newer models.
+              writeOnly: true
+            return_likelihoods:
+              type: string
+              x-fern-audiences: ['public']
+              description: |-
+                One of `GENERATION|ALL|NONE` to specify how and if the token likelihoods are returned with the response. Defaults to `NONE`.
+
+                If `GENERATION` is selected, the token likelihoods will only be provided for generated text.
+
+                If `ALL` is selected, the token likelihoods will be provided both for the prompt and the generated text.
+              enum:
+                - GENERATION
+                - ALL
+                - NONE
+              default: NONE
+            raw_prompting:
+              type: boolean
+              x-fern-audiences: ['public']
+              description: "When enabled, the user's prompt will be sent to the model without
+                any pre-processing."
+          required:
+            - prompt
+          writeOnly: true
+        examples:
+          Example:
+            value:
+              prompt: Please explain to me how LLMs work
+    description: ''

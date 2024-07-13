@@ -1,0 +1,102 @@
+---
+title: "LlamaIndex"
+slug: "docs/llamaindex"
+
+hidden: false
+description: "This document provides instructions on how to use Cohere with LlamaIndex, including setting up prerequisites, using Cohere's chat functionality, embeddings, rerank, and pipeline to generate responses based on data."
+image: "../../assets/images/15aceed-cohere_meta_image.jpg"  
+keywords: "embeddings, LlamaIndex"
+
+createdAt: "Fri Feb 02 2024 14:52:13 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Tue May 14 2024 15:10:49 GMT+0000 (Coordinated Universal Time)"
+---
+### Prerequisite
+
+To use LlamaIndex and Cohere, you will need: 
+
+- LlamaIndex Package. To install it, run `pip install llama-index`. 
+- Cohere's SDK. To install it, run `pip install cohere`. If you run into any issues or want more details on Cohere's SDK, [see this wiki](https://github.com/cohere-ai/cohere-python).
+- A Cohere API Key. For more details on pricing [see this page](https://cohere.com/pricing). When you create an account with Cohere, we automatically create a trial API key for you. This key will be available on the dashboard where you can copy it, and it's in the dashboard section called "API Keys" as well.
+
+### Cohere Chat with LlamaIndex
+
+To use Cohere's chat functionality with LlamaIndex create a [Cohere model object](https://docs.llamaindex.ai/en/stable/examples/llm/cohere.html) and call the `chat` function. 
+
+```python
+from llama_index.llms.cohere import Cohere
+from llama_index.core.llms import ChatMessage
+
+cohere_model = Cohere(api_key="{API_KEY}")
+message = ChatMessage(role="user",content= "Who founded Cohere?")
+resp = cohere_model.chat([message])
+print(resp)
+```
+
+### Cohere Embeddings with LlamaIndex
+
+To use Cohere's embeddings with LlamaIndex create a [Cohere Embeddings object](https://docs.llamaindex.ai/en/stable/examples/embeddings/cohereai.html) with an embedding model [from this list](/reference/embed) and call `get_text_embedding`.
+
+```python
+from llama_index.embeddings.cohereai import CohereEmbedding
+
+embed_model = CohereEmbedding(
+    cohere_api_key="{API_KEY}",
+    model_name="embed-english-v3.0", # Supports all Cohere embed models
+    input_type="search_query", # Required for v3 models
+)
+
+# Generate Embeddings
+embeddings = embed_model.get_text_embedding("Welcome to Cohere!")
+
+# Print embeddings
+print(len(embeddings))
+print(embeddings[:5])
+```
+
+### Cohere Rerank with LlamaIndex
+
+To use Cohere's rerank functionality with LlamaIndex create a [ Cohere Rerank object ](https://docs.llamaindex.ai/en/latest/examples/node_postprocessor/CohereRerank.html#) and use as a [node post processor.](https://docs.llamaindex.ai/en/stable/module_guides/querying/node_postprocessors/root.html)
+
+```python
+cohere_rerank = CohereRerank(api_key="{API_KEY}", top_n=2)
+```
+
+### Cohere Pipeline with LlamaIndex
+
+The following example uses Cohere's chat model, embeddings and rerank functionality to generate a response based on your data. 
+
+```python
+# rerank
+
+from llama_index import ServiceContext, VectorStoreIndex
+from llama_index.llms.cohere import Cohere
+from llama_index import VectorStoreIndex, SimpleDirectoryReader, ServiceContext
+from llama_index.embeddings.cohereai import CohereEmbedding
+from llama_index.postprocessor.cohere_rerank import CohereRerank
+
+# Create the embedding model
+embed_model = CohereEmbedding(
+    cohere_api_key="{API_KEY}",
+    model_name="embed-english-v3.0",
+    input_type="search_query",
+)
+
+# Create the service context with the cohere model for generation and embedding model
+service_context = ServiceContext.from_defaults(
+    llm=Cohere(api_key="{API_KEY}", model="command"),
+    embed_model=embed_model
+)
+
+# Load the data, for this example data needs to be in a test file 
+data = SimpleDirectoryReader(input_files=["example_data_file.txt"]).load_data()
+index = VectorStoreIndex.from_documents(data, service_context=service_context)
+
+# Create a cohere reranker 
+cohere_rerank = CohereRerank(api_key="{API_KEY}")
+
+# Create the query engine
+query_engine = index.as_query_engine(node_postprocessors=[cohere_rerank])
+
+# Generate the response
+response = query_engine.query("Who founded Cohere?",)
+```

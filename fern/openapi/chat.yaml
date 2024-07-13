@@ -1,0 +1,496 @@
+post:
+  parameters:
+    - $ref: './types/RequestSource.yaml'
+  x-fern-audiences: [public]
+  summary: Chat
+  operationId: chat
+  x-fern-streaming:
+    stream-condition: $request.stream
+    response:
+      $ref: './types/NonStreamedChatResponse.yaml'
+    response-stream:
+      $ref: './types/StreamedChatResponse.yaml'
+  x-readme:
+    samples-languages:
+      - python
+      - java
+      - curl
+      - node
+      - go
+    code-samples:
+      - language: go
+        name: Vanilla
+        install: go get github.com/cohere-ai/cohere-go/v2
+        code:
+          $ref: './snippets/go/chat-post/default/main.go'
+      - language: go
+        name: With Documents
+        install: go get github.com/cohere-ai/cohere-go/v2
+        code:
+          $ref: ./snippets/go/chat-post/documents/main.go
+      - language: go
+        name: Streaming
+        install: go get github.com/cohere-ai/cohere-go/v2
+        code:
+          $ref: ./snippets/go/chat-post/stream/main.go
+      - language: go
+        name: With Tools
+        install: go get github.com/cohere-ai/cohere-go/v2
+        code:
+          $ref: ./snippets/go/chat-post/tools/main.go
+      - language: node
+        name: Vanilla
+        install: npm i cohere-ai
+        code:
+          $ref: ./snippets/node/chat-post/default.ts
+      - language: node
+        name: With Documents
+        install: npm i cohere-ai
+        code:
+          $ref: ./snippets/node/chat-post/documents.ts
+      - language: node
+        name: Streaming
+        install: npm i cohere-ai
+        code:
+          $ref: ./snippets/node/chat-post/stream.ts
+      - language: node
+        name: With Tools
+        install: npm i cohere-ai
+        code:
+          $ref: ./snippets/node/chat-post/tools.ts
+      - language: python
+        name: Sync
+        install: python -m pip install cohere --upgrade
+        code:
+          $ref: ./snippets/python/chat-post/default.py
+      - language: python
+        name: Async
+        install: python -m pip install cohere --upgrade
+        code:
+          $ref: ./snippets/python-async/chat-post.py
+      - language: python
+        name: With Documents
+        install: python -m pip install cohere --upgrade
+        code:
+          $ref: ./snippets/python/chat-post/documents.py
+      - language: python
+        name: Streaming
+        install: python -m pip install cohere --upgrade
+        code:
+          $ref: ./snippets/python/chat-post/stream.py
+      - language: python
+        name: With Tools
+        install: python -m pip install cohere --upgrade
+        code:
+          $ref: ./snippets/python/chat-post/tools.py
+      - language: java
+        name: With Documents
+        install: implementation 'com.cohere:cohere-java:1.x.x'
+        code:
+          $ref: ./snippets/java/app/src/main/java/chatpost/Documents.java
+      - language: java
+        name: Streaming
+        install: implementation 'com.cohere:cohere-java:1.x.x'
+        code:
+          $ref: ./snippets/java/app/src/main/java/chatpost/Stream.java
+      - language: java
+        name: With Tools
+        install: implementation 'com.cohere:cohere-java:1.x.x'
+        code:
+          $ref: ./snippets/java/app/src/main/java/chatpost/Tools.java
+      - language: curl
+        name: cURL
+        code:
+          $ref: ./snippets/curl/chat-post.sh
+  description: |
+    Generates a text response to a user message.
+    To learn how to use the Chat API with Streaming and RAG follow our [Text Generation guides](/docs/chat-api).
+  requestBody:
+    content:
+      application/json:
+        schema:
+          type: object
+          x-fern-audiences: ['public']
+          x-examples:
+            Chat:
+              value:
+                message: Can you give me a global market overview of solar panels?
+                temperature: 0.3
+                stream: false
+                chat_history:
+                  [
+                    { 'role': 'User', 'message': 'Hi!' },
+                    { 'role': 'Chatbot', 'message': 'How can I help you today?' },
+                  ]
+                prompt_truncation: 'OFF'
+            Chat with web search:
+              value:
+                message: 'Can you give me a global market overview of solar panels?'
+                temperature: 0.3
+                stream: false
+                chat_history: []
+                connectors:
+                  - id: 'web-search'
+                prompt_truncation: 'AUTO'
+            Chat with connector:
+              value:
+                message: 'How do I expense a meal?'
+                stream: false
+                connectors:
+                  - id: 'custom-connector-id'
+                prompt_truncation: 'AUTO'
+          required:
+            - message
+          properties:
+            message:
+              type: string
+              x-fern-audiences: ['public']
+              description: |
+                Text input for the model to respond to.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+            model:
+              type: string
+              x-fern-audiences: ['public']
+              description: |
+                Defaults to `command-r-plus`.
+
+                The name of a compatible [Cohere model](/docs/models) or the ID of a [fine-tuned](/docs/chat-fine-tuning) model.
+                Compatible Deployments: Cohere Platform, Private Deployments
+            stream:
+              description: |
+                Defaults to `false`.
+
+                When `true`, the response will be a JSON stream of events. The final event will contain the complete response, and will have an `event_type` of `"stream-end"`.
+
+                Streaming is beneficial for user interfaces that render the contents of the response piece by piece, as it gets generated.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+              type: boolean
+              x-fern-audiences: ['public']
+            preamble:
+              description: |
+                When specified, the default Cohere preamble will be replaced with the provided one. Preambles are a part of the prompt used to adjust the model's overall behavior and conversation style, and use the `SYSTEM` role.
+
+                The `SYSTEM` role is also used for the contents of the optional `chat_history=` parameter. When used with the `chat_history=` parameter it adds content throughout a conversation. Conversely, when used with the `preamble=` parameter it adds content at the start of the conversation only.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+              type: string
+              x-fern-audiences: ['public']
+            chat_history:
+              type: array
+              x-fern-audiences: ['public']
+              minItems: 0
+              items:
+                $ref: './types/Message.yaml'
+              description: |
+                A list of previous messages between the user and the model, giving the model conversational context for responding to the user's `message`.
+
+                Each item represents a single message in the chat history, excluding the current user turn. It has two properties: `role` and `message`. The `role` identifies the sender (`CHATBOT`, `SYSTEM`, or `USER`), while the `message` contains the text content.
+
+                The chat_history parameter should not be used for `SYSTEM` messages in most cases. Instead, to add a `SYSTEM` role message at the beginning of a conversation, the `preamble` parameter should be used.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+            conversation_id:
+              type: string
+              x-fern-audiences: ['public']
+              description: |
+                An alternative to `chat_history`.
+
+                Providing a `conversation_id` creates or resumes a persisted conversation with the specified ID. The ID can be any non empty string.
+                Compatible Deployments: Cohere Platform
+            prompt_truncation:
+              type: string
+              x-fern-audiences: ['public']
+              enum: ['OFF', 'AUTO', 'AUTO_PRESERVE_ORDER']
+              description: |
+                Defaults to `AUTO` when `connectors` are specified and `OFF` in all other cases.
+
+                Dictates how the prompt will be constructed.
+
+                With `prompt_truncation` set to "AUTO", some elements from `chat_history` and `documents` will be dropped in an attempt to construct a prompt that fits within the model's context length limit. During this process the order of the documents and chat history will be changed and ranked by relevance.
+
+                With `prompt_truncation` set to "AUTO_PRESERVE_ORDER", some elements from `chat_history` and `documents` will be dropped in an attempt to construct a prompt that fits within the model's context length limit. During this process the order of the documents and chat history will be preserved as they are inputted into the API.
+
+                With `prompt_truncation` set to "OFF", no elements will be dropped. If the sum of the inputs exceeds the model's context length limit, a `TooManyTokens` error will be returned.
+                Compatible Deployments: Cohere Platform Only AUTO_PRESERVE_ORDER: Azure, AWS Sagemaker, Private Deployments
+            connectors:
+              type: array
+              x-fern-audiences: ['public']
+              minItems: 0
+              items:
+                $ref: './types/ChatConnector.yaml'
+              description: |
+                Accepts `{"id": "web-search"}`, and/or the `"id"` for a custom [connector](/docs/connectors), if you've [created](/docs/creating-and-deploying-a-connector) one.
+
+                When specified, the model's reply will be enriched with information found by quering each of the connectors (RAG).
+                Compatible Deployments: Cohere Platform
+            search_queries_only:
+              type: boolean
+              x-fern-audiences: ['public']
+              description: |
+                Defaults to `false`.
+
+                When `true`, the response will only contain a list of generated search queries, but no search will take place, and no reply from the model to the user's `message` will be generated.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+            documents:
+              description: |
+                A list of relevant documents that the model can cite to generate a more accurate reply. Each document is a string-string dictionary.
+
+                Example:
+                `[
+                  { "title": "Tall penguins", "text": "Emperor penguins are the tallest." },
+                  { "title": "Penguin habitats", "text": "Emperor penguins only live in Antarctica." },
+                ]`
+
+                Keys and values from each document will be serialized to a string and passed to the model. The resulting generation will include citations that reference some of these documents.
+
+                Some suggested keys are "text", "author", and "date". For better generation quality, it is recommended to keep the total word count of the strings in the dictionary to under 300 words.
+
+                An `id` field (string) can be optionally supplied to identify the document in the citations. This field will not be passed to the model.
+
+                An `_excludes` field (array of strings) can be optionally supplied to omit some key-value pairs from being shown to the model. The omitted fields will still show up in the citation object. The "_excludes" field will not be passed to the model.
+
+                See ['Document Mode'](/docs/retrieval-augmented-generation-rag#document-mode) in the guide for more information.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+              type: array
+              x-fern-audiences: ['public']
+              items:
+                $ref: './types/ChatDocument.yaml'
+            citation_quality:
+              type: string
+              x-fern-audiences: ['public']
+              description: |
+                Defaults to `"accurate"`.
+
+                Dictates the approach taken to generating citations as part of the RAG flow by allowing the user to specify whether they want `"accurate"` results or `"fast"` results.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+              enum: ['fast', 'accurate']
+            temperature:
+              type: number
+              x-fern-audiences: ['public']
+              format: float
+              minimum: 0
+              maximum: 1
+              description: |
+                Defaults to `0.3`.
+
+                A non-negative float that tunes the degree of randomness in generation. Lower temperatures mean less random generations, and higher temperatures mean more random generations.
+
+                Randomness can be further maximized by increasing the  value of the `p` parameter.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+            max_tokens:
+              type: integer
+              x-fern-audiences: ['public']
+              description: |
+                The maximum number of tokens the model will generate as part of the response. Note: Setting a low value may result in incomplete generations.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+              writeOnly: true
+            max_input_tokens:
+              type: integer
+              x-fern-audiences: ['public']
+              description: |
+                The maximum number of input tokens to send to the model. If not specified, `max_input_tokens` is the model's context length limit minus a small buffer.
+
+                Input will be truncated according to the `prompt_truncation` parameter.
+                Compatible Deployments: Cohere Platform
+              writeOnly: true
+            k:
+              type: integer
+              x-fern-audiences: ['public']
+              description: |
+                Ensures only the top `k` most likely tokens are considered for generation at each step.
+                Defaults to `0`, min value of `0`, max value of `500`.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+              writeOnly: true
+              default: 0
+              minimum: 0
+              maximum: 500
+            p:
+              type: number
+              x-fern-audiences: ['public']
+              description: |
+                Ensures that only the most likely tokens, with total probability mass of `p`, are considered for generation at each step. If both `k` and `p` are enabled, `p` acts after `k`.
+                Defaults to `0.75`. min value of `0.01`, max value of `0.99`.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+              writeOnly: true
+              default: 0.75
+              minimum: 0.01
+              maximum: 0.99
+            seed:
+              x-fern-audiences: ['public']
+              minimum: 0
+              maximum: 18446744073709551615
+              type: integer
+              description: |
+                If specified, the backend will make a best effort to sample tokens
+                deterministically, such that repeated requests with the same
+                seed and parameters should return the same result. However,
+                determinism cannot be totally guaranteed.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+            stop_sequences:
+              x-fern-audiences: ['public']
+              writeOnly: true
+              type: array
+              items:
+                type: string
+              description: |
+                A list of up to 5 strings that the model will use to stop generation. If the model generates a string that matches any of the strings in the list, it will stop generating tokens and return the generated text up to that point not including the stop sequence.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+            connectors_search_options:
+              x-internal: true
+              type: object
+              description: (internal) Sets inference and model options for RAG search query
+                and tool use generations. Defaults are used when options are not
+                specified here, meaning that other parameters outside of
+                connectors_search_options are ignored (such as model= or
+                temperature=).
+              properties:
+                model:
+                  description: The model to use for search query or tool use generations. See
+                    model= description for more details.
+                temperature:
+                  description: The temperature to use for search query or tool use generations.
+                    See temperature= for more details.
+                max_tokens:
+                  description: The maximum number of tokens to generate for search query (default
+                    50) or tool use (default null) generations.
+                preamble:
+                  description: Overrides the default preamble for search query generation. Has no
+                    effect on tool use generations.
+                seed:
+                  x-internal: true
+                  x-fern-audiences: ['public']
+                  minimum: 0
+                  maximum: 18446744073709551615
+                  type: integer
+                  description: |
+                    If specified, the backend will make a best effort to sample tokens
+                    deterministically, such that repeated requests with the same
+                    seed and parameters should return the same result. However,
+                    determinism cannot be totally guaranteed.
+                    Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+            frequency_penalty:
+              type: number
+              x-fern-audiences: ['public']
+              description: |
+                Defaults to `0.0`, min value of `0.0`, max value of `1.0`.
+
+                Used to reduce repetitiveness of generated tokens. The higher the value, the stronger a penalty is applied to previously present tokens, proportional to how many times they have already appeared in the prompt or prior generation.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+              writeOnly: true
+            presence_penalty:
+              type: number
+              x-fern-audiences: ['public']
+              description: |
+                Defaults to `0.0`, min value of `0.0`, max value of `1.0`.
+
+                Used to reduce repetitiveness of generated tokens. Similar to `frequency_penalty`, except that this penalty is applied equally to all tokens that have already appeared, regardless of their exact frequencies.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+              writeOnly: true
+            raw_prompting:
+              x-internal: true
+              x-fern-audiences: ['public']
+              type: boolean
+              description: |
+                When enabled, the user's prompt will be sent to the model without
+                any pre-processing.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+            return_prompt:
+              # Undocumented but present in the SDK:
+              x-internal: true
+              x-fern-audiences: [ 'public' ]
+              type: boolean
+              description: The prompt is returned in the `prompt` response field when this is enabled.
+            tools:
+              x-fern-audiences: ['public']
+              description: |
+                A list of available tools (functions) that the model may suggest invoking before producing a text response.
+
+                When `tools` is passed (without `tool_results`), the `text` field in the response will be `""` and the `tool_calls` field in the response will be populated with a list of tool calls that need to be made. If no calls need to be made, the `tool_calls` array will be empty.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+              type: array
+              items:
+                $ref: './types/Tool.yaml'
+              minItems: 0
+            tool_results:
+              x-fern-audiences: ['public']
+              description: |
+                A list of results from invoking tools recommended by the model in the previous chat turn. Results are used to produce a text response and will be referenced in citations. When using `tool_results`, `tools` must be passed as well.
+                Each tool_result contains information about how it was invoked, as well as a list of outputs in the form of dictionaries.
+
+                **Note**: `outputs` must be a list of objects. If your tool returns a single object (eg `{"status": 200}`), make sure to wrap it in a list.
+                ```
+                tool_results = [
+                  {
+                    "call": {
+                      "name": <tool name>,
+                      "parameters": {
+                        <param name>: <param value>
+                      }
+                    },
+                    "outputs": [{
+                      <key>: <value>
+                    }]
+                  },
+                  ...
+                ]
+                ```
+                **Note**: Chat calls with `tool_results` should not be included in the Chat history to avoid duplication of the message text.
+                Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker, Private Deployments
+              type: array
+              minItems: 0
+              items:
+                $ref: './types/ToolResult.yaml'
+            force_single_step:
+              x-fern-audiences: ['public']
+              type: boolean
+              description: "Forces the chat to be single step. Defaults to `false`."
+            # response_format:
+            #   # Undocumented but present in the SDK:
+            #   x-internal: true
+            #   x-fern-audiences: ['public']
+            #   type: object
+            #   description: (not public yet) Guidance parameters for the generation, forcing the model to output json.
+            #   properties:
+            #     type:
+            #       type: string
+            #       enum: ['json_object'] # will have more options in the future
+            #       description: When set to JSON, the output will be parse-able valid JSON (or run out of context).
+            #     schema:
+            #       # We can make `properties` and `type` required here, but not sure if useful.
+            #       description: |
+            #         A JSON schema object that the output will adhere to. Refer to https://json-schema.org/ for reference about schemas.
+            #         Example (required name and age object):
+            #         `{"type": "object", "properties": {"name": {"type": "string"}, "age": {"type": "integer"}}, "required": ["name", "age"]}`
+            #       type: object
+
+  responses:
+    '400':
+      $ref: "./errors/BadRequest.yaml"
+    '401':
+      $ref: "./errors/Unauthorized.yaml"
+    '403':
+      $ref: "./errors/Forbidden.yaml"
+    '404':
+      $ref: "./errors/NotFound.yaml"
+    '422':
+      $ref: "./errors/UnprocessableEntity.yaml"
+    '429':
+      $ref: './errors/RateLimit.yaml'
+    '498':
+      $ref: "./errors/InvalidToken.yaml"
+    '499':
+      $ref: "./errors/RequestCancelled.yaml"
+    '500':
+      $ref: "./errors/InternalServerError.yaml"
+    '501':
+      $ref: "./errors/NotImplemented.yaml"
+    '503':
+      $ref: "./errors/ServiceUnavailable.yaml"
+    '504':
+      $ref: "./errors/GatewayTimeout.yaml"
+    '200':
+      description: 'OK'
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: './types/NonStreamedChatResponse.yaml'
+              - $ref: './types/StreamedChatResponse.yaml'

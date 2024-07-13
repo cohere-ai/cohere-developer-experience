@@ -1,0 +1,588 @@
+---
+title: Analyzing Hacker News with Six Language Understanding Methods
+slug: /page/analyzing-hacker-news
+---
+
+import { AuthorsContainer } from "../../components/authors-container";
+import { CookbookHeader } from "../../components/cookbook-header";
+
+<CookbookHeader href="https://github.com/cohere-ai/notebooks/blob/main/notebooks/guides/Analyzing_Hacker_News_with_Six_Language_Understanding_Methods.ipynb" />
+
+Large language models give machines a vastly improved representation and understanding of language. These abilities give developers more options for content recommendation, analysis, and filtering.
+
+In this notebook we take thousands of the most popular posts from Hacker News and demonstrate some of these functionalities:
+
+1. Given an existing post title, retrieve the most similar posts (nearest neighbor search using embeddings)
+2. Given a query that we write, retrieve the most similar posts
+3. Plot the archive of articles by similarity (where similar posts are close together and different ones are far)
+4. Cluster the posts to identify the major common themes
+5. Extract major keywords from each cluster so we can identify what the clsuter is about
+6. (Experimental) Name clusters with a generative language model
+
+## Setup
+
+Let's start by installing the tools we'll need and then importing them.
+
+```python
+!pip install cohere umap-learn altair annoy bertopic
+```
+
+```
+Requirement already satisfied: cohere in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (5.1.5)
+Requirement already satisfied: umap-learn in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (0.5.5)
+Requirement already satisfied: altair in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (5.2.0)
+Requirement already satisfied: annoy in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (1.17.3)
+Requirement already satisfied: bertopic in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (0.16.0)
+Requirement already satisfied: httpx>=0.21.2 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from cohere) (0.27.0)
+Requirement already satisfied: pydantic>=1.9.2 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from cohere) (2.6.0)
+Requirement already satisfied: typing_extensions>=4.0.0 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from cohere) (4.10.0)
+Requirement already satisfied: numpy>=1.17 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from umap-learn) (1.24.3)
+Requirement already satisfied: scipy>=1.3.1 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from umap-learn) (1.11.1)
+Requirement already satisfied: scikit-learn>=0.22 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from umap-learn) (1.3.0)
+Requirement already satisfied: numba>=0.51.2 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from umap-learn) (0.57.0)
+Requirement already satisfied: pynndescent>=0.5 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from umap-learn) (0.5.12)
+Requirement already satisfied: tqdm in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from umap-learn) (4.65.0)
+Requirement already satisfied: jinja2 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from altair) (3.1.2)
+Requirement already satisfied: jsonschema>=3.0 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from altair) (4.17.3)
+Requirement already satisfied: packaging in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from altair) (23.2)
+Requirement already satisfied: pandas>=0.25 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from altair) (2.0.3)
+Requirement already satisfied: toolz in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from altair) (0.12.0)
+Requirement already satisfied: hdbscan>=0.8.29 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from bertopic) (0.8.33)
+Requirement already satisfied: sentence-transformers>=0.4.1 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from bertopic) (2.6.1)
+Requirement already satisfied: plotly>=4.7.0 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from bertopic) (5.9.0)
+Requirement already satisfied: cython<3,>=0.27 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from hdbscan>=0.8.29->bertopic) (0.29.37)
+Requirement already satisfied: joblib>=1.0 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from hdbscan>=0.8.29->bertopic) (1.2.0)
+Requirement already satisfied: anyio in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from httpx>=0.21.2->cohere) (3.5.0)
+Requirement already satisfied: certifi in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from httpx>=0.21.2->cohere) (2023.11.17)
+Requirement already satisfied: httpcore==1.* in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from httpx>=0.21.2->cohere) (1.0.2)
+Requirement already satisfied: idna in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from httpx>=0.21.2->cohere) (3.4)
+Requirement already satisfied: sniffio in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from httpx>=0.21.2->cohere) (1.2.0)
+Requirement already satisfied: h11<0.15,>=0.13 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from httpcore==1.*->httpx>=0.21.2->cohere) (0.14.0)
+Requirement already satisfied: attrs>=17.4.0 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from jsonschema>=3.0->altair) (22.1.0)
+Requirement already satisfied: pyrsistent!=0.17.0,!=0.17.1,!=0.17.2,>=0.14.0 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from jsonschema>=3.0->altair) (0.18.0)
+Requirement already satisfied: llvmlite<0.41,>=0.40.0dev0 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from numba>=0.51.2->umap-learn) (0.40.0)
+Requirement already satisfied: python-dateutil>=2.8.2 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from pandas>=0.25->altair) (2.8.2)
+Requirement already satisfied: pytz>=2020.1 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from pandas>=0.25->altair) (2023.3.post1)
+Requirement already satisfied: tzdata>=2022.1 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from pandas>=0.25->altair) (2023.3)
+Requirement already satisfied: tenacity>=6.2.0 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from plotly>=4.7.0->bertopic) (8.2.2)
+Requirement already satisfied: annotated-types>=0.4.0 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from pydantic>=1.9.2->cohere) (0.6.0)
+Requirement already satisfied: pydantic-core==2.16.1 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from pydantic>=1.9.2->cohere) (2.16.1)
+Requirement already satisfied: threadpoolctl>=2.0.0 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from scikit-learn>=0.22->umap-learn) (2.2.0)
+Requirement already satisfied: transformers<5.0.0,>=4.32.0 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from sentence-transformers>=0.4.1->bertopic) (4.39.3)
+Requirement already satisfied: torch>=1.11.0 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from sentence-transformers>=0.4.1->bertopic) (2.2.2)
+Requirement already satisfied: huggingface-hub>=0.15.1 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from sentence-transformers>=0.4.1->bertopic) (0.22.2)
+Requirement already satisfied: Pillow in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from sentence-transformers>=0.4.1->bertopic) (10.0.1)
+Requirement already satisfied: MarkupSafe>=2.0 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from jinja2->altair) (2.1.1)
+Requirement already satisfied: filelock in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from huggingface-hub>=0.15.1->sentence-transformers>=0.4.1->bertopic) (3.9.0)
+Requirement already satisfied: fsspec>=2023.5.0 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from huggingface-hub>=0.15.1->sentence-transformers>=0.4.1->bertopic) (2024.3.1)
+Requirement already satisfied: pyyaml>=5.1 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from huggingface-hub>=0.15.1->sentence-transformers>=0.4.1->bertopic) (6.0)
+Requirement already satisfied: requests in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from huggingface-hub>=0.15.1->sentence-transformers>=0.4.1->bertopic) (2.31.0)
+Requirement already satisfied: six>=1.5 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from python-dateutil>=2.8.2->pandas>=0.25->altair) (1.16.0)
+Requirement already satisfied: sympy in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from torch>=1.11.0->sentence-transformers>=0.4.1->bertopic) (1.11.1)
+Requirement already satisfied: networkx in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from torch>=1.11.0->sentence-transformers>=0.4.1->bertopic) (3.1)
+Requirement already satisfied: regex!=2019.12.17 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from transformers<5.0.0,>=4.32.0->sentence-transformers>=0.4.1->bertopic) (2022.7.9)
+Requirement already satisfied: tokenizers<0.19,>=0.14 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from transformers<5.0.0,>=4.32.0->sentence-transformers>=0.4.1->bertopic) (0.15.2)
+Requirement already satisfied: safetensors>=0.4.1 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from transformers<5.0.0,>=4.32.0->sentence-transformers>=0.4.1->bertopic) (0.4.2)
+Requirement already satisfied: charset-normalizer<4,>=2 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from requests->huggingface-hub>=0.15.1->sentence-transformers>=0.4.1->bertopic) (3.3.2)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from requests->huggingface-hub>=0.15.1->sentence-transformers>=0.4.1->bertopic) (1.26.18)
+Requirement already satisfied: mpmath>=0.19 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from sympy->torch>=1.11.0->sentence-transformers>=0.4.1->bertopic) (1.3.0)
+```
+
+```python
+import cohere
+import numpy as np
+import pandas as pd
+import umap
+import altair as alt
+from annoy import AnnoyIndex
+import warnings
+from sklearn.cluster import KMeans
+from sklearn.feature_extraction.text import CountVectorizer
+from bertopic.vectorizers import ClassTfidfTransformer
+
+warnings.filterwarnings('ignore')
+pd.set_option('display.max_colwidth', None)
+```
+
+Fill in your Cohere API key in the next cell. To do this, begin by [signing up to Cohere](https://os.cohere.ai/) (for free!) if you haven't yet. Then get your API key [here](https://dashboard.cohere.com/api-keys).
+
+```python
+co = cohere.Client("COHERE_API_KEY") # Insert your Cohere API key
+```
+
+## Dataset: Top 3,000 Ask HN posts
+
+We will use the top 3,000 posts from the Ask HN section of Hacker News. We provide a CSV containing the posts.
+
+```python
+df = pd.read_csv('https://storage.googleapis.com/cohere-assets/blog/text-clustering/data/askhn3k_df.csv', index_col=0)
+
+print(f'Loaded a DataFrame with {len(df)} rows')
+```
+
+```
+Loaded a DataFrame with 3000 rows
+```
+
+```python
+df.head()
+```
+
+<div>
+<table border="1" class="dataframe">
+<thead>
+<tr style={{ textAlign: "right" }}>
+<th></th>
+<th>title</th>
+<th>url</th>
+<th>text</th>
+<th>dead</th>
+<th>by</th>
+<th>score</th>
+<th>time</th>
+<th>timestamp</th>
+<th>type</th>
+<th>id</th>
+<th>parent</th>
+<th>descendants</th>
+<th>ranking</th>
+<th>deleted</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>I'm a software engineer going blind, how should I prepare?</td>
+<td>NaN</td>
+      <td>I&amp;#x27;m a 24 y&amp;#x2F;o full stack engineer (I know some of you are rolling your eyes right now, just highlighting that I have experience on frontend apps as well as backend architecture). I&amp;#x27;ve been working professionally for ~7 years building mostly javascript projects but also some PHP. Two years ago I was diagnosed with a condition called &amp;quot;Usher&amp;#x27;s Syndrome&amp;quot; - characterized by hearing loss, balance issues, and progressive vision loss.&lt;p&gt;I know there are blind software engineers out there. My main questions are:&lt;p&gt;- Are there blind frontend engineers?&lt;p&gt;- What kinds of software engineering lend themselves to someone with limited vision? Backend only?&lt;p&gt;- Besides a screen reader, what are some of the best tools for building software with limited vision?&lt;p&gt;- Does your company employ blind engineers? How well does it work? What kind of engineer are they?&lt;p&gt;I&amp;#x27;m really trying to get ahead of this thing and prepare myself as my vision is degrading rather quickly. I&amp;#x27;m not sure what I can do if I can&amp;#x27;t do SE as I don&amp;#x27;t have any formal education in anything. I&amp;#x27;ve worked really hard to get to where I am and don&amp;#x27;t want it to go to waste.&lt;p&gt;Thank you for any input, and stay safe out there!&lt;p&gt;Edit:&lt;p&gt;Thank you all for your links, suggestions, and moral support, I really appreciate it. Since my diagnosis I&amp;#x27;ve slowly developed a crippling anxiety centered around a feeling that I need to figure out the rest of my life before it&amp;#x27;s too late. I know I shouldn&amp;#x27;t think this way but it is hard not to. I&amp;#x27;m very independent and I feel a pressure to &amp;quot;show up.&amp;quot; I will look into these opportunities mentioned and try to get in touch with some more members of the blind engineering community.</td>
+<td>NaN</td>
+<td>zachrip</td>
+<td>3270</td>
+<td>1587332026</td>
+<td>2020-04-19 21:33:46+00:00</td>
+<td>story</td>
+<td>22918980</td>
+<td>NaN</td>
+<td>473.0</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr>
+<th>1</th>
+<td>Am I the longest-serving programmer – 57 years and counting?</td>
+<td>NaN</td>
+<td>In May of 1963, I started my first full-time job as a computer programmer for Mitchell Engineering Company, a supplier of steel buildings.  At Mitchell, I developed programs in Fortran II on an IBM 1620 mostly to improve the efficiency of order processing and fulfillment.  Since then, all my jobs for the past 57 years have involved computer programming.  I am now a data scientist developing cloud-based big data fraud detection algorithms using machine learning and other advanced analytical technologies.  Along the way, I earned a Master’s in Operations Research and a Master’s in Management Science, studied artificial intelligence for 3 years in a Ph.D. program for engineering, and just two years ago I received Graduate Certificates in Big Data Analytics from the schools of business and computer science at a local university (FAU).  In addition, I currently hold the designation of Certified Analytics Professional (CAP).  At 74, I still have no plans to retire or to stop programming.</td>
+<td>NaN</td>
+<td>genedangelo</td>
+<td>2634</td>
+<td>1590890024</td>
+<td>2020-05-31 01:53:44+00:00</td>
+<td>story</td>
+<td>23366546</td>
+<td>NaN</td>
+<td>531.0</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr>
+<th>2</th>
+<td>Is S3 down?</td>
+<td>NaN</td>
+      <td>I&amp;#x27;m getting&lt;p&gt;\{\n  &amp;quot;errorCode&amp;quot; : &amp;quot;InternalError&amp;quot;\n}&lt;p&gt;When I attempt to use the AWS Console to view s3</td>
+<td>NaN</td>
+<td>iamdeedubs</td>
+<td>2589</td>
+<td>1488303958</td>
+<td>2017-02-28 17:45:58+00:00</td>
+<td>story</td>
+<td>13755673</td>
+<td>NaN</td>
+<td>1055.0</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr>
+<th>3</th>
+<td>What tech job would let me get away with the least real work possible?</td>
+<td>NaN</td>
+      <td>Hey HN,&lt;p&gt;I&amp;#x27;ll probably get a lot of flak for this. Sorry.&lt;p&gt;I&amp;#x27;m an average developer looking for ways to work as little as humanely possible.&lt;p&gt;The pandemic made me realize that I do not care about working anymore. The software I build is useless. Time flies real fast and I have to focus on my passions (which are not monetizable).&lt;p&gt;Unfortunately, I require shelter, calories and hobby materials. Thus the need for some kind of job.&lt;p&gt;Which leads me to ask my fellow tech workers, what kind of job (if any) do you think would fit the following requirements :&lt;p&gt;- No &amp;#x2F; very little involvement in the product itself (I do not care.)&lt;p&gt;- Fully remote (You can&amp;#x27;t do much when stuck in the office. Ideally being done in 2 hours in the morning then chilling would be perfect.)&lt;p&gt;- Low expectactions &amp;#x2F; vague job description.&lt;p&gt;- Salary can be on the lower side.&lt;p&gt;- No career advancement possibilities required. Only tech, I do not want to manage people.&lt;p&gt;- Can be about helping other developers, setting up infrastructure&amp;#x2F;deploy or pure data management since this is fun.&lt;p&gt;I think the only possible jobs would be some kind of backend-only dev or devops&amp;#x2F;sysadmin work. But I&amp;#x27;m not sure these exist anymore, it seems like you always end up having to think about the product itself. Web dev jobs always required some involvement in the frontend.&lt;p&gt;Thanks for any advice (or hate, which I can&amp;#x27;t really blame you for).</td>
+<td>NaN</td>
+<td>lmueongoqx</td>
+<td>2022</td>
+<td>1617784863</td>
+<td>2021-04-07 08:41:03+00:00</td>
+<td>story</td>
+<td>26721951</td>
+<td>NaN</td>
+<td>1091.0</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr>
+<th>4</th>
+<td>What books changed the way you think about almost everything?</td>
+<td>NaN</td>
+<td>I was reflecting today about how often I think about Freakonomics. I don&amp;#x27;t study it religiously. I read it one time more than 10 years ago. I can only remember maybe a single specific anecdote from the book. And yet the simple idea that basically every action humans take can be traced back to an incentive has fundamentally changed the way I view the world. Can anyone recommend books that have had a similar impact on them?</td>
+<td>NaN</td>
+<td>anderspitman</td>
+<td>2009</td>
+<td>1549387905</td>
+<td>2019-02-05 17:31:45+00:00</td>
+<td>story</td>
+<td>19087418</td>
+<td>NaN</td>
+<td>1165.0</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+We calculate the embeddings using Cohere's `embed-english-v3.0` model. The resulting embeddings matrix has 3,000 rows (one for each post) and 1024 columns (meaning each post title is represented with a 1024-dimensional embedding).
+
+```python
+batch_size = 90
+
+embeds_list = []
+for i in range(0, len(df), batch_size):
+    batch = df[i : min(i + batch_size, len(df))]
+    texts = list(batch["title"])
+    embs_batch = co.embed(
+        texts=texts, model="embed-english-v3.0", input_type="search_document"
+    ).embeddings
+    embeds_list.extend(embs_batch)
+
+embeds = np.array(embeds_list)
+embeds.shape
+```
+
+```
+(3000, 1024)
+```
+
+## Building a semantic search index
+
+For nearest-neighbor search, we can use the open-source Annoy library. Let's create a semantic search index and feed it all the embeddings.
+
+```python
+search_index = AnnoyIndex(embeds.shape[1], 'angular')
+for i in range(len(embeds)):
+    search_index.add_item(i, embeds[i])
+
+search_index.build(10) # 10 trees
+search_index.save('askhn.ann')
+```
+
+```
+True
+```
+
+## 1- Given an existing post title, retrieve the most similar posts (nearest neighbor search using embeddings)
+
+We can query neighbors of a specific post using `get_nns_by_item`.
+
+```python
+example_id = 50
+
+similar_item_ids = search_index.get_nns_by_item(example_id,
+                                                10, # Number of results to retrieve
+                                                include_distances=True)
+results = pd.DataFrame(data={'post titles': df.iloc[similar_item_ids[0]]['title'],
+                             'distance': similar_item_ids[1]}).drop(example_id)
+
+print(f"Query post:'{df.iloc[example_id]['title']}'\nNearest neighbors:")
+results
+```
+
+```
+Query post:'Pick startups for YC to fund'
+Nearest neighbors:
+```
+
+<div>
+  <table border="1" class="dataframe">
+    <thead>
+      <tr style={{ textAlign: "right" }}>
+        <th></th>
+        <th>post titles</th>
+        <th>distance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th>2991</th>
+        <td>Best Bank for Startups?</td>
+        <td>0.883494</td>
+      </tr>
+      <tr>
+        <th>2910</th>
+        <td>Who's looking for a cofounder?</td>
+        <td>0.885087</td>
+      </tr>
+      <tr>
+        <th>31</th>
+        <td>What startup/technology is on your 'to watch' list?</td>
+        <td>0.887212</td>
+      </tr>
+      <tr>
+        <th>685</th>
+        <td>What startup/technology is on your 'to watch' list?</td>
+        <td>0.887212</td>
+      </tr>
+      <tr>
+        <th>2123</th>
+        <td>Who is seeking a cofounder?</td>
+        <td>0.889451</td>
+      </tr>
+      <tr>
+        <th>727</th>
+        <td>Agriculture startups doing interesting work?</td>
+        <td>0.899192</td>
+      </tr>
+      <tr>
+        <th>2972</th>
+        <td>How should I evaluate a startup as I job hunt?</td>
+        <td>0.901621</td>
+      </tr>
+      <tr>
+        <th>2589</th>
+        <td>
+          What methods do you use to gain early customers for your startup?
+        </td>
+        <td>0.903065</td>
+      </tr>
+      <tr>
+        <th>2708</th>
+        <td>Is there VC appetite for defense related startups?</td>
+        <td>0.904016</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+## 2- Given a query that we write, retrieve the most similar posts
+
+We're not limited to searching using existing items. If we get a query, we can embed it and find its nearest neighbors from the dataset.
+
+```python
+query = "How can I improve my knowledge of calculus?"
+
+query_embed = co.embed(texts=[query],
+                       model="embed-english-v3.0",
+                       truncate="RIGHT",
+                       input_type="search_query").embeddings
+
+similar_item_ids = search_index.get_nns_by_vector(query_embed[0], 10, include_distances=True)
+
+results = pd.DataFrame(data={'texts': df.iloc[similar_item_ids[0]]['title'],
+                             'distance': similar_item_ids[1]})
+print(f"Query:'{query}'\nNearest neighbors:")
+results
+```
+
+```
+Query:'How can I improve my knowledge of calculus?'
+Nearest neighbors:
+```
+
+<div>
+  <table border="1" class="dataframe">
+    <thead>
+      <tr style={{ textAlign: "right" }}>
+        <th></th>
+        <th>texts</th>
+        <th>distance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th>2457</th>
+        <td>How do I improve my command of mathematical language?</td>
+        <td>0.931286</td>
+      </tr>
+      <tr>
+        <th>1235</th>
+        <td>How to learn new things better?</td>
+        <td>1.024635</td>
+      </tr>
+      <tr>
+        <th>145</th>
+        <td>How to self-learn math?</td>
+        <td>1.044135</td>
+      </tr>
+      <tr>
+        <th>1317</th>
+        <td>How can I learn to read mathematical notation?</td>
+        <td>1.050976</td>
+      </tr>
+      <tr>
+        <th>910</th>
+        <td>How Do You Learn?</td>
+        <td>1.061253</td>
+      </tr>
+      <tr>
+        <th>2432</th>
+        <td>How did you learn math notation?</td>
+        <td>1.070800</td>
+      </tr>
+      <tr>
+        <th>1994</th>
+        <td>How do I become smarter?</td>
+        <td>1.083434</td>
+      </tr>
+      <tr>
+        <th>1529</th>
+        <td>How do you personally learn?</td>
+        <td>1.086088</td>
+      </tr>
+      <tr>
+        <th>796</th>
+        <td>How do you keep improving?</td>
+        <td>1.087251</td>
+      </tr>
+      <tr>
+        <th>1286</th>
+        <td>How do I learn drawing?</td>
+        <td>1.088468</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+## 3- Plot the archive of articles by similarity
+
+What if we want to browse the archive instead of only searching it? Let's plot all the questions in a 2D chart so you're able to visualize the posts in the archive and their similarities.
+
+```python
+reducer = umap.UMAP(n_neighbors=100)
+umap_embeds = reducer.fit_transform(embeds)
+```
+
+```python
+df['x'] = umap_embeds[:,0]
+df['y'] = umap_embeds[:,1]
+
+chart = alt.Chart(df).mark_circle(size=60).encode(
+    x=#'x',
+    alt.X('x',
+        scale=alt.Scale(zero=False),
+        axis=alt.Axis(labels=False, ticks=False, domain=False)
+    ),
+    y=
+    alt.Y('y',
+        scale=alt.Scale(zero=False),
+        axis=alt.Axis(labels=False, ticks=False, domain=False)
+    ),
+    tooltip=['title']
+    ).configure(background="#FDF7F0"
+    ).properties(
+        width=700,
+        height=400,
+        title='Ask HN: top 3,000 posts'
+        )
+
+chart.interactive()
+```
+
+<div id="altair-viz-fbe8b85b27604922a130b864640c819c"></div>
+
+## 4- Cluster the posts to identify the major common themes
+
+Let's proceed to cluster the embeddings using KMeans from scikit-learn.
+
+```python
+n_clusters = 8
+
+kmeans_model = KMeans(n_clusters=n_clusters, random_state=0)
+classes = kmeans_model.fit_predict(embeds)
+```
+
+## 5- Extract major keywords from each cluster so we can identify what the cluster is about
+
+```python
+documents =  df['title']
+documents = pd.DataFrame({"Document": documents,
+                          "ID": range(len(documents)),
+                          "Topic": None})
+documents['Topic'] = classes
+documents_per_topic = documents.groupby(['Topic'], as_index=False).agg({'Document': ' '.join})
+count_vectorizer = CountVectorizer(stop_words="english").fit(documents_per_topic.Document)
+count = count_vectorizer.transform(documents_per_topic.Document)
+words = count_vectorizer.get_feature_names_out()
+```
+
+```python
+ctfidf = ClassTfidfTransformer().fit_transform(count).toarray()
+words_per_class = {label: [words[index] for index in ctfidf[label].argsort()[-10:]] for label in documents_per_topic.Topic}
+df['cluster'] = classes
+df['keywords'] = df['cluster'].map(lambda topic_num: ", ".join(np.array(words_per_class[topic_num])[:]))
+```
+
+## Plot with clusters and keywords information
+
+We can now plot the documents with their clusters and keywords
+
+```python
+selection = alt.selection_multi(fields=['keywords'], bind='legend')
+
+chart = alt.Chart(df).transform_calculate(
+    url='https://news.ycombinator.com/item?id=' + alt.datum.id
+).mark_circle(size=60, stroke='#666', strokeWidth=1, opacity=0.3).encode(
+    x=#'x',
+    alt.X('x',
+        scale=alt.Scale(zero=False),
+        axis=alt.Axis(labels=False, ticks=False, domain=False)
+    ),
+    y=
+    alt.Y('y',
+        scale=alt.Scale(zero=False),
+        axis=alt.Axis(labels=False, ticks=False, domain=False)
+    ),
+    href='url:N',
+    color=alt.Color('keywords:N',
+                    legend=alt.Legend(columns=1, symbolLimit=0, labelFontSize=14)
+                   ),
+    opacity=alt.condition(selection, alt.value(1), alt.value(0.2)),
+    tooltip=['title', 'keywords', 'cluster', 'score', 'descendants']
+).properties(
+    width=800,
+    height=500
+).add_selection(
+    selection
+).configure_legend(labelLimit= 0).configure_view(
+    strokeWidth=0
+).configure(background="#FDF7F0").properties(
+    title='Ask HN: Top 3,000 Posts'
+)
+chart.interactive()
+```
+
+<div id="altair-viz-a5dcb59584cf4c7d810203872ec4e0ac"></div>
+
+## 6- (Experimental) Naming clusters with a generative language model
+
+While the extracted keywords do add a lot of information to help us identify the clusters at a glance, we should be able to have a generative model look at these keywords and suggest a name. So far I have reasonable results from a prompt that looks like this:
+
+```
+The common theme of the following words: books, book, read, the, you, are, what, best, in, your
+is that they all relate to favorite books to read.
+---
+The common theme of the following words: startup, company, yc, failed
+is that they all relate to startup companies and their failures.
+---
+The common theme of the following words: freelancer, wants, hired, be, who, seeking, to, 2014, 2020, april
+is that they all relate to hiring for a freelancer to join the team of a startup.
+---
+The common theme of the following words: <insert keywords here>
+is that they all relate to
+```
+
+There's a lot of room for improvement though. I'm really excited by this use case because it adds so much information. Imagine if the in the following tree of topics, you assigned each cluster an intelligible name. Then imagine if you assigned each _branching_ a name as well
+
+<img
+  alt=""
+  src="https://raw.githubusercontent.com/cohere-ai/notebooks/main/notebooks/images/kmeans-centroid-dendrogram.png"
+/>
+
+We can’t wait to see what you start building! Share your projects or find support on our [Discord server](https://discord.com/invite/co-mmunity).

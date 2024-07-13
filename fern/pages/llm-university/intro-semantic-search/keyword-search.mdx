@@ -1,0 +1,114 @@
+---
+title: "Keyword Search"
+slug: "docs/keyword-search"
+
+hidden: false
+createdAt: "Tue May 23 2023 18:49:16 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Wed Apr 03 2024 18:46:47 GMT+0000 (Coordinated Universal Time)"
+---
+
+### Introduction
+
+In the previous lesson, you learned about the difference between keyword search and dense retrieval. In this lab, you’ll learn to use keyword search to query a large dataset of Wikipedia articles. Later in this same module, you’ll be able to improve your results with dense retrieval and rerank, on the same wikipedia dataset, and even be able to combine the search results with a generative model in order to generate answers in the form of sentences!
+
+### Colab Notebook
+
+This chapter comes with a corresponding [Colab notebook](https://colab.research.google.com/github/cohere-ai/notebooks/blob/main/notebooks/llmu/End_To_End_Wikipedia_Search.ipynb), and we encourage you to follow it along as you read the chapter.
+
+### Using a Vector Database
+
+In order to store the Wikipedia dataset query, we’ll use the [Weaviate vector database](https://weaviate.io/?ref=txt.cohere.com), which will give us a range of benefits. In simple terms, a vector database is a place where one can store data objects and vector embeddings, and be able to access them and perform operations easily. For example, finding the nearest neighbors of a vector in a dataset is a lengthy process, which is sped up significantly by using a vector database. This is done with the following code.
+
+```python python
+import weaviate
+import cohere
+
+# Add your Cohere API key here
+# You can obtain a key by signing up in https://dashboard.cohere.com/ or /reference/key
+cohere_api_key = "COHERE_API_KEY"
+
+co = cohere.Client(cohere_api_key)
+
+# Connect to the Weaviate demo databse containing 10M wikipedia vectors
+# This uses a public READ-ONLY Weaviate API key
+auth_config = weaviate.auth.AuthApiKey(api_key="76320a90-53d8-42bc-b41d-678647c6672e")
+client = weaviate.Client(
+    url="https://cohere-demo.weaviate.network/",
+    auth_client_secret=auth_config,
+    additional_headers={
+        "X-Cohere-Api-Key": cohere_api_key,
+    }
+)
+```
+
+### Querying the Wikipedia Dataset Using Keyword Matching
+
+To use keyword matching, we’ll first define the following function for keyword search. In this function, we’ll tell the vector database what properties we want from each retrieved document. We’ll also filter them to the English language (using results_lang), but feel free to explore searching in other languages as well!
+
+```python
+def keyword_search(query, results_lang='en', num_results=10):
+    properties = ["text", "title", "url", "views", "lang", "_additional {distance}"]
+
+    where_filter = {
+        "path": ["lang"],
+        "operator": "Equal",
+        "valueString": results_lang
+    }
+
+    response = (
+        client.query.get("Articles", properties)
+        .with_bm25(
+            query=query
+        )
+        .with_where(where_filter)
+        .with_limit(num_results)
+        .do()
+    )
+    result = response['data']['Get']['Articles']
+    return result
+```
+
+We’ll use two search queries, of varying difficulty.
+
+- Simple query: “Who discovered penicillin?”
+- Hard query: “Who was the first person to win two Nobel prizes?”
+
+The responses for these queries are “Alexander Fleming”, and “Marie Curie”. Now let’s see how keyword search does. Here are the top three results for each query (some results are repeated, so let’s look at the three top distinct ones).
+
+**Query 1:** “Who discovered penicillin?”
+
+**Responses:**
+
+- [Penicillin](https://en.wikipedia.org/wiki?curid=23312)
+- [Antibiotic](https://en.wikipedia.org/wiki?curid=1805)
+- [Alexander Fleming](https://en.wikipedia.org/wiki?curid=1937)
+
+As you can see, keyword search did quite well. All three articles contain the answer, and in particular, the third one is the correct response: Alexander Fleming.
+
+Now let’s see how it did with the more complicated query.
+
+**Query 2:** “Who was the first person to win two Nobel prizes?”
+
+**Responses:**
+
+- [Neutrino](https://en.wikipedia.org/wiki?curid=21485)
+- [Western culture](https://en.wikipedia.org/wiki?curid=21208262)
+- [Reality television](https://en.wikipedia.org/wiki?curid=38539)
+
+This time, keyword search was very far from finding the answer. If you explore the articles, you may notice that they contain several mentions of words such as “first”, “person”, “Nobel”, “prizes”, but none of them have any information on the first person to win two Nobel prizes. In fact, the neutrino article mentions a scientist who won two Nobel prizes, but this wasn’t the first person to achieve this feat.
+
+As you can see, keyword search can be good for queries, like “Who discovered penicillin?”, in which you’d expect the answers to have a lot of words in common with the query. More specifically, if an article contains the words “discovered,” and “penicillin”, it’s also likely to contain the fact that Alexander Fleming discovered it.
+
+With harder queries like “Who was the first person to win two Nobel prizes?”, keyword search doesn’t do well. The reason is that the words in the query would appear in many instances without necessarily talking about something as specific as the first person who won two Nobel prizes. By matching words, we haven’t yet exploited the semantics of the sentence. A model that understands what we mean by “the first person to win two Nobel prizes” would be able to find the answer, which is exactly what dense retrieval does (see the next section).
+
+### Conclusion
+
+As you can see, keyword search can be good for some queries, like “Who discovered penicillin”, in which you’d expect the answers to have a lot of words in common with the query. More specifically, if an article contains the word “discovered” and "penicillin", it’s also likely to contain the fact that Alexander Fleming was the one who discovered it.
+
+Keyword search can have a harder time with queries like “Who was the first person to win two Nobel prizes”, because there can be many articles which contain these words, yet not contain the answer. There can be articles that have words like "first", "person", "win", "two", and have nothing to do with the query. Moreover, there can be many articles about work that led to a Nobel prize which do not necessarily mention that Marie Curie was the first person to win two Nobel prizes.
+
+Later in this module, you'll learn two methods to improve keyword search. One is by creating a search system that actually understands the semantics of the queries and responses, and is able to match them based on their meaning and not based on the words contained. This is called _semantic search_, and you saw it in high level in the previous lesson (more specifically, the method you'll learn is called _dense retrieval_, which is one type of semantic search). The other method is reranking, which is able to surface the pairs of queries and documents that are the most relevant to each other. In this way, you can use keyword search to retrieve, say, hundreds of articles with matching keywords, and then use reranking to surface the best ones.
+
+### Original Source
+
+This material comes from the post [Using LLMs for Search with Dense Retrieval and Reranking](https://txt.cohere.com/using-llms-for-search/).

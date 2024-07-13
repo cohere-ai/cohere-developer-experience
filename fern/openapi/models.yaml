@@ -1,0 +1,74 @@
+get:
+  x-fern-audiences: [public]
+  summary: List Models
+  tags: [/models]
+  operationId: list-models
+  x-fern-sdk-method-name: list
+  x-fern-sdk-group-name: models
+  description: Returns a list of models available for use. The list contains models from Cohere as well as your fine-tuned models.
+  parameters:
+    - name: page_size
+      in: query
+      description: |-
+        Maximum number of models to include in a page
+        Defaults to `20`, min value of `1`, max value of `1000`.
+      schema:
+        type: number
+        x-fern-audiences: ['public']
+    - name: page_token
+      description: Page token provided in the `next_page_token` field of a previous response.
+      in: query
+      schema:
+        type: string
+        x-fern-audiences: ['public']
+    - name: endpoint
+      in: query
+      description: When provided, filters the list of models to only those that are compatible with the specified endpoint.
+      schema:
+        $ref: './types/CompatibleEndpoint.yaml'
+        x-fern-audiences: ['public']
+  responses:
+    '429':
+      $ref: './types/RateLimit.yaml'
+    '200':
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: './types/ListModelsResponse.yaml'
+  x-readme:
+    samples-languages:
+      - node
+      - curl
+    #      - python
+    code-samples:
+#      - language: python
+#        name: Cohere Python SDK
+#        install: python -m pip install cohere --upgrade
+#        code: |-
+#          import cohere
+#          co = cohere.Client('<<apiKey>>')
+#          models = co.list_models()
+#          print(models)
+      - language: curl
+        name: cURL
+        code: |-
+          curl --request GET \
+            --url https://api.cohere.ai/v1/models \
+            --header 'accept: application/json' \
+            --header "Authorization: bearer $CO_API_KEY"
+      - language: node
+        name: Cohere TypeScript SDK
+        install: npm i cohere-ai
+        code: |-
+          const { CohereClient } = require("cohere-ai");
+
+          const cohere = new CohereClient({
+              token: "<<apiKey>>",
+          });
+
+          (async () => {
+            const models = await cohere.models.list();
+
+            console.log(models);
+          })();

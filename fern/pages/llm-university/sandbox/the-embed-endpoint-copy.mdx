@@ -1,0 +1,196 @@
+---
+title: "REMOVE The Embed Endpoint (COPY)"
+slug: "docs/the-embed-endpoint-copy"
+subtitle: "Intro to the Cohere Endpoints: Classify, Embed, Search. From https://txt.cohere.com/hello-world-p2/"
+hidden: true
+createdAt: "Wed May 03 2023 14:32:57 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Mon Oct 23 2023 14:40:59 GMT+0000 (Coordinated Universal Time)"
+---
+![](../../../assets/images/0d1dd7c-image.png)In this chapter, you'll learn how to analyze text. The main ingredient of this chapter is _embeddings_, which as you learned in Module 2, are the bread and butter of Large Language Models. We'll use Cohere's _Embed_ endpoint to obtain embedding vectors for a dataset of questions.After this, we'll undertake two tasks:
+- Semantic Search: Using embeddings, similarity, and nearest neighbors, you'll create a search model that will look for the answer to the given query in the dataset, just like you did in the _Semantic Search_ chapter in Module 2.
+- Semantic Exploration: Using embeddings and a mapping tool, now you'll plot a dataset of web queries in the plane, and be able to observe graphically that indeed similar sentences are mapped to close points in the embedding.
+
+# Codelab
+
+This chapter comes with a corresponding [codelab](https://colab.research.google.com/github/cohere-ai/notebooks/blob/main/notebooks/Hello_World_Meet_Language_AI.ipynb?ref=txt.cohere.com#scrollTo=T3ZMwoPnjuIM), and we encourage you to follow it along as you read the chapter.
+
+For the setup, please refer to the _Setting Up_ chapter at the beginning of this module.
+
+# Introduction
+
+The next area in language understanding is a broad one, which is analyzing text. Cohere’s Embed endpoint takes a piece of text and turns it into a vector embedding. Embeddings represent text in the form of numbers that capture its meaning and context.
+
+This gives you the ability to turn unstructured text data into a structured form. It opens up ways to analyze and extract insights from them. Let’s take a look at a couple of examples.
+
+## Semantic Search
+
+The first example is semantic search. There was a time when web search engines relied on keywords to match your search queries to the most relevant sites. But these days, you would be one frustrated user if that’s the kind experience you get, because these search engines are now able to capture semantic understanding of what you are looking for, beyond just keyword-matching.
+
+Let’s build a simple semantic search engine. Here we have a list of 50 top web search terms about Hello, World! taken from a keyword tool. The following are a few examples:
+
+```
+df = pd.read_csv("hello-world-kw.csv", names=["search_term"])
+df.head()
+```
+
+|    | Keyword                                      |
+| :- | :------------------------------------------- |
+| 0  | how to print hello world in python           |
+| 1  | what is hello world                          |
+| 2  | how do you write hello world in an alert box |
+| 3  | how to print hello world in java             |
+| 4  | how to write hello world in eclipse          |
+
+Let’s pretend that these search terms make up an FAQ database. Our job now, given a new query, is to ensure that the search engine returns the most similar FAQs.
+
+The Embed endpoint is quite straightforward to use:
+
+- Prepare input — The input is the list of text you want to embed.
+- Define model settings — The model setting is just one: the model type. But it does make a difference to your task because bigger models generate embeddings with higher dimensions. We’ll use the default which is large.
+- Generate output — The output is the corresponding embeddings for the input text.
+
+The code looks like this:
+
+```
+def embed_text(texts):
+  output = co.embed(
+                model="large",
+                texts=texts)
+  embedding = output.embeddings
+
+  return embedding
+```
+
+Now, given the FAQs, let’s try the search term “what is the history of hello world.” This is a search term whose keyword (i.e., “history”) doesn’t exist at all in the FAQ. Let’s see how the search fares.
+
+First we get the embeddings of all the FAQs:
+
+```
+df["search_term_embeds"] = embed_text(df["search_term"].tolist())
+embeds = np.array(df["search_term_embeds"].tolist())
+```
+
+And then get the embeddings of the new query:
+
+```
+new_query = "what is the history of hello world"
+new_query_embeds = embed_text(new_query)
+```
+
+Next, we compare the similarity of the embeddings of the new query with each of the embeddings of the FAQs. There are many options to do this, and one option is using cosine similarity. We’ll utilize [scikit-learn’s library](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise.cosine_similarity.html?ref=txt.cohere.com) to perform this.
+
+The steps are:
+
+- Calculate similarity between the new query with each of the FAQs
+- Sort the FAQs by descending order in similarity (the most similar first)
+- Show the top FAQs with the highest similarity to the new query
+
+The code is shown below:
+
+```
+from sklearn.metrics.pairwise import cosine_similarity
+
+def get_similarity(target,candidates):
+  # Turn list into array
+  candidates = np.array(candidates)
+  target = np.expand_dims(np.array(target),axis=0)
+
+  # Calculate cosine similarity
+  sim = cosine_similarity(target,candidates)
+  sim = np.squeeze(sim).tolist()
+
+  # Sort by descending order in similarity
+  sim = list(enumerate(sim))
+  sim = sorted(sim, key=lambda x:x[1], reverse=True)
+
+  # Return similarity scores
+  return sim
+
+similarity = get_similarity(new_query_embeds,embeds)
+
+# Show the top 5 FAQs with the highest similarity to the new query
+for idx,score in similarity[:5]:
+  print(f"Similarity: {score:.2f};", df.iloc[idx]["search_term"])
+```
+
+And the output we get is:
+
+```
+New query:
+what is the history of hello world 
+
+Similar queries:
+Similarity: 0.89; how did hello world originate
+Similarity: 0.87; where did hello world come from
+Similarity: 0.82; what is hello world
+Similarity: 0.73; why is hello world so famous
+Similarity: 0.70; why hello world
+```
+
+It works! Notice that the top terms are indeed the closest in meaning to the search term (about the history and origin of Hello, World!) even though they use different kinds of words.
+
+## Semantic Exploration
+
+Moving on to the second example. Here, we take the same idea that we see in semantic search and take a broader look, which is exploring huge volumes of text and analyzing their semantic relationships.
+
+Let’s keep our example simple and use the same 50 top web search terms about Hello, World! Its volume is by no means small, but it’s good enough to illustrate the idea.
+
+We used the `large` endpoint to generate the embeddings. At the time of writing, this model generates embeddings of 4,096 dimensions. This means, for every piece of text passed to the Embed endpoint, a sequence of 4,096 numbers will be generated. Each number represents a piece of information about the meaning contained in that piece of text.
+
+To understand what these numbers represent, there are techniques we can use to compress the embeddings down to just two dimensions while retaining as much information as possible. And once we can get it down to two dimensions, we can plot these embeddings on a 2D plot.
+
+We can make use of the [UMAP](https://umap-learn.readthedocs.io/en/latest/?ref=txt.cohere.com) technique to do this. The code is as follows:
+
+```
+import umap
+
+# Compress the embeddings to 2 dimensions (UMAP’s default reduction is to 2 dimensions)
+reducer = umap.UMAP(n_neighbors=49) 
+umap_embeds = reducer.fit_transform(embeds)
+
+# Store the compressed embeddings in the dataframe/table
+df['x'] = umap_embeds[:,0]
+df['y'] = umap_embeds[:,1]
+```
+
+You can then use any plotting library to visualize these compressed embeddings on a 2D plot.
+
+Here is the plot showing all 50 data points:
+
+<img src='../../../assets/images/5329788-image.png' alt='points' />
+
+
+And here are a few zoomed in plots, clearly showing text of similar meaning being closer to each other.
+
+**Example #1: Hello, World! In Python**
+
+<img src='../../../assets/images/72633f0-image.png' alt='Python' />
+
+
+**Example #2: Origins of Hello, World!**
+
+<img src='../../../assets/images/3e06b41-image.png' alt='World!' />
+
+
+These kinds of insights enable various downstream analysis and applications, such as topic modeling, by clustering documents into groups. In other words, text embeddings allows us to take a huge corpus of unstructured text and turn it into a structured form, making it possible to objectively compare, dissect, and derive insights from all that text.
+
+If you’d like to learn more about text analysis, here are some additional resources:
+
+- An example application: combing for insight in 10k Hacker News posts
+- Intuition about text embeddings, explained visually
+- Some use case ideas with text embeddings
+- Embed endpoint API reference
+
+Additionally, as you start working with larger input sizes, it’s worth reading the [API reference](/api-reference/?ref=txt.cohere.com&__hstc=14363112.89f2baed82ac4713854553225677badd.1682345384753.1682447142806.1682463578843.8&__hssc=14363112.1.1682463578843&__hsfp=2014138109) of the three endpoints we have covered. For example, endpoints that accept a batch of inputs (Embed and Classify) have a maximum number of inputs per call. There’s also rate limits to be considered ([limited](/limited-access?ref=txt.cohere.com&__hstc=14363112.89f2baed82ac4713854553225677badd.1682345384753.1682447142806.1682463578843.8&__hssc=14363112.1.1682463578843&__hsfp=2014138109) or [full](/going-live/?ref=txt.cohere.com&__hstc=14363112.89f2baed82ac4713854553225677badd.1682345384753.1682447142806.1682463578843.8&__hssc=14363112.1.1682463578843&__hsfp=2014138109) access).
+
+# Conclusion
+
+In this chapter you learned how to use embeddings for two language AI tasks: search and analyze text. Hopefully you are excited as I am to continue diving further into language AI and explore ways to unlock new kinds of applications. The whole category is relatively new and the boundary of what’s possible is continuously being pushed. I’m excited to see what you will build with Cohere!
+
+The following table summarizes the two Endpoints that we have covered in the last two chapters.
+
+|                              | Classify                                | Embed                               |
+| :--------------------------- | :-------------------------------------- | :---------------------------------- |
+| Input                        | Examples and text to classify           | Text to embed                       |
+| Commonly used model settings | Model type                              | Model type (affects embedding size) |
+| Output                       | Predicted classes and confidence values | Embeddings                          |

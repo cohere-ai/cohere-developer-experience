@@ -1,0 +1,86 @@
+---
+title: "Book an appointment"
+slug: "docs/book-an-appointment"
+
+hidden: true 
+description: "The document provides a scenario where a customer wants to book a haircut appointment, and the model outputs the next available time based on the available slots provided."
+image: "../../../../assets/images/6e208a9-cohere_meta_image.jpg"  
+keywords: "prompt engineering, large language models"
+
+createdAt: "Wed Mar 13 2024 18:53:40 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Wed Mar 20 2024 16:25:25 GMT+0000 (Coordinated Universal Time)"
+---
+This could be used in a scenario when the model is connected to other services such as calendar and scheduling API.
+
+**Prompt**
+
+````txt
+# Customer 
+I want to book an appointment for a haircut next Friday at 3pm. 
+
+# Available times 
+2024-03-11 Monday 5pm - 6pm 
+2024-03-13 Wednesday 12pm - 3pm 
+2024-03-15 Friday 4pm - 5pm 
+
+# Context
+Now is 2024-03-11 3:27pm 
+
+# Instruction 
+Each appointment takes 1 hour. If there is availabiltiy within "available times" that meets
+Customer's schedule, output a start time of the appointment that can be scheduled in the following
+format "%Y-%m-%d %H". 
+
+If there are multiple times, choose the earliest. If no times are available, output None. 
+
+Output should be in JSON format: 
+```json
+{
+   next_available_time: "%Y-%m-%d %H"
+}
+```
+````
+
+**Output**
+
+```
+{
+   "next_available_time": "2024-03-15 4pm"
+}
+
+```
+
+**API Request**
+
+````python
+import cohere
+
+co = cohere.Client('<<apiKey>>')
+response = co.chat(
+message="""
+# Customer 
+I want to book an appointment for a haircut next Friday at 3pm. 
+
+# Available times 
+2024-03-11 Monday 5pm - 6pm 
+2024-03-13 Wednesday 12pm - 3pm 
+2024-03-15 Friday 4pm - 5pm 
+
+# Context
+Now is 2024-03-11 3:27pm 
+
+# Instruction 
+Each appointment takes 1 hour. If there is availabiltiy within "available times" that meets Customer's schedule, output a start time of the appointment that can be scheduled in the following format "%Y-%m-%d %H". 
+
+If there are multiple times, choose the earliest. If no times are available, output None. 
+
+Output should be in JSON format: 
+```json
+{
+   next_available_time: "%Y-%m-%d %H"
+}
+```
+""",
+)
+print(response)
+````

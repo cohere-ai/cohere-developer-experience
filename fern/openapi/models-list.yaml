@@ -1,0 +1,108 @@
+get:
+  x-fern-audiences: [public]
+  summary: List Models
+  tags: [/models]
+  operationId: list-models
+  x-fern-sdk-method-name: list
+  x-fern-sdk-group-name: models
+  description: Returns a list of models available for use. The list contains
+    models from Cohere as well as your fine-tuned models.
+  parameters:
+    - name: page_size
+      in: query
+      description: |-
+        Maximum number of models to include in a page
+        Defaults to `20`, min value of `1`, max value of `1000`.
+      schema:
+        type: number
+        x-fern-audiences: ['public']
+    - name: page_token
+      description: Page token provided in the `next_page_token` field of a previous
+        response.
+      in: query
+      schema:
+        type: string
+        x-fern-audiences: ['public']
+    - name: endpoint
+      in: query
+      description: When provided, filters the list of models to only those that are
+        compatible with the specified endpoint.
+      schema:
+        $ref: './types/CompatibleEndpoint.yaml'
+        x-fern-audiences: ['public']
+    - name: default_only
+      in: query
+      description: When provided, filters the list of models to only the default model
+        to the endpoint. This parameter is only valid when `endpoint` is
+        provided.
+      schema:
+        type: boolean
+        x-fern-audiences: ['public']
+  responses:
+    '400':
+      $ref: "./errors/BadRequest.yaml"
+    '401':
+      $ref: "./errors/Unauthorized.yaml"
+    '403':
+      $ref: "./errors/Forbidden.yaml"
+    '404':
+      $ref: "./errors/NotFound.yaml"
+    '422':
+      $ref: "./errors/UnprocessableEntity.yaml"
+    '429':
+      $ref: './errors/RateLimit.yaml'
+    '498':
+      $ref: "./errors/InvalidToken.yaml"
+    '499':
+      $ref: "./errors/RequestCancelled.yaml"
+    '500':
+      $ref: "./errors/InternalServerError.yaml"
+    '501':
+      $ref: "./errors/NotImplemented.yaml"
+    '503':
+      $ref: "./errors/ServiceUnavailable.yaml"
+    '504':
+      $ref: "./errors/GatewayTimeout.yaml"
+    '200':
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: './types/ListModelsResponse.yaml'
+  x-readme:
+    samples-languages:
+      - node
+      - curl
+      - python
+      - java
+      - go
+    code-samples:
+      - language: python
+        name: Sync
+        install: python -m pip install cohere --upgrade
+        code:
+          $ref: ./snippets/python/models-list-get.py
+      - language: python
+        name: Async
+        install: python -m pip install cohere --upgrade
+        code:
+          $ref: ./snippets/python-async/models-list-get.py
+      - language: java
+        name: Cohere java SDK
+        install: implementation 'com.cohere:cohere-java:1.0.4'
+        code:
+          $ref: ./snippets/java/app/src/main/java/ModelsListGet.java
+      - language: curl
+        name: cURL
+        code:
+          $ref: ./snippets/curl/models-list-get.sh
+      - language: node
+        name: Cohere TypeScript SDK
+        install: npm i cohere-ai
+        code:
+          $ref: ./snippets/node/models-list-get.ts
+      - language: go
+        name: Cohere Go SDK
+        install: go get github.com/cohere-ai/cohere-go/v2
+        code:
+          $ref: './snippets/go/models-list-get/main.go'

@@ -1,0 +1,140 @@
+---
+title: "Cohere on Azure"
+slug: "docs/cohere-on-microsoft-azure"
+
+hidden: false
+ 
+image: "../../assets/images/71ec636-cohere_meta_image.jpg"  
+keywords: "generative AI, large language models, Microsoft Azure"
+
+createdAt: "Mon Apr 08 2024 14:53:59 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Wed May 01 2024 16:11:36 GMT+0000 (Coordinated Universal Time)"
+---
+In an effort to make our language-model capabilities more widely available, we've partnered with a few major platforms to create hosted versions of our offerings. 
+
+In this article, you learn how to use [Azure AI Studio](https://ai.azure.com/) to deploy both the Cohere Command models and the Cohere Embed models on Microsoft's Azure cloud computing platform.
+
+The following four models are available through Azure AI Studio with pay-as-you-go, token-based billing:
+
+- Command R
+- Command R+
+- Embed v3 - English
+- Embed v3 - Multilingual
+
+## Prerequisites
+
+Whether you're using Command or Embed, the initial set up is the same. You'll need:
+
+- An Azure subscription with a valid payment method. Free or trial Azure subscriptions won't work. If you don't have an Azure subscription, create a [paid Azure account](https://azure.microsoft.com/pricing/purchase-options/pay-as-you-go) to begin.
+- An [Azure AI hub resource](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-azure-ai-resource). Note: for Cohere models, the pay-as-you-go deployment offering is only available with AI hubs created in the `EastUS`, `EastUS2` or `Sweden Central` regions.
+- An [Azure AI project](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-projects) in Azure AI Studio.
+- Azure role-based access controls (Azure RBAC) are used to grant access to operations in Azure AI Studio. To perform the required steps, your user account must be assigned the Azure AI Developer role on the resource group. For more information on permissions, see [Role-based access control in Azure AI Studio](https://learn.microsoft.com/en-us/azure/ai-studio/concepts/rbac-ai-studio).
+
+For Command- or Embed-based workflows, you'll also need to create a deployment and consume the model. Here are links for more information:
+
+- **Command:** [create a Command deployment](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-command#create-a-new-deployment) and then [consume the Command model](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-command#create-a-new-deployment).
+- **Embed:** [create an Embed deployment](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-embed#create-a-new-deployment) and [consume the Embed model](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-embed#consume-the-cohere-embed-models-as-a-service).
+
+## Text Generation
+
+We expose two routes for Command R and Command R+ inference:
+
+- `v1/chat/completions` adheres to the Azure AI Generative Messages API schema; 
+- ` v1/chat` supports Cohere's native API schema.
+
+You can find more information about Azure's API [here](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-command#chat-api-reference-for-cohere-models-deployed-as-a-service).
+
+Here's a code snippet demonstrating how to programmatically interact with a Cohere model on Azure:
+
+```python
+import urllib.request
+import json
+
+# Configure payload data sending to API endpoint
+data = {
+    "messages": [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "What is good about Wuhan?"},
+    ],
+    "max_tokens": 500,
+    "temperature": 0.3,
+    "stream": "True",
+}
+
+body = str.encode(json.dumps(data))
+
+# Replace the url with your API endpoint
+url = "https://your-endpoint.inference.ai.azure.com/v1/chat/completions"
+
+# Replace this with the key for the endpoint
+api_key = "your-auth-key"
+if not api_key:
+    raise Exception("API Key is missing")
+
+headers = {"Content-Type": "application/json", "Authorization": (api_key)}
+
+req = urllib.request.Request(url, body, headers)
+
+try:
+    response = urllib.request.urlopen(req)
+    result = response.read()
+    print(result)
+except urllib.error.HTTPError as error:
+    print("The request failed with status code: " + str(error.code))
+    # Print the headers - they include the requert ID and the timestamp, which are useful for debugging the failure
+    print(error.info())
+    print(error.read().decode("utf8", "ignore"))
+```
+
+You can find more code snippets, including examples of how to stream responses, in this [notebook](https://github.com/Azure/azureml-examples/blob/main/sdk/python/foundation-models/cohere/webrequests.ipynb).
+
+Though this section is called "Text Generation", it's worth pointing out that these models are capable of much more. Specifically, you can use Azure-hosted Cohere models for both retrieval augmented generation and [multi-step tool use](/docs/multi-step-tool-use). Check the linked pages for much more information.
+
+## Embeddings
+
+We expose two routes for Embed v3 - English and Embed v3 - Multilingual inference:
+
+- `v1/embeddings` adheres to the Azure AI Generative Messages API schema; 
+- ` v1/embed` supports Cohere's native API schema.
+
+You can find more information about Azure's API [here](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-embed#embed-api-reference-for-cohere-embed-models-deployed-as-a-service).
+
+```python
+import urllib.request
+import json
+
+# Configure payload data sending to API endpoint
+data = {
+    "input": ["hi"]
+}
+
+body = str.encode(json.dumps(data))
+
+# Replace the url with your API endpoint
+url = "https://your-endpoint.inference.ai.azure.com/v1/embedding"
+
+# Replace this with the key for the endpoint
+api_key = "your-auth-key"
+if not api_key:
+    raise Exception("API Key is missing")
+
+headers = {"Content-Type": "application/json", "Authorization": (api_key)}
+
+req = urllib.request.Request(url, body, headers)
+
+try:
+    response = urllib.request.urlopen(req)
+    result = response.read()
+    print(result)
+except urllib.error.HTTPError as error:
+    print("The request failed with status code: " + str(error.code))
+    # Print the headers - they include the requert ID and the timestamp, which are useful for debugging the failure
+    print(error.info())
+    print(error.read().decode("utf8", "ignore"))
+```
+
+## A Note on SDKs
+
+You should be aware that it's possible to use the cohere SDK client to consume Azure AI deployments. Here are example notes for [Command](https://github.com/Azure/azureml-examples/blob/main/sdk/python/foundation-models/cohere/cohere-cmdR.ipynb) and [Embed](https://github.com/Azure/azureml-examples/blob/main/sdk/python/foundation-models/cohere/cohere-embed.ipynb). 
+
+The important thing to understand is that our new and existing customers can call the models from Azure while still leveraging their integration with the Cohere SDK.

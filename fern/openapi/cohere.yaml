@@ -1,0 +1,102 @@
+openapi: 3.1.0
+info:
+  title: API Reference
+  version: '1.0'
+  description: |-
+    The Cohere Platform is centered around models.
+
+    Each model has a different amount of power (i.e. parameters), to be used for different tasks.
+
+    Cohere also supports finetuning of baseline models to improve performance on downstream tasks or to teach the model large quantities of information which cannot be extracted with few-shot learning or prompt engineering.
+  summary: Cohere's API
+  contact:
+    name: Cohere Developers
+    url: 'https://cohere.com/'
+    email: team@cohere.com
+  termsOfService: 'https://cohere.com/terms-of-use'
+  license:
+    name: proprietary
+    url: 'https://cohere.com/terms-of-use'
+servers:
+  - url: 'https://api.cohere.com/v1'
+    description: production
+paths:
+  /chat:
+    $ref: ./chat.yaml
+  /generate:
+    $ref: ./generate.yaml
+  /embed:
+    $ref: ./embed.yaml
+  /embed-jobs:
+    $ref: ./embed-jobs.yaml
+  /embed-jobs/{id}:
+    $ref: ./embed-jobs-id.yaml
+  /embed-jobs/{id}/cancel:
+    $ref: ./embed-jobs-cancel.yaml
+  /rerank:
+    $ref: ./rerank.yaml
+  /classify:
+    $ref: ./classify.yaml
+  /datasets:
+    $ref: ./dataset.yaml
+  /datasets/usage:
+    $ref: ./dataset-usage.yaml
+  /datasets/{id}:
+    $ref: ./dataset-id.yaml
+  /summarize:
+    $ref: ./summarize.yaml
+  /tokenize:
+    $ref: ./tokenize.yaml
+  /detokenize:
+    $ref: ./detokenize.yaml
+  /connectors:
+    $ref: ./connectors.yaml
+  /connectors/{id}:
+    $ref: ./connectors-id.yaml
+  /connectors/{id}/oauth/authorize:
+    $ref: ./connectors-id-oauth-authorize.yaml
+  /connector_logs:
+    x-internal: true
+    $ref: ./connector-logs.yaml
+  /loglikelihood:
+    x-internal: true
+    $ref: ./loglikelihood.yaml
+  /cluster-jobs:
+    x-internal: true
+    $ref: ./cluster-jobs.yaml
+  /cluster-jobs/{job-id}:
+    x-internal: true
+    $ref: ./cluster-jobs-job-id.yaml
+  /models/{model}:
+    $ref: ./models-get.yaml
+  /models:
+    $ref: ./models-list.yaml
+  /check-api-key:
+    $ref: ./check-api-key.yaml
+  /finetuning/finetuned-models:
+    $ref: ./finetuning-finetuned-models.yaml
+  /finetuning/finetuned-models/{id}:
+    $ref: ./finetuning-finetuned-models-id.yaml
+  /finetuning/finetuned-models/{finetuned_model_id}/events:
+    $ref: ./finetuning-finetuned-models-events.yaml
+  /finetuning/finetuned-models/{finetuned_model_id}/training-step-metrics:
+    $ref: ./finetuning-finetuned-models-training-step-metrics.yaml
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      x-fern-audiences: ['public']
+      scheme: bearer
+      x-fern-bearer:
+        env: CO_API_KEY
+security:
+  - bearerAuth: []
+tags:
+  - name: /datasets
+    description: 'Datasets API'
+  - name: /connectors
+    description: 'Connectors API'
+  - name: /embed-jobs
+    description: 'Embed Jobs API'
+  - name: /finetuning
+    description: 'Finetuning API (Beta)'

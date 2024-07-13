@@ -1,0 +1,131 @@
+---
+title: "REMOVE Semantic Search Using the Embed Endpoint"
+slug: "docs/remove-analyzing-text-using-embeddings-copy"
+subtitle: "Intro to the Cohere Endpoints: Classify, Embed, Search. From https://txt.cohere.com/hello-world-p2/"
+hidden: true
+createdAt: "Tue May 02 2023 16:00:34 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Mon Oct 23 2023 14:40:59 GMT+0000 (Coordinated Universal Time)"
+---
+![](../../../assets/images/0d1dd7c-image.png)
+# Introduction
+
+In the previous chapter you learned how to use embeddings to analyze text. In this one, you'll learn an application of embeddings, which is semantic search. You've already learned [semantic search](<>) in Module 2, so please feel free to take a look if you need a refresher!
+
+In this chapter, using embeddings, similarity, and nearest neighbors, you'll create a search model that will look for the answer to the given query in the dataset.
+
+# Codelab
+
+This chapter comes with a corresponding [codelab](https://colab.research.google.com/github/cohere-ai/notebooks/blob/main/notebooks/Hello_World_Meet_Language_AI.ipynb?ref=txt.cohere.com#scrollTo=T3ZMwoPnjuIM), and we encourage you to follow it along as you read the chapter.
+
+For the setup, please refer to the [Setting Up](/docs/setting-up) chapter at the beginning of this module.
+
+# Semantic Search
+
+The first example is semantic search. There was a time when web search engines relied on keywords to match your search queries to the most relevant sites. But these days, you would be one frustrated user if that’s the kind experience you get, because these search engines are now able to capture semantic understanding of what you are looking for, beyond just keyword-matching.
+
+Let’s build a simple semantic search engine. For this chapter we'll use the same dataset as in the previous one, consisting of 50 top web search terms about Hello, World! taken from a keyword tool. The following are a few examples:
+
+```
+df = pd.read_csv("hello-world-kw.csv", names=["search_term"])
+df.head()
+```
+
+|    | Keyword                                      |
+| :- | :------------------------------------------- |
+| 0  | how to print hello world in python           |
+| 1  | what is hello world                          |
+| 2  | how do you write hello world in an alert box |
+| 3  | how to print hello world in java             |
+| 4  | how to write hello world in eclipse          |
+
+Let’s pretend that these search terms make up an FAQ database. Our job now, given a new query, is to ensure that the search engine returns the most similar FAQs.
+
+Recall that the Embed endpoint is quite straightforward to use:
+
+- Prepare input — The input is the list of text you want to embed.
+- Define model settings — The model setting is just one: the model type. But it does make a difference to your task because bigger models generate embeddings with higher dimensions. We’ll use the default which is large.
+- Generate output — The output is the corresponding embeddings for the input text.
+
+The code looks like this:
+
+```
+def embed_text(texts):
+  output = co.embed(
+                model="large",
+                texts=texts)
+  embedding = output.embeddings
+
+  return embedding
+```
+
+Now, given the FAQs, let’s try the search term “what is the history of hello world.” This is a search term whose keyword (i.e., “history”) doesn’t exist at all in the FAQ. Let’s see how the search fares.
+
+First we get the embeddings of all the FAQs:
+
+```
+df["search_term_embeds"] = embed_text(df["search_term"].tolist())
+embeds = np.array(df["search_term_embeds"].tolist())
+```
+
+And then get the embeddings of the new query:
+
+```
+new_query = "what is the history of hello world"
+new_query_embeds = embed_text(new_query)
+```
+
+Next, we compare the similarity of the embeddings of the new query with each of the embeddings of the FAQs. There are many options to do this, and one option is using cosine similarity. We’ll utilize [scikit-learn’s library](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise.cosine_similarity.html?ref=txt.cohere.com) to perform this.
+
+The steps are:
+
+- Calculate similarity between the new query with each of the FAQs
+- Sort the FAQs by descending order in similarity (the most similar first)
+- Show the top FAQs with the highest similarity to the new query
+
+The code is shown below:
+
+```
+from sklearn.metrics.pairwise import cosine_similarity
+
+def get_similarity(target,candidates):
+  # Turn list into array
+  candidates = np.array(candidates)
+  target = np.expand_dims(np.array(target),axis=0)
+
+  # Calculate cosine similarity
+  sim = cosine_similarity(target,candidates)
+  sim = np.squeeze(sim).tolist()
+
+  # Sort by descending order in similarity
+  sim = list(enumerate(sim))
+  sim = sorted(sim, key=lambda x:x[1], reverse=True)
+
+  # Return similarity scores
+  return sim
+
+similarity = get_similarity(new_query_embeds,embeds)
+
+# Show the top 5 FAQs with the highest similarity to the new query
+for idx,score in similarity[:5]:
+  print(f"Similarity: {score:.2f};", df.iloc[idx]["search_term"])
+```
+
+And the output we get is:
+
+```
+New query:
+what is the history of hello world 
+
+Similar queries:
+Similarity: 0.89; how did hello world originate
+Similarity: 0.87; where did hello world come from
+Similarity: 0.82; what is hello world
+Similarity: 0.73; why is hello world so famous
+Similarity: 0.70; why hello world
+```
+
+It works! Notice that the top terms are indeed the closest in meaning to the search term (about the history and origin of Hello, World!) even though they use different kinds of words.
+
+# Conclusion
+
+In this chapter you learned how to use embeddings a very important language AI task: search.

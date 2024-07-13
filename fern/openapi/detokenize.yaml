@@ -1,0 +1,141 @@
+post:
+  x-fern-audiences: [public]
+  summary: Detokenize
+  operationId: detokenize
+  parameters:
+    - $ref: './types/RequestSource.yaml'
+  x-readme:
+    samples-languages:
+      - python
+      - java
+      - curl
+      - node
+      - go
+    code-samples:
+      - language: go
+        name: Cohere Go SDK
+        install: go get github.com/cohere-ai/cohere-go/v2
+        code:
+          $ref: './snippets/go/detokenize-post/main.go'
+      - language: node
+        name: Cohere TypeScript SDK
+        install: npm i cohere-ai
+        code:
+          $ref: ./snippets/node/detokenize-post.ts
+      - language: python
+        name: Sync
+        install: python -m pip install cohere --upgrade
+        code:
+          $ref: ./snippets/python/detokenize-post.py
+      - language: python
+        name: Async
+        install: python -m pip install cohere --upgrade
+        code:
+          $ref: ./snippets/python-async/detokenize-post.py
+      - language: java
+        name: Cohere java SDK
+        install: implementation 'com.cohere:cohere-java:1.0.4'
+        code:
+          $ref: ./snippets/java/app/src/main/java/DetokenizePost.java
+      - language: curl
+        name: cURL
+        code:
+          $ref: ./snippets/curl/detokenize-post.sh
+  responses:
+    '400':
+      $ref: "./errors/BadRequest.yaml"
+    '401':
+      $ref: "./errors/Unauthorized.yaml"
+    '403':
+      $ref: "./errors/Forbidden.yaml"
+    '404':
+      $ref: "./errors/NotFound.yaml"
+    '422':
+      $ref: "./errors/UnprocessableEntity.yaml"
+    '429':
+      $ref: './errors/RateLimit.yaml'
+    '498':
+      $ref: "./errors/InvalidToken.yaml"
+    '499':
+      $ref: "./errors/RequestCancelled.yaml"
+    '500':
+      $ref: "./errors/InternalServerError.yaml"
+    '501':
+      $ref: "./errors/NotImplemented.yaml"
+    '503':
+      $ref: "./errors/ServiceUnavailable.yaml"
+    '504':
+      $ref: "./errors/GatewayTimeout.yaml"
+    '200':
+      description: OK
+      headers:
+        X-API-Warning:
+          schema:
+            type: string
+            x-fern-audiences: ['public']
+          description: Warning description for incorrect usage of the API
+      content:
+        application/json:
+          schema:
+            type: object
+            x-fern-audiences: ['public']
+            properties:
+              text:
+                type: string
+                x-fern-audiences: ['public']
+                description: A string representing the list of tokens.
+                readOnly: true
+              meta:
+                $ref: './types/ApiMeta.yaml'
+                x-fern-audiences: ['public']
+            required:
+              - text
+          examples:
+            Example:
+              value:
+                text: 'detokenized! :D'
+                meta:
+                  api_version:
+                    version: '1'
+  description: 'This endpoint takes tokens using byte-pair encoding and returns
+    their text representation. To learn more about tokenization and byte pair
+    encoding, see the tokens page.'
+  requestBody:
+    content:
+      application/json:
+        schema:
+          type: object
+          x-fern-audiences: ['public']
+          properties:
+            tokens:
+              type: array
+              x-fern-audiences: ['public']
+              description: The list of tokens to be detokenized.
+              minItems: 1
+              maxItems: 65536
+              items:
+                type: integer
+                x-fern-audiences: ['public']
+              writeOnly: true
+            model:
+              type: string
+              x-fern-audiences: ['public']
+              description: An optional parameter to provide the model name. This will ensure
+                that the detokenization is done by the tokenizer used by that
+                model.
+          required:
+            - tokens
+            - model
+        examples:
+          Example:
+            value:
+              tokens:
+                - 10104
+                - 12221
+                - 1315
+                - 34
+                - 1420
+                - 69
+              model: 'command'
+    description: ''
+parameters: []

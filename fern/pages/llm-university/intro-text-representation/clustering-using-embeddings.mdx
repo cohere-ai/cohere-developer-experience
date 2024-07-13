@@ -1,0 +1,57 @@
+---
+title: "Clustering Using Embeddings"
+slug: "docs/clustering-using-embeddings"
+subtitle: "Now that you've learned what embeddings are, here is another very important application of embeddings, which is clustering. In this chapter, you'll continue with the same dataset as before, you'll split it into different clusters using K-means clustering, and you'll observe that these clusters contain similar sentences."
+hidden: true
+ 
+image: "../../../assets/images/f5dd3fb-Cohere_LLM_University.png"
+createdAt: "Tue May 02 2023 00:54:56 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Wed Apr 03 2024 19:02:57 GMT+0000 (Coordinated Universal Time)"
+---
+### Colab Notebook
+
+This chapter uses the same [notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/llmu/Visualizing_Text_Embeddings.ipynb) as the previous chapter.
+
+For the setup, please refer to the <a target="_blank" href="/docs/setting-up">Setting Up</a> chapter at the beginning of this module.
+
+### Clustering
+
+As the amount of unstructured text data increases, organizations will want to be able to derive an understanding of its contents. One example would be to discover underlying topics in a collection of documents so we can explore trends and insights. Another could be for businesses to segment customers based on preferences and activity.
+
+These kinds of tasks fall under a category called clustering. In machine learning, clustering is a process of grouping similar documents into clusters. It is used to organize a large number of documents into a smaller number of groups. And it lets us discover emerging patterns in a collection of documents without us having to specify much information beyond supplying the data.
+
+And now that we have text represented by their embeddings, putting them through a clustering algorithm becomes simple. Let’s look at an example using the same 9 data points.
+
+Implementation-wise, we use the K-means algorithms to cluster these data points (if you'd like to learn more about it, please check this <a target="_blank" href="https://www.youtube.com/watch?v=QXOkPvFM6NU">video about the K-means algorithm</a>). 
+
+Other than providing the embeddings, the only other key information we need to provide for the algorithm is the number of clusters we want to find. This is normally larger in actual applications, but since our dataset is small, we’ll set the number of clusters to 2.
+
+```python
+from sklearn.cluster import KMeans
+
+# Pick the number of clusters
+df_clust = df_pc2.copy()
+n_clusters=2
+
+# Cluster the embeddings
+kmeans_model = KMeans(n_clusters=n_clusters, random_state=0)
+classes = kmeans_model.fit_predict(embeds).tolist()
+df_clust['cluster'] = (list(map(str,classes)))
+
+# Plot on a chart
+df_clust.columns = df_clust.columns.astype(str)
+generate_chart(df_clust.iloc[:sample],'0','1',lbl='on',color='cluster',title='Clustering with 2 Clusters')
+```
+
+The plot below shows the clusters that the algorithm returned. It looks to be spot on, where we have one cluster related to airline information and one cluster related to ground service information.
+
+
+<img src='../../../assets/images/b77770f-image.png' alt='clusters' />
+
+### Conclusion
+
+In this chapter, you learned how to cluster a dataset of sentences, and you observed that each cluster corresponds to a particular topic. If you'd like to dive deeper into clustering, feel free to check this more elaborate example on <a target="_blank" href="/docs/clustering-hacker-news-posts"> Clustering Hacker News Posts</a>!
+
+### Original Source
+
+This material comes from the post <a target="_blank" href="https://txt.cohere.com/text-embeddings/">Text Embeddings Visually Explained</a>

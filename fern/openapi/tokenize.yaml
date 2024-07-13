@@ -1,0 +1,159 @@
+post:
+  x-fern-audiences: [public]
+  summary: Tokenize
+  operationId: tokenize
+  parameters:
+    - $ref: './types/RequestSource.yaml'
+  x-readme:
+    samples-languages:
+      - python
+      - java
+      - curl
+      - node
+      - go
+    code-samples:
+      - language: go
+        name: Cohere Go SDK
+        install: go get github.com/cohere-ai/cohere-go/v2
+        code:
+          $ref: './snippets/go/tokenize-post/main.go'
+      - language: node
+        name: Cohere TypeScript SDK
+        install: npm i cohere-ai
+        code:
+          $ref: ./snippets/node/tokenize-post.ts
+      - language: python
+        name: Sync
+        install: python -m pip install cohere --upgrade
+        code:
+          $ref: ./snippets/python/tokenize-post.py
+      - language: python
+        name: Async
+        install: python -m pip install cohere --upgrade
+        code:
+          $ref: ./snippets/python-async/tokenize-post.py
+      - language: java
+        name: Cohere java SDK
+        install: implementation 'com.cohere:cohere-java:1.0.4'
+        code:
+          $ref: ./snippets/java/app/src/main/java/TokenizePost.java
+      - language: node
+        name: Cohere Node.js SDK
+        install: npm install cohere-ai
+        code:
+          $ref: ./snippets/node/tokenize-post.ts
+      - language: curl
+        name: cURL
+        code:
+          $ref: ./snippets/curl/tokenize-post.sh
+  responses:
+    '400':
+      $ref: "./errors/BadRequest.yaml"
+    '401':
+      $ref: "./errors/Unauthorized.yaml"
+    '403':
+      $ref: "./errors/Forbidden.yaml"
+    '404':
+      $ref: "./errors/NotFound.yaml"
+    '422':
+      $ref: "./errors/UnprocessableEntity.yaml"
+    '429':
+      $ref: './errors/RateLimit.yaml'
+    '498':
+      $ref: "./errors/InvalidToken.yaml"
+    '499':
+      $ref: "./errors/RequestCancelled.yaml"
+    '500':
+      $ref: "./errors/InternalServerError.yaml"
+    '501':
+      $ref: "./errors/NotImplemented.yaml"
+    '503':
+      $ref: "./errors/ServiceUnavailable.yaml"
+    '504':
+      $ref: "./errors/GatewayTimeout.yaml"
+    '200':
+      description: OK
+      headers:
+        X-API-Warning:
+          schema:
+            type: string
+            x-fern-audiences: ['public']
+          description: Warning description for incorrect usage of the API
+      content:
+        application/json:
+          schema:
+            type: object
+            x-fern-audiences: ['public']
+            properties:
+              tokens:
+                type: array
+                x-fern-audiences: ['public']
+                description: 'An array of tokens, where each token is an integer.'
+                items:
+                  type: integer
+                  x-fern-audiences: ['public']
+                  readOnly: true
+                readOnly: true
+              token_strings:
+                type: array
+                x-fern-audiences: ['public']
+                items:
+                  type: string
+                  x-fern-audiences: ['public']
+              meta:
+                $ref: './types/ApiMeta.yaml'
+                x-fern-audiences: ['public']
+            required:
+              - tokens
+              - token_strings
+          examples:
+            Example:
+              value:
+                tokens:
+                  - 34160
+                  - 974
+                  - 514
+                  - 34
+                  - 1420
+                  - 69
+                token_strings:
+                  - token
+                  - ize'
+                  - ' me'
+                  - '!'
+                  - ' :'
+                  - D
+                meta:
+                  api_version:
+                    version: '1'
+  description: 'This endpoint splits input text into smaller units called tokens
+    using byte-pair encoding (BPE). To learn more about tokenization and byte
+    pair encoding, see the tokens page.'
+  requestBody:
+    content:
+      application/json:
+        schema:
+          type: object
+          x-fern-audiences: ['public']
+          properties:
+            text:
+              type: string
+              x-fern-audiences: ['public']
+              description: 'The string to be tokenized, the minimum text length is 1
+                character, and the maximum text length is 65536 characters.'
+              minLength: 1
+              maxLength: 65536
+            model:
+              type: string
+              x-fern-audiences: ['public']
+              description: An optional parameter to provide the model name. This will ensure
+                that the tokenization uses the tokenizer used by that model.
+          required:
+            - text
+            - model
+        examples:
+          Example:
+            value:
+              text: 'tokenize me! :D'
+              model: command
+    description: ''
