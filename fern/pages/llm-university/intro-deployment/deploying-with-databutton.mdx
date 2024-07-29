@@ -49,7 +49,7 @@ As the file is now saved to storage, the user can access the data throughout the
 
 The following are the helper functions mentioned above.
 
-```python
+```python PYTHON
 # Function to generate Cohere embeddings
 def embed_text(texts):  
     embeddings = \[]  
@@ -64,7 +64,7 @@ def embed_text(texts):
     return embeddings
 ```
 
-```python
+```python PYTHON
 # Function to reduce dimensionality of embeddings using umap
 
 def reduce_dimensionality(embeddings):  
@@ -73,7 +73,7 @@ def reduce_dimensionality(embeddings):
     return umap_embeddings[:, 0], umap_embeddings[:, 1]
 ```
 
-```python
+```python PYTHON
 # Function to save embeddings into a json file in Databutton data storage
 
 def save_embeddings_to_json(df):  
@@ -97,7 +97,7 @@ The following is what the user interface will look like at this point.
 
 The reduced embeddings are now saved as a new file. We can copy the code snippet to import and use the DataFrame anywhere in our application. Here is an example of how you call the data as a DataFrame:
 
-```python
+```python PYTHON
 # Call the embeddings data as a DataFrame
 df = db.storage.dataframes.get(key=”reduced.csv”)
 ```
@@ -118,7 +118,7 @@ We will create a user interface that provides interactivity at a few crucial poi
 - **Calculate cluster centers and distances from centroids**: The script calculates the centroid (or geometric center) of each cluster. It then computes how far each point in your data is from its cluster’s centroid. We will need this in the next step of the process where we label our clusters.
 - **Display and save the results**: The script will display the DataFrame that now includes cluster labels and distances from centroids. If you’re satisfied with the results, you can save this labeled data back into Databutton’s storage for later use.
 
-```python
+```python PYTHON
 import databutton as db  
 import streamlit as st  
 from sklearn.cluster import KMeans  
@@ -196,7 +196,7 @@ Finally we’ll use the [Chat endpoint](/reference/chat) to suggest a name for e
 
 We use the `utterance_prompt` as the prompt to the Chat endpoint to generate descriptive labels for the data clusters.
 
-```python
+```python PYTHON
 utterance_prompt = """
 These are clusters of commands given to an AI-based personal assistant. Each cluster represents a specific type of task or query that users often ask their personal assistant to perform. A list of keywords summarizing the collection is included, along with the name of the cluster. The name of each cluster should be a brief, precise description of the common theme within the utterances.
 ---
@@ -237,7 +237,7 @@ Sample utterances from this cluster:
 
 We create several helper functions for processing the DataFrame, generating keywords, creating labels, and displaying information to the user. The `extract_top_n_words` function generates the most relevant keywords for each cluster. The `generate_label` function uses an AI model to generate a descriptive label for each cluster. The `generate_keywords_and_label` function wraps up these processes for each cluster and updates the DataFrame accordingly. The `present_cluster_data` function is used to present the information about each cluster to the user.
 
-```python
+```python PYTHON
 # Function to generate a name for each cluster
 
 def generate_label(customer_service_prompt, text_series):  
@@ -258,7 +258,7 @@ def generate_label(customer_service_prompt, text_series):
     return response.text, prompt
 ```
 
-```python
+```python PYTHON
 # Function to generate keywords for each cluster
 
 def extract_top_n_words(vectorizer, tfidf_matrix, n=10):  
@@ -279,7 +279,7 @@ def extract_top_n_words(vectorizer, tfidf_matrix, n=10):
   return [word[0] for word in words_freq[:n]]
 ```
 
-```python
+```python PYTHON
 # Helper function to generate the cluster name and keywords
 
 @st.cache_resource  
@@ -327,7 +327,7 @@ And finally, putting the steps together for cluster names and keyword generation
 
 These are reflected in the corresponding code block.
 
-```python
+```python PYTHON
 from sklearn.feature_extraction.text import TfidfVectorizer  
 import databutton as db  
 import streamlit as st  

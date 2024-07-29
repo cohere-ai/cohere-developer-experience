@@ -20,7 +20,7 @@ To understand the importance of domain-specific training, we will work with a co
 
 We'll start by importing the tools we'll need.
 
-```python
+```python PYTHON
 import os
 import cohere
 import json
@@ -32,7 +32,7 @@ from datasets import load_dataset
 
 Next, we'll instantiate a Cohere client. 
 
-```python
+```python PYTHON
 # Paste your API key here. Remember to not share publicly
 co = cohere.Client("COHERE_API_KEY")
 ```
@@ -46,7 +46,7 @@ We'll work with [the CaseHOLD dataset](https://huggingface.co/datasets/casehold/
 
 We'll work with an [IterableDataset](https://huggingface.co/docs/datasets/en/about_mapstyle_vs_iterable) and load only a small fraction of examples at a time to avoid loading the entire dataset in memory.
 
-```python
+```python PYTHON
 iterable_dataset = load_dataset("casehold/casehold", split="train", streaming=True)
 ```
 
@@ -60,7 +60,7 @@ The data is stored in a Pandas DataFrame `df` with 5 columns:
 - `"relevant_passages"` - The document that correctly answers the query
 - `"hard_negatives"`- The four documents that don't correctly answer the query
 
-```python
+```python PYTHON
 # Size of data subset
 num_examples = 420
 
@@ -90,7 +90,7 @@ df = pd.DataFrame(d)
 
 We next split the data into training (in `df_train`), validation (in `df_valid`), and test (in `df_test`) sets.
 
-```python
+```python PYTHON
 # Set number of examples for train-valid-test split
 train_num = 256
 valid_num = 154
@@ -113,7 +113,7 @@ To get predictions, we'll use the [`rerank()` method](/reference/rerank-1) of th
 - `documents` - List of documents to choose from
 - `top_n` - Number of documents to return
 
-```python
+```python PYTHON
 # Predict index of document that corrrectly answers query
 def get_prediction(item, model="rerank-english-v3.0"):
     response = co.rerank(model=model,
@@ -126,7 +126,7 @@ def get_prediction(item, model="rerank-english-v3.0"):
 
 We apply this function to every row in the test set and save the predictions in new column `"baseline_prediction"`. Then, to calculate the test accuracy, we compare the predictions to the ground truth labels in the `"label"` column.
 
-```python
+```python PYTHON
 # Calculate pre-trained model's test accuracy
 df_test["baseline_prediction"] = df_test.apply(get_prediction, axis=1)
 print("Baseline accuracy:", sum(df_test["baseline_prediction"] == df_test["label"])/len(df_test))
@@ -144,7 +144,7 @@ To prepare for fine-tuning with the Rerank endpoint, we'll need to convert the d
 
 We do this separately for training and validation data. You can learn more about preparing the Rerank fine-tuning data in [the documentation](/docs/rerank-preparing-the-data).
 
-```python
+```python PYTHON
 # Arranges the data to suit Cohere's format
 def create_rerank_ft_data(query, relevant_passages, hard_negatives):
     formatted_data = {
@@ -206,7 +206,7 @@ Navigate to the API tab of the fine-tuned model. There, you'll see the model ID 
 
 In the following code, we calculate the test accuracy of the fine-tuned model. We use the same `get_prediction()` function as before, but now just need to pass in the fine-tuned model ID.
 
-```python
+```python PYTHON
 # Calculate fine-tuned model's test accuracy
 df_test['ft_prediction'] = df_test.apply(get_prediction, model='9f22e08a-f1ab-4cee-9524-607dcb08c954-ft', axis=1)
 print("Fine-tune accuracy:", sum(df_test["ft_prediction"] == df_test["label"])/len(df_test))

@@ -23,7 +23,7 @@ However, one key property of LLMs that’s different from traditional software i
 
 Here’s an example. In [Chapter 1](/docs/constructing-prompts), we looked at a text extraction task of turning a list of bank invoices in a text document into a JSON object containing three fields: “Invoice Number,” “Merchant Name,” and “Account Number.” For brevity, we’ll turn it into a shorter version with the document containing just one invoice, as follows.
 
-```python
+```python PYTHON
 prompt="""Turn the following information into a JSON string with the following keys: Invoice Number, Merchant Name, and Account Number.
 Bank Invoice: INVOICE #0521 MERCHANT ALLBIRDS ACC XXX3846
 """
@@ -31,7 +31,7 @@ Bank Invoice: INVOICE #0521 MERCHANT ALLBIRDS ACC XXX3846
 
 This produced an LLM response that followed exactly what we wanted, as shown below.
 
-```json
+```json JSON
   {
     "Invoice Number": "0521",
     "Merchant Name": "Allbirds",
@@ -41,7 +41,7 @@ This produced an LLM response that followed exactly what we wanted, as shown bel
 
 But how do we ensure we’ll get the same response every time? Perhaps another time, the output may miss some information, such as the returning incomplete information like this one.
 
-```json
+```json JSON
  {
     "Invoice Number": "0521"
  }
@@ -83,7 +83,7 @@ Implementation-wise, the following steps are involved in incorporating Guardrail
 
 Let’s look at an example of using Guardrails in a text extraction task. The task is to extract the information from a doctor’s note into a JSON object. The following is the doctor’s note.
 
-```python
+```python PYTHON
 doctors_notes = """49 y/o Male with chronic macular rash to face & hair, worse in beard, eyebrows & nares.
 Itchy, flaky, slightly scaly. Moderate response to OTC steroid cream"""
 ```
@@ -112,7 +112,7 @@ We'll also need to download the validators required for this tutorial from [Guar
 
 Next, import the necessary packages and create a Cohere client.
 
-```python
+```python PYTHON
 import cohere
 import guardrails as gd
 from guardrails.hub import ValidRange, ValidChoices
@@ -128,7 +128,7 @@ co = cohere.Client(api_key="COHERE_API_KEY")
 
 Next, we define the output schema that defines what the LLM response should look like. As mentioned earlier, Guardrails provides an option to define the schema using Pydantic. We’ll use this option, and below is the schema we’ll use for the doctor notes extraction task.
 
-```python
+```python PYTHON
 class Symptom(BaseModel):
     symptom: str = Field(..., description="Symptom that a patient is experiencing")
     affected_area: str = Field(
@@ -159,7 +159,7 @@ Next, we initialize a `Guard` object based on the schema we have defined.
 
 First, we define the base instruction prompt for the LLM as follows.
 
-```python
+```python PYTHON
 PROMPT = """Given the following doctor's notes about a patient,
 please extract a dictionary that contains the patient's information.
 
@@ -171,7 +171,7 @@ ${gr.complete_json_suffix_v2}
 
 Then, we initialize a `Guard` object from the `PatientInfo` Pydantic model.
 
-```python
+```python PYTHON
 # Initialize a Guard object from the Pydantic model PatientInfo
 guard = gd.Guard.from_pydantic(PatientInfo, prompt=PROMPT)
 print(guard.base_prompt)
@@ -223,7 +223,7 @@ Here are examples of simple (XML, JSON) pairs that show the expected behavior:
 
 We’re ready to run an LLM call using the Cohere `Generate` endpoint. For this, we wrap the LLM call with the `Guard` object. This means it will take care of the validation and reasking (if any) until the final generated output fulfills the defined schema.
 
-```python
+```python PYTHON
 # Wrap the Cohere API call with the `guard` object
 response = guard(
     co.chat,
@@ -238,7 +238,7 @@ print(response.validated_output)
 
 And we get the final validated output as follows.
 
-```json
+```json JSON
 {
     'gender': 'Male',
     'age': 49,
@@ -249,13 +249,13 @@ And we get the final validated output as follows.
 
 Behind the scenes, Guardrails performs the validation step on the output against the schema, raises any errors if there are mismatches, and triggers a reask. We can trace the execution steps as follows.
 
-```python
+```python PYTHON
 guard.history.last.tree
 ```
 
 The LLM call first returned the following response. However, notice that the `affected_area` field returned `"Face & Head"`, which did not fall within the options we had defined earlier (any of `"Head", "Face", "Neck", or "Chest"`).
 
-```json
+```json JSON
  {                                                                           
      "gender": "Male",                                                       
      "age": 49,                                                              
@@ -276,7 +276,7 @@ The LLM call first returned the following response. However, notice that the `af
 
 Guardrails captured this discrepancy by raising a `FieldReAsk` object containing the incorrect value, the error message, and other additional information.
 
-```json
+```json JSON
 {                                                                                                  
     'gender': 'Male',                                                                              
     'age': 49,                                                                                     
@@ -364,7 +364,7 @@ I was given the following JSON response, which had problems due to incorrect val
 
 Guardrails then generated the final validated output, which now completely fulfills the schema.
 
-```json
+```json JSON
 {                                                                     
   "gender": "Male",                                                   
   "age": 49,                                                          

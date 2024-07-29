@@ -169,7 +169,7 @@ Note that you could get the same result if you were using the HuggingFace Tokeni
 > <div class="code-block">
 > <span class="magenta-text">Here is a list of tools that you have available to you:</span>
 >
-> <pre><span class="magenta-text">```python
+> <pre><span class="magenta-text">```python PYTHON
 > def internet_search(query: str) -> List[Dict]:
 >      """Returns a list of relevant document snippets for a textual query retrieved from the internet
 >      Args:
@@ -178,7 +178,7 @@ Note that you could get the same result if you were using the HuggingFace Tokeni
 >      pass
 > ```</span></pre>
 >
-> <pre><span class="magenta-text">```python
+> <pre><span class="magenta-text">```python PYTHON
 > def directly_answer() -> List[Dict]:
 >     """Calls a standard (un-augmented) AI chatbot to generate a response given the conversation history
 >     """
@@ -189,7 +189,7 @@ Note that you could get the same result if you were using the HuggingFace Tokeni
 > <span class="orange-text "> What's the biggest penguin in the world?</span><span class="brown-text ">\<|END_OF_TURN_TOKEN|> \<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|></span>  
 > <span class="magenta-text">Write 'Action:' followed by a json-formatted list of actions that you want to perform in order to produce a good response to the user's last input. You can use any of the supplied tools any number of times, but you should aim to execute the minimum number of necessary actions for the input. You should use the \`directly-answer\` tool if calling the other tools is unnecessary. The list of actions you want to call should be formatted as a list of json objects, for example:
 >
-> <pre><span class="magenta-text">```json
+> <pre><span class="magenta-text">```json JSON
 > [
 >     {
 >         "tool_name": title of the tool in the specification,
@@ -440,7 +440,7 @@ And this has the model output:
 
 ## Appendix
 
-```python
+```python PYTHON
 documents = [
    { "title": "Tall penguins",
       "text": "Emperor penguins are the tallest growing up to 122 cm in height." },
@@ -464,7 +464,7 @@ rendered_docs = render_docs(documents)
 
 ```
 
-```python
+```python PYTHON
 conversation = [
    {"role": "user", "content": "Whats the biggest penguin in the world?"}
    {"role": "system", "content": rendered_docs}

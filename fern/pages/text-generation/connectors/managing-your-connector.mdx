@@ -16,12 +16,13 @@ Once your connector is deployed and registered, there are a couple of features t
 
 You can see all the connectors registered under your organization through the [Cohere dashboard](https://dashboard.cohere.com/connectors). Alternatively, you can make a GET request like the one below:
 
-```curl
+<CodeBlocks>
+```curl CURL
 curl --request GET  
   --url 'https://api.cohere.ai/v1/connectors'  
   --header 'Authorization: Bearer {Cohere API key}'
 ```
-```typescript
+```typescript TYPESCRIPT
 const { CohereClient } = require("cohere-ai");
 const cohere = new CohereClient({
     token: "<<apiKey>>",
@@ -31,23 +32,25 @@ const cohere = new CohereClient({
   console.log(connectors);
 })();
 ```
-```python
+```python PYTHON
 import cohere
 # initialize the Cohere Client with an API Key
 co = cohere.Client('YOUR_API_KEY')
 connectors = co.list_connectors()
 ```
+</CodeBlocks>
 
 ### Authorizing an OAuth 2.0 Connector
 
 If your connector is set up using OAuth 2.0, a user in your organization can authorize the connector through the dashboard by clicking on “connect your account”. Alternatively, you can make a request to the `/oauth/authorize` endpoint in your application. This will provide a redirect URL that the user can follow to authorize the OAuth application. 
 
-```curl
+<CodeBlocks>
+```curl CURL
 curl --request POST  
   --url 'https://api.cohere.ai/v1/connectors/{connector-id}/oauth/authorize' 
   --header 'Authorization: Bearer {Cohere API key for user wishing to authorize}'
 ```
-```typescript
+```typescript TYPESCRIPT
 const { CohereClient } = require("cohere-ai");
 const cohere = new CohereClient({
     token: "<<apiKey>>",
@@ -59,12 +62,14 @@ const cohere = new CohereClient({
   console.log(connector);
 })();
 ```
+</CodeBlocks>
 
 ### Updating a Connector
 
 You can enable and disable a connector [through the dashboard](https://dashboard.cohere.com/connectors). Additionally, you can update the connector name, URL, auth settings, and handle similar sorts of tasks through the API, as follows: 
 
-```curl
+<CodeBlocks>
+```curl CURL
 curl --request PATCH  
   --url 'https://api.cohere.ai/v1/connectors/{id}' 
   --header 'Authorization: Bearer {Cohere API key}'  
@@ -81,13 +86,13 @@ curl --request PATCH
         "active": true,  
     }'
 ```
-```python
+```python PYTHON
 import cohere
 # initialize the Cohere Client with an API Key
 co = cohere.Client('YOUR_API_KEY')
 connectors = co.update_connector(connector_id, name="new name", url="new_url")
 ```
-```typescript
+```typescript TYPESCRIPT
 const { CohereClient } = require("cohere-ai");
 const cohere = new CohereClient({
     token: "<<apiKey>>",
@@ -100,6 +105,7 @@ const cohere = new CohereClient({
   console.log(connector);
 })();
 ```
+</CodeBlocks>
 
 ### Debugging a Connector
 
@@ -107,7 +113,8 @@ To debug issues with a registered connector, you can follow the steps in this se
 
 Step 1: Make a streaming request to the connector using the Chat API and check the search results for the error. Here's an example request:
 
-```python
+<CodeBlocks>
+```python PYTHON
 import cohere  
 co = cohere.Client('Your API key')  
 response = co.chat(  
@@ -116,7 +123,7 @@ response = co.chat(
 	connectors=[{"id": "example_connector_id"}] # this is from the create step  
 )
 ```
-```curl
+```curl CURL
 curl --request POST  \
 --url <https://api.cohere.ai/chat>  \
 --header 'Content-Type: application/json' \
@@ -128,7 +135,7 @@ curl --request POST  \
     "connectors": [{"id": "example_connector_id"}]
 }
 ```
-```typescript
+```typescript TYPESCRIPT
 import { CohereClient } from "cohere-ai";
 const cohere = new CohereClient({
     token: "YOUR_API_KEY",
@@ -142,7 +149,7 @@ const cohere = new CohereClient({
     console.log("Received response", response);
 })();
 ```
-```go
+```go GO
 import (
   cohere       "github.com/cohere-ai/cohere-go/v2"
   cohereclient "github.com/cohere-ai/cohere-go/v2/client"
@@ -156,6 +163,7 @@ response, err := client.Chat(
 	  Connectors:[]*cohereclient.ChatConnector{{Id: "web-search"}},  
 )
 ```
+</CodeBlocks>
 
 The response in the search results array should contain the error message from the connector:
 

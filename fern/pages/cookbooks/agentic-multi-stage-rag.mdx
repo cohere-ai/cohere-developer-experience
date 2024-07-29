@@ -41,7 +41,7 @@ One of the challenges in building a RAG system is that it has many moving pieces
 
 As you will see more below, the multi-stage retrieval is achieved by adding a new function `reference_extractor()` that extracts other references in the documents and updating the instruction so the agent continues to retrieve more documents.
 
-```python
+```python PYTHON
 import os
 from pprint import pprint
 
@@ -50,7 +50,7 @@ import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 ```
 
-```python
+```python PYTHON
 # versions
 print('cohere version:', cohere.__version__)
 ```
@@ -61,7 +61,7 @@ cohere version: 5.5.1
 
 ## Setup
 
-```python
+```python PYTHON
 COHERE_API_KEY = os.environ.get("CO_API_KEY")
 COHERE_MODEL = 'command-r-plus'
 co = cohere.Client(api_key=COHERE_API_KEY)
@@ -71,7 +71,7 @@ co = cohere.Client(api_key=COHERE_API_KEY)
 
 We leveraged data from [Washington Department of Transportation](https://wsdot.wa.gov/travel/bicycling-walking/bicycling-washington/bicyclist-laws-safety) and modified to fit the need of this demo.
 
-```python
+```python PYTHON
 documents = [
     {
         "title": "Bicycle law",
@@ -132,7 +132,7 @@ db["embeddings"] = embeddings.embeddings
 
 ```
 
-```python
+```python PYTHON
 db
 ```
 
@@ -184,7 +184,7 @@ db
 
 Following functions and tools will be used in the subsequent tasks.
 
-```python
+```python PYTHON
 def retrieve_documents(query: str, n=1) -> dict:
     """
     Function to retrieve documents a given query.
@@ -227,7 +227,7 @@ tools = [
 
 ## RAG function
 
-```python
+```python PYTHON
 def simple_rag(query, db):
     """
     Given user's query, retrieve top documents and generate response using documents parameter.
@@ -246,7 +246,7 @@ def simple_rag(query, db):
 
 ## Agentic RAG - cohere_agent()
 
-```python
+```python PYTHON
 def cohere_agent(
     message: str,
     preamble: str,
@@ -328,13 +328,13 @@ Here we are asking a question that can be answered easily with single-stage retr
 | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | Is there a state level law for wearing helmets? | There is currently no state law requiring the use of helmets when riding a bicycle. However, some cities and counties do require helmet use. | There is currently no state law requiring helmet use. However, some cities and counties do require helmet use with bicycles. |
 
-```python
+```python PYTHON
 question1 = "Is there a state level law for wearing helmets?"
 ```
 
 ### Simple RAG
 
-```python
+```python PYTHON
 output = simple_rag(question1, db)
 print(output)
 ```
@@ -347,7 +347,7 @@ There is currently no state law requiring the use of helmets when riding a bicyc
 
 ### Agentic RAG
 
-```python
+```python PYTHON
 preamble = """
 You are an expert assistant that helps users answers question about legal documents and policies.
 Use the provided documents to answer questions about an employee's specific situation.
@@ -377,13 +377,13 @@ The second question requires a double-stage retrieval because top matched docume
 | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
 | I live in orting, do I need to wear a helmet with a bike? | In the state of Washington, there is no law requiring you to wear a helmet when riding a bike. However, some cities and counties do require helmet use, so it is worth checking your local laws. | Yes, you do need to wear a helmet with a bike in Orting if you are under 17. |
 
-```python
+```python PYTHON
 question2 = "I live in orting, do I need to wear a helmet with a bike?"
 ```
 
 ### Simple RAG
 
-```python
+```python PYTHON
 output = simple_rag(question2, db)
 print(output)
 ```
@@ -398,7 +398,7 @@ In the state of Washington, there is no law requiring you to wear a helmet when 
 
 Produces same quality answer as the simple rag.
 
-```python
+```python PYTHON
 preamble = """
 You are an expert assistant that helps users answers question about legal documents and policies.
 Use the provided documents to answer questions about an employee's specific situation.
@@ -427,7 +427,7 @@ In order for the model to retrieve correct documents, we do two things:
 1. New reference_extractor() function is added. This function finds the references to other documents when given query and documents.
 2. We update the instruction that directs the agent to keep retrieving relevant documents.
 
-```python
+```python PYTHON
 def reference_extractor(query: str, documents: list[str]) -> str:
     """
     Given a query and document, find references to other documents.
@@ -491,7 +491,7 @@ tools = [
 
 ```
 
-```python
+```python PYTHON
 preamble2 = """# Instruction
 You are an expert assistant that helps users answers question about legal documents and policies.
 

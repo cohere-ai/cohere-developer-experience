@@ -202,7 +202,7 @@ Various LangChain-supported parsers can be found [here](https://python.langchain
 ## Install Dependencies
 
 
-```python
+```python PYTHON
 # there may be other dependencies that will need installation
 # ! pip install --quiet langchain langchain_cohere langchain_experimental
 # !pip --quiet install faiss-cpu tiktoken
@@ -214,7 +214,7 @@ Various LangChain-supported parsers can be found [here](https://python.langchain
 ```
 
 
-```python
+```python PYTHON
 # LLM
 import os
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -254,7 +254,7 @@ We have found that the best option for parsing is unstructured.io since the pars
 
 
 
-```python
+```python PYTHON
 # UNSTRUCTURED pdf loader
 # Get elements
 raw_pdf_elements = partition_pdf(
@@ -278,7 +278,7 @@ raw_pdf_elements = partition_pdf(
 ```
 
 
-```python
+```python PYTHON
 # extract table and textual objects from parser
 class Element(BaseModel):
     type: str
@@ -318,7 +318,7 @@ Below, we demonstrate the following process:
 - during inference, the multi-vector retrieval returns the full context document related to the summary
 
 
-```python
+```python PYTHON
 co = cohere.Client()
 def get_chat_output(message, preamble, chat_history, model, temp, documents=None):
     return co.chat(
@@ -349,7 +349,7 @@ def rerank_cohere(query, returned_documents,model:str="rerank-multilingual-v3.0"
 ```
 
 
-```python
+```python PYTHON
 # generate table and text summaries
 prompt_text = """You are an assistant tasked with summarizing tables and text. \ 
 Give a concise summary of the table or text. Table or text chunk: {element}. Only provide the summary and no other text."""
@@ -363,7 +363,7 @@ texts = [i.text for i in text_elements]
 ```
 
 
-```python
+```python PYTHON
 # The vectorstore to use to index the child chunks
 vectorstore = Chroma(collection_name="summaries", embedding_function=CohereEmbeddings())
 # The storage layer for the parent documents
@@ -403,7 +403,7 @@ With our database in place, we can run queries against it. The query process can
 - concatenate all the shortlisted/reranked docs and pass them to the generation model
 
 
-```python
+```python PYTHON
 def process_query(query, retriever):
     """Runs query augmentation, retrieval, rerank and final generation in one call."""
     augmented_queries=co.chat(message=query,model='command-r-plus',temperature=0.2, search_queries_only=True)
@@ -452,7 +452,7 @@ Unless the user asks for a different style of answer, you should answer in full 
 We can now test out a query. In this example, the final answer can be found on page 12 of the PDF, which aligns with the response provided by the model:
 
 
-```python
+```python PYTHON
 query = "what are the charges for services in 2022"
 final_answer, final_answer_docs = process_query(query, retriever)
 print(final_answer)
@@ -478,7 +478,7 @@ We detect questions that do not require RAG by examining the `search_queries` ob
 In the example below, the `else` statement is invoked based on `query2`. We still pass in the chat history, allowing the question to be answered with only the prior context.
 
 
-```python
+```python PYTHON
 query2='divide this by two'
 augmented_queries=co.chat(message=query2,model='command-r-plus',temperature=0.2, search_queries_only=True)
 if augmented_queries.search_queries:
@@ -511,12 +511,12 @@ else:
 Here, we connect all of the pieces discussed above into one class object, which is then used as a tool for a Cohere ReAct agent. This class definition consolidates and clarify the key parameters used to define the RAG pipeline.
 
 
-```python
+```python PYTHON
 co = cohere.Client()
 ```
 
 
-```python
+```python PYTHON
 class Element(BaseModel):
     type: str
     text: Any
@@ -723,7 +723,7 @@ Unless the user asks for a different style of answer, you should answer in full 
 ```
 
 
-```python
+```python PYTHON
 rag_object=RAG_pipeline(paths=["city_ny_popular_fin_report.pdf"])
 ```
 
@@ -748,7 +748,7 @@ Finally, we build a simple agent that utilizes the RAG pipeline defined above. W
 The intention behind coupling these tools is to enable the model to perform mathematical and other postprocessing operations on RAG outputs using Python.
 
 
-```python
+```python PYTHON
 from langchain.agents import Tool
 from langchain_experimental.utilities import PythonREPL
 from langchain.agents import AgentExecutor
@@ -832,12 +832,12 @@ You also have access to a python interpreter tool which you can use to run code 
 ```
 
 
-```python
+```python PYTHON
 agent_object=react_agent(rag_retriever=rag_object)
 ```
 
 
-```python
+```python PYTHON
 step1_response=agent_object.run_agent("what are the charges for services in 2022 and 2023")
 ```
 
@@ -860,12 +860,12 @@ step1_response=agent_object.run_agent("what are the charges for services in 2022
 Just like earlier, we can also pass chat history to the LangChain agent to refer to for any other queries.
 
 
-```python
+```python PYTHON
 from langchain_core.messages import HumanMessage, AIMessage
 ```
 
 
-```python
+```python PYTHON
 chat_history=[
 HumanMessage(content=step1_response['input']),
 AIMessage(content=step1_response['output'])
@@ -873,7 +873,7 @@ AIMessage(content=step1_response['output'])
 ```
 
 
-```python
+```python PYTHON
 agent_object.run_agent("what is the mean of the two values",history=chat_history)
 ```
 

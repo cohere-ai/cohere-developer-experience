@@ -30,7 +30,7 @@ In the directory, we have a simple_invoice.pdf file. Everytime a user uploads th
 3. The agent summarizes the document and passes that information to convert_to_json() function. This function makes another call to command model to convert the summary to json output. This separation of tasks is useful when the text document is complicated and long. Therefore, we first distill the information and ask another model to convert the text into json object. This is useful so each model or agent focuses on its own task without suffering from long context.
 4. Then the json object goes through a check to make sure all keys are present and gets saved as a csv file. When the document is too long or the task is too complex, the model may fail to extract all information. These checks are then very useful because they give feedback to the model so it can adjust it's parameters to retry.
 
-```python
+```python PYTHON
 import os
 
 import cohere
@@ -39,12 +39,12 @@ import json
 from unstructured.partition.pdf import partition_pdf
 ```
 
-```python
+```python PYTHON
 # uncomment to install dependencies
 # !pip install cohere unstructured
 ```
 
-```python
+```python PYTHON
 # versions
 print('cohere version:', cohere.__version__)
 ```
@@ -55,7 +55,7 @@ cohere version: 5.5.1
 
 ## Setup
 
-```python
+```python PYTHON
 COHERE_API_KEY = os.environ.get("CO_API_KEY")
 COHERE_MODEL = 'command-r-plus'
 co = cohere.Client(api_key=COHERE_API_KEY)
@@ -69,7 +69,7 @@ The sample invoice data is from https://unidoc.io/media/simple-invoices/simple_i
 
 Here we define the tool which converts summary of the pdf into json object. Then, it checks to make sure all necessary keys are present and saves it as csv.
 
-```python
+```python PYTHON
 def convert_to_json(text: str) -> dict:
     """
     Given text files, convert to json object and saves to csv.
@@ -125,7 +125,7 @@ def convert_to_json(text: str) -> dict:
 
 Below is a cohere agent that leverages multi-step API. It is equipped with convert_to_json tool.
 
-```python
+```python PYTHON
 def cohere_agent(
     message: str,
     preamble: str,
@@ -213,7 +213,7 @@ def cohere_agent(
 
 ### main
 
-```python
+```python PYTHON
 def extract_pdf(path):
     """
     Function to extract text from a PDF file.

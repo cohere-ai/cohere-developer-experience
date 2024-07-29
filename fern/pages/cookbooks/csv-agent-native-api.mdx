@@ -38,7 +38,7 @@ In this notebook we explore how to setup a [Cohere Agent](https://docs.cohere.co
 
 # Setup [#setup]
 
-```python
+```python PYTHON
 import os
 from typing import List
 
@@ -52,12 +52,12 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_experimental.utilities import PythonREPL
 ```
 
-```python
+```python PYTHON
 # Uncomment if you need to install the following packages
 # !pip install --quiet langchain langchain_experimental cohere --upgrade
 ```
 
-```python
+```python PYTHON
 # versions
 print('cohere version:', cohere.__version__)
 print('langchain version:', langchain.__version__)
@@ -74,7 +74,7 @@ langchain_experimental version: 0.0.59
 
 ### API Key
 
-```python
+```python PYTHON
 COHERE_API_KEY = os.environ["COHERE_API_KEY"]
 CHAT_URL= "https://api.cohere.ai/v1/chat"
 COHERE_MODEL = 'command-r-plus'
@@ -83,12 +83,12 @@ co = cohere.Client(api_key=COHERE_API_KEY)
 
 ### Data Loading
 
-```python
+```python PYTHON
 income_statement = pd.read_csv('income_statement.csv')
 balance_sheet = pd.read_csv('balance_sheet.csv')
 ```
 
-```python
+```python PYTHON
 income_statement.head(2)
 ```
 
@@ -163,7 +163,7 @@ income_statement.head(2)
   </table>
 </div>
 
-```python
+```python PYTHON
 balance_sheet.head(2)
 ```
 
@@ -253,7 +253,7 @@ balance_sheet.head(2)
 
 Here we define the python tool using langchain's PythonREPL. We also define `functions_map` that will later be used by the Cohere Agent to correctly map function name to the actual function. Lastly, we define the tools that will be passed in the Cohere API.
 
-```python
+```python PYTHON
 python_repl = PythonREPL()
 python_tool = Tool(
     name="python_repl",
@@ -295,7 +295,7 @@ tools = [
 
 As [Multi-Step Tool Use](https://docs.cohere.com/page/basic-multi-step) shows, you have a lot of flexiblity on how you can customize and interact with the cohere agent. Here I am creating a wrapper so that it automatically determines when to stop calling the tools and output final answer. It will run maximum of 15 steps.
 
-```python
+```python PYTHON
 def cohere_agent(
     message: str,
     preamble: str,
@@ -392,7 +392,7 @@ We will ask the following questions given income statement data.
 - What is the largest gross profit margin?
 - What is the minimum ratio of operating income loss divided by non operating income expense?
 
-```python
+```python PYTHON
 question_dict ={
     'q1': ['what is the highest value of cost of goods and service?',169559000000],
     'q2': ['what is the largest gross profit margin?',0.3836194330595236],
@@ -400,7 +400,7 @@ question_dict ={
 }
 ```
 
-```python
+```python PYTHON
 preamble = """
 You are an expert who answers the user's question. You are working with a pandas dataframe in Python. The name of the dataframe is `income_statement.csv`.
 Here is a preview of the dataframe:
@@ -418,7 +418,7 @@ print(preamble)
     |  1 |            1 | 2018-09-30-2018-12-29 |                                           84310000000 |                nan           |   32031000000 |                    nan          |                             nan          |        nan          |          nan          |                 nan         |                                                                                  nan          |              nan          |     19965000000 |                    1.05 |                      1.05 |                                   nan           |                                     nan           |
     |  2 |            2 | 2018-09-30-2019-09-28 |                                          260174000000 |                  1.61782e+11 |   98392000000 |                      1.6217e+10 |                               1.8245e+10 |          3.4462e+10 |            6.393e+10  |                   1.807e+09 |                                                                                    6.5737e+10 |                1.0481e+10 |     55256000000 |                    2.99 |                      2.97 |                                     1.84713e+10 |                                       1.85957e+10 |
 
-```python
+```python PYTHON
 for qsn,val in question_dict.items():
     print(f'question:{qsn}')
     question = val[0]
@@ -472,13 +472,13 @@ We now make the task for the Agent more complicated by asking a question that ca
 
 As you will see below, this question can be obtained only by accessing both the balance sheet and the income statement.
 
-```python
+```python PYTHON
 question_dict ={
     'q1': ['what is the ratio of the largest stockholders equity to the smallest revenue'],
 }
 ```
 
-```python
+```python PYTHON
 # get the largest stockholders equity
 x = balance_sheet['StockholdersEquity'].astype(float).max()
 print(f"The largest stockholders equity value is: {x}")
@@ -498,7 +498,7 @@ The smallest revenue value is: 53809000000.0
 Their ratio is: 2.4911631883142227
 ```
 
-```python
+```python PYTHON
 preamble = """
 You are an expert who answers the user's question in complete sentences. You are working with two pandas dataframe in Python. Ensure your output is a string.
 
@@ -531,7 +531,7 @@ Here is a preview of the `balance_sheet.csv` dataframe:
 |  2 |            2 | 2019-09-28 |                              4.8844e+10 |                    5.1713e+10 |                     2.2926e+10 |      4.106e+09 |                   2.2878e+10 |           1.2352e+10 |     1.62819e+11 |                      1.05341e+11 |                     3.7378e+10 |              3.2978e+10 |        1.75697e+11 |   3.38516e+11 |               4.6236e+10 |                 3.772e+10 |                              5.522e+09 |          5.98e+09 |             1.026e+10 |          1.05718e+11 |               9.1807e+10 |                   5.0503e+10 |              1.4231e+11 |   2.48028e+11 |                             0 |                                     4.5174e+10 |                           4.5898e+10 |                                         -5.84e+08 |          90488000000 |                        3.38516e+11 |
 ```
 
-```python
+```python PYTHON
 for qsn,val in question_dict.items():
     print(f'question:{qsn}')
     question = val[0]
@@ -559,7 +559,7 @@ In the previous example over single table, the model successfully answered your 
 
 You will see that the second method is able to come to the answer with fewer steps.
 
-```python
+```python PYTHON
 preamble = """
 You are an expert who answers the user's question. You are working with a pandas dataframe in Python. The name of the dataframe is `income_statement.csv`.
 """
@@ -581,7 +581,7 @@ Sorry, there is no column named 'Cost of Goods and Service' in the 'income_state
 
 As you see above, the model failed to execute because it assumed certain column names but they turned out to be wrong. One simple fix is to tell the model to continue to solve the problem in the face of error.
 
-```python
+```python PYTHON
 preamble = """
 You are an expert who answers the user's question. You are working with a pandas dataframe in Python. The name of the dataframe is `income_statement.csv`.
 If you run into error, keep trying until you fix it. You may need to view the data to understand the error.
@@ -616,7 +616,7 @@ The highest value of 'Cost of Goods and Services' is 169559000000.0.
 
 What if we directly give the model the ability to view the data as a tool so that it can explicitly use it instead of indirectly figuring it out?
 
-```python
+```python PYTHON
 def view_csv_data(path: str) -> dict:
     """
     Function to view the head, tail and shape of a given csv file.
@@ -660,7 +660,7 @@ tools = [
 ]
 ```
 
-```python
+```python PYTHON
 preamble = """
 You are an expert who answers the user's question. You are working with a pandas dataframe in Python. The name of the dataframe is `income_statement.csv`.
 Always view the data first to write flawless code.

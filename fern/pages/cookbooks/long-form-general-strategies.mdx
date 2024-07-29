@@ -33,7 +33,7 @@ We'll show you three potential mitigation strategies: truncating the document, q
 
 ## Getting Started [#getting-started]
 
-```python
+```python PYTHON
 %%capture
 !pip install cohere
 !pip install python-dotenv
@@ -44,7 +44,7 @@ We'll show you three potential mitigation strategies: truncating the document, q
 !pip install pypdf2
 ```
 
-```python
+```python PYTHON
 import os
 import requests
 from collections import deque
@@ -74,14 +74,14 @@ from IPython.display import HTML, display
 [nltk_data]   Package punkt is already up-to-date!
 ```
 
-```python
+```python PYTHON
 # Set up Cohere client
 co_model = 'command-r'
 co_api_key = getpass("Enter your Cohere API key: ")
 co = cohere.Client(api_key=co_api_key)
 ```
 
-```python
+```python PYTHON
 def load_long_pdf(file_path):
     """
     Load a long PDF file and extract its text content.
@@ -120,7 +120,7 @@ def save_pdf_from_url(pdf_url, save_path):
 
 In this example we use the Proposal for a Regulation of the European Parliament and of the Council defining rules on Artificial Intelligence from 26 January 2024, [link](https://data.consilium.europa.eu/doc/document/ST-5662-2024-INIT/en/pdf).
 
-```python
+```python PYTHON
 # Download the PDF file from the URL
 pdf_url = 'https://data.consilium.europa.eu/doc/document/ST-5662-2024-INIT/en/pdf'
 save_path = 'example.pdf'
@@ -141,7 +141,7 @@ Document length - #tokens: 134184
 
 ## Summarizing the text
 
-```python
+```python PYTHON
 def generate_response(message, max_tokens=300, temperature=0.2, k=0):
   """
   A wrapper around the Cohere API to generate a response based on a given prompt.
@@ -166,7 +166,7 @@ def generate_response(message, max_tokens=300, temperature=0.2, k=0):
   return response.text
 ```
 
-```python
+```python PYTHON
 # Example summary prompt.
 prompt_template = """
 ## Instruction
@@ -183,7 +183,7 @@ If you run the cell below, an error will occur. Therefore, in the following sect
 
 Error: :`CohereAPIError: too many tokens:`
 
-```python
+```python PYTHON
 prompt = prompt_template.format(document=long_text)
 # print(generate_response(message=prompt))
 ```
@@ -194,7 +194,7 @@ Therefore, in the following sections, we will explore some techniques to address
 
 First we try to truncate the document so that it meets the length constraints. This approach is simple to implement and understand. However, it drops potentially important information contained towards the end of the document.
 
-```python
+```python PYTHON
 # The new Cohere model has a context limit of 128k tokens. However, for the purpose of this exercise, we will assume a smaller context window.
 # Employing a smaller context window also has the additional benefit of reducing the cost per request, especially if billed by the number of tokens.
 
@@ -212,7 +212,7 @@ def truncate(long: str, max_tokens: int) -> str:
     return short
 ```
 
-```python
+```python PYTHON
 short_text = truncate(long_text, MAX_TOKENS)
 
 prompt = prompt_template.format(document=short_text)
@@ -248,7 +248,7 @@ See `query_based_retrieval` function for the starting point.
 
 ### Query based retrieval implementation
 
-```python
+```python PYTHON
 def split_text_into_sentences(text) -> List[str]:
     """
     Split the input text into a list of sentences.
@@ -279,7 +279,7 @@ def build_simple_chunks(text, n_sentences=5):
     return chunks
 ```
 
-```python
+```python PYTHON
 sentences = split_text_into_sentences(long_text)
 passages = group_sentences_into_passages(sentences, n_sentences_per_passage=5)
 print('Example sentence:', np.random.choice(np.asarray(sentences), size=1, replace=False))
@@ -293,7 +293,7 @@ Example sentence: ['4.']
 Example passage: ['T echnical robustness and safety means that AI systems are developed  and used in a way that allows robustness in case of problems and resilience against  attempts to alter the use or performance of the AI system so as to allow unlawful use by  third parties, a nd minimise unintended harm. Privacy and data governance means that AI  systems are developed and used in compliance with existing privacy and data protection  rules, while processing data that meets high standards in terms of quality and integrity. Transpar ency means that AI systems are developed and used in a way that allows  appropriate traceability and explainability, while making humans aware that they  communicate or interact with an AI system, as well as duly informing deployers of the  capabilities and l imitations of that AI system and affected persons about their rights. Diversity, non - discrimination and fairness means that AI systems are developed and used  in a way that includes diverse actors and promotes equal access, gender equality and  cultural dive rsity, while avoiding discriminatory impacts and unfair biases that are  prohibited by Union or national law. Social and environmental well - being means that AI  systems are developed and used in a sustainable and environmentally friendly manner as  well as in   a way to benefit all human beings, while monitoring and assessing the long - term  impacts on the individual, society and democracy. ']
 ```
 
-```python
+```python PYTHON
 def _add_chunks_by_priority(
     chunks: List[str],
     idcs_sorted_by_priority: List[int],
@@ -348,7 +348,7 @@ def query_based_retrieval(
     return short
 ```
 
-```python
+```python PYTHON
 # Example prompt
 prompt_template = """
 ## Instruction
@@ -361,7 +361,7 @@ prompt_template = """
 """.strip()
 ```
 
-```python
+```python PYTHON
 query = "What does the report say about biometric identification? Answer only based on the document."
 short_text = query_based_retrieval(long_text, MAX_TOKENS, query)
 prompt = prompt_template.format(query=query, document=short_text)
@@ -403,7 +403,7 @@ See `text_rank` as the starting point.
 
 ### Text rank implementation
 
-```python
+```python PYTHON
 def text_rank(text: str, max_tokens: int, n_setences_per_passage: int) -> str:
     """
     Shortens text by extracting key units of text from it based on their centrality.
@@ -438,7 +438,7 @@ def text_rank(text: str, max_tokens: int, n_setences_per_passage: int) -> str:
     return short
 ```
 
-```python
+```python PYTHON
 # Example summary prompt.
 prompt_template = """
 ## Instruction
@@ -451,7 +451,7 @@ Summarize the following Document in 3-5 sentences. Only answer based on the info
 """.strip()
 ```
 
-```python
+```python PYTHON
 short_text = text_rank(long_text, MAX_TOKENS, 5)
 prompt = prompt_template.format(document=short_text)
 print(generate_response(message=prompt, max_tokens=600))

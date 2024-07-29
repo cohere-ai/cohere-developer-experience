@@ -19,7 +19,7 @@ This notebook provides the code to produce the outputs described in [this blog p
 
 ## 1. Setup [#setup]
 
-```python
+```python PYTHON
 %%capture
 
 import cohere
@@ -41,7 +41,7 @@ co = cohere.Client(co_api_key)
 
 ```
 
-```python
+```python PYTHON
 
 from google.colab import drive
 drive.mount("/content/drive", force_remount=True)
@@ -58,7 +58,7 @@ print(f"Loaded IMF report with {num_tokens} tokens")
 
 ### Aside: define utils
 
-```python
+```python PYTHON
 
 def split_text_into_sentences(text: str) -> List[str]:
     sentences =  sent_tokenize(text)
@@ -189,7 +189,7 @@ def _add_chunks_by_priority(
 
 First, let's see Command-R's out-of-the-box performance. It's a 128k-context model, so we can pass the full IMF report in a single call. We replicate the exact instructions from the original tweet (correcting for a minor typo) for enabling fair comparisons.
 
-```python
+```python PYTHON
 prompt_template = """\
 ## text
 {text}
@@ -232,7 +232,7 @@ For more information on how to enable grounded generation via our `co.chat` API,
 
 Finally, note that we chunk the IMF report into multiple documents before passing them to `co.chat`. This isn't necessary (`co.chat` annotates citations at the character level), but allows for more human-readable citations.
 
-```python
+```python PYTHON
 summarize_preamble = """\
 You will receive a series of text fragments from an article that are presented in chronological order. \
 As the assistant, you must generate responses to user's requests based on the information given in the fragments. \
@@ -268,7 +268,7 @@ print(resp.text)
 
 Let's display the citations inside our answer:
 
-```python
+```python PYTHON
 print(insert_citations(resp.text, resp.citations))
 ```
 
@@ -282,7 +282,7 @@ Around 40% of employment worldwide is exposed to AI [1, 6]
 
 by checking its chunk:
 
-```python
+```python PYTHON
 print(chunked[6])
 ```
 
@@ -295,7 +295,7 @@ Even though Command-R is an efficient, light-weight model, for some applications
 
 We have a whole notebook dedicated to methods for reducing context length. Here, we call our 'text-rank' method to select maximally central chunks in a graph based on the chunk-to-chunk similarties. For more detail, please refer [to this cookbook](https://colab.research.google.com/drive/1zxSAbruOWwWJHNsj3N56uxZtUeiS7Evd).
 
-```python
+```python PYTHON
 num_tokens = 8192
 shortened = textrank(text, co, num_tokens, n_sentences_per_passage=30)
 

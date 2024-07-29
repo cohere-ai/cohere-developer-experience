@@ -20,7 +20,7 @@ In this chapter, you'll learn how to fine-tune a model for classification.
 
 To set up, we first import several tools. 
 
-```python
+```python PYTHON
 import os
 import json
 import numpy as np
@@ -33,7 +33,7 @@ from sklearn.metrics import f1_score
 
 We also import the Cohere module and create a client.
 
-```python
+```python PYTHON
 import cohere
 co = cohere.Client("COHERE_API_KEY") # Your Cohere API key
 ```
@@ -42,14 +42,14 @@ co = cohere.Client("COHERE_API_KEY") # Your Cohere API key
 
 We'll use the [Airline Travel Information System (ATIS)](https://www.kaggle.com/datasets/hassanamin/atis-airlinetravelinformationsystem?select=atis_intents_train.csv) intent classification dataset \[[source](https://aclanthology.org/H90-1021/)]. For demonstration purposes, we’ll take just a small portion of the dataset: 1,000 data points in total.
 
-```python
+```python PYTHON
 # Load the dataset to a dataframe
 df = pd.read_csv('https://raw.githubusercontent.com/cohere-ai/notebooks/main/notebooks/data/atis_subset.csv', names=['query','intent'])
 ```
 
  The first thing we need is to create a training dataset, to be used for building the classifier, and a test dataset, to be used for testing the classifier performance. We will use 800 and 200 data points for these datasets, respectively.
 
-```python
+```python PYTHON
 # Split the dataset into training and test portions
 df_train, df_test = train_test_split(df, test_size=200, random_state=21)
 ```
@@ -69,7 +69,7 @@ Our goal is to train the classifier so it can predict the class of a new custome
 
 We transform the data to JSONL format to match the style expected by the Classification endpoint ([documentation](/docs/classify-preparing-the-data)).
 
-```python
+```python PYTHON
 def create_classification_data(text, label):
     formatted_data = {
         "text": text,
@@ -130,7 +130,7 @@ Once the model has finished fine-tuning, it’s time to evaluate its performance
 
 We fill in the model ID to generate test predictions.
 
-```python
+```python PYTHON
 # Generate classification predictions on the test dataset using the finetuned model
 
 # Classification function
@@ -152,7 +152,7 @@ for i in range(0, len(df_test), BATCH_SIZE):
 
 Next, we calculate the model's test accuracy and F1 score.
 
-```python
+```python PYTHON
 # Compute metrics on the test dataset
 accuracy = accuracy_score(df_test["intent"], y_pred)
 f1 = f1_score(df_test["intent"], y_pred, average='weighted')

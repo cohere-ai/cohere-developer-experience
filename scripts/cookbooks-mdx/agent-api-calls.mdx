@@ -201,7 +201,7 @@ With this approach, we bring together the best of two worlds: the ability of LLM
 # Step 1: Setup
 
 
-```python
+```python PYTHON
 # Uncomment if you need to install the following packages
 # !pip install cohere
 # !pip install python-dotenv
@@ -209,7 +209,7 @@ With this approach, we bring together the best of two worlds: the ability of LLM
 ```
 
 
-```python
+```python PYTHON
 import os
 import json
 import re
@@ -223,7 +223,7 @@ from langchain_core.tools import tool
 ```
 
 
-```python
+```python PYTHON
 # load the cohere api key
 os.environ["COHERE_API_KEY"] = getpass.getpass()
 ```
@@ -233,7 +233,7 @@ os.environ["COHERE_API_KEY"] = getpass.getpass()
 Here we create a tool which implements the deterministic function to extract alphanumeric strings from the user's query and match them to the right parameter.
 
 
-```python
+```python PYTHON
 @tool
 def regex_extractor(user_query: str) -> dict:
     """Function which, given the query from the user, returns a dictionary parameter:value."""
@@ -258,7 +258,7 @@ tools=[regex_extractor]
 ```
 
 
-```python
+```python PYTHON
 # Let's define the preamble for the Agent.
 # The preamble includes info about:
 # - the tool the Agent has access to
@@ -287,7 +287,7 @@ Search products sport | Search products dress and jumpsuit | [{'taxonomies': ['S
 ```
 
 
-```python
+```python PYTHON
 # Define the prompt
 prompt = ChatPromptTemplate.from_template("{input}")
 # Define the agent
@@ -306,7 +306,7 @@ agent_executor = AgentExecutor(agent=agent,
 ```
 
 
-```python
+```python PYTHON
 # finally, let's write a function to convert the Agents output to a json
 def convert_to_json(string: str) -> json:
     return json.loads(
@@ -322,7 +322,7 @@ def convert_to_json(string: str) -> json:
 Let's now test the Agent we just defined!
 
 
-```python
+```python PYTHON
 query_1 = "Look for urn:75f2b737-06dd-4399-9206-a6c11b65138e, GLCMS004AGTCAMIS; 0000234GLCMS0100ANORAKCAA, GLCHL000CGUCHALE"
 response_1 = agent_executor.invoke(
             {
@@ -340,7 +340,7 @@ response_1 = agent_executor.invoke(
     {'tool_name': 'regex_extractor', 'parameters': {'user_query': 'Look for urn:75f2b737-06dd-4399-9206-a6c11b65138e, GLCMS004AGTCAMIS; 0000234GLCMS0100ANORAKCAA, GLCHL000CGUCHALE'}}
     [0m[36;1m[1;3m{'nmgs': ['0000234GLCMS0100ANORAKCAA'], 'objref': ['GLCMS004AGTCAMIS', 'GLCHL000CGUCHALE'], 'urn': ['urn:75f2b737-06dd-4399-9206-a6c11b65138e']}[0m[32;1m[1;3mRelevant Documents: 0
     Cited Documents: 0
-    Answer: ```json
+    Answer: ```json JSON
     [
         {
             "urn": ["urn:75f2b737-06dd-4399-9206-a6c11b65138e"],
@@ -349,7 +349,7 @@ response_1 = agent_executor.invoke(
         }
     ]
     ```
-    Grounded answer: ```json
+    Grounded answer: ```json JSON
      [
         {
             "urn": [<co: 0>"urn:75f2b737-06dd-4399-9206-a6c11b65138e</co: 0>"],
@@ -366,7 +366,7 @@ In the reasoning chain above, we can see that the Agent uses the tool we provide
 The output of the tool is then used to generate the request.
 
 
-```python
+```python PYTHON
 # let's have a look at the final output
 convert_to_json(response_1['output'])
 ```
@@ -383,7 +383,7 @@ convert_to_json(response_1['output'])
 As mentioned above, the Agent can use the tool when specific alphanumeric patterns have to be extracted from the query; however, it can also generate the output based on its semantic understanding of the query. For example:
 
 
-```python
+```python PYTHON
 query_2 = "I need tennis products"
 
 response_2 = agent_executor.invoke(
@@ -402,7 +402,7 @@ response_2 = agent_executor.invoke(
     {'tool_name': 'regex_extractor', 'parameters': {'user_query': 'I need tennis products'}}
     [0m[36;1m[1;3m{}[0m[32;1m[1;3mRelevant Documents: None
     Cited Documents: None
-    Answer: ```json
+    Answer: ```json JSON
     [
         {
             "taxonomies": [
@@ -411,7 +411,7 @@ response_2 = agent_executor.invoke(
         }
     ]
     ```
-    Grounded answer: ```json
+    Grounded answer: ```json JSON
      [
      {
      "taxonomies": [
@@ -427,7 +427,7 @@ response_2 = agent_executor.invoke(
 The Agent runs the tool to check if any target string was in the query, then it generated the request body based on its understanding.
 
 
-```python
+```python PYTHON
 convert_to_json(response_2['output'])
 ```
 
@@ -441,7 +441,7 @@ convert_to_json(response_2['output'])
 Finally, the two paths to generation - deterministic and semantic - can be applied in parallel by the Agent, as shown below:
 
 
-```python
+```python PYTHON
 query_3 = "Look for GLBRL0000GACHALE, nmg 0000234GLCZD0000GUREDTOAA and car products"
 
 response_3 = agent_executor.invoke(
@@ -460,7 +460,7 @@ response_3 = agent_executor.invoke(
     {'tool_name': 'regex_extractor', 'parameters': {'user_query': 'Look for GLBRL0000GACHALE, nmg 0000234GLCZD0000GUREDTOAA and car products'}}
     [0m[36;1m[1;3m{'nmgs': ['0000234GLCZD0000GUREDTOAA'], 'objref': ['GLBRL0000GACHALE']}[0m[32;1m[1;3mRelevant Documents: 0
     Cited Documents: 0
-    Answer: ```json
+    Answer: ```json JSON
     [
         {
             "objref": ["GLBRL0000GACHALE"],
@@ -471,7 +471,7 @@ response_3 = agent_executor.invoke(
         }
     ]
     ```
-    Grounded answer: ```json
+    Grounded answer: ```json JSON
      [
         {
             "objref": [<co: 0>"GLBRL0000GACHALE</co: 0>"],
@@ -487,7 +487,7 @@ response_3 = agent_executor.invoke(
 
 
 
-```python
+```python PYTHON
 convert_to_json(response_3['output'])
 ```
 
