@@ -155,947 +155,6 @@ paths:
               tool-calls-generation: "#/components/schemas/ChatToolCallsGenerationEvent"
               stream-end: "#/components/schemas/ChatStreamEndEvent"
               tool-calls-chunk: "#/components/schemas/ChatToolCallsChunkEvent"
-      x-readme:
-        samples-languages:
-          - python
-          - java
-          - curl
-          - node
-          - go
-        code-samples:
-          - language: go
-            name: Default
-            install: go get github.com/cohere-ai/cohere-go/v2
-            code: >
-              package main
-
-
-              import (
-              	"context"
-              	"log"
-
-              	cohere "github.com/cohere-ai/cohere-go/v2"
-              	client "github.com/cohere-ai/cohere-go/v2/client"
-              )
-
-
-              func main() {
-              	co := client.NewClient(client.WithToken("<<apiKey>>"))
-
-              	resp, err := co.Chat(
-              		context.TODO(),
-              		&cohere.ChatRequest{
-              			ChatHistory: []*cohere.Message{
-              				{
-              					Role: "USER",
-              					User: &cohere.ChatMessage{
-              						Message: "Who discovered gravity?",
-              					},
-              				},
-              				{
-              					Role: "CHATBOT",
-              					Chatbot: &cohere.ChatMessage{
-              						Message: "The man who is widely credited with discovering gravity is Sir Isaac Newton",
-              					},
-              				}},
-              			Message: "What year was he born?",
-              			Connectors: []*cohere.ChatConnector{
-              				{Id: "web-search"},
-              			},
-              		},
-              	)
-
-              	if err != nil {
-              		log.Fatal(err)
-              	}
-
-              	log.Printf("%+v", resp)
-              }
-          - language: go
-            name: Documents
-            install: go get github.com/cohere-ai/cohere-go/v2
-            code: >
-              package main
-
-
-              import (
-              	"context"
-              	"errors"
-              	"io"
-              	"log"
-
-              	cohere "github.com/cohere-ai/cohere-go/v2"
-              	client "github.com/cohere-ai/cohere-go/v2/client"
-              )
-
-
-              func main() {
-              	co := client.NewClient(client.WithToken("<<apiKey>>"))
-
-              	resp, err := co.ChatStream(
-              		context.TODO(),
-              		&cohere.ChatStreamRequest{
-              			ChatHistory: []*cohere.Message{
-              				{
-              					Role: "USER",
-              					User: &cohere.ChatMessage{
-              						Message: "Who discovered gravity?",
-              					},
-              				},
-              				{
-              					Role: "CHATBOT",
-              					Chatbot: &cohere.ChatMessage{
-              						Message: "The man who is widely credited with discovering gravity is Sir Isaac Newton",
-              					},
-              				}},
-              			Message: "What year was he born?",
-              			Connectors: []*cohere.ChatConnector{
-              				{Id: "web-search"},
-              			},
-              		},
-              	)
-
-              	if err != nil {
-              		log.Fatal(err)
-              	}
-
-              	// Make sure to close the stream when you're done reading.
-              	// This is easily handled with defer.
-              	defer resp.Close()
-
-              	for {
-              		message, err := resp.Recv()
-
-              		if errors.Is(err, io.EOF) {
-              			// An io.EOF error means the server is done sending messages
-              			// and should be treated as a success.
-              			break
-              		}
-
-              		if message.TextGeneration != nil {
-              			log.Printf("%+v", resp)
-              		}
-              	}
-
-              }
-          - language: go
-            name: Streaming
-            install: go get github.com/cohere-ai/cohere-go/v2
-            code: >
-              package main
-
-
-              import (
-              	"context"
-              	"errors"
-              	"io"
-              	"log"
-
-              	cohere "github.com/cohere-ai/cohere-go/v2"
-              	client "github.com/cohere-ai/cohere-go/v2/client"
-              )
-
-
-              func main() {
-              	co := client.NewClient(client.WithToken("<<apiKey>>"))
-
-              	resp, err := co.ChatStream(
-              		context.TODO(),
-              		&cohere.ChatStreamRequest{
-              			ChatHistory: []*cohere.Message{
-              				{
-              					Role: "USER",
-              					User: &cohere.ChatMessage{
-              						Message: "Who discovered gravity?",
-              					},
-              				},
-              				{
-              					Role: "CHATBOT",
-              					Chatbot: &cohere.ChatMessage{
-              						Message: "The man who is widely credited with discovering gravity is Sir Isaac Newton",
-              					},
-              				}},
-              			Message: "What year was he born?",
-              			Connectors: []*cohere.ChatConnector{
-              				{Id: "web-search"},
-              			},
-              		},
-              	)
-
-              	if err != nil {
-              		log.Fatal(err)
-              	}
-
-              	// Make sure to close the stream when you're done reading.
-              	// This is easily handled with defer.
-              	defer resp.Close()
-
-              	for {
-              		message, err := resp.Recv()
-
-              		if errors.Is(err, io.EOF) {
-              			// An io.EOF error means the server is done sending messages
-              			// and should be treated as a success.
-              			break
-              		}
-
-              		if message.TextGeneration != nil {
-              			log.Printf("%+v", resp)
-              		}
-              	}
-
-              }
-          - language: go
-            name: Tools
-            install: go get github.com/cohere-ai/cohere-go/v2
-            code: >
-              package main
-
-
-              import (
-              	"context"
-              	"log"
-
-              	cohere "github.com/cohere-ai/cohere-go/v2"
-              	client "github.com/cohere-ai/cohere-go/v2/client"
-              )
-
-
-              func main() {
-              	co := client.NewClient(client.WithToken("<<apiKey>>"))
-
-              	resp, err := co.Chat(
-              		context.TODO(),
-              		&cohere.ChatRequest{
-              			Message: "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
-              			Tools: []*cohere.Tool{
-              				{
-              					Name:        "query_daily_sales_report",
-              					Description: "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
-              					ParameterDefinitions: map[string]*cohere.ToolParameterDefinitionsValue{
-              						"day": {
-              							Description: cohere.String("Retrieves sales data for this day, formatted as YYYY-MM-DD."),
-              							Type:        "str",
-              							Required:    cohere.Bool(true),
-              						},
-              					},
-              				},
-              				{
-              					Name:        "query_product_catalog",
-              					Description: "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
-              					ParameterDefinitions: map[string]*cohere.ToolParameterDefinitionsValue{
-              						"category": {
-              							Description: cohere.String("Retrieves product information data for all products in this category."),
-              							Type:        "str",
-              							Required:    cohere.Bool(true),
-              						},
-              					},
-              				},
-              			},
-              		},
-              	)
-
-              	if err != nil {
-              		log.Fatal(err)
-              	}
-
-              	log.Printf("%+v", resp)
-              }
-          - language: node
-            name: Default
-            install: npm i cohere-ai
-            code: >
-              const { CohereClient } = require('cohere-ai');
-
-
-              const cohere = new CohereClient({
-                token: '<<apiKey>>',
-              });
-
-
-              (async () => {
-                const response = await cohere.chat({
-                  chatHistory: [
-                    { role: 'USER', message: 'Who discovered gravity?' },
-                    {
-                      role: 'CHATBOT',
-                      message: 'The man who is widely credited with discovering gravity is Sir Isaac Newton',
-                    },
-                  ],
-                  message: 'What year was he born?',
-                  // perform web search before answering the question. You can also use your own custom connector.
-                  connectors: [{ id: 'web-search' }],
-                });
-
-                console.log(response);
-              })();
-          - language: node
-            name: Documents
-            install: npm i cohere-ai
-            code: >
-              const { CohereClient } = require('cohere-ai');
-
-
-              const cohere = new CohereClient({
-                token: '<<apiKey>>',
-              });
-
-
-              (async () => {
-                const response = await cohere.chat({
-                  message: 'Who is more popular: Nsync or Backstreet Boys?',
-                  documents: [
-                    {
-                      title: 'CSPC: Backstreet Boys Popularity Analysis - ChartMasters',
-                      snippet:
-                        '↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: Backstreet Boys Popularity Analysis\n\nHernán Lopez Posted on February 9, 2017 Posted in CSPC 72 Comments Tagged with Backstreet Boys, Boy band\n\nAt one point, Backstreet Boys defined success: massive albums sales across the globe, great singles sales, plenty of chart topping releases, hugely hyped tours and tremendous media coverage.\n\nIt is true that they benefited from extraordinarily good market conditions in all markets. After all, the all-time record year for the music business, as far as revenues in billion dollars are concerned, was actually 1999. That is, back when this five men group was at its peak.',
-                    },
-                    {
-                      title: 'CSPC: NSYNC Popularity Analysis - ChartMasters',
-                      snippet:
-                        "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: NSYNC Popularity Analysis\n\nMJD Posted on February 9, 2018 Posted in CSPC 27 Comments Tagged with Boy band, N'Sync\n\nAt the turn of the millennium three teen acts were huge in the US, the Backstreet Boys, Britney Spears and NSYNC. The latter is the only one we haven’t study so far. It took 15 years and Adele to break their record of 2,4 million units sold of No Strings Attached in its first week alone.\n\nIt wasn’t a fluke, as the second fastest selling album of the Soundscan era prior 2015, was also theirs since Celebrity debuted with 1,88 million units sold.",
-                    },
-                    {
-                      title: 'CSPC: Backstreet Boys Popularity Analysis - ChartMasters',
-                      snippet:
-                        ' 1997, 1998, 2000 and 2001 also rank amongst some of the very best years.\n\nYet the way many music consumers – especially teenagers and young women’s – embraced their output deserves its own chapter. If Jonas Brothers and more recently One Direction reached a great level of popularity during the past decade, the type of success achieved by Backstreet Boys is in a completely different level as they really dominated the business for a few years all over the world, including in some countries that were traditionally hard to penetrate for Western artists.\n\nWe will try to analyze the extent of that hegemony with this new article with final results which will more than surprise many readers.',
-                    },
-                    {
-                      title: 'CSPC: NSYNC Popularity Analysis - ChartMasters',
-                      snippet:
-                        ' Was the teen group led by Justin Timberlake really that big? Was it only in the US where they found success? Or were they a global phenomenon?\n\nAs usual, I’ll be using the Commensurate Sales to Popularity Concept in order to relevantly gauge their results. This concept will not only bring you sales information for all NSYNC‘s albums, physical and download singles, as well as audio and video streaming, but it will also determine their true popularity. If you are not yet familiar with the CSPC method, the next page explains it with a short video. I fully recommend watching the video before getting into the sales figures.',
-                    },
-                  ],
-                });
-
-                console.log(response);
-              })();
-          - language: node
-            name: Streaming
-            install: npm i cohere-ai
-            code: >
-              const { CohereClient } = require('cohere-ai');
-
-
-              const cohere = new CohereClient({
-                token: '<<apiKey>>',
-              });
-
-
-              (async () => {
-                const chatStream = await cohere.chatStream({
-                  chatHistory: [
-                    { role: 'USER', message: 'Who discovered gravity?' },
-                    {
-                      role: 'CHATBOT',
-                      message: 'The man who is widely credited with discovering gravity is Sir Isaac Newton',
-                    },
-                  ],
-                  message: 'What year was he born?',
-                  // perform web search before answering the question. You can also use your own custom connector.
-                  connectors: [{ id: 'web-search' }],
-                });
-
-                for await (const message of chatStream) {
-                  if (message.eventType === 'text-generation') {
-                    process.stdout.write(message);
-                  }
-                }
-              })();
-          - language: node
-            name: Tools
-            install: npm i cohere-ai
-            code: >
-              const { CohereClient } = require('cohere-ai');
-
-
-              const cohere = new CohereClient({
-                token: '<<apiKey>>',
-              });
-
-
-              (async () => {
-                const response = await cohere.chat({
-                  message:
-                    "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
-                  tools: [
-                    {
-                      name: 'query_daily_sales_report',
-                      description:
-                        'Connects to a database to retrieve overall sales volumes and sales information for a given day.',
-                      parameterDefinitions: {
-                        day: {
-                          description: 'Retrieves sales data for this day, formatted as YYYY-MM-DD.',
-                          type: 'str',
-                          required: true,
-                        },
-                      },
-                    },
-                    {
-                      name: 'query_product_catalog',
-                      description:
-                        'Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.',
-                      parameterDefinitions: {
-                        category: {
-                          description: 'Retrieves product information data for all products in this category.',
-                          type: 'str',
-                          required: true,
-                        },
-                      },
-                    },
-                  ],
-                });
-
-                console.log(response);
-              })();
-          - language: python
-            name: Sync
-            install: python -m pip install cohere --upgrade
-            code: >
-              import cohere
-
-
-              co = cohere.Client("<<apiKey>>")
-
-
-              response = co.chat(
-                  chat_history=[
-                      {"role": "USER", "message": "Who discovered gravity?"},
-                      {
-                          "role": "CHATBOT",
-                          "message": "The man who is widely credited with discovering gravity is Sir Isaac Newton",
-                      },
-                  ],
-                  message="What year was he born?",
-                  # perform web search before answering the question. You can also use your own custom connector.
-                  connectors=[{"id": "web-search"}],
-              )
-
-
-              print(response)
-          - language: python
-            name: Async
-            install: python -m pip install cohere --upgrade
-            code: >
-              import cohere
-
-              import asyncio
-
-
-              co = cohere.AsyncClient("<<apiKey>>")
-
-
-
-              async def main():
-                  return await co.chat(
-                      chat_history=[
-                          {"role": "USER", "message": "Who discovered gravity?"},
-                          {
-                              "role": "CHATBOT",
-                              "message": "The man who is widely credited with discovering gravity is Sir Isaac Newton",
-                          },
-                      ],
-                      message="What year was he born?",
-                      # perform web search before answering the question. You can also use your own custom connector.
-                      connectors=[{"id": "web-search"}],
-                  )
-
-              asyncio.run(main())
-          - language: python
-            name: Documents
-            install: python -m pip install cohere --upgrade
-            code: >
-              import cohere
-
-
-              co = cohere.Client("<<apiKey>>")
-
-
-              response = co.chat(
-                  model="command",
-                  message="Who is more popular: Nsync or Backstreet Boys?",
-                  documents=[
-                      {
-                        "title": "CSPC: Backstreet Boys Popularity Analysis - ChartMasters",
-                        "snippet": "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: Backstreet Boys Popularity Analysis\n\nHernán Lopez Posted on February 9, 2017 Posted in CSPC 72 Comments Tagged with Backstreet Boys, Boy band\n\nAt one point, Backstreet Boys defined success: massive albums sales across the globe, great singles sales, plenty of chart topping releases, hugely hyped tours and tremendous media coverage.\n\nIt is true that they benefited from extraordinarily good market conditions in all markets. After all, the all-time record year for the music business, as far as revenues in billion dollars are concerned, was actually 1999. That is, back when this five men group was at its peak."
-                      },
-                      {
-                          "title": "CSPC: NSYNC Popularity Analysis - ChartMasters",
-                          "snippet": "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: NSYNC Popularity Analysis\n\nMJD Posted on February 9, 2018 Posted in CSPC 27 Comments Tagged with Boy band, N'Sync\n\nAt the turn of the millennium three teen acts were huge in the US, the Backstreet Boys, Britney Spears and NSYNC. The latter is the only one we haven’t study so far. It took 15 years and Adele to break their record of 2,4 million units sold of No Strings Attached in its first week alone.\n\nIt wasn’t a fluke, as the second fastest selling album of the Soundscan era prior 2015, was also theirs since Celebrity debuted with 1,88 million units sold."
-                      },
-                      {
-                          "title": "CSPC: Backstreet Boys Popularity Analysis - ChartMasters",
-                          "snippet": " 1997, 1998, 2000 and 2001 also rank amongst some of the very best years.\n\nYet the way many music consumers – especially teenagers and young women’s – embraced their output deserves its own chapter. If Jonas Brothers and more recently One Direction reached a great level of popularity during the past decade, the type of success achieved by Backstreet Boys is in a completely different level as they really dominated the business for a few years all over the world, including in some countries that were traditionally hard to penetrate for Western artists.\n\nWe will try to analyze the extent of that hegemony with this new article with final results which will more than surprise many readers."
-                      },
-                      {
-                          "title": "CSPC: NSYNC Popularity Analysis - ChartMasters",
-                          "snippet": " Was the teen group led by Justin Timberlake really that big? Was it only in the US where they found success? Or were they a global phenomenon?\n\nAs usual, I’ll be using the Commensurate Sales to Popularity Concept in order to relevantly gauge their results. This concept will not only bring you sales information for all NSYNC‘s albums, physical and download singles, as well as audio and video streaming, but it will also determine their true popularity. If you are not yet familiar with the CSPC method, the next page explains it with a short video. I fully recommend watching the video before getting into the sales figures."
-                      }
-                  ])
-
-              print(response)
-          - language: python
-            name: Streaming
-            install: python -m pip install cohere --upgrade
-            code: >
-              import cohere
-
-
-              co = cohere.Client("<<apiKey>>")
-
-
-              response = co.chat_stream(
-                  chat_history=[
-                      {"role": "USER", "message": "Who discovered gravity?"},
-                      {
-                          "role": "CHATBOT",
-                          "message": "The man who is widely credited with discovering gravity is Sir Isaac Newton",
-                      },
-                  ],
-                  message="What year was he born?",
-                  # perform web search before answering the question. You can also use your own custom connector.
-                  connectors=[{"id": "web-search"}],
-              )
-
-
-              for event in response:
-                  if event.event_type == "text-generation":
-                      print(event.text, end='')
-          - language: python
-            name: Tools
-            install: python -m pip install cohere --upgrade
-            code: >
-              import cohere
-
-
-              co = cohere.Client("<<apiKey>>")
-
-
-              # tool descriptions that the model has access to
-
-              tools = [
-                  {
-                      "name": "query_daily_sales_report",
-                      "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
-                      "parameter_definitions": {
-                          "day": {
-                              "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
-                              "type": "str",
-                              "required": True
-                          }
-                      }
-                  },
-                  {
-                      "name": "query_product_catalog",
-                      "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
-                      "parameter_definitions": {
-                          "category": {
-                              "description": "Retrieves product information data for all products in this category.",
-                              "type": "str",
-                              "required": True
-                          }
-                      }
-                  }
-              ]
-
-
-
-              # user request
-
-              message = "Can you provide a sales summary for 29th September
-              2023, and also give me some details about the products in the
-              'Electronics' category, for example their prices and stock
-              levels?"
-
-
-              response = co.chat(
-                  message=message,
-                  tools=tools,
-              )
-
-
-              print(response)
-          - language: java
-            name: Default
-            install: implementation 'com.cohere:cohere-java:1.x.x'
-            code: >
-              /* (C)2024 */
-
-              package chatpost;
-
-
-              import com.cohere.api.Cohere;
-
-              import com.cohere.api.requests.ChatRequest;
-
-              import com.cohere.api.types.ChatMessage;
-
-              import com.cohere.api.types.ChatMessageRole;
-
-              import com.cohere.api.types.NonStreamedChatResponse;
-
-              import java.util.List;
-
-
-              public class Default {
-                  public static void main(String[] args) {
-                      Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
-
-                      NonStreamedChatResponse response =
-                              cohere.chat(
-                                      ChatRequest.builder()
-                                              .message("What year was he born?")
-                                              .chatHistory(
-                                                      List.of(
-                                                              ChatMessage.builder()
-                                                                      .role(ChatMessageRole.USER)
-                                                                      .message("Who discovered gravity?")
-                                                                      .build(),
-                                                              ChatMessage.builder()
-                                                                      .role(ChatMessageRole.CHATBOT)
-                                                                      .message(
-                                                                              "The man who is widely credited"
-                                                                                  + " with discovering gravity is"
-                                                                                  + " Sir Isaac Newton")
-                                                                      .build()))
-                                              .build());
-
-                      System.out.println(response);
-                  }
-              }
-          - language: java
-            name: Documents
-            install: implementation 'com.cohere:cohere-java:1.x.x'
-            code: >
-              /* (C)2024 */
-
-              package chatpost;
-
-
-              import com.cohere.api.Cohere;
-
-              import com.cohere.api.requests.ChatRequest;
-
-              import com.cohere.api.types.NonStreamedChatResponse;
-
-              import java.util.List;
-
-              import java.util.Map;
-
-
-              public class Documents {
-                  public static void main(String[] args) {
-                      Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
-
-                      NonStreamedChatResponse response =
-                              cohere.chat(
-                                      ChatRequest.builder()
-                                              .message("What year was he born?")
-                                              .documents(
-                                                      List.of(
-                                                              Map.of(
-                                                                      "title",
-                                                                              "CSPC: Backstreet Boys Popularity"
-                                                                                  + " Analysis - ChartMasters",
-                                                                      "snippet",
-                                                                              "↓ Skip to Main Content\n\n"
-                                                                                  + "Music industry – One step"
-                                                                                  + " closer to being"
-                                                                                  + " accurate\n\n"
-                                                                                  + "CSPC: Backstreet Boys"
-                                                                                  + " Popularity Analysis\n\n"
-                                                                                  + "Hernán Lopez Posted on"
-                                                                                  + " February 9, 2017 Posted in"
-                                                                                  + " CSPC 72 Comments Tagged"
-                                                                                  + " with Backstreet Boys, Boy"
-                                                                                  + " band\n\n"
-                                                                                  + "At one point, Backstreet"
-                                                                                  + " Boys defined success:"
-                                                                                  + " massive albums sales across"
-                                                                                  + " the globe, great singles"
-                                                                                  + " sales, plenty of chart"
-                                                                                  + " topping releases, hugely"
-                                                                                  + " hyped tours and tremendous"
-                                                                                  + " media coverage.\n\n"
-                                                                                  + "It is true that they"
-                                                                                  + " benefited from"
-                                                                                  + " extraordinarily good market"
-                                                                                  + " conditions in all markets."
-                                                                                  + " After all, the all-time"
-                                                                                  + " record year for the music"
-                                                                                  + " business, as far as"
-                                                                                  + " revenues in billion dollars"
-                                                                                  + " are concerned, was actually"
-                                                                                  + " 1999. That is, back when"
-                                                                                  + " this five men group was at"
-                                                                                  + " its peak."),
-                                                              Map.of(
-                                                                      "title",
-                                                                              "CSPC: NSYNC Popularity Analysis -"
-                                                                                      + " ChartMasters",
-                                                                      "snippet",
-                                                                              "↓ Skip to Main Content\n\n"
-                                                                                  + "Music industry – One step"
-                                                                                  + " closer to being"
-                                                                                  + " accurate\n\n"
-                                                                                  + "CSPC: NSYNC Popularity"
-                                                                                  + " Analysis\n\n"
-                                                                                  + "MJD Posted on February 9,"
-                                                                                  + " 2018 Posted in CSPC 27"
-                                                                                  + " Comments Tagged with Boy"
-                                                                                  + " band, N'Sync\n\n"
-                                                                                  + "At the turn of the"
-                                                                                  + " millennium three teen acts"
-                                                                                  + " were huge in the US, the"
-                                                                                  + " Backstreet Boys, Britney"
-                                                                                  + " Spears and NSYNC. The"
-                                                                                  + " latter is the only one we"
-                                                                                  + " haven’t study so far. It"
-                                                                                  + " took 15 years and Adele to"
-                                                                                  + " break their record of 2,4"
-                                                                                  + " million units sold of No"
-                                                                                  + " Strings Attached in its"
-                                                                                  + " first week alone.\n\n"
-                                                                                  + "It wasn’t a fluke, as the"
-                                                                                  + " second fastest selling"
-                                                                                  + " album of the Soundscan era"
-                                                                                  + " prior 2015, was also theirs"
-                                                                                  + " since Celebrity debuted"
-                                                                                  + " with 1,88 million units"
-                                                                                  + " sold."),
-                                                              Map.of(
-                                                                      "title",
-                                                                              "CSPC: Backstreet Boys Popularity"
-                                                                                  + " Analysis - ChartMasters",
-                                                                      "snippet",
-                                                                              " 1997, 1998, 2000 and 2001 also"
-                                                                                  + " rank amongst some of the"
-                                                                                  + " very best years.\n\n"
-                                                                                  + "Yet the way many music"
-                                                                                  + " consumers – especially"
-                                                                                  + " teenagers and young women’s"
-                                                                                  + " – embraced their output"
-                                                                                  + " deserves its own chapter."
-                                                                                  + " If Jonas Brothers and more"
-                                                                                  + " recently One Direction"
-                                                                                  + " reached a great level of"
-                                                                                  + " popularity during the past"
-                                                                                  + " decade, the type of success"
-                                                                                  + " achieved by Backstreet Boys"
-                                                                                  + " is in a completely"
-                                                                                  + " different level as they"
-                                                                                  + " really dominated the"
-                                                                                  + " business for a few years"
-                                                                                  + " all over the world,"
-                                                                                  + " including in some countries"
-                                                                                  + " that were traditionally"
-                                                                                  + " hard to penetrate for"
-                                                                                  + " Western artists.\n\n"
-                                                                                  + "We will try to analyze the"
-                                                                                  + " extent of that hegemony"
-                                                                                  + " with this new article with"
-                                                                                  + " final results which will"
-                                                                                  + " more than surprise many"
-                                                                                  + " readers."),
-                                                              Map.of(
-                                                                      "title",
-                                                                      "CSPC: NSYNC Popularity Analysis -"
-                                                                              + " ChartMasters",
-                                                                      "snippet",
-                                                                      " Was the teen group led by Justin"
-                                                                          + " Timberlake really that big? Was it"
-                                                                          + " only in the US where they found"
-                                                                          + " success? Or were they a global"
-                                                                          + " phenomenon?\n\n"
-                                                                          + "As usual, I’ll be using the"
-                                                                          + " Commensurate Sales to Popularity"
-                                                                          + " Concept in order to relevantly"
-                                                                          + " gauge their results. This concept"
-                                                                          + " will not only bring you sales"
-                                                                          + " information for all NSYNC‘s albums,"
-                                                                          + " physical and download singles, as"
-                                                                          + " well as audio and video streaming,"
-                                                                          + " but it will also determine their"
-                                                                          + " true popularity. If you are not yet"
-                                                                          + " familiar with the CSPC method, the"
-                                                                          + " next page explains it with a short"
-                                                                          + " video. I fully recommend watching"
-                                                                          + " the video before getting into the"
-                                                                          + " sales figures.")))
-                                              .build());
-
-                      System.out.println(response);
-                  }
-              }
-          - language: java
-            name: Streaming
-            install: implementation 'com.cohere:cohere-java:1.x.x'
-            code: >
-              /* (C)2024 */
-
-              package chatpost;
-
-
-              import com.cohere.api.Cohere;
-
-              import com.cohere.api.requests.ChatStreamRequest;
-
-              import com.cohere.api.types.ChatMessage;
-
-              import com.cohere.api.types.ChatMessageRole;
-
-              import com.cohere.api.types.ChatTextGenerationEvent;
-
-              import com.cohere.api.types.StreamedChatResponse;
-
-              import java.util.List;
-
-
-              public class Stream {
-                  public static void main(String[] args) {
-                      Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
-
-                      Iterable<StreamedChatResponse> response =
-                              cohere.chatStream(
-                                      ChatStreamRequest.builder()
-                                              .message("What year was he born?")
-                                              .chatHistory(
-                                                      List.of(
-                                                              ChatMessage.builder()
-                                                                      .role(ChatMessageRole.USER)
-                                                                      .message("Who discovered gravity?")
-                                                                      .build(),
-                                                              ChatMessage.builder()
-                                                                      .role(ChatMessageRole.CHATBOT)
-                                                                      .message(
-                                                                              "The man who is widely credited"
-                                                                                  + " with discovering gravity is"
-                                                                                  + " Sir Isaac Newton")
-                                                                      .build()))
-                                              .build());
-
-                      for (StreamedChatResponse chatResponse : response) {
-                          if (chatResponse.isTextGeneration()) {
-                              System.out.println(
-                                      chatResponse
-                                              .getTextGeneration()
-                                              .map(ChatTextGenerationEvent::getText)
-                                              .orElse(""));
-                          }
-                      }
-
-                      System.out.println(response);
-                  }
-              }
-          - language: java
-            name: Tools
-            install: implementation 'com.cohere:cohere-java:1.x.x'
-            code: >
-              /* (C)2024 */
-
-              package chatpost;
-
-
-              import com.cohere.api.Cohere;
-
-              import com.cohere.api.requests.ChatRequest;
-
-              import com.cohere.api.types.NonStreamedChatResponse;
-
-              import com.cohere.api.types.Tool;
-
-              import com.cohere.api.types.ToolParameterDefinitionsValue;
-
-              import java.util.List;
-
-              import java.util.Map;
-
-
-              public class Tools {
-                  public static void main(String[] args) {
-                      Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
-
-                      NonStreamedChatResponse response =
-                              cohere.chat(
-                                      ChatRequest.builder()
-                                              .message(
-                                                      "Can you provide a sales summary for 29th September 2023,"
-                                                          + " and also give me some details about the products in"
-                                                          + " the 'Electronics' category, for example their"
-                                                          + " prices and stock levels?")
-                                              .tools(
-                                                      List.of(
-                                                              Tool.builder()
-                                                                      .name("query_daily_sales_report")
-                                                                      .description(
-                                                                              "Connects to a database to retrieve"
-                                                                                  + " overall sales volumes and"
-                                                                                  + " sales information for a"
-                                                                                  + " given day.")
-                                                                      .parameterDefinitions(
-                                                                              Map.of(
-                                                                                      "day",
-                                                                                      ToolParameterDefinitionsValue
-                                                                                              .builder()
-                                                                                              .type("str")
-                                                                                              .description(
-                                                                                                      "Retrieves"
-                                                                                                          + " sales"
-                                                                                                          + " data"
-                                                                                                          + " for this"
-                                                                                                          + " day,"
-                                                                                                          + " formatted"
-                                                                                                          + " as YYYY-MM-DD.")
-                                                                                              .required(true)
-                                                                                              .build()))
-                                                                      .build(),
-                                                              Tool.builder()
-                                                                      .name("query_product_catalog")
-                                                                      .description(
-                                                                              "Connects to a a product catalog"
-                                                                                  + " with information about all"
-                                                                                  + " the products being sold,"
-                                                                                  + " including categories,"
-                                                                                  + " prices, and stock levels.")
-                                                                      .parameterDefinitions(
-                                                                              Map.of(
-                                                                                      "category",
-                                                                                      ToolParameterDefinitionsValue
-                                                                                              .builder()
-                                                                                              .type("str")
-                                                                                              .description(
-                                                                                                      "Retrieves"
-                                                                                                          + " product"
-                                                                                                          + " information"
-                                                                                                          + " data"
-                                                                                                          + " for all"
-                                                                                                          + " products"
-                                                                                                          + " in this"
-                                                                                                          + " category.")
-                                                                                              .required(true)
-                                                                                              .build()))
-                                                                      .build()))
-                                              .build());
-
-                      System.out.println(response);
-                  }
-              }
-          - language: curl
-            name: cURL
-            code: >-
-              curl --request POST \
-                --url https://api.cohere.com/v1/chat \
-                --header 'accept: application/json' \
-                --header 'content-type: application/json' \
-                --header "Authorization: bearer $CO_API_KEY" \
-                --data '{
-                  "chat_history": [
-                    {"role": "USER", "message": "Who discovered gravity?"},
-                    {"role": "CHATBOT", "message": "The man who is widely credited with discovering gravity is Sir Isaac Newton"}
-                  ],
-                  "message": "What year was he born?",
-                  "connectors": [{"id": "web-search"}]
-                }'
       description: |
         Generates a text response to a user message.
         To learn how to use the Chat API with Streaming and RAG follow our [Text Generation guides](https://docs.cohere.com/docs/chat-api).
@@ -1145,6 +204,7 @@ paths:
                     Text input for the model to respond to.
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 model:
+                  default: "command-r-plus"
                   type: string
                   x-fern-audiences:
                     - public
@@ -1154,9 +214,8 @@ paths:
                     The name of a compatible [Cohere model](https://docs.cohere.com/docs/models) or the ID of a [fine-tuned](https://docs.cohere.com/docs/chat-fine-tuning) model.
                     Compatible Deployments: Cohere Platform, Private Deployments
                 stream:
+                  default: false
                   description: |
-                    Defaults to `false`.
-
                     When `true`, the response will be a JSON stream of events. The final event will contain the complete response, and will have an `event_type` of `"stream-end"`.
 
                     Streaming is beneficial for user interfaces that render the contents of the response piece by piece, as it gets generated.
@@ -1241,10 +300,12 @@ paths:
                     A list of relevant documents that the model can cite to generate a more accurate reply. Each document is a string-string dictionary.
 
                     Example:
-                    `[
+                    ```
+                    [
                       { "title": "Tall penguins", "text": "Emperor penguins are the tallest." },
                       { "title": "Penguin habitats", "text": "Emperor penguins only live in Antarctica." },
-                    ]`
+                    ]
+                    ```
 
                     Keys and values from each document will be serialized to a string and passed to the model. The resulting generation will include citations that reference some of these documents.
 
@@ -1266,14 +327,13 @@ paths:
                   x-fern-audiences:
                     - public
                   description: |
-                    Defaults to `"accurate"`.
-
                     Dictates the approach taken to generating citations as part of the RAG flow by allowing the user to specify whether they want `"accurate"` results, `"fast"` results or no results.
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   enum:
                     - fast
                     - accurate
                     - off
+                  default: accurate
                 temperature:
                   type: number
                   x-fern-audiences:
@@ -1515,50 +575,1085 @@ paths:
       x-fern-examples:
         - request:
             stream: true
-            message: say hello to me
+            message: What year was he born?
+            connectors: 
+              - id: web-search
+            chat_history: 
+              - role: USER
+                message: Who discovered gravity?
+              - role: CHATBOT
+                message: The man who is widely credited with discovering gravity is Sir Isaac Newton
           response:
             stream:
-              - event_type: stream-start
-                generation_id: 9a8b535c-a344-4869-b07e-4e26d038a6cf
               - event_type: text-generation
-                text: Hello
+                text: "Isaac"
               - event_type: text-generation
-                text: "!"
+                text: " Newton"
               - event_type: text-generation
-                text: " How"
+                text: " was"
               - event_type: text-generation
-                text: " can"
+                text: " born"
               - event_type: text-generation
-                text: " I"
+                text: " on"
               - event_type: text-generation
-                text: " help"
+                text: " 2"
               - event_type: text-generation
-                text: " you"
+                text: "5"
               - event_type: text-generation
-                text: " today"
+                text: " December"
               - event_type: text-generation
-                text: "?"
-              - event_type: stream-end
-                response:
-                  text: Hello! How can I help you today?
-                  generation_id: 9a8b535c-a344-4869-b07e-4e26d038a6cf
+                text: " 1"
+              - event_type: text-generation
+                text: "6"
+              - event_type: text-generation
+                text: "4"
+              - event_type: text-generation
+                text: "2"
+              - event_type: text-generation
+                text: ","
+              - event_type: text-generation
+                text: " according"
+              - event_type: text-generation
+                text: " to"
+              - event_type: text-generation
+                text: " the"
+              - event_type: text-generation
+                text: " Julian"
+              - event_type: text-generation
+                text: " calendar"
+              - event_type: text-generation
+                text: " in"
+              - event_type: text-generation
+                text: " use"
+              - event_type: text-generation
+                text: " in"
+              - event_type: text-generation
+                text: " England"
+              - event_type: text-generation
+                text: " at"
+              - event_type: text-generation
+                text: " the"
+              - event_type: text-generation
+                text: " time"
+              - event_type: text-generation
+                text: "."
+              - event_type: text-generation
+                text: " In"
+              - event_type: text-generation
+                text: " the"
+              - event_type: text-generation
+                text: " Gregorian"
+              - event_type: text-generation
+                text: " calendar"
+              - event_type: text-generation
+                text: ","
+              - event_type: text-generation
+                text: " this"
+              - event_type: text-generation
+                text: " date"
+              - event_type: text-generation
+                text: " is"
+              - event_type: text-generation
+                text: " 4"
+              - event_type: text-generation
+                text: " January"
+              - event_type: text-generation
+                text: " 1"
+              - event_type: text-generation
+                text: "6"
+              - event_type: text-generation
+                text: "4"
+              - event_type: text-generation
+                text: "3"
+              - event_type: text-generation
+                text: "."
+              - finish_reason: COMPLETE
+                event_type: stream-end
+                response: 
+                  text: "Isaac Newton was born on 25 December 1642, according to the Julian calendar in use in England at the time. In the Gregorian calendar, this date is 4 January 1643."
+                  generation_id: 6f752c91-1ec2-4ead-aef4-2e58b1236bdd
                   chat_history:
                     - role: USER
-                      message: say hello to me
+                      message: Who discovered gravity?
                     - role: CHATBOT
-                      message: Hello! How can I help you today?
-                  finish_reason: COMPLETE
-                  meta:
-                    api_version:
-                      version: "1"
-                    billed_units:
-                      input_tokens: 4
-                      output_tokens: 9
-                    tokens:
-                      input_tokens: 70
-                      output_tokens: 9
-                finish_reason: COMPLETE
+                      message: The man who is widely credited with discovering gravity is Sir Isaac Newton
+                    - role: USER
+                      message: What year was he born?
+                    - role: CHATBOT
+                      message: Isaac Newton was born on 25 December 1642, according to the Julian calendar in use in England at the time. In the Gregorian calendar, this date is 4 January 1643.
+          code-samples: 
+            - language: curl
+              name: cURL
+              code: >-
+                curl --request POST \
+                  --url https://api.cohere.com/v1/chat \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY" \
+                  --data '{
+                    "stream": true,
+                    "chat_history": [
+                      {"role": "USER", "message": "Who discovered gravity?"},
+                      {"role": "CHATBOT", "message": "The man who is widely credited with discovering gravity is Sir Isaac Newton"}
+                    ],
+                    "message": "What year was he born?",
+                    "connectors": [{"id": "web-search"}]
+                  }'
+            - language: go
+              name: Go
+              install: go get github.com/cohere-ai/cohere-go/v2
+              code: >
+                package main
 
+
+                import (
+                  "context"
+                  "errors"
+                  "io"
+                  "log"
+
+                  cohere "github.com/cohere-ai/cohere-go/v2"
+                  client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                  co := client.NewClient(client.WithToken("<<apiKey>>"))
+
+                  resp, err := co.ChatStream(
+                    context.TODO(),
+                    &cohere.ChatStreamRequest{
+                      ChatHistory: []*cohere.Message{
+                        {
+                          Role: "USER",
+                          User: &cohere.ChatMessage{
+                            Message: "Who discovered gravity?",
+                          },
+                        },
+                        {
+                          Role: "CHATBOT",
+                          Chatbot: &cohere.ChatMessage{
+                            Message: "The man who is widely credited with discovering gravity is Sir Isaac Newton",
+                          },
+                        }},
+                      Message: "What year was he born?",
+                      Connectors: []*cohere.ChatConnector{
+                        {Id: "web-search"},
+                      },
+                    },
+                  )
+
+                  if err != nil {
+                    log.Fatal(err)
+                  }
+
+                  // Make sure to close the stream when you're done reading.
+                  // This is easily handled with defer.
+                  defer resp.Close()
+
+                  for {
+                    message, err := resp.Recv()
+
+                    if errors.Is(err, io.EOF) {
+                      // An io.EOF error means the server is done sending messages
+                      // and should be treated as a success.
+                      break
+                    }
+
+                    if message.TextGeneration != nil {
+                      log.Printf("%+v", resp)
+                    }
+                  }
+
+                }
+            - language: node
+              name: Node
+              install: npm i cohere-ai
+              code: >
+                const { CohereClient } = require('cohere-ai');
+
+
+                const cohere = new CohereClient({
+                  token: '<<apiKey>>',
+                });
+
+
+                (async () => {
+                  const chatStream = await cohere.chatStream({
+                    chatHistory: [
+                      { role: 'USER', message: 'Who discovered gravity?' },
+                      {
+                        role: 'CHATBOT',
+                        message: 'The man who is widely credited with discovering gravity is Sir Isaac Newton',
+                      },
+                    ],
+                    message: 'What year was he born?',
+                    // perform web search before answering the question. You can also use your own custom connector.
+                    connectors: [{ id: 'web-search' }],
+                  });
+
+                  for await (const message of chatStream) {
+                    if (message.eventType === 'text-generation') {
+                      process.stdout.write(message);
+                    }
+                  }
+                })();
+            - language: python
+              name: Python
+              install: python -m pip install cohere --upgrade
+              code: >
+                import cohere
+
+
+                co = cohere.Client("<<apiKey>>")
+
+
+                response = co.chat_stream(
+                    chat_history=[
+                        {"role": "USER", "message": "Who discovered gravity?"},
+                        {
+                            "role": "CHATBOT",
+                            "message": "The man who is widely credited with discovering gravity is Sir Isaac Newton",
+                        },
+                    ],
+                    message="What year was he born?",
+                    # perform web search before answering the question. You can also use your own custom connector.
+                    connectors=[{"id": "web-search"}],
+                )
+
+
+                for event in response:
+                    if event.event_type == "text-generation":
+                        print(event.text, end='')
+            - language: java
+              name: Java
+              install: implementation 'com.cohere:cohere-java:1.x.x'
+              code: >
+                /* (C)2024 */
+
+                package chatpost;
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.requests.ChatStreamRequest;
+
+                import com.cohere.api.types.ChatMessage;
+
+                import com.cohere.api.types.ChatMessageRole;
+
+                import com.cohere.api.types.ChatTextGenerationEvent;
+
+                import com.cohere.api.types.StreamedChatResponse;
+
+                import java.util.List;
+
+
+                public class Stream {
+                    public static void main(String[] args) {
+                        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+
+                        Iterable<StreamedChatResponse> response =
+                                cohere.chatStream(
+                                        ChatStreamRequest.builder()
+                                                .message("What year was he born?")
+                                                .chatHistory(
+                                                        List.of(
+                                                                ChatMessage.builder()
+                                                                        .role(ChatMessageRole.USER)
+                                                                        .message("Who discovered gravity?")
+                                                                        .build(),
+                                                                ChatMessage.builder()
+                                                                        .role(ChatMessageRole.CHATBOT)
+                                                                        .message(
+                                                                                "The man who is widely credited"
+                                                                                    + " with discovering gravity is"
+                                                                                    + " Sir Isaac Newton")
+                                                                        .build()))
+                                                .build());
+
+                        for (StreamedChatResponse chatResponse : response) {
+                            if (chatResponse.isTextGeneration()) {
+                                System.out.println(
+                                        chatResponse
+                                                .getTextGeneration()
+                                                .map(ChatTextGenerationEvent::getText)
+                                                .orElse(""));
+                            }
+                        }
+
+                        System.out.println(response);
+                    }
+                }
+        - request: 
+            stream: false
+            message: What year was he born?
+            connectors: 
+              - id: web-search
+            chat_history: 
+              - role: USER
+                message: Who discovered gravity?
+              - role: CHATBOT
+                message: The man who is widely credited with discovering gravity is Sir Isaac Newton
+          response:
+            body: 
+              text: "Isaac Newton was born on 25 December 1642, according to the Julian calendar in use in England at the time. This date is equivalent to 4 January 1643 in the Gregorian calendar."
+              generation_id: "b05f3457-840d-4445-91b6-aed302b702de"
+              citations: 
+                - start: 1
+                  end: 1
+                  text: "25 December 1642"
+                  document_ids: 
+                    - "web-search_0"
+      
+          code-samples: 
+            - language: curl
+              name: cURL
+              code: >-
+                curl --request POST \
+                  --url https://api.cohere.com/v1/chat \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY" \
+                  --data '{
+                    "chat_history": [
+                      {"role": "USER", "message": "Who discovered gravity?"},
+                      {"role": "CHATBOT", "message": "The man who is widely credited with discovering gravity is Sir Isaac Newton"}
+                    ],
+                    "message": "What year was he born?",
+                    "connectors": [{"id": "web-search"}]
+                  }'
+            - language: go
+              name: Default
+              install: go get github.com/cohere-ai/cohere-go/v2
+              code: >
+                package main
+
+
+                import (
+                  "context"
+                  "log"
+
+                  cohere "github.com/cohere-ai/cohere-go/v2"
+                  client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                  co := client.NewClient(client.WithToken("<<apiKey>>"))
+
+                  resp, err := co.Chat(
+                    context.TODO(),
+                    &cohere.ChatRequest{
+                      ChatHistory: []*cohere.Message{
+                        {
+                          Role: "USER",
+                          User: &cohere.ChatMessage{
+                            Message: "Who discovered gravity?",
+                          },
+                        },
+                        {
+                          Role: "CHATBOT",
+                          Chatbot: &cohere.ChatMessage{
+                            Message: "The man who is widely credited with discovering gravity is Sir Isaac Newton",
+                          },
+                        }},
+                      Message: "What year was he born?",
+                      Connectors: []*cohere.ChatConnector{
+                        {Id: "web-search"},
+                      },
+                    },
+                  )
+
+                  if err != nil {
+                    log.Fatal(err)
+                  }
+
+                  log.Printf("%+v", resp)
+                }
+            - language: go
+              name: Documents
+              install: go get github.com/cohere-ai/cohere-go/v2
+              code: >
+                package main
+
+
+                import (
+                  "context"
+                  "errors"
+                  "io"
+                  "log"
+
+                  cohere "github.com/cohere-ai/cohere-go/v2"
+                  client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                  co := client.NewClient(client.WithToken("<<apiKey>>"))
+
+                  resp, err := co.ChatStream(
+                    context.TODO(),
+                    &cohere.ChatStreamRequest{
+                      ChatHistory: []*cohere.Message{
+                        {
+                          Role: "USER",
+                          User: &cohere.ChatMessage{
+                            Message: "Who discovered gravity?",
+                          },
+                        },
+                        {
+                          Role: "CHATBOT",
+                          Chatbot: &cohere.ChatMessage{
+                            Message: "The man who is widely credited with discovering gravity is Sir Isaac Newton",
+                          },
+                        }},
+                      Message: "What year was he born?",
+                      Connectors: []*cohere.ChatConnector{
+                        {Id: "web-search"},
+                      },
+                    },
+                  )
+
+                  if err != nil {
+                    log.Fatal(err)
+                  }
+
+                  // Make sure to close the stream when you're done reading.
+                  // This is easily handled with defer.
+                  defer resp.Close()
+
+                  for {
+                    message, err := resp.Recv()
+
+                    if errors.Is(err, io.EOF) {
+                      // An io.EOF error means the server is done sending messages
+                      // and should be treated as a success.
+                      break
+                    }
+
+                    if message.TextGeneration != nil {
+                      log.Printf("%+v", resp)
+                    }
+                  }
+
+                }
+            - language: go
+              name: Tools
+              install: go get github.com/cohere-ai/cohere-go/v2
+              code: >
+                package main
+
+
+                import (
+                  "context"
+                  "log"
+
+                  cohere "github.com/cohere-ai/cohere-go/v2"
+                  client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                  co := client.NewClient(client.WithToken("<<apiKey>>"))
+
+                  resp, err := co.Chat(
+                    context.TODO(),
+                    &cohere.ChatRequest{
+                      Message: "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
+                      Tools: []*cohere.Tool{
+                        {
+                          Name:        "query_daily_sales_report",
+                          Description: "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+                          ParameterDefinitions: map[string]*cohere.ToolParameterDefinitionsValue{
+                            "day": {
+                              Description: cohere.String("Retrieves sales data for this day, formatted as YYYY-MM-DD."),
+                              Type:        "str",
+                              Required:    cohere.Bool(true),
+                            },
+                          },
+                        },
+                        {
+                          Name:        "query_product_catalog",
+                          Description: "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
+                          ParameterDefinitions: map[string]*cohere.ToolParameterDefinitionsValue{
+                            "category": {
+                              Description: cohere.String("Retrieves product information data for all products in this category."),
+                              Type:        "str",
+                              Required:    cohere.Bool(true),
+                            },
+                          },
+                        },
+                      },
+                    },
+                  )
+
+                  if err != nil {
+                    log.Fatal(err)
+                  }
+
+                  log.Printf("%+v", resp)
+                }
+            - language: node
+              name: Default
+              install: npm i cohere-ai
+              code: >
+                const { CohereClient } = require('cohere-ai');
+
+
+                const cohere = new CohereClient({
+                  token: '<<apiKey>>',
+                });
+
+
+                (async () => {
+                  const response = await cohere.chat({
+                    chatHistory: [
+                      { role: 'USER', message: 'Who discovered gravity?' },
+                      {
+                        role: 'CHATBOT',
+                        message: 'The man who is widely credited with discovering gravity is Sir Isaac Newton',
+                      },
+                    ],
+                    message: 'What year was he born?',
+                    // perform web search before answering the question. You can also use your own custom connector.
+                    connectors: [{ id: 'web-search' }],
+                  });
+
+                  console.log(response);
+                })();
+            - language: node
+              name: Documents
+              install: npm i cohere-ai
+              code: >
+                const { CohereClient } = require('cohere-ai');
+
+
+                const cohere = new CohereClient({
+                  token: '<<apiKey>>',
+                });
+
+
+                (async () => {
+                  const response = await cohere.chat({
+                    message: 'Who is more popular: Nsync or Backstreet Boys?',
+                    documents: [
+                      {
+                        title: 'CSPC: Backstreet Boys Popularity Analysis - ChartMasters',
+                        snippet:
+                          '↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: Backstreet Boys Popularity Analysis\n\nHernán Lopez Posted on February 9, 2017 Posted in CSPC 72 Comments Tagged with Backstreet Boys, Boy band\n\nAt one point, Backstreet Boys defined success: massive albums sales across the globe, great singles sales, plenty of chart topping releases, hugely hyped tours and tremendous media coverage.\n\nIt is true that they benefited from extraordinarily good market conditions in all markets. After all, the all-time record year for the music business, as far as revenues in billion dollars are concerned, was actually 1999. That is, back when this five men group was at its peak.',
+                      },
+                      {
+                        title: 'CSPC: NSYNC Popularity Analysis - ChartMasters',
+                        snippet:
+                          "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: NSYNC Popularity Analysis\n\nMJD Posted on February 9, 2018 Posted in CSPC 27 Comments Tagged with Boy band, N'Sync\n\nAt the turn of the millennium three teen acts were huge in the US, the Backstreet Boys, Britney Spears and NSYNC. The latter is the only one we haven’t study so far. It took 15 years and Adele to break their record of 2,4 million units sold of No Strings Attached in its first week alone.\n\nIt wasn’t a fluke, as the second fastest selling album of the Soundscan era prior 2015, was also theirs since Celebrity debuted with 1,88 million units sold.",
+                      },
+                      {
+                        title: 'CSPC: Backstreet Boys Popularity Analysis - ChartMasters',
+                        snippet:
+                          ' 1997, 1998, 2000 and 2001 also rank amongst some of the very best years.\n\nYet the way many music consumers – especially teenagers and young women’s – embraced their output deserves its own chapter. If Jonas Brothers and more recently One Direction reached a great level of popularity during the past decade, the type of success achieved by Backstreet Boys is in a completely different level as they really dominated the business for a few years all over the world, including in some countries that were traditionally hard to penetrate for Western artists.\n\nWe will try to analyze the extent of that hegemony with this new article with final results which will more than surprise many readers.',
+                      },
+                      {
+                        title: 'CSPC: NSYNC Popularity Analysis - ChartMasters',
+                        snippet:
+                          ' Was the teen group led by Justin Timberlake really that big? Was it only in the US where they found success? Or were they a global phenomenon?\n\nAs usual, I’ll be using the Commensurate Sales to Popularity Concept in order to relevantly gauge their results. This concept will not only bring you sales information for all NSYNC‘s albums, physical and download singles, as well as audio and video streaming, but it will also determine their true popularity. If you are not yet familiar with the CSPC method, the next page explains it with a short video. I fully recommend watching the video before getting into the sales figures.',
+                      },
+                    ],
+                  });
+
+                  console.log(response);
+                })();
+            - language: node
+              name: Tools
+              install: npm i cohere-ai
+              code: >
+                const { CohereClient } = require('cohere-ai');
+
+
+                const cohere = new CohereClient({
+                  token: '<<apiKey>>',
+                });
+
+
+                (async () => {
+                  const response = await cohere.chat({
+                    message:
+                      "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
+                    tools: [
+                      {
+                        name: 'query_daily_sales_report',
+                        description:
+                          'Connects to a database to retrieve overall sales volumes and sales information for a given day.',
+                        parameterDefinitions: {
+                          day: {
+                            description: 'Retrieves sales data for this day, formatted as YYYY-MM-DD.',
+                            type: 'str',
+                            required: true,
+                          },
+                        },
+                      },
+                      {
+                        name: 'query_product_catalog',
+                        description:
+                          'Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.',
+                        parameterDefinitions: {
+                          category: {
+                            description: 'Retrieves product information data for all products in this category.',
+                            type: 'str',
+                            required: true,
+                          },
+                        },
+                      },
+                    ],
+                  });
+
+                  console.log(response);
+                })();
+            - language: python
+              name: Sync
+              install: python -m pip install cohere --upgrade
+              code: >
+                import cohere
+
+
+                co = cohere.Client("<<apiKey>>")
+
+
+                response = co.chat(
+                    chat_history=[
+                        {"role": "USER", "message": "Who discovered gravity?"},
+                        {
+                            "role": "CHATBOT",
+                            "message": "The man who is widely credited with discovering gravity is Sir Isaac Newton",
+                        },
+                    ],
+                    message="What year was he born?",
+                    # perform web search before answering the question. You can also use your own custom connector.
+                    connectors=[{"id": "web-search"}],
+                )
+
+
+                print(response)
+            - language: python
+              name: Async
+              install: python -m pip install cohere --upgrade
+              code: >
+                import cohere
+
+                import asyncio
+
+
+                co = cohere.AsyncClient("<<apiKey>>")
+
+
+
+                async def main():
+                    return await co.chat(
+                        chat_history=[
+                            {"role": "USER", "message": "Who discovered gravity?"},
+                            {
+                                "role": "CHATBOT",
+                                "message": "The man who is widely credited with discovering gravity is Sir Isaac Newton",
+                            },
+                        ],
+                        message="What year was he born?",
+                        # perform web search before answering the question. You can also use your own custom connector.
+                        connectors=[{"id": "web-search"}],
+                    )
+
+                asyncio.run(main())
+            - language: python
+              name: Documents
+              install: python -m pip install cohere --upgrade
+              code: >
+                import cohere
+
+
+                co = cohere.Client("<<apiKey>>")
+
+
+                response = co.chat(
+                    model="command",
+                    message="Who is more popular: Nsync or Backstreet Boys?",
+                    documents=[
+                        {
+                          "title": "CSPC: Backstreet Boys Popularity Analysis - ChartMasters",
+                          "snippet": "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: Backstreet Boys Popularity Analysis\n\nHernán Lopez Posted on February 9, 2017 Posted in CSPC 72 Comments Tagged with Backstreet Boys, Boy band\n\nAt one point, Backstreet Boys defined success: massive albums sales across the globe, great singles sales, plenty of chart topping releases, hugely hyped tours and tremendous media coverage.\n\nIt is true that they benefited from extraordinarily good market conditions in all markets. After all, the all-time record year for the music business, as far as revenues in billion dollars are concerned, was actually 1999. That is, back when this five men group was at its peak."
+                        },
+                        {
+                            "title": "CSPC: NSYNC Popularity Analysis - ChartMasters",
+                            "snippet": "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: NSYNC Popularity Analysis\n\nMJD Posted on February 9, 2018 Posted in CSPC 27 Comments Tagged with Boy band, N'Sync\n\nAt the turn of the millennium three teen acts were huge in the US, the Backstreet Boys, Britney Spears and NSYNC. The latter is the only one we haven’t study so far. It took 15 years and Adele to break their record of 2,4 million units sold of No Strings Attached in its first week alone.\n\nIt wasn’t a fluke, as the second fastest selling album of the Soundscan era prior 2015, was also theirs since Celebrity debuted with 1,88 million units sold."
+                        },
+                        {
+                            "title": "CSPC: Backstreet Boys Popularity Analysis - ChartMasters",
+                            "snippet": " 1997, 1998, 2000 and 2001 also rank amongst some of the very best years.\n\nYet the way many music consumers – especially teenagers and young women’s – embraced their output deserves its own chapter. If Jonas Brothers and more recently One Direction reached a great level of popularity during the past decade, the type of success achieved by Backstreet Boys is in a completely different level as they really dominated the business for a few years all over the world, including in some countries that were traditionally hard to penetrate for Western artists.\n\nWe will try to analyze the extent of that hegemony with this new article with final results which will more than surprise many readers."
+                        },
+                        {
+                            "title": "CSPC: NSYNC Popularity Analysis - ChartMasters",
+                            "snippet": " Was the teen group led by Justin Timberlake really that big? Was it only in the US where they found success? Or were they a global phenomenon?\n\nAs usual, I’ll be using the Commensurate Sales to Popularity Concept in order to relevantly gauge their results. This concept will not only bring you sales information for all NSYNC‘s albums, physical and download singles, as well as audio and video streaming, but it will also determine their true popularity. If you are not yet familiar with the CSPC method, the next page explains it with a short video. I fully recommend watching the video before getting into the sales figures."
+                        }
+                    ])
+
+                print(response)
+            - language: python
+              name: Tools
+              install: python -m pip install cohere --upgrade
+              code: >
+                import cohere
+
+
+                co = cohere.Client("<<apiKey>>")
+
+
+                # tool descriptions that the model has access to
+
+                tools = [
+                    {
+                        "name": "query_daily_sales_report",
+                        "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+                        "parameter_definitions": {
+                            "day": {
+                                "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
+                                "type": "str",
+                                "required": True
+                            }
+                        }
+                    },
+                    {
+                        "name": "query_product_catalog",
+                        "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
+                        "parameter_definitions": {
+                            "category": {
+                                "description": "Retrieves product information data for all products in this category.",
+                                "type": "str",
+                                "required": True
+                            }
+                        }
+                    }
+                ]
+
+
+
+                # user request
+
+                message = "Can you provide a sales summary for 29th September
+                2023, and also give me some details about the products in the
+                'Electronics' category, for example their prices and stock
+                levels?"
+
+
+                response = co.chat(
+                    message=message,
+                    tools=tools,
+                )
+
+
+                print(response)
+            - language: java
+              name: Default
+              install: implementation 'com.cohere:cohere-java:1.x.x'
+              code: >
+                /* (C)2024 */
+
+                package chatpost;
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.requests.ChatRequest;
+
+                import com.cohere.api.types.ChatMessage;
+
+                import com.cohere.api.types.ChatMessageRole;
+
+                import com.cohere.api.types.NonStreamedChatResponse;
+
+                import java.util.List;
+
+
+                public class Default {
+                    public static void main(String[] args) {
+                        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+
+                        NonStreamedChatResponse response =
+                                cohere.chat(
+                                        ChatRequest.builder()
+                                                .message("What year was he born?")
+                                                .chatHistory(
+                                                        List.of(
+                                                                ChatMessage.builder()
+                                                                        .role(ChatMessageRole.USER)
+                                                                        .message("Who discovered gravity?")
+                                                                        .build(),
+                                                                ChatMessage.builder()
+                                                                        .role(ChatMessageRole.CHATBOT)
+                                                                        .message(
+                                                                                "The man who is widely credited"
+                                                                                    + " with discovering gravity is"
+                                                                                    + " Sir Isaac Newton")
+                                                                        .build()))
+                                                .build());
+
+                        System.out.println(response);
+                    }
+                }
+            - language: java
+              name: Documents
+              install: implementation 'com.cohere:cohere-java:1.x.x'
+              code: >
+                /* (C)2024 */
+
+                package chatpost;
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.requests.ChatRequest;
+
+                import com.cohere.api.types.NonStreamedChatResponse;
+
+                import java.util.List;
+
+                import java.util.Map;
+
+
+                public class Documents {
+                    public static void main(String[] args) {
+                        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+
+                        NonStreamedChatResponse response =
+                                cohere.chat(
+                                        ChatRequest.builder()
+                                                .message("What year was he born?")
+                                                .documents(
+                                                        List.of(
+                                                                Map.of(
+                                                                        "title",
+                                                                                "CSPC: Backstreet Boys Popularity"
+                                                                                    + " Analysis - ChartMasters",
+                                                                        "snippet",
+                                                                                "↓ Skip to Main Content\n\n"
+                                                                                    + "Music industry – One step"
+                                                                                    + " closer to being"
+                                                                                    + " accurate\n\n"
+                                                                                    + "CSPC: Backstreet Boys"
+                                                                                    + " Popularity Analysis\n\n"
+                                                                                    + "Hernán Lopez Posted on"
+                                                                                    + " February 9, 2017 Posted in"
+                                                                                    + " CSPC 72 Comments Tagged"
+                                                                                    + " with Backstreet Boys, Boy"
+                                                                                    + " band\n\n"
+                                                                                    + "At one point, Backstreet"
+                                                                                    + " Boys defined success:"
+                                                                                    + " massive albums sales across"
+                                                                                    + " the globe, great singles"
+                                                                                    + " sales, plenty of chart"
+                                                                                    + " topping releases, hugely"
+                                                                                    + " hyped tours and tremendous"
+                                                                                    + " media coverage.\n\n"
+                                                                                    + "It is true that they"
+                                                                                    + " benefited from"
+                                                                                    + " extraordinarily good market"
+                                                                                    + " conditions in all markets."
+                                                                                    + " After all, the all-time"
+                                                                                    + " record year for the music"
+                                                                                    + " business, as far as"
+                                                                                    + " revenues in billion dollars"
+                                                                                    + " are concerned, was actually"
+                                                                                    + " 1999. That is, back when"
+                                                                                    + " this five men group was at"
+                                                                                    + " its peak."),
+                                                                Map.of(
+                                                                        "title",
+                                                                                "CSPC: NSYNC Popularity Analysis -"
+                                                                                        + " ChartMasters",
+                                                                        "snippet",
+                                                                                "↓ Skip to Main Content\n\n"
+                                                                                    + "Music industry – One step"
+                                                                                    + " closer to being"
+                                                                                    + " accurate\n\n"
+                                                                                    + "CSPC: NSYNC Popularity"
+                                                                                    + " Analysis\n\n"
+                                                                                    + "MJD Posted on February 9,"
+                                                                                    + " 2018 Posted in CSPC 27"
+                                                                                    + " Comments Tagged with Boy"
+                                                                                    + " band, N'Sync\n\n"
+                                                                                    + "At the turn of the"
+                                                                                    + " millennium three teen acts"
+                                                                                    + " were huge in the US, the"
+                                                                                    + " Backstreet Boys, Britney"
+                                                                                    + " Spears and NSYNC. The"
+                                                                                    + " latter is the only one we"
+                                                                                    + " haven’t study so far. It"
+                                                                                    + " took 15 years and Adele to"
+                                                                                    + " break their record of 2,4"
+                                                                                    + " million units sold of No"
+                                                                                    + " Strings Attached in its"
+                                                                                    + " first week alone.\n\n"
+                                                                                    + "It wasn’t a fluke, as the"
+                                                                                    + " second fastest selling"
+                                                                                    + " album of the Soundscan era"
+                                                                                    + " prior 2015, was also theirs"
+                                                                                    + " since Celebrity debuted"
+                                                                                    + " with 1,88 million units"
+                                                                                    + " sold."),
+                                                                Map.of(
+                                                                        "title",
+                                                                                "CSPC: Backstreet Boys Popularity"
+                                                                                    + " Analysis - ChartMasters",
+                                                                        "snippet",
+                                                                                " 1997, 1998, 2000 and 2001 also"
+                                                                                    + " rank amongst some of the"
+                                                                                    + " very best years.\n\n"
+                                                                                    + "Yet the way many music"
+                                                                                    + " consumers – especially"
+                                                                                    + " teenagers and young women’s"
+                                                                                    + " – embraced their output"
+                                                                                    + " deserves its own chapter."
+                                                                                    + " If Jonas Brothers and more"
+                                                                                    + " recently One Direction"
+                                                                                    + " reached a great level of"
+                                                                                    + " popularity during the past"
+                                                                                    + " decade, the type of success"
+                                                                                    + " achieved by Backstreet Boys"
+                                                                                    + " is in a completely"
+                                                                                    + " different level as they"
+                                                                                    + " really dominated the"
+                                                                                    + " business for a few years"
+                                                                                    + " all over the world,"
+                                                                                    + " including in some countries"
+                                                                                    + " that were traditionally"
+                                                                                    + " hard to penetrate for"
+                                                                                    + " Western artists.\n\n"
+                                                                                    + "We will try to analyze the"
+                                                                                    + " extent of that hegemony"
+                                                                                    + " with this new article with"
+                                                                                    + " final results which will"
+                                                                                    + " more than surprise many"
+                                                                                    + " readers."),
+                                                                Map.of(
+                                                                        "title",
+                                                                        "CSPC: NSYNC Popularity Analysis -"
+                                                                                + " ChartMasters",
+                                                                        "snippet",
+                                                                        " Was the teen group led by Justin"
+                                                                            + " Timberlake really that big? Was it"
+                                                                            + " only in the US where they found"
+                                                                            + " success? Or were they a global"
+                                                                            + " phenomenon?\n\n"
+                                                                            + "As usual, I’ll be using the"
+                                                                            + " Commensurate Sales to Popularity"
+                                                                            + " Concept in order to relevantly"
+                                                                            + " gauge their results. This concept"
+                                                                            + " will not only bring you sales"
+                                                                            + " information for all NSYNC‘s albums,"
+                                                                            + " physical and download singles, as"
+                                                                            + " well as audio and video streaming,"
+                                                                            + " but it will also determine their"
+                                                                            + " true popularity. If you are not yet"
+                                                                            + " familiar with the CSPC method, the"
+                                                                            + " next page explains it with a short"
+                                                                            + " video. I fully recommend watching"
+                                                                            + " the video before getting into the"
+                                                                            + " sales figures.")))
+                                                .build());
+
+                        System.out.println(response);
+                    }
+                }  
+            - language: java
+              name: Tools
+              install: implementation 'com.cohere:cohere-java:1.x.x'
+              code: >
+                /* (C)2024 */
+
+                package chatpost;
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.requests.ChatRequest;
+
+                import com.cohere.api.types.NonStreamedChatResponse;
+
+                import com.cohere.api.types.Tool;
+
+                import com.cohere.api.types.ToolParameterDefinitionsValue;
+
+                import java.util.List;
+
+                import java.util.Map;
+
+
+                public class Tools {
+                    public static void main(String[] args) {
+                        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+
+                        NonStreamedChatResponse response =
+                                cohere.chat(
+                                        ChatRequest.builder()
+                                                .message(
+                                                        "Can you provide a sales summary for 29th September 2023,"
+                                                            + " and also give me some details about the products in"
+                                                            + " the 'Electronics' category, for example their"
+                                                            + " prices and stock levels?")
+                                                .tools(
+                                                        List.of(
+                                                                Tool.builder()
+                                                                        .name("query_daily_sales_report")
+                                                                        .description(
+                                                                                "Connects to a database to retrieve"
+                                                                                    + " overall sales volumes and"
+                                                                                    + " sales information for a"
+                                                                                    + " given day.")
+                                                                        .parameterDefinitions(
+                                                                                Map.of(
+                                                                                        "day",
+                                                                                        ToolParameterDefinitionsValue
+                                                                                                .builder()
+                                                                                                .type("str")
+                                                                                                .description(
+                                                                                                        "Retrieves"
+                                                                                                            + " sales"
+                                                                                                            + " data"
+                                                                                                            + " for this"
+                                                                                                            + " day,"
+                                                                                                            + " formatted"
+                                                                                                            + " as YYYY-MM-DD.")
+                                                                                                .required(true)
+                                                                                                .build()))
+                                                                        .build(),
+                                                                Tool.builder()
+                                                                        .name("query_product_catalog")
+                                                                        .description(
+                                                                                "Connects to a a product catalog"
+                                                                                    + " with information about all"
+                                                                                    + " the products being sold,"
+                                                                                    + " including categories,"
+                                                                                    + " prices, and stock levels.")
+                                                                        .parameterDefinitions(
+                                                                                Map.of(
+                                                                                        "category",
+                                                                                        ToolParameterDefinitionsValue
+                                                                                                .builder()
+                                                                                                .type("str")
+                                                                                                .description(
+                                                                                                        "Retrieves"
+                                                                                                            + " product"
+                                                                                                            + " information"
+                                                                                                            + " data"
+                                                                                                            + " for all"
+                                                                                                            + " products"
+                                                                                                            + " in this"
+                                                                                                            + " category.")
+                                                                                                .required(true)
+                                                                                                .build()))
+                                                                        .build()))
+                                                .build());
+
+                        System.out.println(response);
+                    }
+                }
   /generate:
     post:
       x-fern-audiences:
@@ -1971,7 +2066,7 @@ paths:
                   x-fern-audiences:
                     - public
                   description: |-
-                    One of `GENERATION|ALL|NONE` to specify how and if the token likelihoods are returned with the response. Defaults to `NONE`.
+                    One of `GENERATION|ALL|NONE` to specify how and if the token likelihoods are returned with the response. 
 
                     If `GENERATION` is selected, the token likelihoods will only be provided for generated text.
 
@@ -9271,10 +9366,9 @@ components:
       x-fern-audiences:
         - public
       description: |
-        Defaults to `"text"`.
-
         When set to `"json_object"`, the model's output will be a valid JSON Object.
       type: string
+      default: text
       enum:
         - text
         - json_object
@@ -13090,12 +13184,13 @@ components:
               - public
         auth_type:
           description:
-            "The type of authentication/authorization used by the connector.
-            Possible values: [oauth, service_auth]"
+            "The type of authentication/authorization used by the connector."
           type: string
           x-fern-audiences:
             - public
-          format: enum
+          enum: 
+            - oauth
+            - service_auth
         oauth:
           $ref: "#/components/schemas/ConnectorOAuth"
           x-fern-audiences:
@@ -13108,7 +13203,7 @@ components:
           enum:
             - valid
             - expired
-          description:
+          description: |
             The OAuth status for the user making the request. One of ["valid",
             "expired", ""]. Empty string (field is omitted) means the user has
             not authorized the connector yet.
