@@ -160,7 +160,7 @@ We'll go through the following examples:
   - Answer the question based on the most relevant documents
 
 
-```python
+```python PYTHON
 from langchain.embeddings.cohere import CohereEmbeddings
 from langchain.llms import Cohere
 from langchain.prompts import PromptTemplate
@@ -190,7 +190,7 @@ dotenv.load_dotenv(".env") # Upload an '.env' file containing an environment var
 ### Import a list of documents
 
 
-```python
+```python PYTHON
 import tensorflow_datasets as tfds
 dataset = tfds.load('trec', split='train')
 texts = [item['text'].decode('utf-8') for item in tfds.as_numpy(dataset)]
@@ -237,7 +237,7 @@ print(f"Number of documents: {len(texts)}")
 
 
 
-```python
+```python PYTHON
 random.seed(11)
 for item in random.sample(texts, 5):
   print(item) 
@@ -253,7 +253,7 @@ for item in random.sample(texts, 5):
 ### Embed the documents and store them in an index
 
 
-```python
+```python PYTHON
 embeddings = CohereEmbeddings(model = "multilingual-22-12")
 
 db = Qdrant.from_texts(texts, embeddings, location=":memory:", collection_name="my_documents", distance_func="Dot")
@@ -262,7 +262,7 @@ db = Qdrant.from_texts(texts, embeddings, location=":memory:", collection_name="
 ### Enter a query
 
 
-```python
+```python PYTHON
 queries = ["How to get in touch with Bill Gates",
            "Comment entrer en contact avec Bill Gates",
            "Cara menghubungi Bill Gates"]
@@ -273,7 +273,7 @@ queries_lang = ["English", "French", "Indonesian"]
 ### Return the document most similar to the query
 
 
-```python
+```python PYTHON
 answers = []
 for query in queries:
   docs = db.similarity_search(query)
@@ -281,7 +281,7 @@ for query in queries:
 ```
 
 
-```python
+```python PYTHON
 for idx,query in enumerate(queries):
   print(f"Query language: {queries_lang[idx]}")
   print(f"Query: {query}")
@@ -312,7 +312,7 @@ for idx,query in enumerate(queries):
 ## Add an article and chunk it into smaller passages
 
 
-```python
+```python PYTHON
 
 !wget 'https://docs.google.com/uc?export=download&id=1f1INWOfJrHTFmbyF_0be5b4u_moz3a4F' -O steve-jobs-commencement.txt
 ```
@@ -337,7 +337,7 @@ for idx,query in enumerate(queries):
 
 
 
-```python
+```python PYTHON
 loader = TextLoader("steve-jobs-commencement.txt")
 documents = loader.load()
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=0)
@@ -347,7 +347,7 @@ texts = text_splitter.split_documents(documents)
 ## Embed the passages and store them in an index
 
 
-```python
+```python PYTHON
 embeddings = CohereEmbeddings(model = "multilingual-22-12")
 db = Qdrant.from_documents(texts, embeddings, location=":memory:", collection_name="my_documents", distance_func="Dot")
 ```
@@ -355,7 +355,7 @@ db = Qdrant.from_documents(texts, embeddings, location=":memory:", collection_na
 ## Enter a question
 
 
-```python
+```python PYTHON
 questions = [
            "What did the author liken The Whole Earth Catalog to?",
            "What was Reed College great at?",
@@ -369,7 +369,7 @@ questions = [
 
 
 
-```python
+```python PYTHON
 
 prompt_template = """Text: {context}
 
@@ -383,7 +383,7 @@ PROMPT = PromptTemplate(
 ```
 
 
-```python
+```python PYTHON
 chain_type_kwargs = {"prompt": PROMPT}
 
 qa = RetrievalQA.from_chain_type(llm=Cohere(model="command", temperature=0), 
@@ -500,7 +500,7 @@ for question in questions:
 ## Questions in French
 
 
-```python
+```python PYTHON
 questions_fr = [
            "À quoi se compare The Whole Earth Catalog ?",
            "Dans quoi Reed College était-il excellent ?",
@@ -511,11 +511,11 @@ questions_fr = [
 ```
 
 
-```python
+```python PYTHON
 ```
 
 
-```python
+```python PYTHON
 
 chain_type_kwargs = {"prompt": PROMPT}
 

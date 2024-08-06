@@ -18,7 +18,7 @@ Multi-step tool use with Cohere can be implemented using the [Langchain framewor
 
 First, we'll install the dependencies. (Note: the `!` is required for notebooks, but you must omit it if you're in the command line).
 
-```python
+```python PYTHON
 ! pip install --quiet langchain langchain_cohere langchain_experimental
 ```
 
@@ -28,7 +28,7 @@ Below, we've included two code snippets, equipping the agent with the Web Search
 
 #### Example: define the Web Search tool
 
-```python
+```python PYTHON
 from langchain_community.tools.tavily_search import TavilySearchResults
 
 os.environ["TAVILY_API_KEY"] = #<your-api-key>
@@ -46,7 +46,7 @@ internet_search.args_schema = TavilySearchInput
 
 #### Example: define the Python Interpreter tool
 
-```python
+```python PYTHON
 from langchain.agents import Tool
 from langchain_experimental.utilities import PythonREPL
 
@@ -68,7 +68,7 @@ Even better any Python function can easily be _transformed_ into a Langchain too
 
 #### Example: define a custom tool
 
-```python
+```python PYTHON
 
 from langchain_core.tools import tool
 import random
@@ -96,7 +96,7 @@ random_operation_tool.args_schema = random_operation_inputs
 
 Third, create a ReAct agent in Langchain. The model can dynamically pick the right tool(s) for the user query, call them in a sequence, analyze the results, and self-reflect. Note that your ReAct agent can optionally take an input preamble.
 
-```python
+```python PYTHON
 from langchain.agents import AgentExecutor
 from langchain_cohere.react_multi_hop.agent import create_cohere_react_agent
 from langchain_core.prompts import ChatPromptTemplate
@@ -131,7 +131,7 @@ agent_executor = AgentExecutor(agent=agent,
 
 Finally, call your agent with a question!
 
-```python
+```python PYTHON
 agent_executor.invoke({
    "input": "I want to write an essay about the Roman Empire. Any tips for writing an essay? Any fun facts?",
    "preamble": preamble,
@@ -213,7 +213,7 @@ Here are some fun facts about the Roman Empire:
 
 Beyond the web search tool and the Python interpreter tool shared in the code snippets above, we have found some tools to be particularly useful. Here's an example of leveraging a vector store for greater functionality:
 
-```python
+```python PYTHON
 # You can easily equip your agent with a vector store!
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -263,7 +263,7 @@ So far, we asked one-off questions to the ReAct agent. In many enterprise applic
 
 The ReAct agent can handle multi-turn conversations by using `chat_history`.
 
-```python
+```python PYTHON
 # Step 1: Construct the chat history as a list of LangChain Messages, ending with the last user message
 from langchain_core.messages import HumanMessage, AIMessage
 
@@ -300,7 +300,7 @@ Yes. The ReAct agent from Cohere comes out of the box with the ability to answer
 
 For example, let’s look at the following question:
 
-```python
+```python PYTHON
 agent_executor.invoke({
    "input": "Hey how are you?",
 })
@@ -311,7 +311,7 @@ By inspecting the logs, we see that the ReAct agent decided to just respond dire
 ````asp
 > Entering new AgentExecutor chain...
 Plan: I will respond to the user's greeting.
-Action: ```json
+Action: ```json JSON
 [
     {
         "tool_name": "directly_answer",

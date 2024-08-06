@@ -25,11 +25,11 @@ We’ll cover three groups of tasks that you will typically work on when dealing
 
 The first step is to install the Cohere Python SDK. Next, create an API key, which you can generate from the Cohere [dashboard](https://os.cohere.ai/register) or [CLI tool](https://docs.cohere.ai/cli-key).
 
-```python
+```python PYTHON
 ! pip install cohere altair umap-learn -q
 ```
 
-```python
+```python PYTHON
 import cohere
 import pandas as pd
 import numpy as np
@@ -42,7 +42,7 @@ The Cohere Generate endpoint generates text given an input, called “prompt”.
 
 ### Try a Simple Prompt
 
-```python
+```python PYTHON
 prompt = "What is a Hello World program."
 
 response = co.chat(
@@ -69,11 +69,11 @@ int main() {
 }
 ```
 2. **Python**:
-```python
+```python PYTHON
 print("Hello World")
 ```
 3. **Java**:
-```java
+```java JAVA
 class HelloWorld {
     public static void main(String[] args) {
         System.out.println("Hello World");
@@ -101,7 +101,7 @@ The "Hello World" program is a testament to the power of programming, as a simpl
 
 The output is not bad, but it can be better. We need to find a way to make the output tighter to how we want it to be, which is where we leverage _prompt engineering_.
 
-```python
+```python PYTHON
 prompt = """
 Write the first paragraph of a blog post given a blog title.
 --
@@ -134,7 +134,7 @@ Starting to code can be daunting, but it's actually simpler than you think! The 
 
 In real applications, you will likely need to produce these text generations on an ongoing basis, given different inputs. Let’s simulate that with our example.
 
-```python
+```python PYTHON
 def generate_text(topic):
   prompt = f"""
 Write the first paragraph of a blog post given a blog title.
@@ -160,13 +160,13 @@ First Paragraph:"""
   return response.text
 ```
 
-```python
+```python PYTHON
 topics = ["How to Grow in Your Career",
           "The Habits of Great Software Developers",
           "Ideas for a Relaxing Weekend"]
 ```
 
-```python
+```python PYTHON
 paragraphs = []
 
 for topic in topics:
@@ -194,7 +194,7 @@ Cohere’s Classify endpoint makes it easy to take a list of texts and predict t
 
 ### Sentiment Analysis
 
-```python
+```python PYTHON
 from cohere import ClassifyExample
 
 examples = [
@@ -216,7 +216,7 @@ examples = [
 ]
 ```
 
-```python
+```python PYTHON
 inputs=["Hello, world! What a beautiful day",
         "It was a great time with great people",
         "Great place to work",
@@ -232,7 +232,7 @@ inputs=["Hello, world! What a beautiful day",
         ]
 ```
 
-```python
+```python PYTHON
 def classify_text(inputs, examples):
   """
   Classify a list of input texts
@@ -253,7 +253,7 @@ def classify_text(inputs, examples):
   return classifications
 ```
 
-```python
+```python PYTHON
 predictions = classify_text(inputs,examples)
 
 classes = ["positive","negative","neutral"]
@@ -325,7 +325,7 @@ Cohere’s Embed endpoint takes a piece of text and turns it into a vector embed
 
 Here we have a list of 50 top web search keywords about Hello, World! taken from a keyword tool. Let’s look at a few examples:
 
-```python
+```python PYTHON
 df = pd.read_csv("https://github.com/cohere-ai/notebooks/raw/main/notebooks/data/hello-world-kw.csv", names=["search_term"])
 df.head()
 ```
@@ -365,7 +365,7 @@ df.head()
 
 We use the Embed endpoint to get the embeddings for each of these keywords.
 
-```python
+```python PYTHON
 def embed_text(texts, input_type):
   """
   Turns a piece of text into embeddings
@@ -383,7 +383,7 @@ def embed_text(texts, input_type):
   return response.embeddings
 ```
 
-```python
+```python PYTHON
 df["search_term_embeds"] = embed_text(texts=df["search_term"].tolist(),
                                       input_type="search_document")
 doc_embeds = np.array(df["search_term_embeds"].tolist())
@@ -393,7 +393,7 @@ doc_embeds = np.array(df["search_term_embeds"].tolist())
 
 We’ll look at a couple of example applications. The first example is semantic search. Given a new query, our "search engine" must return the most similar FAQs, where the FAQs are the 50 search terms we uploaded earlier.
 
-```python
+```python PYTHON
 query = "what is the history of hello world"
 
 query_embeds = embed_text(texts=[query],
@@ -402,7 +402,7 @@ query_embeds = embed_text(texts=[query],
 
 We use cosine similarity to compare the similarity of the new query with each of the FAQs
 
-```python
+```python PYTHON
 
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -433,7 +433,7 @@ def get_similarity(target, candidates):
 
 Finally, we display the top 5 FAQs that match the new query
 
-```python
+```python PYTHON
 similarity = get_similarity(query_embeds,doc_embeds)
 
 print("New query:")
@@ -462,7 +462,7 @@ In the second example, we take the same idea as semantic search and take a broad
 
 We'll use the same 50 top web search terms about Hello, World! There are different techniques we can use to compress the embeddings down to just 2 dimensions while retaining as much information as possible. We'll use a technique called UMAP. And once we can get it down to 2 dimensions, we can plot these embeddings on a 2D chart.
 
-```python
+```python PYTHON
 import umap
 reducer = umap.UMAP(n_neighbors=49)
 umap_embeds = reducer.fit_transform(doc_embeds)
@@ -471,7 +471,7 @@ df['x'] = umap_embeds[:,0]
 df['y'] = umap_embeds[:,1]
 ```
 
-```python
+```python PYTHON
 chart = alt.Chart(df).mark_circle(size=500).encode(
   x=
   alt.X('x',

@@ -27,13 +27,13 @@ We'll go through the following steps:
 
 If you're running an older version of the SDK you'll want to upgrade it, like this:
 
-```python
+```python PYTHON
 #!pip install --upgrade cohere
 ```
 
 ## 1. Get the dataset
 
-```python
+```python PYTHON
 import cohere
 from sklearn.model_selection import train_test_split
 
@@ -43,7 +43,7 @@ pd.set_option('display.max_colwidth', None)
 df = pd.read_csv('https://github.com/clairett/pytorch-sentiment-classification/raw/master/data/SST2/train.tsv', delimiter='\t', header=None)
 ```
 
-```python
+```python PYTHON
 df.head()
 ```
 
@@ -107,7 +107,7 @@ We'll only use a subset of the training and testing datasets in this example. We
 
 The `train_test_split` method splits arrays or matrices into random train and test subsets.
 
-```python
+```python PYTHON
 num_examples = 500
 df_sample = df.sample(num_examples)
 
@@ -126,7 +126,7 @@ labels_test = labels_test[:95]
 
 We're now ready to retrieve the embeddings from the API. You'll need your API key for this next cell. [Sign up to Cohere](https://os.cohere.ai/) and get one if you haven't yet.
 
-```python
+```python PYTHON
 model_name = "embed-english-v3.0"
 api_key = ""
 
@@ -135,7 +135,7 @@ input_type = "classification"
 co = cohere.Client(api_key)
 ```
 
-```python
+```python PYTHON
 embeddings_train = co.embed(texts=sentences_train,
                             model=model_name,
                             input_type=input_type
@@ -154,7 +154,7 @@ We now have two sets of embeddings, `embeddings_train` contains the embeddings o
 
 Curious what an embedding looks like? We can print it:
 
-```python
+```python PYTHON
 print(f"Review text: {sentences_train[0]}")
 print(f"Embedding vector: {embeddings_train[0][:10]}")
 ```
@@ -168,7 +168,7 @@ Embedding vector: [1.1531117, -0.8543223, -1.2496399, -0.28317127, -0.75870246, 
 
 Now that we have the embedding, we can train our classifier. We'll use an SVM from sklearn.
 
-```python
+```python PYTHON
 from sklearn.svm import SVC
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -187,7 +187,7 @@ Pipeline(steps=[('standardscaler', StandardScaler()),
 
 ## 4. Evaluate the performance of the classifier on the testing set
 
-```python
+```python PYTHON
 score = svm_classifier.score(embeddings_test, labels_test)
 print(f"Validation accuracy on is {100*score}%!")
 ```

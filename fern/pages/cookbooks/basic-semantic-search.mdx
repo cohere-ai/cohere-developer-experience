@@ -24,7 +24,7 @@ In this notebook, we'll build a simple semantic search engine. The applications 
 
 And if you're running an older version of the SDK, you might need to upgrade it like so:
 
-```python
+```python PYTHON
 #!pip install --upgrade cohere
 ```
 
@@ -32,7 +32,7 @@ Get your Cohere API key by [signing up here](https://os.cohere.ai/register). Pas
 
 ## 1. Getting Set Up
 
-```python
+```python PYTHON
 #@title Import libraries (Run this cell to execute required code) {display-mode: "form"}
 
 import cohere
@@ -52,7 +52,7 @@ pd.set_option('display.max_colwidth', None)
 
 You'll need your API key for this next cell. [Sign up to Cohere](https://os.cohere.ai/) and get one if you haven't yet.
 
-```python
+```python PYTHON
 model_name = "embed-english-v3.0"
 api_key = ""
 input_type_embed = "search_document"
@@ -64,7 +64,7 @@ co = cohere.Client(api_key)
 
 We'll use the [trec](https://www.tensorflow.org/datasets/catalog/trec) dataset which is made up of questions and their categories.
 
-```python
+```python PYTHON
 dataset = load_dataset("trec", split="train")
 
 df = pd.DataFrame(dataset)[:1000]
@@ -160,13 +160,13 @@ The next step is to embed the text of the questions.
 
 To get a thousand embeddings of this length should take about fifteen seconds.
 
-```python
+```python PYTHON
 embeds = co.embed(texts=list(df['text']),
                   model=model_name,
                   input_type=input_type_embed).embeddings
 ```
 
-```python
+```python PYTHON
 embeds = np.array(embeds)
 embeds.shape
 ```
@@ -186,7 +186,7 @@ Let's now use [Annoy](https://github.com/spotify/annoy) to build an index that s
 
 After building the index, we can use it to retrieve the nearest neighbors either of existing questions (section 3.1), or of new questions that we embed (section 3.2).
 
-```python
+```python PYTHON
 search_index = AnnoyIndex(embeds.shape[1], 'angular')
 for i in range(len(embeds)):
     search_index.add_item(i, embeds[i])
@@ -203,7 +203,7 @@ True
 
 If we're only interested in measuring the distance between the questions in the dataset (no outside queries), a simple way is to calculate the distance between every pair of embeddings we have.
 
-```python
+```python PYTHON
 example_id = 92
 
 similar_item_ids = search_index.get_nns_by_item(example_id,10,
@@ -283,7 +283,7 @@ Nearest neighbors:
 
 We're not limited to searching using existing items. If we get a query, we can embed it and find its nearest neighbors from the dataset.
 
-```python
+```python PYTHON
 query = "What is the tallest mountain in the world?"
 input_type_query = "search_query"
 
@@ -380,7 +380,7 @@ Nearest neighbors:
 
 Finally, let's plot out all the questions onto a 2D chart so you're able to visualize the semantic similarities of this dataset!
 
-```python
+```python PYTHON
 #@title Plot the archive {display-mode: "form"}
 
 reducer = umap.UMAP(n_neighbors=20)

@@ -8,7 +8,7 @@ import { CookbookHeader } from "../../components/cookbook-header";
 
 <CookbookHeader href="https://github.com/cohere-ai/notebooks/blob/main/notebooks/Embed_Jobs_Serverless_Pinecone_Semantic_Search.ipynb" />
 
-```python
+```python PYTHON
 import os
 import json
 import time
@@ -30,7 +30,7 @@ pc = Pinecone(
 
 ## Step 1: Upload a dataset
 
-```python
+```python PYTHON
 dataset_file_path = "data/embed_jobs_sample_data.jsonl" # Full path - https://raw.githubusercontent.com/cohere-ai/notebooks/main/notebooks/data/embed_jobs_sample_data.jsonl
 
 ds=co.create_dataset(
@@ -64,7 +64,7 @@ cohere.Dataset {
 
 ## Step 2: Create embeddings via Cohere's Embed Jobs endpoint
 
-```python
+```python PYTHON
 job = co.create_embed_job(dataset_id=ds.id,
                           input_type='search_document',
                           model='embed-english-v3.0',
@@ -78,7 +78,7 @@ job.wait() # poll the server until the job is completed
 ...
 ```
 
-```python
+```python PYTHON
 print(job)
 ```
 
@@ -108,7 +108,7 @@ cohere.EmbedJob {
 
 ## Step 3: Prepare embeddings for upsert
 
-```python
+```python PYTHON
 output_dataset=co.get_dataset(job.output.id)
 data_array = []
 for record in output_dataset:
@@ -123,7 +123,7 @@ to_upsert = list(zip(ids, embeds, meta))
 
 ## Step 4: Initialize Pinecone vector database
 
-```python
+```python PYTHON
 from pinecone import ServerlessSpec
 
 index_name = "embed-jobs-serverless-test-example"
@@ -140,7 +140,7 @@ idx = pc.Index(index_name)
 
 ## Step 5: Upsert embeddings into the index
 
-```python
+```python PYTHON
 batch_size = 128
 
 for i in range(0, len(data_array), batch_size):
@@ -159,7 +159,7 @@ print(idx.describe_index_stats())
 
 ## Step 6: Query the index
 
-```python
+```python PYTHON
 query = "What did Microsoft announce in Las Vegas?"
 
 xq = co.embed(
@@ -178,7 +178,7 @@ res = idx.query(xq, top_k=20, include_metadata=True)
 (1, 1024)
 ```
 
-```python
+```python PYTHON
 for match in res['matches']:
     print(f"{match['score']:.2f}: {match['metadata']['text']}")
 ```
@@ -208,7 +208,7 @@ for match in res['matches']:
 
 ## Step 7: Rerank the retrieved results
 
-```python
+```python PYTHON
 docs =[match['metadata']['text'] for match in res['matches']]
 
 rerank_response = co.rerank(
@@ -229,7 +229,7 @@ for response in rerank_response:
 
 ## Another example - query and rerank
 
-```python
+```python PYTHON
 query = "What was the first youtube video about?"
 
 xq = co.embed(
@@ -271,7 +271,7 @@ for match in res['matches']:
 0.45: In September 2020, YouTube announced that it would be launching a beta version of a new platform of 15-second videos, similar to TikTok, called YouTube Shorts. The platform was first tested in India but as of March 2021 has expanded to other countries including the United States with videos now able to be up to 1 minute long. The platform is not a standalone app, but is integrated into the main YouTube app. Like TikTok, it gives users access to built-in creative tools, including the possibility of adding licensed music to their videos. The platform had its global beta launch in July 2021.
 ```
 
-```python
+```python PYTHON
 docs =[match['metadata']['text'] for match in res['matches']]
 
 rerank_response = co.rerank(

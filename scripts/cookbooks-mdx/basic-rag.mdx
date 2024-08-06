@@ -154,7 +154,7 @@ In this example, we'll use a recent piece of text, that wasn't in the training d
 In practice, you would typically do RAG on much longer text, that doesn't fit in the context window of the model.
 
 
-```python
+```python PYTHON
 %pip install "cohere<5" --quiet
 ```
 
@@ -163,14 +163,14 @@ In practice, you would typically do RAG on much longer text, that doesn't fit in
     [?25h
 
 
-```python
+```python PYTHON
 import cohere
 API_KEY = "..." # fill in your Cohere API key here
 co = cohere.Client(API_KEY)
 ```
 
 
-```python
+```python PYTHON
 !pip install wikipedia --quiet
 import wikipedia
 ```
@@ -180,7 +180,7 @@ import wikipedia
 
 
 
-```python
+```python PYTHON
 article = wikipedia.page('Dune Part Two')
 text = article.content
 print(f"The text has roughly {len(text.split())} words.")
@@ -196,7 +196,7 @@ We index the document in a vector database. This requires getting the documents,
 ### We split the document into chunks of roughly 512 words
 
 
-```python
+```python PYTHON
 %pip install -qU langchain-text-splitters --quiet
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 ```
@@ -207,7 +207,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
     [?25h
 
 
-```python
+```python PYTHON
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=512,
     chunk_overlap=50,
@@ -228,7 +228,7 @@ print(f"The text has been broken down in {len(chunks)} chunks.")
 Cohere embeddings are state-of-the-art.
 
 
-```python
+```python PYTHON
 model="embed-english-v3.0"
 response = co.embed(
     texts= chunks,
@@ -248,12 +248,12 @@ print(f"We just computed {len(embeddings)} embeddings.")
 We use the simplest vector database ever: a python dictionary using `np.array()`.
 
 
-```python
+```python PYTHON
 !pip install numpy --quiet
 ```
 
 
-```python
+```python PYTHON
 import numpy as np
 vector_database = {i: np.array(embedding) for i, embedding in enumerate(embeddings)}
 ```
@@ -264,7 +264,7 @@ vector_database = {i: np.array(embedding) for i, embedding in enumerate(embeddin
 ### Define the user question
 
 
-```python
+```python PYTHON
 query = "Name everyone involved in writing the script, directing, and producing 'Dune: Part Two'?"
 
 ```
@@ -274,7 +274,7 @@ query = "Name everyone involved in writing the script, directing, and producing 
 Cohere embeddings are state-of-the-art.
 
 
-```python
+```python PYTHON
 response = co.embed(
     texts=[query],
     model=model,
@@ -293,7 +293,7 @@ print("query_embedding: ", query_embedding)
 We use cosine similarity to find the most similar chunks
 
 
-```python
+```python PYTHON
 def cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
@@ -333,7 +333,7 @@ We rerank the 10 chunks retrieved from the vector database. Reranking boosts ret
 Reranking lets us go from 10 chunks retrieved from the vector database, to the 3 most relevant chunks.
 
 
-```python
+```python PYTHON
 response = co.rerank(
     query=query,
     documents=top_chunks_after_retrieval,
@@ -356,7 +356,7 @@ for t in top_chunks_after_rerank:
 ## Step 3 - Generate the model final answer, given the retrieved and reranked chunks
 
 
-```python
+```python PYTHON
 preamble = """
 ## Task & Context
 You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.
@@ -367,7 +367,7 @@ Unless the user asks for a different style of answer, you should answer in full 
 ```
 
 
-```python
+```python PYTHON
 documents = [
     {"title": "chunk 0", "snippet": top_chunks_after_rerank[0]},
     {"title": "chunk 1", "snippet": top_chunks_after_rerank[1]},
@@ -417,7 +417,7 @@ These citations are optional — you can decide to ignore them.
 
 
 
-```python
+```python PYTHON
 print("Citations that support the final answer:")
 for cite in response.citations:
   print(cite)
@@ -457,7 +457,7 @@ for cite in response.citations:
 
 
 
-```python
+```python PYTHON
 def insert_citations_in_order(text, citations):
     """
     A helper function to pretty print citations.

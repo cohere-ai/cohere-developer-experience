@@ -20,7 +20,7 @@ Also, note that multi-step is enabled by default.
 
 ### Step 1: Define the tools
 
-```python
+```python PYTHON
 # define the `web_search` tool.
 
 def web_search(query: str) -> list[dict]:
@@ -45,7 +45,7 @@ web_search_tool = {
 
 ### Step 2: Ask model for tool calls and send back tool results
 
-```python
+```python PYTHON
 import cohere
 co = cohere.Client(api_key="<YOUR API KEY>")
 
@@ -107,18 +107,10 @@ That said single-step tool use only facilitates the model calling multiple tools
 
 #### When Should I Use Multi-step Tool Use?
 
-For more complex queries, such as those that require multiple steps, it's probably better to operate in multi-step mode. You can do this by setting `enable_multistep=True` and providing a list of tools through the Chat API. In multi-step mode, the model can reason across steps and select multiple tools to answer a question completely. 
-
-To illustrate, imagine you give the Chat API a query like "What was the weather where I was yesterday," along with a location tool (to return the user’s location given a timestamp) and a weather tool (to return the weather at a given location). Here's what happens:
-
-- First, the model will make a plan, which consists in first calling the location tool (step 1), and then calling the weather tool (step 2) based on the output of the location tool.
-- Then, the model receives the results of these tool calls and the underlying model's reasoning.
-- In a subsequent call, the model will determine that it still doesn’t have all the information required to answer, and select another tool. 
-- Etc.
+For more complex queries it's probably better to operate in multi-step mode, which is the default (you can operate in single-step mode by setting `force_single_step=True`). In multi-step mode, the model can reason across steps and select multiple tools to answer a question completely.
 
 #### What is the difference between tool use and Retrieval Augmented Generation (RAG)?
 
 Tool use is a natural extension of retrieval augmented generation (RAG). RAG is about enabling the model to interact with an information retrieval system (like a vector database). Our models are trained to be excellent at RAG use cases.
 
 Tool use pushes this further, allowing Cohere models to go far beyond information retrieval, interact with search engines, APIs, functions, databases, and many other tools.
-

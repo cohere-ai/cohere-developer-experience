@@ -17,7 +17,7 @@ import { CookbookHeader } from "../../components/cookbook-header";
 
 <CookbookHeader href="https://github.com/cohere-ai/notebooks/blob/main/notebooks/guides/Chunking_strategies.ipynb" />
 
-```python
+```python PYTHON
 %%capture
 !pip install cohere
 !pip install -qU langchain-text-splitters
@@ -25,7 +25,7 @@ import { CookbookHeader } from "../../components/cookbook-header";
 !pip install llama-index-postprocessor-cohere-rerank
 ```
 
-```python
+```python PYTHON
 import requests
 from typing import List
 
@@ -44,7 +44,7 @@ from llama_index.postprocessor.cohere_rerank import CohereRerank
 from llama_index.core import VectorStoreIndex, ServiceContext
 ```
 
-```python
+```python PYTHON
 co_model = 'command-r'
 co_api_key = getpass("Enter Cohere API key: ")
 co = cohere.Client(api_key=co_api_key)
@@ -94,7 +94,7 @@ Designing a robust chunking strategy is as much a science as an art. There are n
 
 ## Utils
 
-```python
+```python PYTHON
 def set_css():
   display(HTML('''
 
@@ -104,7 +104,7 @@ get_ipython().events.register('pre_run_cell', set_css)
 set_css()
 ```
 
-```python
+```python PYTHON
 def insert_citations(text: str, citations: List[dict]):
     """
     A helper function to pretty print citations.
@@ -150,7 +150,7 @@ def build_retriever(documents, top_n=5):
 
 In this example we will work with an 2023 Tesla earning call transcript.
 
-```python
+```python PYTHON
 # Get all investement memos (19) in bvp repository
 url_path = 'https://www.fool.com/earnings/call-transcripts/2024/01/24/tesla-tsla-q4-2023-earnings-call-transcript/'
 response = requests.get(url_path)
@@ -186,7 +186,7 @@ Elon Musk -- Chief Executive Officer and Product Architect
 Yeah. The creators of Westworld, Jonathan Nolan, Lisa Joy Nolan, are friends -- are all friends of mine, actually. And I invited them to come see the lab and, like, well, come see it, hopefully soon. It's pretty well -- especially the sort of subsystem test stands where you've just got like one leg on a test stand just doing repetitive exercises and one arm on a test stand pretty well.
 ```
 
-```python
+```python PYTHON
 # Define the question
 question = "Who mentions Jonathan Nolan?"
 ```
@@ -195,7 +195,7 @@ In this case, we are more concerned about accuracy than a verbose answer, so we 
 
 We employ the `RecursiveCharacterTextSplitter` from [LangChain](https://python.langchain.com/docs/get_started/introduction) for this task.
 
-```python
+```python PYTHON
 # Define the chunking function
 def get_chunks(text, chunk_size, chunk_overlap):
   text_splitter = RecursiveCharacterTextSplitter(
@@ -217,7 +217,7 @@ In our first experiment we define the chunk size as 500 and allow **no overlap b
 
 Subsequently, we implement the standard RAG pipeline. We feed the chunks into a retriever, selecting the `top_n` most pertinent to the query chunks, and supply them as context to the generation model. Throughout this pipeline, we leverage [Cohere's endpoints](https://docs.cohere.com/reference/about), specifically, `co.embed`, `co.re.rank`, and finally, `co.chat`.
 
-```python
+```python PYTHON
 chunk_size = 500
 chunk_overlap = 0
 documents = get_chunks(text, chunk_size, chunk_overlap)
@@ -244,7 +244,7 @@ An unknown speaker mentions Jonathan Nolan in a conversation about the creators 
 
 A notable feature of [`co.chat`](https://docs.cohere.com/reference/chat) is its ability to ground the model's answer within the context. This means we can identify which chunks were used to generate the answer. Below, we show the previous output of the model together with the citation reference, where `[num]` represents the index of the chunk.
 
-```python
+```python PYTHON
 print(insert_citations(response.text, response.citations))
 ```
 
@@ -254,7 +254,7 @@ An unknown speaker [0] mentions Jonathan Nolan in a conversation about the creat
 
 Indeed, by printing the cited chunk, we can validate that the text was divided so that the generation model could not provide the correct response. Notably, the speaker's name is not included in the context, which is why the model refes to an `unknown speaker`.
 
-```python
+```python PYTHON
 print(source_nodes[0])
 ```
 
@@ -268,7 +268,7 @@ In the previous experiment, we discovered that the chunks were generated in a wa
 
 Therefore, this time to mitigate this issue, we **allow for overlap between consecutive chunks**.
 
-```python
+```python PYTHON
 chunk_size = 500
 chunk_overlap = 100
 documents = get_chunks(text,chunk_size, chunk_overlap)
@@ -295,7 +295,7 @@ Elon Musk mentions Jonathan Nolan. Musk is the CEO and Product Architect of the 
 
 Again, we can print the text along with the citations.
 
-```python
+```python PYTHON
 print(insert_citations(response.text, response.citations))
 ```
 
@@ -305,7 +305,7 @@ Elon Musk [0] mentions Jonathan Nolan. Musk is the CEO and Product Architect [0]
 
 And investigate the chunks which were used as context to answer the query.
 
-```python
+```python PYTHON
 source_nodes[0]
 ```
 
@@ -329,7 +329,7 @@ Firstly, let's observe that in the HTML text, each time the speaker changes, the
 
 To facilitate our text chunking process, we'll use the above observation and introduce a unique character sequence `###`, which we'll utilize as a marker for splitting the text.
 
-```python
+```python PYTHON
 print('HTML text')
 print(target_divs[:3])
 print('-------------------\n')
@@ -359,7 +359,7 @@ During this call, we will discuss our business outlook and make forward-looking 
 
 In this approach, we prioritize splitting the text at the appropriate separator, `###.` To ensure this behavior, we'll use `CharacterTextSplitter` from [LangChain](https://python.langchain.com/docs/get_started/introduction), guaranteeing such behavior. From our analysis of the text and the fact that we aim to preserve entire speaker speeches intact, we anticipate that most of them will exceed a length of 500. Hence, we'll increase the chunk size to 1000.
 
-```python
+```python PYTHON
 separator = "###"
 chunk_size = 1000
 chunk_overlap = 0
@@ -409,7 +409,7 @@ Elon Musk mentions Jonathan Nolan. Musk is friends with the creators of Westworl
 
 Below we validate the answer using citations.
 
-```python
+```python PYTHON
 print(insert_citations(response.text, response.citations))
 ```
 
@@ -417,7 +417,7 @@ print(insert_citations(response.text, response.citations))
 Elon Musk [0] mentions Jonathan Nolan. [0] Musk is friends [0] with the creators of Westworld [0], Jonathan Nolan [0] and Lisa Joy Nolan. [0]
 ```
 
-```python
+```python PYTHON
 source_nodes[0]
 ```
 

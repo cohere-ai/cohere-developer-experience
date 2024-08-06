@@ -205,7 +205,7 @@ In this notebook we explore how to setup a [Cohere Agent](https://docs.cohere.co
 # Setup
 
 
-```python
+```python PYTHON
 import os
 from typing import List
 
@@ -220,13 +220,13 @@ from langchain_experimental.utilities import PythonREPL
 ```
 
 
-```python
+```python PYTHON
 # Uncomment if you need to install the following packages
 # !pip install --quiet langchain langchain_experimental cohere --upgrade
 ```
 
 
-```python
+```python PYTHON
 # versions
 print('cohere version:', cohere.__version__)
 print('langchain version:', langchain.__version__)
@@ -243,7 +243,7 @@ print('langchain_experimental version:', langchain_experimental.__version__)
 ### API Key 
 
 
-```python
+```python PYTHON
 COHERE_API_KEY = os.environ["COHERE_API_KEY"]
 CHAT_URL= "https://api.cohere.ai/v1/chat"
 COHERE_MODEL = 'command-r-plus'
@@ -253,13 +253,13 @@ co = cohere.Client(api_key=COHERE_API_KEY)
 ### Data Loading 
 
 
-```python
+```python PYTHON
 income_statement = pd.read_csv('income_statement.csv')
 balance_sheet = pd.read_csv('balance_sheet.csv')
 ```
 
 
-```python
+```python PYTHON
 income_statement.head(2)
 ```
 
@@ -351,7 +351,7 @@ income_statement.head(2)
 
 
 
-```python
+```python PYTHON
 balance_sheet.head(2)
 ```
 
@@ -463,7 +463,7 @@ Here we define the python tool using langchain's PythonREPL. We also define `fun
 
 
 
-```python
+```python PYTHON
 python_repl = PythonREPL()
 python_tool = Tool(
     name="python_repl",
@@ -508,7 +508,7 @@ tools = [
 As [Multi-Step Tool Use](https://docs.cohere.com/page/basic-multi-step) shows, you have a lot of flexiblity on how you can customize and interact with the cohere agent. Here I am creating a wrapper so that it automatically determines when to stop calling the tools and output final answer. It will run maximum of 15 steps. 
 
 
-```python
+```python PYTHON
 def cohere_agent(
     message: str,
     preamble: str,
@@ -607,7 +607,7 @@ We will ask the following questions given income statement data.
 * What is the minimum ratio of operating income loss divided by non operating income expense? 
 
 
-```python
+```python PYTHON
 question_dict ={
     'q1': ['what is the highest value of cost of goods and service?',169559000000],
     'q2': ['what is the largest gross profit margin?',0.3836194330595236],
@@ -616,7 +616,7 @@ question_dict ={
 ```
 
 
-```python
+```python PYTHON
 preamble = """
 You are an expert who answers the user's question. You are working with a pandas dataframe in Python. The name of the dataframe is `income_statement.csv`.
 Here is a preview of the dataframe:
@@ -637,7 +637,7 @@ print(preamble)
 
 
 
-```python
+```python PYTHON
 for qsn,val in question_dict.items():
     print(f'question:{qsn}')
     question = val[0]
@@ -695,14 +695,14 @@ As you will see below, this question can be obtained only by accessing both the 
 
 
 
-```python
+```python PYTHON
 question_dict ={
     'q1': ['what is the ratio of the largest stockholders equity to the smallest revenue'],
 }
 ```
 
 
-```python
+```python PYTHON
 # get the largest stockholders equity
 x = balance_sheet['StockholdersEquity'].astype(float).max()
 print(f"The largest stockholders equity value is: {x}")
@@ -722,7 +722,7 @@ print(f"Their ratio is: {ratio}")
 
 
 
-```python
+```python PYTHON
 preamble = """
 You are an expert who answers the user's question in complete sentences. You are working with two pandas dataframe in Python. Ensure your output is a string.
 
@@ -756,7 +756,7 @@ print(preamble)
 
 
 
-```python
+```python PYTHON
 for qsn,val in question_dict.items():
     print(f'question:{qsn}')
     question = val[0]
@@ -787,7 +787,7 @@ You will see that the second method is able to come to the answer with fewer ste
 
 
 
-```python
+```python PYTHON
 preamble = """
 You are an expert who answers the user's question. You are working with a pandas dataframe in Python. The name of the dataframe is `income_statement.csv`.
 """
@@ -810,7 +810,7 @@ output = cohere_agent(question1, preamble, tools, verbose=True)
 As you see above, the model failed to execute because it assumed certain column names but they turned out to be wrong. One simple fix is to tell the model to continue to solve the problem in the face of error. 
 
 
-```python
+```python PYTHON
 preamble = """
 You are an expert who answers the user's question. You are working with a pandas dataframe in Python. The name of the dataframe is `income_statement.csv`.
 If you run into error, keep trying until you fix it. You may need to view the data to understand the error.
@@ -848,7 +848,7 @@ output = cohere_agent(question1, preamble, tools, verbose=True)
 What if we directly give the model the ability to view the data as a tool so that it can explicitly use it instead of indirectly figuring it out? 
 
 
-```python
+```python PYTHON
 def view_csv_data(path: str) -> dict:
     """
     Function to view the head, tail and shape of a given csv file.
@@ -893,7 +893,7 @@ tools = [
 ```
 
 
-```python
+```python PYTHON
 preamble = """
 You are an expert who answers the user's question. You are working with a pandas dataframe in Python. The name of the dataframe is `income_statement.csv`.
 Always view the data first to write flawless code.

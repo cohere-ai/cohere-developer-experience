@@ -16,13 +16,13 @@ To follow along with this tutorial, you need to be familiar with Python. Make su
 
 First, you need to install the python dependencies required to run the project. Use pip to install them using the command below
 
-```python
+```python PYTHON
 pip install requests beautifulsoup4 cohere altair clean-text numpy pandas sklearn > /dev/null
 ```
 
 Create a new python file named cohere_nlp.py. Write all your code in this file. import the dependencies and initialize Cohere’s client.
 
-```python
+```python PYTHON
 import cohere
 
 api_key = '<api_key>'
@@ -33,7 +33,7 @@ This tutorial focuses on applying topic modeling to look for recent trends in AI
 
 First, import the required libraries to make web requests and process the web content .
 
-```python
+```python PYTHON
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -43,14 +43,14 @@ from cleantext import clean
 
 Next, make an HTTP request to the source website that has an archive of the AI papers.
 
-```python
+```python PYTHON
 URL = "https://www.jair.org/index.php/jair/issue/archive"
 page = requests.get(URL)
 ```
 
 Use this archive to get the list of AI papers published. This archive has papers published since 2015. This tutorial considers papers published recently, on or after 2020 only.
 
-```python
+```python PYTHON
 soup = BeautifulSoup(page.content, "html.parser")
 archive_links = []
 
@@ -64,7 +64,7 @@ for link in soup.select('a.title'):
 
 Finally, you’ll need to clean the titles of the AI papers gathered. Remove trailing white spaces and unwanted characters. Use the NTLK library to get English stop words and filter them out.
 
-```python
+```python PYTHON
 papers = []
 for archive in archive_links:
   page = requests.get(archive['link'])
@@ -98,7 +98,7 @@ for archive in archive_links:
 
 The dataset created using this process has 258 AI papers published between 2020 and 2022. Use pandas library to create a data frame to hold our text data.
 
-```python
+```python PYTHON
 df = pd.DataFrame(papers)
 print(len(df))
 ```
@@ -117,7 +117,7 @@ Cohere’s platform provides an Embed Endpoint that returns text embeddings. An 
 
 Write a function to create the word embeddings using Cohere. The function should read as follows:
 
-```python
+```python PYTHON
 def get_embeddings(text,model='medium'):
   output = co.embed(
                 model=model,
@@ -127,13 +127,13 @@ def get_embeddings(text,model='medium'):
 
 Create a new column in your pandas data frame to hold the embeddings created.
 
-```python
+```python PYTHON
 df['title_embeds'] = df['title'].apply(get_embeddings)
 ```
 
 Congratulations! You have created the word embeddings . Now, you will proceed to visualize the embeddings using a scatter plot. First, you need to reduce the dimensions of the word embeddings. You’ll use the Principal Component Analysis (PCA) method to achieve this task. Import the necessary packages and create a function to return the principle components.
 
-```python
+```python PYTHON
 from sklearn.decomposition import PCA
 
 def get_pc(arr,n):
@@ -144,7 +144,7 @@ def get_pc(arr,n):
 
 Next, create a function to generate a scatter plot chart. You’ll use the altair library to create the charts.
 
-```python
+```python PYTHON
 import altair as alt
 def generate_chart(df,xcol,ycol,lbl='off',color='basic',title=''):
   chart = alt.Chart(df).mark_circle(size=500).encode(
@@ -181,7 +181,7 @@ def generate_chart(df,xcol,ycol,lbl='off',color='basic',title=''):
 
 Finally, use the embeddings with reduced dimensionality to create a scatter plot.
 
-```python
+```python PYTHON
 sample = 200
 embeds = np.array(df['title_embeds'].tolist())
 embeds_pc2 = get_pc(embeds,2)
@@ -237,7 +237,7 @@ print(df_pc2.iloc[:sample])
 
 Here’s a chart demonstrating the word embeddings for AI papers. It is important to note that the chart represents a sample size of 200 papers.
 
-```python
+```python PYTHON
 generate_chart(df_pc2.iloc[:sample],'0','1',title='2D Embeddings')
 ```
 
@@ -247,7 +247,7 @@ Data searching techniques focus on using keywords to retrieve text-based informa
 
 First, create a function to get similarities between two embeddings. This will use the cosine similarity algorithm from the sci-kit learn library.
 
-```python
+```python PYTHON
 from sklearn.metrics.pairwise import cosine_similarity
 
 def get_similarity(target,candidates):
@@ -269,7 +269,7 @@ def get_similarity(target,candidates):
 
 Next, create embeddings for the search query
 
-```python
+```python PYTHON
 new_query = "graph network strategies"
 
 new_query_embeds = get_embeddings(new_query)
@@ -278,7 +278,7 @@ new_query_embeds = get_embeddings(new_query)
 
 Finally, check the similarity between the two embeddings. Display the top 10 similar papers using your result
 
-```python
+```python PYTHON
 similarity = get_similarity(new_query_embeds,embeds[:sample])
 
 print('Query:')
@@ -503,7 +503,7 @@ Clustering is a process of grouping similar documents into clusters. It allows y
 
 First, import the k-means algorithm from the scikit-learn package. Then configure two variables: the number of clusters and a duplicate dataset.
 
-```python
+```python PYTHON
 from sklearn.cluster import KMeans
 
 df_clust = df_pc2.copy()
@@ -513,7 +513,7 @@ n_clusters=5
 
 Next, initialize the k-means model and use it to fit the embeddings to create the clusters.
 
-```python
+```python PYTHON
 kmeans_model = KMeans(n_clusters=n_clusters, random_state=0)
 classes = kmeans_model.fit_predict(embeds).tolist()
 print(classes)
@@ -527,7 +527,7 @@ df_clust['cluster'] = (list(map(str,classes)))
 
 Finally, plot a scatter plot to visualize the 5 clusters in our sample size.
 
-```python
+```python PYTHON
 df_clust.columns = df_clust.columns.astype(str)
 generate_chart(df_clust.iloc[:sample],'0','1',lbl='off',color='cluster',title='Clustering with 5 Clusters')
 ```

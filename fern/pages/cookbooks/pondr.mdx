@@ -24,13 +24,13 @@ In this notebook we will walk through the first two steps.
 
 Install and import the tools we will need as well as initializing the Cohere model.
 
-```python
+```python PYTHON
 import cohere
 from cohere.responses.classify import Example
 import pandas as pd
 ```
 
-```python
+```python PYTHON
 co=cohere.Client('YOUR_API_KEY')
 ```
 
@@ -38,7 +38,7 @@ co=cohere.Client('YOUR_API_KEY')
 
 Generate a list of potential conversation questions and retain the first 10.
 
-```python
+```python PYTHON
 #user_input is hardcoded for this example
 user_input='I am meeting up with a coworker. We are meeting at a fancy restaurant. I wanna ask some interesting questions. These questions should be deep.'
 prompt=user_input+'\nHere are 10 interesting questions to ask:\n1)'
@@ -46,7 +46,7 @@ response=co.generate(model='xlarge', prompt=prompt, max_tokens=200, temperature=
 response
 ```
 
-```python
+```python PYTHON
 def generation_to_df(generation):
     generation=response.split('\n')
     clean_questions=[]
@@ -57,7 +57,7 @@ def generation_to_df(generation):
     return clean_q_df
 ```
 
-```python
+```python PYTHON
 clean_q_df = generation_to_df(response)
 pd.options.display.max_colwidth=150
 clean_q_df
@@ -67,7 +67,7 @@ clean_q_df
 
 Rank and sort the questions based on interestingness and specificity.
 
-```python
+```python PYTHON
 interestingness=[
     Example("What do you think is the hardest part of what I do for a living?", "Not Interesting"),
     Example("What\'s the first thing you noticed about me?", "Interesting"),
@@ -107,7 +107,7 @@ specificity=[
     Example("What would your younger self not believe about your life today?", "Specific")]
 ```
 
-```python
+```python PYTHON
 def add_attribute(df, attribute, name, target):
 
   response = co.classify(
@@ -122,7 +122,7 @@ def add_attribute(df, attribute, name, target):
   df[name]=q_conf
 ```
 
-```python
+```python PYTHON
 add_attribute(clean_q_df, interestingness, 'interestingness', 'Interesting')
 add_attribute(clean_q_df, specificity, 'specificity', 'Specific')
 clean_q_df['average']= clean_q_df.iloc[:,1:].mean(axis=1)

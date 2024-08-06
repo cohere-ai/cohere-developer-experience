@@ -16,7 +16,7 @@ The recommended way to achieve [multi-step tool use with Cohere](https://docs.co
 
 ## Install Dependencies
 
-```python
+```python PYTHON
 ! pip install --quiet langchain langchain_cohere langchain_experimental
 ```
 
@@ -37,7 +37,7 @@ The recommended way to achieve [multi-step tool use with Cohere](https://docs.co
 [?25h
 ```
 
-```python
+```python PYTHON
 import os
 os.environ['COHERE_API_KEY'] = <your-api-key>
 ```
@@ -57,7 +57,7 @@ Plus the model can self-reflect.
 
 You can easily equip your agent with web search!
 
-```python
+```python PYTHON
 from langchain_community.tools.tavily_search import TavilySearchResults
 
 os.environ["TAVILY_API_KEY"] = <your-api-key> # you can create an API key for free on Tavily's website
@@ -77,7 +77,7 @@ internet_search.args_schema = TavilySearchInput
 
 You can easily equip your agent with a vector store!
 
-```python
+```python PYTHON
 !pip --quiet install faiss-cpu tiktoken
 ```
 
@@ -87,7 +87,7 @@ You can easily equip your agent with a vector store!
 [?25h
 ```
 
-```python
+```python PYTHON
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.vectorstores import FAISS
@@ -116,7 +116,7 @@ vectorstore_retriever = vectorstore.as_retriever()
 
 ```
 
-```python
+```python PYTHON
 from langchain.tools.retriever import create_retriever_tool
 
 vectorstore_search = create_retriever_tool(
@@ -130,7 +130,7 @@ vectorstore_search = create_retriever_tool(
 
 You can easily equip your agent with a python interpreter!
 
-```python
+```python PYTHON
 from langchain.agents import Tool
 from langchain_experimental.utilities import PythonREPL
 
@@ -151,7 +151,7 @@ python_tool.args_schema = ToolInput
 
 You can easily equip your agent with any Python function!
 
-```python
+```python PYTHON
 from langchain_core.tools import tool
 import random
 
@@ -179,7 +179,7 @@ random_operation_tool.args_schema = random_operation_inputs
 The model can smartly pick the right tool(s) for the user query, call them in any sequence, analyze the results and self-reflect.
 Once the model considers it has enough information to answer the user question, it generates the final answer.
 
-```python
+```python PYTHON
 from langchain.agents import AgentExecutor
 from langchain_cohere.react_multi_hop.agent import create_cohere_react_agent
 from langchain_core.prompts import ChatPromptTemplate
@@ -208,7 +208,7 @@ agent_executor = AgentExecutor(agent=agent, tools=[internet_search, vectorstore_
 
 A question that requires using a predefined tool from Langchain
 
-```python
+```python PYTHON
 response = agent_executor.invoke({
     "input": "I want to write an essay about the Roman Empire. Any tips for writing an essay? Any fun facts?",
     "preamble": preamble,
@@ -397,7 +397,7 @@ Here are some fun facts about the Roman Empire:
 
 A question that requires the large language model to use a custom tool.
 
-```python
+```python PYTHON
 response = agent_executor.invoke({
     "input": "Calculate the result of the random operation of 10 and 20. Then find a few fun facts about that number, as well as its prime factors.",
     "preamble": preamble,
@@ -447,7 +447,7 @@ The prime factors of 200 are <co: 10="">2 and 5</co:>.[0m
 
 A question that requires the large language model to directly answer.
 
-```python
+```python PYTHON
 response = agent_executor.invoke({
     "input": "Hey how are you?",
     "preamble": preamble,
@@ -480,7 +480,7 @@ Grounded answer: I'm an AI chatbot, so I don't have feelings as such, but I'm he
 
 A question that requires using multipe tools, in sequence
 
-```python
+```python PYTHON
 response = agent_executor.invoke({
     "input": "In what year was the company that was founded as Sound of Music went public? What was its stock price in 2000 and 2010.",
     "preamble": preamble,
@@ -517,7 +517,7 @@ Grounded answer: <co: 0,1,2,3,4="">Best Buy</co:>, which was founded as Sound of
 
 The chat history enables you to have multi-turn conversations with the ReAct agent.
 
-```python
+```python PYTHON
 from langchain_core.messages import HumanMessage, AIMessage
 
 chat_history = [
@@ -529,7 +529,7 @@ chat_history = [
 prompt = ChatPromptTemplate.from_messages(chat_history)
 ```
 
-```python
+```python PYTHON
 agent = create_cohere_react_agent(
     llm=llm,
     tools=[internet_search, vectorstore_search, python_tool],
@@ -539,7 +539,7 @@ agent = create_cohere_react_agent(
 agent_executor = AgentExecutor(agent=agent, tools=[internet_search, vectorstore_search, python_tool], verbose=True)
 ```
 
-```python
+```python PYTHON
 response = agent_executor.invoke({
     "preamble": preamble,
 })

@@ -23,7 +23,7 @@ In this notebook we take thousands of the most popular posts from Hacker News an
 
 Let's start by installing the tools we'll need and then importing them.
 
-```python
+```python PYTHON
 !pip install cohere umap-learn altair annoy bertopic
 ```
 
@@ -88,7 +88,7 @@ Requirement already satisfied: urllib3<3,>=1.21.1 in /Users/alexiscook/anaconda3
 Requirement already satisfied: mpmath>=0.19 in /Users/alexiscook/anaconda3/lib/python3.11/site-packages (from sympy->torch>=1.11.0->sentence-transformers>=0.4.1->bertopic) (1.3.0)
 ```
 
-```python
+```python PYTHON
 import cohere
 import numpy as np
 import pandas as pd
@@ -106,7 +106,7 @@ pd.set_option('display.max_colwidth', None)
 
 Fill in your Cohere API key in the next cell. To do this, begin by [signing up to Cohere](https://os.cohere.ai/) (for free!) if you haven't yet. Then get your API key [here](https://dashboard.cohere.com/api-keys).
 
-```python
+```python PYTHON
 co = cohere.Client("COHERE_API_KEY") # Insert your Cohere API key
 ```
 
@@ -114,7 +114,7 @@ co = cohere.Client("COHERE_API_KEY") # Insert your Cohere API key
 
 We will use the top 3,000 posts from the Ask HN section of Hacker News. We provide a CSV containing the posts.
 
-```python
+```python PYTHON
 df = pd.read_csv('https://storage.googleapis.com/cohere-assets/blog/text-clustering/data/askhn3k_df.csv', index_col=0)
 
 print(f'Loaded a DataFrame with {len(df)} rows')
@@ -124,7 +124,7 @@ print(f'Loaded a DataFrame with {len(df)} rows')
 Loaded a DataFrame with 3000 rows
 ```
 
-```python
+```python PYTHON
 df.head()
 ```
 
@@ -241,7 +241,7 @@ df.head()
 
 We calculate the embeddings using Cohere's `embed-english-v3.0` model. The resulting embeddings matrix has 3,000 rows (one for each post) and 1024 columns (meaning each post title is represented with a 1024-dimensional embedding).
 
-```python
+```python PYTHON
 batch_size = 90
 
 embeds_list = []
@@ -265,7 +265,7 @@ embeds.shape
 
 For nearest-neighbor search, we can use the open-source Annoy library. Let's create a semantic search index and feed it all the embeddings.
 
-```python
+```python PYTHON
 search_index = AnnoyIndex(embeds.shape[1], 'angular')
 for i in range(len(embeds)):
     search_index.add_item(i, embeds[i])
@@ -282,7 +282,7 @@ True
 
 We can query neighbors of a specific post using `get_nns_by_item`.
 
-```python
+```python PYTHON
 example_id = 50
 
 similar_item_ids = search_index.get_nns_by_item(example_id,
@@ -365,7 +365,7 @@ Nearest neighbors:
 
 We're not limited to searching using existing items. If we get a query, we can embed it and find its nearest neighbors from the dataset.
 
-```python
+```python PYTHON
 query = "How can I improve my knowledge of calculus?"
 
 query_embed = co.embed(texts=[query],
@@ -454,12 +454,12 @@ Nearest neighbors:
 
 What if we want to browse the archive instead of only searching it? Let's plot all the questions in a 2D chart so you're able to visualize the posts in the archive and their similarities.
 
-```python
+```python PYTHON
 reducer = umap.UMAP(n_neighbors=100)
 umap_embeds = reducer.fit_transform(embeds)
 ```
 
-```python
+```python PYTHON
 df['x'] = umap_embeds[:,0]
 df['y'] = umap_embeds[:,1]
 
@@ -491,7 +491,7 @@ chart.interactive()
 
 Let's proceed to cluster the embeddings using KMeans from scikit-learn.
 
-```python
+```python PYTHON
 n_clusters = 8
 
 kmeans_model = KMeans(n_clusters=n_clusters, random_state=0)
@@ -500,7 +500,7 @@ classes = kmeans_model.fit_predict(embeds)
 
 ## 5- Extract major keywords from each cluster so we can identify what the cluster is about
 
-```python
+```python PYTHON
 documents =  df['title']
 documents = pd.DataFrame({"Document": documents,
                           "ID": range(len(documents)),
@@ -512,7 +512,7 @@ count = count_vectorizer.transform(documents_per_topic.Document)
 words = count_vectorizer.get_feature_names_out()
 ```
 
-```python
+```python PYTHON
 ctfidf = ClassTfidfTransformer().fit_transform(count).toarray()
 words_per_class = {label: [words[index] for index in ctfidf[label].argsort()[-10:]] for label in documents_per_topic.Topic}
 df['cluster'] = classes
@@ -523,7 +523,7 @@ df['keywords'] = df['cluster'].map(lambda topic_num: ", ".join(np.array(words_pe
 
 We can now plot the documents with their clusters and keywords
 
-```python
+```python PYTHON
 selection = alt.selection_multi(fields=['keywords'], bind='legend')
 
 chart = alt.Chart(df).transform_calculate(

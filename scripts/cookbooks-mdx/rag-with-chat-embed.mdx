@@ -162,11 +162,11 @@ For each user-chatbot interaction:
 - If no query is generated
   - **Step 4**: Call the Chat endpoint in normal mode to generate a response
 
-```python
+```python PYTHON
 ! pip install cohere hnswlib unstructured python-dotenv -q
 ```
 
-```python
+```python PYTHON
 import cohere
 from pinecone import Pinecone, PodSpec
 import uuid
@@ -179,7 +179,7 @@ co = cohere.Client("COHERE_API_KEY") # Get your API key here: https://dashboard.
 pc = Pinecone(api_key="PINECONE_API_KEY") # (get API key at app.pinecone.io)
 ```
 
-```python
+```python PYTHON
 import cohere
 import os
 import dotenv
@@ -194,7 +194,7 @@ pc = Pinecone(
 
 First, we define the list of documents we want to ingest and make available for retrieval. As an example, we'll use the contents from the first module of Cohere's _LLM University: What are Large Language Models?_.
 
-```python
+```python PYTHON
 raw_documents = [
     {
         "title": "Text Embeddings",
@@ -228,7 +228,7 @@ This method uses Cohere's `embed-english-v3.0` model to generate embeddings of t
 `index()`  
 This method uses the `hsnwlib` package to index the document chunk embeddings.  This will ensure efficient similarity search during retrieval.  Note that `hnswlib` uses a vector library, and we have chosen it for its simplicity.
 
-```python
+```python PYTHON
 class Vectorstore:
     """
     A class representing a collection of documents indexed into a vectorstore.
@@ -371,7 +371,7 @@ class Vectorstore:
 
 In the code cell below, we initialize an instance of the `Vectorstore` class and pass in the `raw_documents` list as input.
 
-```python
+```python PYTHON
 vectorstore = Vectorstore(raw_documents)
 ```
 
@@ -402,7 +402,7 @@ In the code cell below, we check the document chunks that are retrieved for the 
 
 ## Test Retrieval
 
-```python
+```python PYTHON
 vectorstore.retrieve("multi-head attention definition")
 ```
 
@@ -433,7 +433,7 @@ In either case, we also pass the `conversation_id` parameter, which retains the 
 
 We then print the chatbot's response.  In the case that the external information was used to generate a response, we also display citations.
 
-```python
+```python PYTHON
 class Chatbot:
     def __init__(self, vectorstore: Vectorstore):
         """
@@ -540,7 +540,7 @@ The format of each citation is:
 - `text`: The text representing this span
 - `document_ids`: The IDs of the documents being referenced (`doc_0` being the ID of the first document passed to the `documents` creating parameter in the endpoint call, and so on)
 
-```python
+```python PYTHON
 chatbot = Chatbot(vectorstore)
 
 chatbot.run()

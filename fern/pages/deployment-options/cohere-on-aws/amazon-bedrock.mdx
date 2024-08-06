@@ -27,7 +27,6 @@ Here are the steps you'll need to get set up in advance of running Cohere models
 
 - Subscribe to Cohere's models on Amazon Bedrock. For more details, [see here](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html).
 - You'll also need to install the AWS Python SDK and some related tooling. Run:
-  - `pip install boto3`. You can find more details about the boto3 library [here](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html#install-boto3).
   - `pip install cohere-aws` (or `pip install --upgrade cohere-aws` if you need to upgrade). You can also install from source with `python setup.py install`. 
   - For more details, see this [GitHub repo](https://github.com/cohere-ai/cohere-aws/) and [related notebooks](https://github.com/cohere-ai/cohere-aws/tree/main/notebooks/bedrock).
 - Finally, you'll have to configure your authentication credentials for AWS. This [document](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html#configuration) has more information.
@@ -36,12 +35,15 @@ Here are the steps you'll need to get set up in advance of running Cohere models
 
 You can use this code to invoke Cohere's embed model on Amazon Bedrock: 
 
-```python
-import boto3
-import json
+```python PYTHON
+import cohere
 
-# Create the AWS client for the Bedrock runtime with boto3
-aws_client = boto3.client(service_name="bedrock-runtime")
+co = cohere.BedrockClient(
+    aws_region="us-east-1",
+    aws_access_key="...",
+    aws_secret_key="...",
+    aws_session_token="...",
+)
 
 # Input parameters for embed. In this example we are embedding hacker news post titles.
 texts = ["Interesting (Non software) books?",
@@ -55,38 +57,34 @@ input_type = "clustering"
 truncate = "NONE" # optional
 model_id = "cohere.embed-english-v3" # or "cohere.embed-multilingual-v3"
 
-# Create the JSON payload for the request
-json_params = {
-        'texts': texts,
-        'truncate': truncate, 
-        "input_type": input_type
-    }
-json_body = json.dumps(json_params)
-params = {'body': json_body, 'modelId': model_id,}
 
 # Invoke the model and print the response
-result = aws_client.invoke_model(**params)
-response = json.loads(result['body'].read().decode())
-print(response)
+result = co.embed(
+						model=model_id,
+  					input_type=input_type,
+  				  texts=texts,
+  					truncate=truncate) # aws_client.invoke_model(**params)
+
+print(result)
 ```
 
 ## Text Generation
 
 You can use this code to invoke Cohere's Command models on Amazon Bedrock:
 
-```python
-import boto3
-import json
+```python PYTHON
+import cohere
 
-# Create the AWS client for the Bedrock runtime with boto3
-aws_client = boto3.client(service_name="bedrock-runtime")
+co = cohere.BedrockClient(
+    aws_region="us-east-1",
+    aws_access_key="...",
+    aws_secret_key="...",
+    aws_session_token="...",
+)
 
-# Create the JSON payload for the request
-json_params = {'prompt': "Write a LinkedIn post about starting a career in tech:"}
-params = {'body': json.dumps(json_params),'modelId': 'cohere.command-text-v14',}
+result = co.chat(message="Write a LinkedIn post about starting a career in tech:",
+                 model='cohere.command-r-plus-v1:0' # or 'cohere.command-r-v1:0'
+                 )
 
-# Invoke the model and print the response
-result = aws_client.invoke_model(**params)
-response = json.loads(result['body'].read().decode())
-print(response)
+print(result)
 ```
