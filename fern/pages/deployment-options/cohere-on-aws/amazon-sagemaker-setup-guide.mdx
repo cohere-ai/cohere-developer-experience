@@ -27,7 +27,6 @@ These permissions allow a user to manage your organization’s Amazon SageMaker 
 
 You'll also need to install the AWS Python SDK and some related tooling. Run:
 
-- `pip install boto3`. You can find more details about the boto3 library [here](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html#install-boto3).
 - `pip install cohere-aws` (or `pip install --upgrade cohere-aws` if you want to upgrade to the most recent version of the SDK).
 
 ## Cohere with Amazon SageMaker Setup
@@ -40,6 +39,64 @@ Next, explore the tools on the **Product Detail** page to evaluate how you want 
 - Usage: This section contains the technical details around supported data formats for each model, and offers links to documentation and notebooks that will help developers scope out the effort required to integrate with Cohere’s models.
 - Subscribing: This section will once again present you with both the pricing details and the EULA for final review before you accept the offer. This information is identical to the information on Product Detail page.
 - Configuration: The primary goal of this section is to retrieve the [Amazon Resource Name (ARN)](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html) for the product you have subscribed to.
+
+## Embeddings
+
+You can use this code to invoke Cohere's embed model on Amazon SageMaker:
+
+```python PYTHON
+import cohere
+
+co = cohere.SageMakerClient(
+    aws_region="us-east-1",
+    aws_access_key="...",
+    aws_secret_key="...",
+    aws_session_token="...",
+)
+
+# Input parameters for embed. In this example we are embedding hacker news post titles.
+texts = ["Interesting (Non software) books?",
+         "Non-tech books that have helped you grow professionally?",
+         "I sold my company last month for $5m. What do I do with the money?",
+         "How are you getting through (and back from) burning out?",
+         "I made $24k over the last month. Now what?",
+         "What kind of personal financial investment do you do?",
+         "Should I quit the field of software development?"]
+input_type = "clustering"
+truncate = "NONE" # optional
+model_id = "<YOUR ENDPOINT NAME>" # On SageMaker, you create a model name that you'll pass here. 
+
+
+# Invoke the model and print the response
+result = co.embed(
+						model=model_id,
+  					input_type=input_type,
+  				  texts=texts,
+  					truncate=truncate) 
+
+print(result)
+```
+
+## Text Generation
+
+You can use this code to invoke Cohere's Command models on Amazon SageMaker:
+
+```python PYTHON 
+import cohere
+
+co = cohere.SageMakerClient(
+    aws_region="us-east-1",
+    aws_access_key="...",
+    aws_secret_key="...",
+    aws_session_token="...",
+)
+
+# Invoke the model and print the response
+result = co.chat(message="Write a LinkedIn post about starting a career in tech:",
+                 model="<YOUR ENDPOINT NAME>") # On SageMaker, you create a model name that you'll pass here. 
+
+print(result)
+```
 
 ## Next Steps
 

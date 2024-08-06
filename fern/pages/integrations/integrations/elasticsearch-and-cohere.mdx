@@ -11,7 +11,7 @@ createdAt: "Sun Apr 07 2024 20:15:08 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Thu May 30 2024 15:56:35 GMT+0000 (Coordinated Universal Time)"
 ---
 
-<img src="../../../assets/images/17b17dc-elastic-search-logo.png" />
+<img src="../../../assets/images/17b17dc-elastic-search-logo.png" width="200px" height="auto" />
 
 [Elasticsearch](https://www.elastic.co/search-labs/blog/elasticsearch-cohere-embeddings-support) has all the tools developers need to build next generation search experiences with generative AI, and it supports native integration with [Cohere](https://www.elastic.co/search-labs/blog/elasticsearch-cohere-embeddings-support) through their [inference API](https://www.elastic.co/guide/en/elasticsearch/reference/master/semantic-search-inference.html).
 
@@ -60,14 +60,14 @@ Install and import the required Python Packages:
 
 To install the packages, use the following code
 
-```python
+```python PYTHON
 !pip install elasticsearch_serverless==0.2.0.20231031
 !pip install cohere==5.2.5
 ```
 
 ## Import the required packages
 
-```python
+```python PYTHON
 from elasticsearch_serverless import Elasticsearch, helpers
 import cohere
 import json
@@ -84,7 +84,7 @@ In order to create an Elasticsearch client you will need:
 When creating your API key in the Serverless dashboard make sure to turn on Control security privileges, and edit cluster privileges to specify `"cluster": ["all"].`  
 Note - you can also create a client using a local or Elastic Cloud cluster. For simplicity we use Elastic Serverless.
 
-```python
+```python PYTHON
 ELASTICSEARCH_ENDPOINT = "elastic_endpoint"
 ELASTIC_API_KEY = "encoded_api_key"
 
@@ -107,7 +107,7 @@ To set up an inference pipeline for ingestion we first must create an inference 
 
 We will create an inference endpoint that uses `embed-english-v3.0` and `int8` or `byte` compression to save on storage.
 
-```python
+```python PYTHON
 COHERE_API_KEY = "cohere_api_key"
 
 client.inference.put_model(
@@ -130,7 +130,7 @@ client.inference.put_model(
 
 Now that we have an inference endpoint we can create an inference pipeline and processor to use when we ingest documents into our index.
 
-```python
+```python PYTHON
 client.ingest.put_pipeline(
     id="cohere_embeddings",
     description="Ingest pipeline for Cohere inference.",
@@ -160,7 +160,7 @@ Let's note a few important parameters from that API call:
 
 We will now create an empty index that will be the destination of our documents and embeddings.
 
-```python
+```python PYTHON
 client.indices.create(
     index="cohere-wiki-embeddings",
     settings={"index": {"default_pipeline": "cohere_embeddings"}},
@@ -188,7 +188,7 @@ client.indices.create(
 
 Let’s now index our wiki dataset.
 
-```python
+```python PYTHON
 url = "https://raw.githubusercontent.com/cohere-ai/notebooks/main/notebooks/data/embed_jobs_sample_data.jsonl"
 response = requests.get(url)
 
@@ -218,7 +218,7 @@ Our index should now be populated with our wiki data and text embeddings for the
 Now let’s start querying our index. We will perform a hybrid search query, which means we will compute the relevance of search results based on the vector similarity to our query, as well as the keyword similarity. Hybrid search tends to lead to state-of-the-art search results and Elastic is well-suited to offer this.  
 Here we build a query that will search over the `title` and `text` fields using keyword matching, and will search over our text embeddings using vector similarity.
 
-```python
+```python PYTHON
 query = "When were the semi-finals of the 2022 FIFA world cup played?"
 
 response = client.search(
@@ -263,7 +263,7 @@ In order to effectively combine the results from our vector and BM25 retrieval, 
 
 First, create an inference endpoint with your Cohere API key. Make sure to specify a name for your endpoint, and the model_id of one of the rerank models. In this example we will use Rerank v3.
 
-```python
+```python PYTHON
 client.inference.put_model(
     task_type="rerank",
     inference_id="cohere_rerank",
@@ -284,7 +284,7 @@ You can now rerank your results using that inference endpoint. Here we will pass
 
 The inference service will respond with a list of documents in descending order of relevance. Each document has a corresponding index (reflecting the order the documents were in when sent to the inference endpoint), and if the “return_documents” task setting is True, then the document texts will be included as well.
 
-```python
+```python PYTHON
 response = client.inference.inference(
     inference_id="cohere_rerank",
     body={
@@ -315,7 +315,7 @@ Now that we have ranked our results, we can easily turn this into a RAG system w
 
 Next, we can easily get a grounded generation with citations from the Cohere Chat API. We simply pass in the user query and documents retrieved from Elasticsearch to the API, and print out our grounded response.
 
-```python
+```python PYTHON
 response = co.chat(message=query, documents=ranked_documents, model='command-r-plus')
 
 source_documents = []

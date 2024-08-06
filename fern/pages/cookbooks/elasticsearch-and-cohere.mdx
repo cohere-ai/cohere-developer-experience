@@ -30,13 +30,13 @@ First we need to `pip` install the following packages:
 
 After installing, in the Serverless dashboard, find your endpoint URL, and create your API key.
 
-```python
+```python PYTHON
 pip install elasticsearch_serverless cohere
 ```
 
 Next, we need to import the modules we need. 🔐 NOTE: getpass enables us to securely prompt the user for credentials without echoing them to the terminal, or storing it in memory.
 
-```python
+```python PYTHON
 from elasticsearch_serverless import Elasticsearch, helpers
 from getpass import getpass
 import cohere
@@ -51,7 +51,7 @@ Then we create a `client` object that instantiates an instance of the `Elasticse
 
 When creating your Elastic Serverless API key make sure to turn on Control security privileges, and edit cluster privileges to specify `"cluster": ["all"]`
 
-```python
+```python PYTHON
 ELASTICSEARCH_ENDPOINT = getpass("Elastic Endpoint: ")
 ELASTIC_API_KEY = getpass("Elastic encoded API key: ") # Use the encoded API key
 
@@ -63,7 +63,7 @@ client = Elasticsearch(
 
 Confirm that the client has connected with this test:
 
-```python
+```python PYTHON
 print(client.info())
 ```
 
@@ -73,7 +73,7 @@ Let's create the inference endpoint by using the [Create inference API](https://
 
 You'll need an Cohere API key for this that you can find in your Cohere account under the [API keys section](https://dashboard.cohere.com/api-keys). A production key is required to complete the steps in this notebook as the Cohere free trial API usage is limited.
 
-```python
+```python PYTHON
 COHERE_API_KEY = getpass("Enter Cohere API key:  ")
 
 client.options(ignore_status=[404]).inference.delete_model(inference_id="cohere_embeddings")
@@ -98,7 +98,7 @@ client.inference.put_model(
 
 Create an ingest pipeline with an inference processor by using the [`put_pipeline`](https://www.elastic.co/guide/en/elasticsearch/reference/master/put-pipeline-api.html) method. Reference the inference endpoint created above as the `model_id` to infer against the data that is being ingested in the pipeline.
 
-```python
+```python PYTHON
 client.options(ignore_status=[404]).ingest.delete_pipeline(id="cohere_embeddings")
 
 client.ingest.put_pipeline(
@@ -132,7 +132,7 @@ The mapping of the destination index – the index that contains the embeddings 
 
 Let's create an index named `cohere-wiki-embeddings` with the mappings we need.
 
-```python
+```python PYTHON
 client.indices.delete(index="cohere-wiki-embeddings", ignore_unavailable=True)
 client.indices.create(
     index="cohere-wiki-embeddings",
@@ -161,7 +161,7 @@ client.indices.create(
 
 Let's insert our example wiki dataset. You need a production Cohere account to complete this step, otherwise the documentation ingest will time out due to the API request rate limits.
 
-```python
+```python PYTHON
 url = "https://raw.githubusercontent.com/cohere-ai/notebooks/main/notebooks/data/embed_jobs_sample_data.jsonl"
 response = requests.get(url)
 
@@ -187,7 +187,7 @@ After the dataset has been enriched with the embeddings, you can query the data 
 
 Pass a `query_vector_builder` to the k-nearest neighbor (kNN) vector search API, and provide the query text and the model you have used to create the embeddings.
 
-```python
+```python PYTHON
 query = "When were the semi-finals of the 2022 FIFA world cup played?"
 
 response = client.search(
@@ -228,7 +228,7 @@ In order to effectively combine the results from our vector and BM25 retrieval, 
 
 First, create an inference endpoint with your Cohere API key. Make sure to specify a name for your endpoint, and the model_id of one of the rerank models. In this example we will use Rerank 3.
 
-```python
+```python PYTHON
 client.options(ignore_status=[404]).inference.delete_model(inference_id="cohere_rerank")
 
 client.inference.put_model(
@@ -253,7 +253,7 @@ The inference service will respond with a list of documents in descending order 
 
 In this case we will set the response to False and will reconstruct the input documents based on the index returned in the response.
 
-```python
+```python PYTHON
 response = client.inference.inference(
     inference_id="cohere_rerank",
     body={
@@ -280,13 +280,13 @@ Now that we have ranked our results, we can easily turn this into a RAG system w
 
 First, we will create the Cohere client.
 
-```python
+```python PYTHON
 co = cohere.Client(COHERE_API_KEY)
 ```
 
 Next, we can easily get a grounded generation with citations from the Cohere Chat API. We simply pass in the user query and documents retrieved from Elastic to the API, and print out our grounded response.
 
-```python
+```python PYTHON
 response = co.chat(
     message=query,
     documents=ranked_documents,

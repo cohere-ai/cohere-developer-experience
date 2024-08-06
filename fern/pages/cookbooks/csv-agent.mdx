@@ -38,7 +38,7 @@ In this notebook we explore how to setup a [Cohere ReAct Agent](https://github.c
 
 # Setup [#sec_step0]
 
-```python
+```python PYTHON
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain.agents import AgentExecutor
 from langchain_cohere.react_multi_hop.agent import create_cohere_react_agent
@@ -50,7 +50,7 @@ from langchain_experimental.utilities import PythonREPL
 from langchain_experimental.tools.python.tool import PythonAstREPLTool
 ```
 
-```python
+```python PYTHON
 # Uncomment if you need to install the following packages
 #!pip install --quiet langchain langchain_cohere langchain_experimental --upgrade
 #!pip install sec-api
@@ -65,7 +65,7 @@ This notebook assumes the input is a set of csv files extracted from Apple's SEC
 
 We use the sec-api to download the income statement and balance sheet from the SEC 10K .htm file. Please note that the tables need to be parsed such that the index is numerical as the python code generation struggles to filter based on index. We have processed the tables and provided them for you. They can be found [here](https://github.com/cohere-ai/notebooks/tree/main/notebooks/agents/financial-csv-agent).
 
-```python
+```python PYTHON
 income_statement = pd.read_csv('income_statement.csv')
 balance_sheet = pd.read_csv('balance_sheet.csv')
 ```
@@ -81,7 +81,7 @@ In the example below, we show how the python tool can be used to load a datafram
 
 First, let's implement the ReAct agent.
 
-```python
+```python PYTHON
 # instantiate the Cohere llm
 llm = ChatCohere(model="command-r", temperature=0.1,cohere_api_key="",verbose=True)
 
@@ -124,7 +124,7 @@ Here is a preview of the dataframe:
 
 Then, we define the dictionary including the questions we want the Agent to answer, and their answer.
 
-```python
+```python PYTHON
 question_dict ={
     'q1': ['what is the highest value of cost of goods and service?',169559000000],
     'q2': ['what is the largest gross profit margin?',0.3836194330595236],
@@ -134,7 +134,7 @@ question_dict ={
 
 Let's now see how the Agent answers each of the questions.
 
-```python
+```python PYTHON
 for qsn,val in question_dict.items():
     print(f'question:{qsn}')
     agent_executor.invoke({
@@ -202,7 +202,7 @@ Nice! The agent uses the Python tool to write the code to access the data in the
 
 In the example above, the model needs to load the dataframe in the python call before carrying out operations. In this example, we show how to pass the dataframes to the python tool so it has the file already loaded.
 
-```python
+```python PYTHON
 # call the PythonAstREPLTool in order to pass tables to the tool
 df_locals = {'df':pd.read_csv('income_statement.csv')}
 tools = [PythonAstREPLTool(locals=df_locals)]
@@ -228,7 +228,7 @@ Here is a preview of the dataframe:
 
 Let's loop again over the same dictionary of questions.
 
-```python
+```python PYTHON
 for qsn,val in question_dict.items():
     print(f'question:{qsn}')
     agent_executor.invoke({
@@ -296,7 +296,7 @@ Also in this case, the Agent correctly answers all the questions.
 
 We now make the task for the Agent more complicated, by asking it questions whose answer can be computed only by retrieving relevant information from multiple tables.
 
-```python
+```python PYTHON
 # define the Agent
 python_repl = PythonREPL()
 python_tool = Tool(
@@ -337,7 +337,7 @@ Here is a preview of the `balance_sheet.csv` dataframe:
 
 We now define a new question.
 
-```python
+```python PYTHON
 question_dict ={
     'q1': ['what is the ratio of the largest stockholders equity to the smallest revenue'],
 }
@@ -345,7 +345,7 @@ question_dict ={
 
 The answer to this question can be obtained only by accessing both the balance sheet and the income statement, as shown below:
 
-```python
+```python PYTHON
 # get the largest stockholders equity
 x = balance_sheet['StockholdersEquity'].astype(float).max()
 print(f"The largest stockholders equity value is: {x}")
@@ -367,7 +367,7 @@ Their ratio is: 2.4911631883142227
 
 Let's now get the answer from the Agent.
 
-```python
+```python PYTHON
 for qsn,val in question_dict.items():
     print(f'question:{qsn}')
     agent_executor.invoke({

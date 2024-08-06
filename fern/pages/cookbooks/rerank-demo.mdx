@@ -18,7 +18,7 @@ In our benchmarks across 20 datasets, we **saw significant improvements compared
 
 We will demonstrate the rerank endpoint in this notebook.
 
-```python
+```python PYTHON
 !pip install "cohere<5"
 ```
 
@@ -45,7 +45,7 @@ Requirement already satisfied: certifi>=2017.4.17 in /Users/elliottchoi/Library/
 [0m
 ```
 
-```python
+```python PYTHON
 import cohere
 import requests
 import numpy as np
@@ -54,7 +54,7 @@ from typing import List
 from pprint import pprint
 ```
 
-```python
+```python PYTHON
 API_KEY = "<insert api="" key="" your="">"
 co = cohere.Client(API_KEY)
 MODEL_NAME = "rerank-english-v3.0" # another option is rerank-multilingual-02
@@ -77,7 +77,7 @@ docs = [
 
 In the following cell we will call rerank to rank `docs` based on how relevant they are with `query`.
 
-```python
+```python PYTHON
 results = co.rerank(query=query, model=MODEL_NAME, documents=docs, top_n=3) # Change top_n to change the number of results returned. If top_n is not passed, all results will be returned.
 for idx, r in enumerate(results):
   print(f"Document Rank: {idx + 1}, Document Index: {r.index}")
@@ -108,7 +108,7 @@ The following is an example how to use this model end-to-end to search over the 
 
 We use BM25 lexical search to retrieve the top-100 passages matching the query and then send these 100 passages and the query to our rerank endpoint to get a re-ranked list. We output the top-3 hits according to BM25 lexical search (as used by e.g. Elasticsearch) and the re-ranked list from our endpoint.
 
-```python
+```python PYTHON
 !pip install -U  rank_bm25
 ```
 
@@ -124,7 +124,7 @@ Installing collected packages: rank_bm25
 [0mSuccessfully installed rank_bm25-0.2.2
 ```
 
-```python
+```python PYTHON
 import json
 import gzip
 import os
@@ -139,7 +139,7 @@ from tqdm.autonotebook import tqdm
     from tqdm.autonotebook import tqdm
 ```
 
-```python
+```python PYTHON
 !wget http://sbert.net/datasets/simplewiki-2020-11-01.jsonl.gz
 ```
 
@@ -165,7 +165,7 @@ simplewiki-2020-11- 100%[===================>]  47.90M  5.78MB/s    in 8.9s
 2024-04-08 14:28:11 (5.37 MB/s) - ‘simplewiki-2020-11-01.jsonl.gz’ saved [50223724/50223724]
 ```
 
-```python
+```python PYTHON
 wikipedia_filepath = 'simplewiki-2020-11-01.jsonl.gz'
 
 passages = []
@@ -181,13 +181,13 @@ print("Passages:", len(passages))
 Passages: 509663
 ```
 
-```python
+```python PYTHON
 print(passages[0], passages[1])
 ```
 
     Ted Cassidy (July 31, 1932 - January 16, 1979) was an American actor. He was best known for his roles as Lurch and Thing on "The Addams Family". Aileen Carol Wuornos Pralle (born Aileen Carol Pittman; February 29, 1956 – October 9, 2002) was an American serial killer. She was born in Rochester, Michigan. She confessed to killing six men in Florida and was executed in Florida State Prison by lethal injection for the murders. Wuornos said that the men she killed had raped her or tried to rape her while she was working as a prostitute.
 
-```python
+```python PYTHON
 
 def bm25_tokenizer(text):
     tokenized_doc = []
@@ -210,7 +210,7 @@ bm25 = BM25Okapi(tokenized_corpus)
 100%|██████████| 509663/509663 [00:09<00:00, 51180.82it/s]
 ```
 
-```python
+```python PYTHON
 
 def search(query, top_k=3, num_candidates=100):
     print("Input question:", query)
@@ -235,7 +235,7 @@ def search(query, top_k=3, num_candidates=100):
         print("\t{:.3f}\t{}".format(hit.relevance_score, hit.document["text"].replace("\n", " ")))
 ```
 
-```python
+```python PYTHON
 search(query = "What is the capital of the United States?")
 ```
 
@@ -252,7 +252,7 @@ Top-3 hits by rank-API (100 BM25 hits re-ranked)
     0.993	As the national capital of the United States, Washington, D.C. has numerous media outlets in various mediums. Some of these media are known throughout the United States, including "The Washington Post" and various broadcasting networks headquartered in D.C.
 ```
 
-```python
+```python PYTHON
 search(query = "Number countries Europe")
 ```
 
@@ -269,7 +269,7 @@ Top-3 hits by rank-API (100 BM25 hits re-ranked)
     0.981	Europe, the planet's 6th largest continent, includes 47 countries and assorted dependencies, islands and territories.
 ```
 
-```python
+```python PYTHON
 search(query = "Elon Musk year birth")
 ```
 
@@ -286,7 +286,7 @@ Top-3 hits by rank-API (100 BM25 hits re-ranked)
     0.474	In early 2002, Musk was seeking workers for his new space company, soon to be named SpaceX. Musk found a rocket engineer Tom Mueller (later SpaceX's CTO of Propulsion). He agreed to work for Musk. That was how SpaceX was born. The first headquarters of SpaceX was in a warehouse in El Segundo, California. The company has grown rapidly since it was founded in 2002, growing from 160 workers in November 2005 to 1,100 in 2010, 3,800 workers and contractors by October 2013, nearly 5,000 by late 2015, and about 6,000 in April 2017.
 ```
 
-```python
+```python PYTHON
 search(query = "Which US president was killed?")
 ```
 
@@ -303,7 +303,7 @@ Top-3 hits by rank-API (100 BM25 hits re-ranked)
     0.916	On the night that President Abraham Lincoln was killed, someone also tried to kill Seward. For the rest of his life, Seward had scars on his face from the attack. Later, the man who attacked him was caught and put to death.
 ```
 
-```python
+```python PYTHON
 search(query="When is Chinese New Year")
 ```
 
@@ -320,7 +320,7 @@ Top-3 hits by rank-API (100 BM25 hits re-ranked)
     0.996	Chinese New Year lasts fifteen days, including one week as a national holiday. It starts with the first day of the Chinese lunar year and ends with the full moon fifteen days later. It is always in the middle of winter, but is called the Spring Festival in Chinese because Chinese seasons are a little different from English ones. On the first day of the Chinese New Year, people call on friends and relatives. Because most people watch the special performances on CCTV all the night on New Year's Eve and don't go to bed until 12:00 AM, they usually get up later in the next day. The fifth day of the Chinese New Year is the day to welcome the god of Wealth (Chinese:财神爷), many people make and eat dumplings (Chinese:饺子. Pinyin: Jaozi). They believe that dumplings can hold the god of Wealth and bring luck. The last day of the Chinese New Year is the Lantern Festival. On this day, the moon becomes the full moon. People go out and watch the lantern festivals everywhere. After that, they eat sweet dumpling (Chinese:汤圆,元宵), a kind of dumpling which is round and looks like the full moon.
 ```
 
-```python
+```python PYTHON
 search(query="How many people live in Paris")
 ```
 
@@ -337,7 +337,7 @@ Top-3 hits by rank-API (100 BM25 hits re-ranked)
     0.602	Essonne is a department to the south of Paris in the Île-de-France region. Its prefecture is Évry. About 1,172,000 people live there (2006 estimation).
 ```
 
-```python
+```python PYTHON
 search(query="Who is the director of The Matrix?")
 ```
 

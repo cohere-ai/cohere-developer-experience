@@ -34,13 +34,13 @@ You should also be aware of how Cohere handles data retention. This is the most 
 
 First, let's install the SDK
 
-```python
+```python PYTHON
 pip install cohere
 ```
 
 Import dependencies and set up the Cohere client.
 
-```python
+```python PYTHON
 import cohere
 co = cohere.Client(api_key='Your API key')
 ```
@@ -57,7 +57,7 @@ The dataset `name` is useful when browsing the datasets you've uploaded. In addi
 
 Here is an example code snippet illustrating the process of creating a dataset, with both the `name` and the `dataset_type` specified.
 
-```python
+```python PYTHON
 my_dataset = co.datasets.create(
 	name="shakespeare",
 	data=open("./shakespeare.csv", "rb"),
@@ -72,7 +72,7 @@ Whenever a dataset is created, the data is validated asynchronously against the 
 
 Here's a code snippet showing how to check the validation status of a dataset you've created.
 
-```python
+```python PYTHON
 ds = co.wait(my_dataset)
 print(ds.validation_status)
 ```
@@ -100,14 +100,14 @@ The Dataset API will preserve metadata if specified at time of upload. During th
 
 #### Sample Dataset Input Format
 
-```json
+```json JSON
 {"wiki_id": 69407798, "url": "https://en.wikipedia.org/wiki?curid=69407798", "views": 5674.4492597435465, "langs": 38, "title": "Deaths in 2022", "text": "The following notable deaths occurred in 2022. Names are reported under the date of death, in alphabetical order. A typical entry reports information in the following sequence:", "paragraph_id": 0, "id": 0}
 {"wiki_id": 3524766, "url": "https://en.wikipedia.org/wiki?curid=3524766", "views": 5409.5609619796405, "title": "YouTube", "text": "YouTube is a global online video sharing and social media platform headquartered in San Bruno, California. It was launched on February 14, 2005, by Steve Chen, Chad Hurley, and Jawed Karim. It is owned by Google, and is the second most visited website, after Google Search. YouTube has more than 2.5 billion monthly users who collectively watch more than one billion hours of videos each day. , videos were being uploaded at a rate of more than 500 hours of content per minute.", "paragraph_id": 0, "id": 1}
 ```
 
 As seen in the above example, the following would be a valid `create_dataset` call since `langs` is in the first entry but not in the second entry. The fields `wiki_id`, `url`, `views` and `title` are present in both JSONs.
 
-```python
+```python PYTHON
 # Upload a dataset for embed jobs
 ds=co.datasets.create(
 	name='sample_file',
@@ -129,7 +129,7 @@ Once the dataset passes validation, it can be used to fine-tune a model. To do t
 
 In the example below, we will create a new dataset and upload an evaluation set using the optional `eval_data` parameter. We will then kick off a fine-tuning job using `co.finetuning.create_finetuned_model`.
 
-```python
+```python PYTHON
 # create a dataset
 my_dataset = co.datasets.create(
 	name="shakespeare",
@@ -153,7 +153,7 @@ When a dataset is created, the `dataset_type` field _must_ be specified in order
 
 Datasets of type `chat-finetune-input`, for example, are expected to have a json with the field `messages` containing a list of messages: 
 
-```python
+```python PYTHON
 {
   "messages": [
     {
@@ -189,7 +189,7 @@ Datasets can be fetched using its unique `id`. Note that the dataset `name` and 
 
 Here is an example code snippet showing how to fetch a dataset by its unique `id`.
 
-```python
+```python PYTHON
 # fetch the dataset by ID
 my_dataset = co.datasets.get(id="<DATASET_ID>")
 
@@ -207,6 +207,6 @@ co.utils.save_dataset(dataset=my_dataset, filepath='./path/to/new/file.csv')
 
 Datasets are automatically deleted after 30 days, but they can also be deleted manually. Here's a code snippet showing how to do that:
 
-```python
+```python PYTHON
 co.datasets.delete(id="<DATASET_ID>")
 ```

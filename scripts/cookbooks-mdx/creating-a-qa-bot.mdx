@@ -147,13 +147,13 @@ We proceed as follows:
 ## Setup
 
 
-```python
+```python PYTHON
 %%capture
 !pip install cohere datasets llama_index llama-index-llms-cohere llama-index-embeddings-cohere
 ```
 
 
-```python
+```python PYTHON
 import cohere
 import datasets
 from llama_index.core import StorageContext, VectorStoreIndex, load_index_from_storage
@@ -169,7 +169,7 @@ from typing import List
 ```
 
 
-```python
+```python PYTHON
 api_key = "" # <your API key>
 co = cohere.Client(api_key=api_key)
 ```
@@ -184,7 +184,7 @@ co = cohere.Client(api_key=api_key)
 Because this process is lengthy (~2h for all documents on a MacBookPro), we store the index to disc for future reuse. We also provide a (commented) code snippet to index only a subset of the data. If you use this snippet, bear in mind that many documents will become unavailable to the model and, as a result, performance will suffer!
 
 
-```python
+```python PYTHON
 data = datasets.load_dataset("sauravjoshi23/aws-documentation-chunked")
 print(data)
 
@@ -209,7 +209,7 @@ map_id2index = {sample["id"]: index for index, sample in enumerate(data["train"]
 
 
 
-```python
+```python PYTHON
 
 overwrite = True # only compute index if it doesn't exist
 path_index = Path(".") / "aws-documentation_index_cohere"
@@ -249,14 +249,14 @@ else:
 
 The vector database we built using `VectorStoreIndex` comes with an in-built retriever. We can call that retriever to fetch the top $k$ documents most relevant to the user question with:
 
-```python
+```python PYTHON
 retriever = index.as_retriever(similarity_top_k=top_k)
 ```
 
 We recently released [Rerank-3](https://txt.cohere.com/rerank-3/) (April '24), which we can use to improve the quality of retrieval, as well as reduce latency and the cost of inference. To use the retriever with `rerank`, we create a thin wrapper around `index.as_retriever` as follows:
 
 
-```python
+```python PYTHON
 class RetrieverWithRerank:
     def __init__(self, retriever, api_key):
         self.retriever = retriever
@@ -290,7 +290,7 @@ retriever = RetrieverWithRerank(
 ```
 
 
-```python
+```python PYTHON
 query = "What happens to my Amazon EC2 instances if I delete my Auto Scaling group?"
 
 documents = retriever.retrieve(query, top_n=top_n)
@@ -303,7 +303,7 @@ print(resp.text)
 This works! With `co.chat`, you get the additional benefit that citations are returned for every span of text. Here's a simple function to display the citations inside square brackets.
 
 
-```python
+```python PYTHON
 def build_answer_with_citations(response):
     """ """
     text = response.text
@@ -337,7 +337,7 @@ Now that we have a running pipeline, we need to assess its performance.
 The author of the repository provides 100 QA pairs that we can test the model on. Let's download these questions, then run inference on all 100 questions. Later, we will use Command-R+ -- Cohere's largest and most powerful model -- to measure performance.
 
 
-```python
+```python PYTHON
 url = "https://github.com/siagholami/aws-documentation/blob/main/QA_true.csv?raw=true"
 qa_pairs = pd.read_csv(url)
 qa_pairs.sample(2)
@@ -354,7 +354,7 @@ We'll loop over each question and generate our model answer. We'll also complete
 2. We prepare the grading prompts -- these will be sent to an LLM scorer to compute the goodness of responses
 
 
-```python
+```python PYTHON
 
 LLM_EVAL_TEMPLATE = """## References
 {references}
@@ -398,7 +398,7 @@ def get_rank_of_golden_within_retrieved(golden: str, retrieved: List[dict]) -> i
 ```
 
 
-```python
+```python PYTHON
 from tqdm import tqdm
 
 answers = []
@@ -442,7 +442,7 @@ We want to test our model performance on two dimensions:
 Note that this pipeline is for illustration only. To measure performance in practice, we would want to run more in-depths tests on a broader, representative dataset.
 
 
-```python
+```python PYTHON
 results = pd.DataFrame()
 results["answer"] = answers
 results["golden_answer"] = qa_pairs["Answer_True"]
@@ -455,7 +455,7 @@ results["rank"] = ranks
 We'll use Command-R+ as a judge of whether the answers produced by our model convey the same information as the golden answers. Since we've defined the grading prompts earlier, we can simply ask our LLM judge to evaluate that grading prompt. After a little bit of postprocessing, we can then extract our model scores.
 
 
-```python
+```python PYTHON
 scores = []
 reasonings = []
 
@@ -484,13 +484,13 @@ for prompt in tqdm(grading_prompts, total=len(grading_prompts)):
 ```
 
 
-```python
+```python PYTHON
 results["score"] = scores
 results["reasoning"] = reasonings
 ```
 
 
-```python
+```python PYTHON
 print(f"Average score: {results['score'].mean():.3f}")
 
 ```
@@ -500,7 +500,7 @@ print(f"Average score: {results['score'].mean():.3f}")
 We've already computed the rank of the golden documents using `get_rank_of_golden_within_retrieved`. Here, we'll plot the histogram of ranks, using blue when the answer scored a 1, and red when the answer scored a 0.
 
 
-```python
+```python PYTHON
 import matplotlib.pyplot as plt
 import seaborn as sns
 

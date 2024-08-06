@@ -148,12 +148,12 @@ In this cookbook, we will be demonstrating an approach we use for evaluating sum
 You'll need a Cohere API key to run this notebook. If you don't have a key, head to https://cohere.com/ to generate your key.
 
 
-```python
+```python PYTHON
 !pip install cohere datasets --quiet
 ```
 
 
-```python
+```python PYTHON
 import json
 import random
 import re
@@ -172,7 +172,7 @@ co = cohere.Client(api_key=co_api_key)
 As test data, we'll use transcripts from the [QMSum dataset](https://github.com/Yale-LILY/QMSum). Note that in addition to the transcripts, this dataset also contains reference summaries -- we will use only the transcripts as our approach is reference-free.
 
 
-```python
+```python PYTHON
 qmsum = load_dataset("MocktaiLEngineer/qmsum-processed", split="validation")
 transcripts = [x for x in qmsum["meeting_transcript"] if x is not None]
 ```
@@ -205,7 +205,7 @@ Therefore, we must first create a dataset that contains diverse summarization pr
 First, we define the prompt that combines the text and instructions. Here, we use a very basic prompt:
 
 
-```python
+```python PYTHON
 prompt_template = """## meeting transcript
 {transcript}
 
@@ -216,7 +216,7 @@ prompt_template = """## meeting transcript
 Next, we build the instructions. Because each instruction may have a different objective and modifiers, we track them using metadata. This will later be required for evaluation (i.e. to know what the prompt is asking).
 
 
-```python
+```python PYTHON
 
 instruction_objectives = {
     "general_summarization": "Summarize the meeting based on the transcript.",
@@ -268,7 +268,7 @@ format_length_modifiers = {
 Let's combine the objectives and format/length modifiers to finish building the instructions.
 
 
-```python
+```python PYTHON
 instructions = []
 for obj_name, obj_text in instruction_objectives.items():
     for mod_data in format_length_modifiers.values():
@@ -309,7 +309,7 @@ print(json.dumps(instructions[:2], indent=4))
 Finally, let's build the final prompts by semi-randomly pairing the instructions with transcripts from the QMSum dataset.
 
 
-```python
+```python PYTHON
 data = pd.DataFrame(instructions)
 
 transcripts = sorted(transcripts, key=lambda x: len(x), reverse=True)[:int(len(transcripts) * 0.25)]
@@ -321,12 +321,12 @@ data["prompt"] = data.apply(lambda x: prompt_template.format(transcript=x["trans
 ```
 
 
-```python
+```python PYTHON
 data["transcript_token_len"] = [len(x) for x in co.batch_tokenize(data["transcript"].tolist(), model=co_model)]
 ```
 
 
-```python
+```python PYTHON
 print(data["prompt"][0])
 ```
 
@@ -391,7 +391,7 @@ We use three criteria that are graded using LLMs:
 In this cookbook, we will use Command-R to grade the completions. However, note that in practice, we typically use an ensemble of multiple LLM evaluators to reduce any bias.
 
 
-```python
+```python PYTHON
 
 grading_prompt_template = """You are an AI grader that given a prompt, a completion, and a criterion, grades the completion based on the prompt and criterion. Below is a prompt, a completion, and a criterion with which to grade the completion. You need to respond according to the criterion instructions.
 
@@ -446,7 +446,7 @@ In addition, we have two criteria that are graded programmatically:
 - Length: checks if the summary follows the length that was requested in the prompt.
 
 
-```python
+```python PYTHON
 
 def score_format(completion: str, format_type: str) -> int:
     """
@@ -536,7 +536,7 @@ Now that we have our evaluation dataset and defined our evaluation functions, le
 First, we generate completions to be graded. We will use Cohere's [Command-R](https://huggingface.co/CohereForAI/c4ai-command-r-v01) model, boasting a context length of 128K.
 
 
-```python
+```python PYTHON
 completions = []
 for prompt in data["prompt"]:
     completion = co.chat(message=prompt, model="command-r", temperature=0.2).text
@@ -546,7 +546,7 @@ data["completion"] = completions
 ```
 
 
-```python
+```python PYTHON
 print(data["completion"][0])
 ```
 
@@ -556,7 +556,7 @@ print(data["completion"][0])
 Let's grade the completions using our LLM and non-LLM checks.
 
 
-```python
+```python PYTHON
 data["format_score"] = data.apply(
     lambda x: score_format(x["completion"], x["eval_metadata"]["format"]), axis=1
 )
@@ -585,7 +585,7 @@ data["conciseness_score"] = data.apply(
 ```
 
 
-```python
+```python PYTHON
 data
 ```
 
@@ -724,7 +724,7 @@ data
 Finally, let's print the average scores per critiera.
 
 
-```python
+```python PYTHON
 avg_scores = data[["format_score", "length_score", "completeness_score", "correctness_score", "conciseness_score"]].mean()
 print(avg_scores)
 ```

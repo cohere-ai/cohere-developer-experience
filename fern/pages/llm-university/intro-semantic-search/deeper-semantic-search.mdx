@@ -29,7 +29,7 @@ As you've seen before, semantic search goes way beyond keyword search. The appli
 
 ### 1. Download the Dependencies
 
-```python
+```python PYTHON
 #title Import libraries (Run this cell to execute required code) {display-mode: "form"}
 
 import cohere
@@ -51,7 +51,7 @@ pd.set_option('display.max_colwidth', None)
 
 We'll use the <a target="_blank" href="https://www.tensorflow.org/datasets/catalog/trec">trec</a> dataset which is made up of questions and their categories.
 
-```python
+```python PYTHON
 # Get dataset
 dataset = load_dataset("trec", split="train")
 # Import into a pandas dataframe, take only the first 1000 rows
@@ -81,7 +81,7 @@ Let's now embed the text of the questions.
 
 To get a thousand embeddings of this length should take a few seconds.
 
-```python
+```python PYTHON
 # Paste your API key here. Remember to not share publicly
 api_key = ''
 
@@ -99,7 +99,7 @@ embeds = co.embed(texts=list(df['text']),
 
 Let's build an index using the library called <a target="_blank" href="https://github.com/spotify/annoy">annoy</a>. Annoy is a library created by Spotify to do <a target="_blank" href="https://en.wikipedia.org/wiki/nearest_neighbor_search">nearest neighbour search</a>; nearest neighbour search is an optimization problem of finding the point in a given set that is closest (or most similar) to a given point.
 
-```python
+```python PYTHON
 # Create the search index, pass the size of embedding
 search_index = AnnoyIndex(np.array(embeds).shape[1], 'angular')
 # Add all the vectors to the search index
@@ -115,7 +115,7 @@ After building the index, we can use it to retrieve the nearest neighbours eithe
 
 If we're only interested in measuring the similarities between the questions in the dataset (no outside queries), a simple way is to calculate the similarities between every pair of embeddings we have.
 
-```python
+```python PYTHON
 # Choose an example (we'll retrieve others similar to it)
 example_id = 92
 # Retrieve nearest neighbors
@@ -128,7 +128,7 @@ print(f"Question:'{df.iloc[example_id]['text']}'\nNearest neighbors:")
 results
 ```
 
-```python
+```python PYTHON
 # Output:
 Question:'What are bear and bull markets ?'
 Nearest neighbors:
@@ -150,7 +150,7 @@ Nearest neighbors:
 
 We're not limited to searching using existing items. If we get a query, we can embed it and find its nearest neighbours from the dataset.
 
-```python
+```python PYTHON
 query = "What is the tallest mountain in the world?"
 
 # Get the query's embedding
@@ -184,7 +184,7 @@ results
 
 ### 5. Visualize the archive
 
-```python
+```python PYTHON
 #@title Plot the archive {display-mode: "form"}
 
 # UMAP reduces the dimensions from 1024 to 2 dimensions that we can plot

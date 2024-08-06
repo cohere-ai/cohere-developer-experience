@@ -23,13 +23,13 @@ You may use this script to jumpstart financial analysis of 10-Ks or 10-Qs with C
 
 This cookbook relies on helpful tooling from LlamaIndex, as well as our Cohere SDK. If you're familiar with LlamaIndex, it should be easy to slot this process into your own productivity flows.
 
-```python
+```python PYTHON
 %%capture
 !sudo apt install tesseract-ocr poppler-utils
 !pip install "cohere<5" langchain llama-index llama-index-embeddings-cohere llama-index-postprocessor-cohere-rerank pytesseract pdf2image
 ```
 
-```python
+```python PYTHON
 # Due to compatibility issues, we need to do imports like this
 from llama_index.core.schema import TextNode
 
@@ -37,7 +37,7 @@ from llama_index.core.schema import TextNode
 !pip install unstructured
 ```
 
-```python
+```python PYTHON
 import cohere
 from getpass import getpass
 
@@ -59,7 +59,7 @@ You may run the following cells to load a 10-K that has already been preprocesse
 
 > 💡 If you'd like to run the OCR pipeline yourself, you can find more info in the section titled **PDF to Text using OCR and `pdf2image`**.
 
-```python
+```python PYTHON
 # Using langchain here since they have access to the Unstructured Data Loader powered by unstructured.io
 from langchain_community.document_loaders import UnstructuredURLLoader
 
@@ -87,7 +87,7 @@ We choose to use LlamaIndex's `SentenceSplitter` in this case in order to get th
 
 You may also apply further transformations from the LlamaIndex repo if you so choose. Take a look at the [docs](https://docs.llamaindex.ai/en/stable/understanding/loading/loading.html) for inspiration on what is possible with transformations.
 
-```python
+```python PYTHON
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.node_parser import SentenceSplitter
 
@@ -155,7 +155,7 @@ Special tokens have been added in the vocabulary, make sure the associated word 
 
 Loading the document into a LlamaIndex vector store will allow us to use the Cohere embedding model and rerank model to retrieve the relevant parts of the form to pass into Command.
 
-```python
+```python PYTHON
 from llama_index.core import Settings, VectorStoreIndex
 
 from llama_index.postprocessor.cohere_rerank import CohereRerank
@@ -187,7 +187,7 @@ In order to do RAG, we need a query or a set of queries to actually _do_ the ret
 
 To learn more about document mode and query generation, check out [our documentation](https://docs.cohere.com/docs/retrieval-augmented-generation-rag).
 
-```python
+```python PYTHON
 PROMPT = "List the overall revenue numbers for 2021, 2022, and 2023 in the 10-K as bullet points, then explain the revenue growth trends."
 
 # Get queries to run against our index from the command-nightly model
@@ -200,7 +200,7 @@ else:
 
 Now, with the queries in hand, we search against our vector index.
 
-```python
+```python PYTHON
 # Convenience function for formatting documents
 def format_for_cohere_client(nodes_):
     return [
@@ -232,7 +232,7 @@ You can see this for yourself by inspecting the `response.citations` field to ch
 
 You can learn more about the `chat` endpoint by checking out the API reference [here](https://docs.cohere.com/reference/chat).
 
-```python
+```python PYTHON
 # Make a request to the model
 response = co.chat(
     message=PROMPT,
@@ -258,7 +258,7 @@ The revenue growth trend demonstrates sustained strong travel demand. On a const
 Other factors influencing the company's financial performance are described outside of the revenue growth trends.
 ```
 
-```python
+```python PYTHON
 # Helper function for displaying response WITH citations
 def insert_citations(text: str, citations: list[dict]):
     """
@@ -312,7 +312,7 @@ To go from PDF to text with PyTesseract, there is an intermediary step of conver
 
 To do this, we use `pdf2image`, which uses `poppler` behind the scenes to convert the PDF into a PNG. From there, we can pass the image (which is a PIL Image object) directly into the OCR tool.
 
-```python
+```python PYTHON
 import pytesseract
 from pdf2image import convert_from_path
 
@@ -326,7 +326,7 @@ pages = [pytesseract.image_to_string(page) for page in pages]
 
 ## Token count / price comparison and latency
 
-```python
+```python PYTHON
 def get_response(prompt, rag):
     if rag:
         # Get queries to run against our index from the command-nightly model
@@ -364,7 +364,7 @@ def get_response(prompt, rag):
     return response
 ```
 
-```python
+```python PYTHON
 prompt_template = """# financial form 10-K
 {tenk}
 
@@ -374,17 +374,17 @@ prompt_template = """# financial form 10-K
 full_context_prompt = prompt_template.format(tenk=edgar_10k, question=PROMPT)
 ```
 
-```python
+```python PYTHON
 r1 = get_response(PROMPT, rag=True)
 r2 = get_response(full_context_prompt, rag=False)
 ```
 
-```python
+```python PYTHON
 def get_price(r):
     return (r.token_count["prompt_tokens"] * 0.5 / 10e6) + (r.token_count["response_tokens"] * 1.5 / 10e6)
 ```
 
-```python
+```python PYTHON
 rag_price = get_price(r1)
 full_context_price = get_price(r2)
 
@@ -395,7 +395,7 @@ print(f"RAG is {(full_context_price - rag_price) / full_context_price:.0%} cheap
 RAG is 93% cheaper than full context
 ```
 
-```python
+```python PYTHON
 %timeit get_response(PROMPT, rag=True)
 ```
 
@@ -403,7 +403,7 @@ RAG is 93% cheaper than full context
 14.9 s ± 1.4 s per loop (mean ± std. dev. of 7 runs, 1 loop each)
 ```
 
-```python
+```python PYTHON
 %timeit get_response(full_context_prompt, rag=False)
 ```
 

@@ -8,7 +8,7 @@ import { CookbookHeader } from "../../components/cookbook-header";
 
 <CookbookHeader href="https://github.com/cohere-ai/notebooks/blob/main/notebooks/Embed_Jobs_Semantic_Search.ipynb" />
 
-```python
+```python PYTHON
 import time
 import cohere
 import hnswlib
@@ -17,7 +17,7 @@ co = cohere.Client('COHERE_API_KEY')
 
 ## Step 1: Upload a dataset
 
-```python
+```python PYTHON
 
 dataset_file_path = "data/embed_jobs_sample_data.jsonl" # Full path - https://raw.githubusercontent.com/cohere-ai/notebooks/main/notebooks/data/embed_jobs_sample_data.jsonl
 
@@ -35,7 +35,7 @@ sample-file-hca4x0 was uploaded
 ...
 ```
 
-```python
+```python PYTHON
 print(ds.await_validation())
 ```
 
@@ -55,7 +55,7 @@ cohere.Dataset {
 
 ## Step 2: Create embeddings via Cohere's Embed Jobs endpoint
 
-```python
+```python PYTHON
 job = co.create_embed_job(
     dataset_id=ds.id,
     input_type='search_document' ,
@@ -70,7 +70,7 @@ job.wait() # poll the server until the job is completed
 ...
 ```
 
-```python
+```python PYTHON
 print(job)
 ```
 
@@ -100,13 +100,13 @@ cohere.EmbedJob {
 
 ## Step 3: Download and prepare the embeddings
 
-```python
+```python PYTHON
 embeddings_file_path = 'embed_jobs_output.csv'
 output_dataset=co.get_dataset(job.output.id)
 output_dataset.save(filepath=embeddings_file_path, format="csv")
 ```
 
-```python
+```python PYTHON
 embeddings=[]
 texts=[]
 for record in output_dataset:
@@ -116,7 +116,7 @@ for record in output_dataset:
 
 ## Step 4: Initialize Hnwslib index and add embeddings
 
-```python
+```python PYTHON
 index = hnswlib.Index(space='ip', dim=1024)
 index.init_index(max_elements=len(embeddings), ef_construction=512, M=64)
 index.add_items(embeddings,list(range(len(embeddings))))
@@ -124,7 +124,7 @@ index.add_items(embeddings,list(range(len(embeddings))))
 
 ## Step 5: Query the index and rerank the results
 
-```python
+```python PYTHON
 query = "What was the first youtube video about?"
 
 query_emb=co.embed(
@@ -146,7 +146,7 @@ final_result = co.rerank(
 
 ## Step 6: Display the results
 
-```python
+```python PYTHON
 for idx, r in enumerate(final_result):
   print(f"Document Rank: {idx + 1}, Document Index: {r.index}")
   print(f"Document: {r.document['text']}")

@@ -195,14 +195,14 @@ To demonstrate the metrics, we will use data from the [Docugami's KG-RAG](https:
 Let's start by setting the environment and downloading the dataset.
 
 
-```python
+```python PYTHON
 %%capture
 !pip install llama-index cohere openai
 !pip install mistralai
 ```
 
 
-```python
+```python PYTHON
 # required imports
 from getpass import getpass
 import os
@@ -218,7 +218,7 @@ For Response evaluation, we will use an LLM as a judge.
 Any LLM can be used for this goal, but because evaluation is a very challenging task, we recommend using powerful LLMs, possibly as an ensemble of models. In [previous work](https://arxiv.org/pdf/2303.16634.pdf), it has been shown that models tend to assign higher scores to their own output. Since we generated the answers in this notebook using `command-r`, we will not use it for evaluation. We will provide two alternatives, `gpt-4` and `mistral`. We set `gpt-4` as the default model because, as mentioned above, evaluation is challenging, and `gpt-4` is powerful enough to efficiently perform the task.
 
 
-```python
+```python PYTHON
 # Get keys
 openai_api_key = getpass("Enter your OpenAI API Key: ")
 # uncomment if you want to use mistral
@@ -232,7 +232,7 @@ model = "gpt-4"
 ```
 
 
-```python
+```python PYTHON
 if model == "gpt-4":
   client = Client(api_key=openai_api_key)
 else:
@@ -240,7 +240,7 @@ else:
 ```
 
 
-```python
+```python PYTHON
 # let's define a function to get the model's response for a given input
 def get_response(model, client, prompt):
   response = client.chat.completions.create(
@@ -251,7 +251,7 @@ def get_response(model, client, prompt):
 ```
 
 
-```python
+```python PYTHON
 # load the DocugamiKgRagSec10Q dataset
 if os.path.exists("./data/source_files") and os.path.exists("./data/rag_dataset.json"):
         rag_dataset = LabelledRagDataset.from_json("./data/rag_dataset.json")
@@ -274,7 +274,7 @@ We use three standard metrics to evaluate retrieval:
 We implement these three metrics in the class below:
 
 
-```python
+```python PYTHON
 class RetrievalEvaluator:
 
     def compute_precision(self, retrieved_documents, golden_documents):
@@ -307,7 +307,7 @@ class RetrievalEvaluator:
 Let's now see how to use the class above to compute the results on a single datapoint.
 
 
-```python
+```python PYTHON
 # select the index of a single datapoint - the first one in the dataset
 idx = 0
 
@@ -331,7 +331,7 @@ print(f'Retrieved docs: {retrieved_docs}')
 
 
 
-```python
+```python PYTHON
 # we can now instantiate the evaluator
 evaluate_retrieval = RetrievalEvaluator()
 
@@ -375,7 +375,7 @@ Also, while Correctness is measuring the precision of the claims in the response
 Let's now see how we implement the evaluation described above using LLMs. Let's start with **claim extraction**.
 
 
-```python
+```python PYTHON
 # first, let's define a function which extracts the claims from a response
 def extract_claims(query, response, model, client):
 
@@ -393,7 +393,7 @@ def extract_claims(query, response, model, client):
 ```
 
 
-```python
+```python PYTHON
 # now, let's consider this answer, which we previously generated with command-r
 response = "Apple's total net sales experienced a decline over the last year. The three-month period ended July 1, 2023, saw a total net sale of $81,797 million, which was a 1% decrease from the same period in 2022. The nine-month period ended July 1, 2023, fared slightly better, with a 3% decrease in net sales compared to the first nine months of 2022.\nThis downward trend continued into the three and six-month periods ending April 1, 2023. Apple's total net sales decreased by 3% and 4% respectively, compared to the same periods in 2022."
 
@@ -419,7 +419,7 @@ print(f"List of claims extracted from the model's response:\n\n{claims}")
 Nice! now that we have the list of claims, we can go ahead and **assess the validity** of each claim.
 
 
-```python
+```python PYTHON
 # Let's create a function that checks each claim against a reference text,
 # which here we will call "context". As you will see, we will use different contexts,
 # depending on the metric we want to compute.
@@ -445,7 +445,7 @@ def assess_claims(query, claims, context, model, client):
 ### Faithfulness
 
 
-```python
+```python PYTHON
 # Let's start with Faithfulness: in this case, we want to assess the claims
 # in the response against the retrieved documents (i.e., context = retrieved documents)
 
@@ -475,7 +475,7 @@ print(f"Assessment of the claims extracted from the model's response:\n\n{assess
 Great, we now have an assessment for each of the claims: in the last step, we just need to use these assessments to define the final score.
 
 
-```python
+```python PYTHON
 # given the list of claims and their label, compute the final score
 # as the proportion of correct claims over the full list of claims
 def get_final_score(claims_list):
@@ -486,7 +486,7 @@ def get_final_score(claims_list):
 ```
 
 
-```python
+```python PYTHON
 score_faithfulness = get_final_score(assessed_claims_faithfulness)
 print(f'Faithfulness: {score_faithfulness}')
 ```
@@ -499,7 +499,7 @@ The final Faithfulness score is 1, which means that the model's response is full
 Before moving on, let's modify the model's response by adding a piece of information which is **not** grounded in any document, and re-compute Faithfulness.
 
 
-```python
+```python PYTHON
 # let's mess up the century, changing 2022 to 1922
 modified_response = response.replace('2022', '1922')
 
@@ -538,7 +538,7 @@ As you can see, by assessing claims one by one, we are able to spot **hallucinat
 As said, Faithfulness and Correctness share the same logic, the only difference being that we will check the claims against the gold answer. We can therefore repeat the process above, and just substitute the `context`.
 
 
-```python
+```python PYTHON
 # let's get the gold answer from the dataset
 golden_answer = rag_dataset[idx].reference_answer
 
@@ -568,7 +568,7 @@ print(f"Assess the claims extracted from the model's response against the golden
 As mentioned above, automatic evaluation is a hard task, and even when using powerful models, claim assessment can present problems: for example, the third claim is labelled as 0, even if it might be inferred from the information in the gold answer.
 
 
-```python
+```python PYTHON
 # we can now compute the final Correctness score
 score_correctness = get_final_score(assessed_claims_correctness)
 print(f'Correctness: {score_correctness}')
@@ -585,7 +585,7 @@ For Correctness, we found that only half of the claims in the generated response
 We finally move to Coverage. Remember that, in this case, we want to check how many of the claims *in the gold answer* are included in the generated response. To do it, we first need to extract the claims from the gold answer.
 
 
-```python
+```python PYTHON
 # let's extract the golden claims
 gold_claims = extract_claims(query, golden_answer, model, client)
 
@@ -605,7 +605,7 @@ print(f"List of claims extracted from the gold answer:\n\n{gold_claims}")
 Then, we check which of these claims is present in the response generated by the model.
 
 
-```python
+```python PYTHON
 # note that in, this case, the context is the model's response
 assessed_claims_coverage = assess_claims(query=query,
                                          claims=gold_claims,
@@ -628,7 +628,7 @@ print(f"Assess which of the gold claims is in the model's response:\n\n{assessed
 
 
 
-```python
+```python PYTHON
 # we compute the final Coverage score
 score_coverage = get_final_score(assessed_claims_coverage)
 print(f'Coverage: {score_coverage}')

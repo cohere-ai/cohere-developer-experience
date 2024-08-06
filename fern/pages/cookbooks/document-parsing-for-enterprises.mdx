@@ -57,20 +57,20 @@ Before we dive into the technical weeds, we need to set up the notebook's runtim
   - precomputed parsed documents for each parsing solution. While the point of this notebook is to illustrate how this is done, we provide the parsed final results to allow readers to skip ahead to the RAG section without having to set up the required infrastructure for each solution.)
 - Add utility functions needed for later sections
 
-```python
+```python PYTHON
 %%capture
 ! sudo apt install tesseract-ocr poppler-utils
 ! pip install "cohere<5" fsspec hnswlib google-cloud-documentai google-cloud-storage boto3 langchain-text-splitters llama_parse pytesseract pdf2image pandas
 
 ```
 
-```python
+```python PYTHON
 data_dir = "data/document-parsing"
 source_filename = "example-drug-label"
 extension = "pdf"
 ```
 
-```python
+```python PYTHON
 from pathlib import Path
 
 sources = ["gcp", "aws", "unstructured-io", "llamaparse-text", "llamaparse-markdown", "pytesseract"]
@@ -88,13 +88,13 @@ for filename in filenames:
 
 Make sure to include the notebook's utility functions in the runtime.
 
-```python
+```python PYTHON
 def store_document(path: str, doc_content: str):
     with open(path, 'w') as f:
       f.write(doc_content)
 ```
 
-```python
+```python PYTHON
 import json
 
 def insert_citations_in_order(text, citations, documents):
@@ -130,7 +130,7 @@ def insert_citations_in_order(text, citations, documents):
     return text_with_citations, "\n".join(citations_reference)
 ```
 
-```python
+```python PYTHON
 def format_docs_for_chat(documents):
   return [{"id": str(index), "text": x} for index, x in enumerate(documents)]
 ```
@@ -157,7 +157,7 @@ The following block can be executed in one of two ways:
 
 **Note: You can skip to the next block if you want to use the pre-existing parsed version.**
 
-```python
+```python PYTHON
 """
 Extracted from https://cloud.google.com/document-ai/docs/samples/documentai-batch-process-document
 """
@@ -269,7 +269,7 @@ def batch_process_documents(
 # )
 ```
 
-```python
+```python PYTHON
 """
 Post process parsed document and store it locally.
 Make sure to run this in a Google Vertex AI environment or include a credentials file.
@@ -301,7 +301,7 @@ for filename, doc_content in parsed_documents:
 
 #### Visualize the parsed document
 
-```python
+```python PYTHON
 filename = "gcp-parsed-{}.txt".format(source_filename)
 with open("{}/{}".format(data_dir, filename), "r") as doc:
     parsed_document = doc.read()
@@ -329,7 +329,7 @@ At minimum, you will need access to the following AWS resources to get started:
 
 First, we bring in the `TextractWrapper` class provided in the [AWS Code Examples repository](https://github.com/awsdocs/aws-doc-sdk-examples/blob/main/python/example_code/textract/textract_wrapper.py). This class makes it simpler to interface with the Textract service.
 
-```python
+```python PYTHON
 # source: https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/python/example_code/textract
 
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -612,7 +612,7 @@ class TextractWrapper:
 
 Next, we set up Textract and S3, and provide this to an instance of `TextractWrapper`.
 
-```python
+```python PYTHON
 import boto3
 
 textract_client = boto3.client('textract')
@@ -630,7 +630,7 @@ Asynchronous calls follow the below process:
 3. Once the request is complete, Textract sends out a message to the SNS topic. This can be used in conjunction with other services such as Lambda or SQS for downstream processes.
 4. The parsed results can be fetched from Textract in chunks via the job ID.
 
-```python
+```python PYTHON
 bucket_name = "your-bucket-name"
 sns_topic_arn = "your-sns-arn" # this can be found under the topic you created in the Amazon SNS dashboard
 sns_role_arn = "sns-role-arn" # this is an IAM role that allows Textract to interact with SNS
@@ -638,7 +638,7 @@ sns_role_arn = "sns-role-arn" # this is an IAM role that allows Textract to inte
 file_name = "example-drug-label.pdf"
 ```
 
-```python
+```python PYTHON
 # kick off a text detection job. This returns a job ID.
 job_id = textractWrapper.start_detection_job(bucket_name=bucket_name, document_file_name=file_name,
                                     sns_topic_arn=sns_topic_arn, sns_role_arn=sns_role_arn)
@@ -652,7 +652,7 @@ This response corresponds to one chunk of information parsed by Textract. The nu
 
 Textract returns an information-rich representation of the extracted text, such as their position on the page and hierarchical relationships with other entities, all the way down to the individual word level. Since we are only interested in the raw text, we need a way to parse through all of the chunks and their `Blocks`. Lucky for us, Amazon provides some [helper functions](https://github.com/aws-samples/textract-paragraph-identification/tree/main) for this purpose, which we utilize below.
 
-```python
+```python PYTHON
 def get_text_results_from_textract(job_id):
     response = textract_client.get_document_text_detection(JobId=job_id)
     collection_of_textract_responses = []
@@ -729,7 +729,7 @@ We feed in the Job ID from before into the function `get_text_results_from_textr
 
 Finally, we can concatenate the lines into one string to pass into our downstream RAG pipeline.
 
-```python
+```python PYTHON
 all_text = "\n".join([line["text"] if line else "" for line in text_info_with_line_spacing])
 
 with open(f"aws-parsed-{source_filename}.txt", "w") as f:
@@ -738,7 +738,7 @@ with open(f"aws-parsed-{source_filename}.txt", "w") as f:
 
 #### Visualize the parsed document
 
-```python
+```python PYTHON
 filename = "aws-parsed-{}.txt".format(source_filename)
 with open("{}/{}".format(data_dir, filename), "r") as doc:
     parsed_document = doc.read()
@@ -761,7 +761,7 @@ The guide assumes an endpoint exists that hosts this service. The API is offered
 
 **Note: You can skip to the next block if you want to use the pre-existing parsed version.**
 
-```python
+```python PYTHON
 import os
 import requests
 
@@ -789,7 +789,7 @@ parsed_document = " ".join([parsed_entry["text"] for parsed_entry in parsed_resp
 print("Parsed {}".format(source_filename))
 ```
 
-```python
+```python PYTHON
 """
 Post process parsed document and store it locally.
 """
@@ -800,7 +800,7 @@ store_document(file_path, parsed_document)
 
 #### Visualize the parsed document
 
-```python
+```python PYTHON
 filename = "unstructured-io-parsed-{}.txt".format(source_filename)
 with open("{}/{}".format(data_dir, filename), "r") as doc:
     parsed_document = doc.read()
@@ -825,7 +825,7 @@ Parsing documents with LlamaParse offers an option for two output modes both of 
 
 **Note: You can skip to the next block if you want to use the pre-existing parsed version.**
 
-```python
+```python PYTHON
 import os
 from llama_parse import LlamaParse
 
@@ -836,7 +836,7 @@ llama_index_api_key = "{API_KEY}"
 input_path = "{}/{}.{}".format(data_dir, source_filename, extension)
 ```
 
-```python
+```python PYTHON
 # Text mode
 text_parser = LlamaParse(
     api_key=llama_index_api_key,
@@ -849,7 +849,7 @@ text_parsed_document = " ".join([parsed_entry.text for parsed_entry in text_resp
 print("Parsed {} to text".format(source_filename))
 ```
 
-```python
+```python PYTHON
 """
 Post process parsed document and store it locally.
 """
@@ -858,7 +858,7 @@ file_path = "{}/{}-text-parsed-fda-approved-drug.txt".format(data_dir, "llamapar
 store_document(file_path, text_parsed_document)
 ```
 
-```python
+```python PYTHON
 # Markdown mode
 markdown_parser = LlamaParse(
     api_key=llama_index_api_key,
@@ -871,7 +871,7 @@ markdown_parsed_document = " ".join([parsed_entry.text for parsed_entry in markd
 print("Parsed {} to markdown".format(source_filename))
 ```
 
-```python
+```python PYTHON
 """
 Post process parsed document and store it locally.
 """
@@ -882,7 +882,7 @@ store_document(file_path, markdown_parsed_document)
 
 #### Visualize the parsed document
 
-```python
+```python PYTHON
 # Text parsing
 
 filename = "llamaparse-text-parsed-{}.txt".format(source_filename)
@@ -893,7 +893,7 @@ with open("{}/{}".format(data_dir, filename), "r") as doc:
 print(parsed_document[:1000])
 ```
 
-```python
+```python PYTHON
 # Markdown parsing
 
 filename = "llamaparse-markdown-parsed-fda-approved-drug.txt"
@@ -909,18 +909,18 @@ The final parsing method we examine does not rely on cloud services, but rather 
 
 #### Parsing the document
 
-```python
+```python PYTHON
 from matplotlib import pyplot as plt
 from pdf2image import convert_from_path
 import pytesseract
 ```
 
-```python
+```python PYTHON
 # pdf2image extracts as a list of PIL.Image objects
 pages = convert_from_path(filename)
 ```
 
-```python
+```python PYTHON
 # we look at the first page as a sanity check:
 
 plt.imshow(pages[0])
@@ -930,11 +930,11 @@ plt.show()
 
 Now, we can process the image of each page with `pytesseract` and concatenate the results to get our parsed document.
 
-```python
+```python PYTHON
 label_ocr_pytesseract = "".join([pytesseract.image_to_string(page) for page in pages])
 ```
 
-```python
+```python PYTHON
 print(label_ocr_pytesseract[:200])
 ```
 
@@ -948,7 +948,7 @@ IWILFIN.
 IWILFIN™ (eflor
 ```
 
-```python
+```python PYTHON
 label_ocr_pytesseract = "".join([pytesseract.image_to_string(page) for page in pages])
 
 with open(f"pytesseract-parsed-{source_filename}.txt", "w") as f:
@@ -957,7 +957,7 @@ with open(f"pytesseract-parsed-{source_filename}.txt", "w") as f:
 
 #### Visualize the parsed document
 
-```python
+```python PYTHON
 filename = "pytesseract-parsed-{}.txt".format(source_filename)
 with open("{}/{}".format(data_dir, filename), "r") as doc:
     parsed_document = doc.read()
@@ -976,12 +976,12 @@ We can now ask a set of simple + complex questions and see how each parsing solu
 - **I need a succinct summary of the compound name, indication, route of administration, and mechanism of action of Iwilfin.**
   - Task: Overall document summary
 
-```python
+```python PYTHON
 import cohere
 co = cohere.Client(api_key="{API_KEY}")
 ```
 
-```python
+```python PYTHON
 """
 Document Questions
 """
@@ -1004,7 +1004,7 @@ source = "gcp"
 
 In order to set up our RAG implementation, we need to separate the parsed text into chunks and load the chunks to an index. The index will allow us to retrieve relevant passages from the document for different queries. Here, we use a simple implementation of indexing using the `hnswlib` library. Note that there are many different indexing solutions that are appropriate for specific production use cases.
 
-```python
+```python PYTHON
 """
 Read parsed document content and chunk data
 """
@@ -1038,14 +1038,14 @@ documents = [c.page_content for c in chunks_]
 print("Source document has been broken down to {} chunks".format(len(documents)))
 ```
 
-```python
+```python PYTHON
 """
 Embed document chunks
 """
 document_embeddings = co.embed(texts=documents, model="embed-english-v3.0", input_type="search_document").embeddings
 ```
 
-```python
+```python PYTHON
 """
 Create document index and add embedded chunks
 """
@@ -1066,7 +1066,7 @@ Count: 115
 
 In this step, we use k-nearest neighbors to fetch the most relevant documents for our query. Once the nearest neighbors are retrieved, we use Cohere's reranker to reorder the documents in the most relevant order with regards to our input search query.
 
-```python
+```python PYTHON
 """
 Embed search query
 Fetch k nearest neighbors
@@ -1080,7 +1080,7 @@ neighbors = [(result[0][0][i], result[1][0][i]) for i in range(len(result[0][0])
 relevant_docs = [documents[x[0]] for x in sorted(neighbors, key=lambda x: x[1])]
 ```
 
-```python
+```python PYTHON
 """
 Rerank retrieved documents
 """
@@ -1091,7 +1091,7 @@ reranked_relevant_docs = format_docs_for_chat([x.document["text"] for x in reran
 
 ## Final Step: Call Command-R + RAG!
 
-```python
+```python PYTHON
 """
 Call the /chat endpoint with command-r
 """
@@ -1113,12 +1113,12 @@ print(citations_reference)
 
 Run the code cells below to make head to head comparisons of the different parsing techniques across different questions.
 
-```python
+```python PYTHON
 import pandas as pd
 results = pd.read_csv("{}/results-table.csv".format(data_dir))
 ```
 
-```python
+```python PYTHON
 question = input("""
 Question 1: What are the most common adverse reactions of Iwilfin?
 Question 2: What is the recommended dosage of Iwilfin on body surface area between 0.5 m2 and 0.75 m2?

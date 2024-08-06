@@ -42,7 +42,7 @@ The answer to this question is five: _Marie Curie, Linus Pauling, John Bardeen, 
 
 The way to ask this to the model is with the following line of code, which calls the `co.chat` endpoint.
 
-```python
+```python PYTHON
 prediction_without_search = [
     co.chat(
         message=query,
@@ -69,7 +69,7 @@ Instead, let’s first search for the answer using what we’ve learned in the p
 
 In order to find the answer to this question in the Wikipedia dataset (the one we’ve been working with throughout this post), we can use the same `dense_retrieval` function that we used before. For simplicity, we will only use dense retrieval without Rerank, but we invite you to add it to the lab and see how the results improve!
 
-```python
+```python PYTHON
 responses = dense_retrieval(query, num_results=20)
 ```
 
@@ -87,13 +87,13 @@ Next, we’ll feed these 20 paragraphs to a generative model, and instruct it to
 
 In order to get the generative model to answer a question based on a certain context, we need to create a prompt. And in this prompt, we need to give it a command and a context. The context will be the concatenation of all the paragraphs retrieved in the search step, which we can obtain using this line of code:
 
-```python
+```python PYTHON
 context = [r['text'] for r in responses]
 ```
 
 The array `context` contains a lot of text, and, given the good results we’ve been obtaining with search mechanisms, we are fairly confident that somewhere in this text lies the answer to our original question. Now, we invoke the `Chat` endpoint. The prompt we’ll use is the following.
 
-```python
+```python PYTHON
 prompt = f"""
 Use the information provided below to answer the questions at the end. If the answer to the question is not contained in the provided information, say "The answer is not in the context".
 ---
@@ -106,7 +106,7 @@ Question: How many people have won more than one Nobel prize?
 
 In other words, we’ve prompted the model to answer the question, but only from information coming from the `context` array. And if the information is not there, we are prompting the model to state that the answer is not in the context. The following line of code will run the prompt. As before, we generate 5 answers, and `max_tokens` controls the length of each answer.
 
-```python
+```python PYTHON
 prediction_with_search = [
     co.chat(
         message=prompt,

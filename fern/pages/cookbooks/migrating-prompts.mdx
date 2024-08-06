@@ -19,11 +19,11 @@ The two use cases demonstrated here are:
 1. Autobiography Assistant; and
 2. Legal Question Answering
 
-```python
+```python PYTHON
 #!pip install cohere
 ```
 
-```python
+```python PYTHON
 import json
 import os
 import re
@@ -32,7 +32,7 @@ import cohere
 import getpass
 ```
 
-```python
+```python PYTHON
 CO_API_KEY = getpass.getpass('cohere API key:')
 ```
 
@@ -40,7 +40,7 @@ CO_API_KEY = getpass.getpass('cohere API key:')
 cohere API key:··········
 ```
 
-```python
+```python PYTHON
 co = cohere.Client(CO_API_KEY)
 ```
 
@@ -48,7 +48,7 @@ co = cohere.Client(CO_API_KEY)
 
 This application scenario is a common LLM-as-assistant use case: given some context, help the user to complete a task. In this case, the task is to write a concise autobiographical summary.
 
-```python
+```python PYTHON
 original_prompt = '''## information
 Current Job Title: Senior Software Engineer
 Current Company Name: GlobalSolTech
@@ -64,14 +64,14 @@ The length of the text should be no more than 100 words.
 Write the summary in first person.'''
 ```
 
-```python
+```python PYTHON
 response = co.chat(
     message=original_prompt,
     model='command-r',
 )
 ```
 
-```python
+```python PYTHON
 print(response.text)
 ```
 
@@ -81,7 +81,7 @@ print(response.text)
 
 Using Command-R, we can automatically upgrade the original prompt to a RAG-style prompt to get more faithful adherence to the instructions, a clearer and more concise prompt, and in-line citations for free. Consider the following meta-prompt:
 
-```python
+```python PYTHON
 meta_prompt = f'''Below is a task for an LLM delimited with ## Original Task. Your task is to split that task into two parts: (1) the context; and (2) the instructions.
 The context should be split into several separate parts and returned as a JSON object where each part has a name describing its contents and the value is the contents itself.
 Make sure to include all of the context contained in the original task description and do not change its meaning.
@@ -98,7 +98,7 @@ Return everything in a JSON object with the following structure:
 '''
 ```
 
-```python
+```python PYTHON
 print(meta_prompt)
 ```
 
@@ -132,20 +132,20 @@ Write the summary in first person.
 
 Command-R returns with the following:
 
-```python
+```python PYTHON
 upgraded_prompt = co.chat(
     message=meta_prompt,
     model='command-r',
 )
 ```
 
-```python
+```python PYTHON
 print(upgraded_prompt.text)
 ```
 
 ````txt title="Output"
 Here is the task delved into a JSON object as requested:
-```json
+```json JSON
 {
     "context": [
     {
@@ -168,7 +168,7 @@ Here is the task delved into a JSON object as requested:
 
 To extract the returned information, we will write two simple functions to post-process out the JSON and then parse it.
 
-````python
+````python PYTHON
 def get_json(text: str) -> str:
     matches = [m.group(1) for m in re.finditer("```([\w\W]*?)```", text)]
     if len(matches):
@@ -179,7 +179,7 @@ def get_json(text: str) -> str:
     return text
 ````
 
-```python
+```python PYTHON
 def get_prompt_and_docs(text: str) -> tuple:
     json_obj = json.loads(get_json(text))
     prompt = json_obj['instructions']
@@ -190,11 +190,11 @@ def get_prompt_and_docs(text: str) -> tuple:
     return prompt, docs
 ```
 
-```python
+```python PYTHON
 new_prompt, docs = get_prompt_and_docs(upgraded_prompt.text)
 ```
 
-```python
+```python PYTHON
 new_prompt, docs
 ```
 
@@ -212,7 +212,7 @@ new_prompt, docs
 
 As we can see above, the new prompt is much more concise and gets right to the point. The context has been split into 4 "documents" that Command-R can ground the information to. Now let's run the same task with the new prompt while leveraging the `documents=` parameter. Note that the `docs` variable is a list of dict objects with `title` describing the contents of a text and `snippet` containing the text itself:
 
-```python
+```python PYTHON
 response = co.chat(
     message=new_prompt,
     model='command-r',
@@ -220,7 +220,7 @@ response = co.chat(
 )
 ```
 
-```python
+```python PYTHON
 print(response.text)
 ```
 
@@ -230,7 +230,7 @@ I'm a senior software engineer with a Ph.D. in Statistics and over 15 years of A
 
 The response is concise. More importantly, we can ensure that there is no hallucination because the text is automatically grounded in the input documents. Using the simple function below, we can add this grounding information to the text as citations:
 
-```python
+```python PYTHON
 def insert_citations(text: str, citations: list[dict], add_one: bool=False):
     """
     A helper function to pretty print citations.
@@ -259,7 +259,7 @@ def insert_citations(text: str, citations: list[dict], add_one: bool=False):
     return text
 ```
 
-```python
+```python PYTHON
 print(insert_citations(response.text, response.citations, True))
 ```
 
@@ -273,11 +273,11 @@ Now let's move on to an arguably more difficult problem.
 
 On March 21st, the DOJ announced that it is [suing Apple](https://www.theverge.com/2024/3/21/24107659/apple-doj-lawsuit-antitrust-documents-suing) for anti-competitive practices. The [complaint](https://www.justice.gov/opa/media/1344546/dl) is 88 pages long and consists of about 230 paragraphs of text. To understand what the suit alleges, a common use case would be to ask for a summary. Because Command-R has a context window of 128K, even an 88-page legal complaint fits comfortably within the window.
 
-```python
+```python PYTHON
 apple = open('data/apple_mod.txt').read()
 ```
 
-```python
+```python PYTHON
 tokens = co.tokenize(text=apple, model='command-r')
 len(tokens.tokens)
 ```
@@ -288,7 +288,7 @@ len(tokens.tokens)
 
 We can set up a prompt template that allows us to ask questions on the original text.
 
-```python
+```python PYTHON
 prompt_template = '''
 {legal_text}
 
@@ -296,12 +296,12 @@ prompt_template = '''
 '''
 ```
 
-```python
+```python PYTHON
 question = '''Please summarize the attached legal complaint succinctly. Focus on answering the question: what does the complaint allege?'''
 rendered_prompt = prompt_template.format(legal_text=apple, question=question)
 ```
 
-```python
+```python PYTHON
 response = co.chat(
     message=rendered_prompt,
     model='command-r',
@@ -309,7 +309,7 @@ response = co.chat(
 )
 ```
 
-```python
+```python PYTHON
 print(response.text)
 ```
 
@@ -319,19 +319,19 @@ The complaint alleges that Apple has violated antitrust laws by engaging in a pa
 
 The summary seems clear enough. But we are interested in the specific allegations that the DOJ makes. For example, skimming the full complaint, it looks like the DOJ is alleging that Apple could encrypt text messages sent to Android phones if it wanted to do so. We can amend the rendered prompt and ask:
 
-```python
+```python PYTHON
 question = '''Does the DOJ allege that Apple could encrypt text messages sent to Android phones?'''
 rendered_prompt = prompt_template.format(legal_text=apple, question=question)
 ```
 
-```python
+```python PYTHON
 response = co.chat(
     message=rendered_prompt,
     model='command-r',
 )
 ```
 
-```python
+```python PYTHON
 print(response.text)
 ```
 
@@ -343,7 +343,7 @@ This is a very interesting allegation that at first glance suggests that the mod
 
 While previously we asked Command-R to chunk the text for us, the legal complaint is highly structured with numbered paragraphs so we can use the following function to break the complaint into input docs ready for RAG:
 
-```python
+```python PYTHON
 def chunk_doc(input_doc: str) -> list:
     chunks = []
     current_para = 'Preamble'
@@ -366,11 +366,11 @@ def chunk_doc(input_doc: str) -> list:
     return docs
 ```
 
-```python
+```python PYTHON
 chunks = chunk_doc(apple)
 ```
 
-```python
+```python PYTHON
 print(chunks[18])
 ```
 
@@ -380,7 +380,7 @@ print(chunks[18])
 
 We can now try the same question but ask it directly to Command-R with the chunks as grounding information.
 
-```python
+```python PYTHON
 response = co.chat(
     message='''Does the DOJ allege that Apple could encrypt text messages sent to Android phones?''',
     model='command-r',
@@ -388,7 +388,7 @@ response = co.chat(
 )
 ```
 
-```python
+```python PYTHON
 print(response.text)
 ```
 
@@ -398,7 +398,7 @@ Yes, according to the DOJ, Apple could encrypt text messages sent from iPhones t
 
 The responses seem similar, but we should add citations and check the citation to get confidence in the response.
 
-```python
+```python PYTHON
 print(insert_citations(response.text, response.citations))
 ```
 
@@ -408,7 +408,7 @@ Yes, according to the DOJ, Apple could encrypt text messages sent from iPhones t
 
 The most important passage seems to be paragraph 144. Paragraph 93 is also cited. Let's check what they contain.
 
-```python
+```python PYTHON
 print(chunks[144]['snippet'])
 ```
 
@@ -420,7 +420,7 @@ users to send encrypted messages to Android users while still using iMessage on 
 which would instantly improve the privacy and security of iPhone and other smartphone users.
 ```
 
-```python
+```python PYTHON
 print(chunks[93]['snippet'])
 ```
 

@@ -11,7 +11,7 @@ createdAt: "Mon Feb 26 2024 22:22:44 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Thu May 23 2024 17:06:49 GMT+0000 (Coordinated Universal Time)"
 ---
 
-<img src="../../../assets/images/5ae9bbd-redis-logo.png" />
+<img src="../../../assets/images/5ae9bbd-redis-logo.png" width="200px" height="auto" />
 
 [RedisVL](https://www.redisvl.com/) provides a powerful, dedicated Python client library for using Redis as a Vector Database. This walks through how to integrate [Cohere embeddings](/docs/embeddings) with Redis using a dataset of Wikipedia articles to set up a pipeline for semantic search. It will cover:
 
@@ -36,7 +36,7 @@ The code samples on this page assume the following:
 
 - You have docker running locally
 
-```shell
+```shell SHELL
 docker run -d --name redis-stack -p 6379:6379 -p 8001:8001 redis/redis-stack:latest
 ```
 
@@ -53,7 +53,7 @@ Install and import the required Python Packages:
 
 To install the packages, use the following code
 
-```shell
+```shell SHELL
 !pip install redisvl==0.1.0
 !pip install cohere==4.45
 !pip install jsonlines
@@ -61,7 +61,7 @@ To install the packages, use the following code
 
 ### Import the required packages:
 
-```python
+```python PYTHON
 from redis import Redis
 from redisvl.index import SearchIndex
 from redisvl.schema import IndexSchema
@@ -77,7 +77,7 @@ import jsonlines
 
 To configure a Redis index you can either specify a `yaml` file or import a dictionary. In this tutorial we will be using a `yaml` file with the following schema. Either use the `yaml` file found at this [link](https://github.com/cohere-ai/notebooks/blob/main/notebooks/configs/redis_guide_schema.yaml), or create a `.yaml` file locally with the following configuration.
 
-```yaml
+```yaml YAML
 version: "0.1.0"
 index:
   name: semantic_search_demo
@@ -116,7 +116,7 @@ For this guide, we will be using the Cohere `embed-english-v3.0 model` which has
 
 ## Initializing the Cohere Text Vectorizer:
 
-```python
+```python PYTHON
 # create a vectorizer
 api_key='{Insert your cohere API Key}'
 
@@ -132,7 +132,7 @@ The following [link](/docs/embed-2) contains details around the available embedd
 
 ## Initializing the Redis Index:
 
-```python
+```python PYTHON
 # construct a search index from the schema - this schema is called "semantic_search_demo"
 schema = IndexSchema.from_yaml("./schema.yaml")
 client = Redis.from_url("redis://localhost:6379")
@@ -144,20 +144,20 @@ index.create(overwrite=True)
 
 Note that we are using `SearchIndex.from_yaml` because we are choosing to import the schema from a yaml file, we could also do `SearchIndex.from_dict` as well.
 
-```curl
+```curl CURL
 !rvl index listall
 ```
 
 The above code checks to see if an index has been created. If it has, you should see something like this below:
 
-```text
+```text TEXT
 15:39:22 [RedisVL] INFO   Indices:
 15:39:22 [RedisVL] INFO   1. semantic_search_demo
 ```
 
 Look inside the index to make sure it matches the schema you want
 
-```curl
+```curl CURL
 !rvl index info -i semantic_search_demo
 ```
 
@@ -188,11 +188,13 @@ Index Fields:
 
 You can also visit: [http://localhost:8001/redis-stack/browser](http://localhost:8001/redis-stack/browser). The Redis GUI will show you the index in realtime.
 
+<Frame caption="Redis GUI">
 <img src="../../../assets/images/a346870-image.png" alt="GUI" />
+</Frame>
 
 ## Loading your Documents and Embedding them into Redis:
 
-```python
+```python PYTHON
 # read in your documents
 jsonl_file_path='data/redis_guide_data.jsonl'
 
@@ -214,7 +216,7 @@ We will be loading a subset of data which contains paragraphs from wikipedia - t
 
 ## Prepare your Data to be inserted into the Index:
 
-```python
+```python PYTHON
 # contruct the data payload to be uploaded to your index
 data = [{"url": row['url'],
          "title": row['title'],
@@ -237,7 +239,7 @@ At this point, your Redis DB is ready for semantic search!
 
 ## Query your Redis DB:
 
-```python
+```python PYTHON
 # use the Cohere vectorizer again to create a query embedding
 query_embedding = cohere_vectorizer.embed("What did Microsoft release in 2015?", input_type='search_query',as_buffer=True)
 
@@ -261,7 +263,7 @@ Use the `VectorQuery` class to construct a query object - here you can specify t
 
 ## Adding Tag Filters:
 
-```python
+```python PYTHON
 # Initialize a tag filter
 tag_filter = Tag("title") == "Microsoft Office"
 
@@ -278,7 +280,7 @@ One feature of Redis is the ability to add [filtering](https://www.redisvl.com/a
 
 ## Using Filter Expressions:
 
-```python
+```python PYTHON
 # define a tag match on the title, text match on the text field, and numeric filter on the views field
 filter_data=(Tag('title')=='Elizabeth II') & (Text("text")% "born") & (Num("views")>4500)
 
