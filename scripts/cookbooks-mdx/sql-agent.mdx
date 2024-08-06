@@ -1,0 +1,830 @@
+---
+title: SQL Agent
+slug: /page/sql-agent
+---
+
+<div class="cookbook-nav-container">
+  <a href="/page/cookbooks" class="back-button pt-10 group inline-block cursor-pointer font-medium " rel="noreferrer"
+    target="_self">
+    <div class="pr-1 inline-block group-hover:no-underline">
+      <svg width="11.8" height="11" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M1.1554 7.20808C1.35066 7.40335 1.66724 7.40335 1.8625 7.20808L7.18477 1.88582C7.38003 1.69055 7.38003 1.37397 7.18477 1.17871L6.83121 0.825157C6.63595 0.629895 6.31937 0.629896 6.12411 0.825157L0.801842 6.14742C0.60658 6.34269 0.60658 6.65927 0.801842 6.85453L1.1554 7.20808Z"
+          fill="currentColor" />
+        <path
+          d="M1.1554 5.79226C1.35066 5.597 1.66724 5.597 1.8625 5.79226L7.18477 11.1145C7.38003 11.3098 7.38003 11.6264 7.18477 11.8216L6.83121 12.1752C6.63595 12.3705 6.31937 12.3705 6.12411 12.1752L0.801842 6.85292C0.60658 6.65766 0.60658 6.34108 0.801842 6.14582L1.1554 5.79226Z"
+          fill="currentColor" />
+        <path
+          d="M2.52491 6.23674C2.52492 5.9606 2.74878 5.73675 3.02491 5.73675H6.28412C6.4513 5.73675 6.60742 5.8203 6.70015 5.95941L7.03347 6.45941C7.25499 6.79169 7.01679 7.23675 6.61745 7.23675H3.0249C2.74876 7.23675 2.5249 7.01289 2.5249 6.73674L2.52491 6.23674Z"
+          fill="currentColor" />
+        <path
+          d="M13.5517 6.73676C13.5517 7.0129 13.3278 7.23675 13.0517 7.23675H8.79246C8.62528 7.23675 8.46916 7.1532 8.37643 7.0141L8.04311 6.5141C7.8216 6.18182 8.05979 5.73675 8.45914 5.73675H13.0517C13.3278 5.73675 13.5517 5.96062 13.5517 6.23676L13.5517 6.73676Z"
+          fill="currentColor" />
+      </svg>
+    </div>
+    Back to Cookbooks
+  </a>
+
+  <a href=https://github.com/cohere-ai/notebooks/blob/main/notebooks/agents/sql_agent/sql_agent.ipynb class="github-button pt-10 group inline-block cursor-pointer font-medium " rel="noreferrer"
+    target="_blank">
+    Open in GitHub
+    <div class="pl-1 inline-block group-hover:no-underline">
+      <svg width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M8.63218 0.366821C8.35604 0.366821 8.13218 0.590679 8.13218 0.866821V8.39364C8.13218 8.66978 8.35604 8.89364 8.63218 8.89364H9.13218C9.40832 8.89364 9.63218 8.66978 9.63218 8.39364V0.866821C9.63218 0.590678 9.40832 0.366821 9.13218 0.366821H8.63218Z"
+          fill="currentColor" />
+        <path
+          d="M9.63332 1.36796C9.63332 1.6441 9.40946 1.86796 9.13332 1.86796H1.6065C1.33035 1.86796 1.1065 1.6441 1.1065 1.36796V0.867956C1.1065 0.591813 1.33035 0.367956 1.6065 0.367956H9.13332C9.40946 0.367956 9.63332 0.591813 9.63332 0.867956V1.36796Z"
+          fill="currentColor" />
+        <path
+          d="M8.35063 2.02206C8.54588 2.21732 8.54588 2.5339 8.35062 2.72916L6.04601 5.03377C5.9278 5.15198 5.75833 5.20329 5.59439 5.1705L5.00515 5.05264C4.61356 4.97432 4.46728 4.49118 4.74966 4.2088L7.28997 1.66849C7.48523 1.47323 7.80182 1.47323 7.99708 1.6685L8.35063 2.02206Z"
+          fill="currentColor" />
+        <path
+          d="M0.199967 9.46558C0.0047119 9.27032 0.0047151 8.95374 0.199974 8.75848L3.21169 5.74677C3.3299 5.62855 3.49938 5.57724 3.66331 5.61003L4.25256 5.72789C4.64414 5.80621 4.79042 6.28935 4.50804 6.57173L1.26063 9.81915C1.06536 10.0144 0.748774 10.0144 0.553513 9.81914L0.199967 9.46558Z"
+          fill="currentColor" />
+      </svg>
+    </div>
+  </a>
+</div>
+
+<div>
+  <h1>SQL Agent</h1>
+</div>
+
+<!-- Authors -->
+<div class="authors-container">
+  
+  <div class="author-container">
+    <img class="author-image" src="https://files.readme.io/d17fc44-Shaan.jpg" alt="Shaan Desai" />
+    <p class="author-name">Shaan Desai</p>
+  </div>
+  
+</div>
+
+<style>
+  .header {
+    padding: 9px 0 17px 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  a[href],
+  .field-description a:not([href=""]),
+  .markdown-body a[href],
+  .markdown-body a:not([href=""]) {
+    text-decoration: none;
+  }
+
+  #content {
+    padding: 0 32px;
+  }
+
+  #content-head {
+    display: none;
+  }
+
+  .guide-page-title {
+    font-size: 29px !important;
+  }
+
+  .back-button .github-button {
+    border-radius: 0 !important;
+    border-width: 0 !important;
+    background-color: inherit !important;
+  }
+
+  .cookbook-nav-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .authors-container {
+    display: flex;
+    flex-direction: row;
+    flex-flow: row wrap;
+    gap: 2px 14px;
+    margin-top: 8px;
+  }
+
+  .author-container {
+    line-height: 1.5em;
+    display: flex;
+    flex-direction: row;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  .author-image {
+    height: 1.5em;
+    margin: 0px 6px 6px 0px !important;
+    border-radius: 50%;
+  }
+
+  .author-name {
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  @media only screen and (min-width: 620px) {
+    .guide-page-title {
+      width: 70%;
+    }
+
+    .header {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 0 17px 0;
+    }
+
+    .git--button {
+      width: 145px !important;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 16px;
+
+      width: 154px;
+      height: 35px;
+
+      background: #D4D9D4;
+      border: 1px solid #9DAAA4;
+      border-radius: 6px;
+    }
+  }
+
+
+  @media only screen and (min-width: 1024px) {
+    .guide-page-title {
+      font-size: 46px !important;
+    }
+
+    .header {
+      padding: 9px 0 32px 0;
+    }
+  }
+</style>
+
+
+## Motivation
+Enterprise customers often store and handle information in relational databases but querying such databases effectively requires bespoke knowledge of the underlying database structure as well as strong SQL coding skills. One way to address these challenges is to build an LLM agent capable of generating and executing SQL queries based on natural language. For example, if a user asks: ``what are the top 4 rows in table X``, the agent should be able to generate ``SELECT * FROM X LIMIT 4``, execute this query and return the output to the user. 
+
+## Objective
+In this notebook we explore how to setup a [Cohere ReAct Agent](https://github.com/langchain-ai/langchain-cohere/blob/main/libs/cohere/langchain_cohere/cohere_agent.py) to answer questions over SQL Databases. We show how this can be done seamlessly with langchain's existing [SQLDBToolkit](https://python.langchain.com/v0.1/docs/integrations/toolkits/sql_database/).
+
+## Table of Contents
+
+- [Toolkit Setup](#sec_step0)
+- [SQL Agent](#sec_step1)
+- [SQL Agent with context](#sec_step2)
+
+<a name="sec_step0"></a>
+# Toolkit Setup
+
+
+
+
+```python
+from langchain.agents import AgentExecutor
+from langchain_cohere.react_multi_hop.agent import create_cohere_react_agent
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_cohere.chat_models import ChatCohere
+from langchain_community.utilities.sql_database import SQLDatabase
+from langchain_community.agent_toolkits import SQLDatabaseToolkit
+import os
+import json
+```
+
+
+```python
+# Uncomment if you need to install the following packages
+#!pip install --quiet langchain langchain_cohere langchain_experimental --upgrade
+```
+
+Langchain already has a SQLDBToolkit that consists of 4 tools to handle SQL query generation, execution and validation. To use this, you simply need to define your LLM and DB and pass these into the Toolkit.
+
+These are the following tools:
+- 'sql_db_query': executes SQL code on the database
+- 'sql_db_schema': returns the schema of tables given the list of tables
+- 'sql_db_list_tables': lists the tables in the database
+- 'sql_db_query_checker': validates the SQL query
+
+
+
+
+
+```python
+# load the cohere api key
+os.environ["COHERE_API_KEY"] = ""
+```
+
+
+```python
+DB_NAME='Chinook.db'
+MODEL="command-r-plus"
+llm = ChatCohere(model=MODEL, temperature=0.1,verbose=True)
+db = SQLDatabase.from_uri(f"sqlite:///{DB_NAME}")
+toolkit = SQLDatabaseToolkit(db=db, llm=llm)
+context = toolkit.get_context()
+tools = toolkit.get_tools()
+
+print('**List of pre-defined Langchain Tools**')
+print([tool.name for tool in tools])
+```
+
+    **List of pre-defined Langchain Tools**
+    ['sql_db_query', 'sql_db_schema', 'sql_db_list_tables', 'sql_db_query_checker']
+
+
+<a name="sec_step1"></a>
+# SQL Agent
+
+We follow the general cohere react agent setup in Langchain to build our SQL agent.
+
+
+```python
+# define the prompt template
+prompt = ChatPromptTemplate.from_template("{input}")
+# instantiate the ReAct agent
+agent = create_cohere_react_agent(
+   llm=llm,
+   tools=tools,
+   prompt=prompt,
+)
+agent_executor = AgentExecutor(agent=agent,
+                               tools=tools,
+                               verbose=True,
+                               return_intermediate_steps=True
+                    )
+```
+
+
+```python
+output=agent_executor.invoke({
+   "input": 'what tables are available?',
+})
+```
+
+    
+    
+    [1m> Entering new AgentExecutor chain...[0m
+    [32;1m[1;3m
+    I will use the sql_db_list_tables tool to find out which tables are available.
+    {'tool_name': 'sql_db_list_tables', 'parameters': {'tool_input': ''}}
+    [0m[38;5;200m[1;3mAlbum, Artist, Customer, Employee, Genre, Invoice, InvoiceLine, MediaType, Playlist, PlaylistTrack, Track[0m[32;1m[1;3mRelevant Documents: 0
+    Cited Documents: 0
+    Answer: The following tables are available: Album, Artist, Customer, Employee, Genre, Invoice, InvoiceLine, MediaType, Playlist, PlaylistTrack, Track.
+    Grounded answer: The following tables are available: <co: 0>Album</co: 0>, <co: 0>Artist</co: 0>, <co: 0>Customer</co: 0>, <co: 0>Employee</co: 0>, <co: 0>Genre</co: 0>, <co: 0>Invoice</co: 0>, <co: 0>InvoiceLine</co: 0>, <co: 0>MediaType</co: 0>, <co: 0>Playlist</co: 0>, <co: 0>PlaylistTrack</co: 0>, <co: 0>Track</co: 0>.[0m
+    
+    [1m> Finished chain.[0m
+
+
+
+```python
+print(output['output'])
+```
+
+    The following tables are available: Album, Artist, Customer, Employee, Genre, Invoice, InvoiceLine, MediaType, Playlist, PlaylistTrack, Track.
+
+
+The agent uses the list_tables tool to effectively highlight all the tables in the DB.
+
+
+```python
+output=agent_executor.invoke({
+   "input": 'show the first row of the Playlist and Genre tables?',
+})
+```
+
+    
+    
+    [1m> Entering new AgentExecutor chain...[0m
+    [32;1m[1;3m
+    I will use the sql_db_schema tool to find the first row of the Playlist and Genre tables.
+    {'tool_name': 'sql_db_schema', 'parameters': {'table_names': 'Playlist, Genre'}}
+    [0m[33;1m[1;3m
+    CREATE TABLE "Genre" (
+    	"GenreId" INTEGER NOT NULL, 
+    	"Name" NVARCHAR(120), 
+    	PRIMARY KEY ("GenreId")
+    )
+    
+    /*
+    3 rows from Genre table:
+    GenreId	Name
+    1	Rock
+    2	Jazz
+    3	Metal
+    */
+    
+    
+    CREATE TABLE "Playlist" (
+    	"PlaylistId" INTEGER NOT NULL, 
+    	"Name" NVARCHAR(120), 
+    	PRIMARY KEY ("PlaylistId")
+    )
+    
+    /*
+    3 rows from Playlist table:
+    PlaylistId	Name
+    1	Music
+    2	Movies
+    3	TV Shows
+    */[0m[32;1m[1;3mRelevant Documents: 0
+    Cited Documents: 0
+    Answer: Here is the first row of the Genre table:
+    
+    | GenreId | Name |
+    |---|---|
+    | 1 | Rock |
+    
+    Here is the first row of the Playlist table:
+    
+    | PlaylistId | Name |
+    |---|---|
+    | 1 | Music |
+    Grounded answer: Here is the first row of the Genre table:
+    
+    | <co: 0>GenreId</co: 0> | <co: 0>Name</co: 0> |
+    |---|---|
+    | <co: 0>1</co: 0> | <co: 0>Rock</co: 0> |
+    
+    Here is the first row of the Playlist table:
+    
+    | <co: 0>PlaylistId</co: 0> | <co: 0>Name</co: 0> |
+    |---|---|
+    | <co: 0>1</co: 0> | <co: 0>Music</co: 0> |[0m
+    
+    [1m> Finished chain.[0m
+
+
+
+```python
+print(output['output'])
+```
+
+    Here is the first row of the Genre table:
+    
+    | GenreId | Name |
+    |---|---|
+    | 1 | Rock |
+    
+    Here is the first row of the Playlist table:
+    
+    | PlaylistId | Name |
+    |---|---|
+    | 1 | Music |
+
+
+Here we see that the tool takes a list of tables to query the sql_db_schema tool to retrieve the various schemas.
+
+
+```python
+output=agent_executor.invoke({
+   "input": 'which countries have the most invoices?',
+})
+```
+
+    
+    
+    [1m> Entering new AgentExecutor chain...[0m
+    [32;1m[1;3m
+    I will search for the number of invoices per country and then write an answer.
+    {'tool_name': 'sql_db_query', 'parameters': {'query': 'SELECT country, COUNT(*) AS invoice_count FROM invoices GROUP BY country ORDER BY invoice_count DESC'}}
+    [0m[36;1m[1;3mError: (sqlite3.OperationalError) no such table: invoices
+    [SQL: SELECT country, COUNT(*) AS invoice_count FROM invoices GROUP BY country ORDER BY invoice_count DESC]
+    (Background on this error at: https://sqlalche.me/e/20/e3q8)[0m[32;1m[1;3m
+    I received an error message. I will now use the sql_db_list_tables tool to find out the correct table name.
+    {'tool_name': 'sql_db_list_tables', 'parameters': {'tool_input': ''}}
+    [0m[38;5;200m[1;3mAlbum, Artist, Customer, Employee, Genre, Invoice, InvoiceLine, MediaType, Playlist, PlaylistTrack, Track[0m[32;1m[1;3m
+    I found out that the correct table name is 'Invoice'. I will now rewrite my query and run it again.
+    {'tool_name': 'sql_db_query', 'parameters': {'query': 'SELECT country, COUNT(*) AS invoice_count FROM Invoice GROUP BY country ORDER BY invoice_count DESC'}}
+    [0m[36;1m[1;3mError: (sqlite3.OperationalError) no such column: country
+    [SQL: SELECT country, COUNT(*) AS invoice_count FROM Invoice GROUP BY country ORDER BY invoice_count DESC]
+    (Background on this error at: https://sqlalche.me/e/20/e3q8)[0m[32;1m[1;3m
+    I received another error message. I will now use the sql_db_schema tool to find out the correct column name.
+    {'tool_name': 'sql_db_schema', 'parameters': {'table_names': 'Invoice'}}
+    [0m[33;1m[1;3m
+    CREATE TABLE "Invoice" (
+    	"InvoiceId" INTEGER NOT NULL, 
+    	"CustomerId" INTEGER NOT NULL, 
+    	"InvoiceDate" DATETIME NOT NULL, 
+    	"BillingAddress" NVARCHAR(70), 
+    	"BillingCity" NVARCHAR(40), 
+    	"BillingState" NVARCHAR(40), 
+    	"BillingCountry" NVARCHAR(40), 
+    	"BillingPostalCode" NVARCHAR(10), 
+    	"Total" NUMERIC(10, 2) NOT NULL, 
+    	PRIMARY KEY ("InvoiceId"), 
+    	FOREIGN KEY("CustomerId") REFERENCES "Customer" ("CustomerId")
+    )
+    
+    /*
+    3 rows from Invoice table:
+    InvoiceId	CustomerId	InvoiceDate	BillingAddress	BillingCity	BillingState	BillingCountry	BillingPostalCode	Total
+    1	2	2021-01-01 00:00:00	Theodor-Heuss-Straße 34	Stuttgart	None	Germany	70174	1.98
+    2	4	2021-01-02 00:00:00	Ullevålsveien 14	Oslo	None	Norway	0171	3.96
+    3	8	2021-01-03 00:00:00	Grétrystraat 63	Brussels	None	Belgium	1000	5.94
+    */[0m[32;1m[1;3m
+    I found out that the correct column name is 'BillingCountry'. I will now rewrite my query and run it again.
+    {'tool_name': 'sql_db_query', 'parameters': {'query': 'SELECT BillingCountry AS country, COUNT(*) AS invoice_count FROM Invoice GROUP BY BillingCountry ORDER BY invoice_count DESC'}}
+    [0m[36;1m[1;3m[('USA', 91), ('Canada', 56), ('France', 35), ('Brazil', 35), ('Germany', 28), ('United Kingdom', 21), ('Portugal', 14), ('Czech Republic', 14), ('India', 13), ('Sweden', 7), ('Spain', 7), ('Poland', 7), ('Norway', 7), ('Netherlands', 7), ('Italy', 7), ('Ireland', 7), ('Hungary', 7), ('Finland', 7), ('Denmark', 7), ('Chile', 7), ('Belgium', 7), ('Austria', 7), ('Australia', 7), ('Argentina', 7)][0m[32;1m[1;3mRelevant Documents: 1,3,4
+    Cited Documents: 4
+    Answer: The countries with the most invoices are the USA (91), Canada (56), and France (35).
+    Grounded answer: The countries with the most invoices are the <co: 4>USA (91</co: 4>), <co: 4>Canada (56</co: 4>), and <co: 4>France (35</co: 4>).[0m
+    
+    [1m> Finished chain.[0m
+
+
+
+```python
+print(output['output'])
+```
+
+    The countries with the most invoices are the USA (91), Canada (56), and France (35).
+
+
+The agent initially makes some errors as it jumps to answer the question using the db_query tool, but it then realizes it needs to figure out what tables it has access to and what they look like. It then fixes the SQL code and is able to generate the right answer.
+
+
+```python
+output=agent_executor.invoke({
+   "input": 'who is the best customer? The customer who has spent the most money is the best.',
+})
+```
+
+    
+    
+    [1m> Entering new AgentExecutor chain...[0m
+    [32;1m[1;3m
+    I will run a SQL query to find the customer who has spent the most money.
+    {'tool_name': 'sql_db_query', 'parameters': {'query': 'SELECT customer_name, SUM(total_cost) AS total_spent FROM orders GROUP BY customer_name ORDER BY total_spent DESC LIMIT 1;'}}
+    [0m[36;1m[1;3mError: (sqlite3.OperationalError) no such table: orders
+    [SQL: SELECT customer_name, SUM(total_cost) AS total_spent FROM orders GROUP BY customer_name ORDER BY total_spent DESC LIMIT 1;]
+    (Background on this error at: https://sqlalche.me/e/20/e3q8)[0m[32;1m[1;3m
+    I received an error message saying that there is no table called 'orders'. I will now use the sql_db_list_tables tool to find out what tables are available.
+    {'tool_name': 'sql_db_list_tables', 'parameters': {'tool_input': ''}}
+    [0m[38;5;200m[1;3mAlbum, Artist, Customer, Employee, Genre, Invoice, InvoiceLine, MediaType, Playlist, PlaylistTrack, Track[0m[32;1m[1;3m
+    I found that there is a table called 'Customer'. I will now use the sql_db_schema tool to find out what columns are in the 'Customer' table.
+    {'tool_name': 'sql_db_schema', 'parameters': {'table_names': 'Customer'}}
+    [0m[33;1m[1;3m
+    CREATE TABLE "Customer" (
+    	"CustomerId" INTEGER NOT NULL, 
+    	"FirstName" NVARCHAR(40) NOT NULL, 
+    	"LastName" NVARCHAR(20) NOT NULL, 
+    	"Company" NVARCHAR(80), 
+    	"Address" NVARCHAR(70), 
+    	"City" NVARCHAR(40), 
+    	"State" NVARCHAR(40), 
+    	"Country" NVARCHAR(40), 
+    	"PostalCode" NVARCHAR(10), 
+    	"Phone" NVARCHAR(24), 
+    	"Fax" NVARCHAR(24), 
+    	"Email" NVARCHAR(60) NOT NULL, 
+    	"SupportRepId" INTEGER, 
+    	PRIMARY KEY ("CustomerId"), 
+    	FOREIGN KEY("SupportRepId") REFERENCES "Employee" ("EmployeeId")
+    )
+    
+    /*
+    3 rows from Customer table:
+    CustomerId	FirstName	LastName	Company	Address	City	State	Country	PostalCode	Phone	Fax	Email	SupportRepId
+    1	Luís	Gonçalves	Embraer - Empresa Brasileira de Aeronáutica S.A.	Av. Brigadeiro Faria Lima, 2170	São José dos Campos	SP	Brazil	12227-000	+55 (12) 3923-5555	+55 (12) 3923-5566	luisg@embraer.com.br	3
+    2	Leonie	Köhler	None	Theodor-Heuss-Straße 34	Stuttgart	None	Germany	70174	+49 0711 2842222	None	leonekohler@surfeu.de	5
+    3	François	Tremblay	None	1498 rue Bélanger	Montréal	QC	Canada	H2G 1A7	+1 (514) 721-4711	None	ftremblay@gmail.com	3
+    */[0m[32;1m[1;3m
+    I found that the 'Customer' table does not contain any information about how much money a customer has spent. I will now use the sql_db_schema tool to find out what columns are in the 'Invoice' table.
+    {'tool_name': 'sql_db_schema', 'parameters': {'table_names': 'Invoice'}}
+    [0m[33;1m[1;3m
+    CREATE TABLE "Invoice" (
+    	"InvoiceId" INTEGER NOT NULL, 
+    	"CustomerId" INTEGER NOT NULL, 
+    	"InvoiceDate" DATETIME NOT NULL, 
+    	"BillingAddress" NVARCHAR(70), 
+    	"BillingCity" NVARCHAR(40), 
+    	"BillingState" NVARCHAR(40), 
+    	"BillingCountry" NVARCHAR(40), 
+    	"BillingPostalCode" NVARCHAR(10), 
+    	"Total" NUMERIC(10, 2) NOT NULL, 
+    	PRIMARY KEY ("InvoiceId"), 
+    	FOREIGN KEY("CustomerId") REFERENCES "Customer" ("CustomerId")
+    )
+    
+    /*
+    3 rows from Invoice table:
+    InvoiceId	CustomerId	InvoiceDate	BillingAddress	BillingCity	BillingState	BillingCountry	BillingPostalCode	Total
+    1	2	2021-01-01 00:00:00	Theodor-Heuss-Straße 34	Stuttgart	None	Germany	70174	1.98
+    2	4	2021-01-02 00:00:00	Ullevålsveien 14	Oslo	None	Norway	0171	3.96
+    3	8	2021-01-03 00:00:00	Grétrystraat 63	Brussels	None	Belgium	1000	5.94
+    */[0m[32;1m[1;3m
+    I found that the 'Invoice' table contains a 'Total' column, which is likely to be the total amount spent by the customer on that invoice. I will now use the sql_db_query tool to find the customer who has spent the most money.
+    {'tool_name': 'sql_db_query', 'parameters': {'query': 'SELECT c.FirstName, c.LastName, SUM(i.Total) AS total_spent FROM Customer c JOIN Invoice i ON c.CustomerId = i.CustomerId GROUP BY c.CustomerId ORDER BY total_spent DESC LIMIT 1;'}}
+    [0m[36;1m[1;3m[('Helena', 'Holý', 49.62)][0m[32;1m[1;3mRelevant Documents: 1,2,3,4
+    Cited Documents: 4
+    Answer: The best customer is Helena Holý, who has spent a total of 49.62.
+    Grounded answer: The best customer is <co: 4>Helena Holý</co: 4>, who has spent a total of <co: 4>49.62</co: 4>.[0m
+    
+    [1m> Finished chain.[0m
+
+
+
+```python
+print(output['output'])
+```
+
+    The best customer is Helena Holý, who has spent a total of 49.62.
+
+
+As you can see, the agent makes an error, but is able to rectify itself. It also manages to generate a SQL query over two tables in the database.
+
+<a name="sec_step2"></a>
+# SQL Agent with context
+
+Generally, passing in additional context to the preamble can help reduce the initial failures. This context is provided by the SQLDBToolkit and contains the first 3 rows of the tables in the Database.
+
+
+```python
+print('**Context to pass to LLM on tables**')
+print('Table Names')
+print(context['table_names'])
+print('Table Schemas')
+print(context['table_info'])
+```
+
+    **Context to pass to LLM on tables**
+    Table Names
+    Album, Artist, Customer, Employee, Genre, Invoice, InvoiceLine, MediaType, Playlist, PlaylistTrack, Track
+    Table Schemas
+    
+    CREATE TABLE "Album" (
+    	"AlbumId" INTEGER NOT NULL, 
+    	"Title" NVARCHAR(160) NOT NULL, 
+    	"ArtistId" INTEGER NOT NULL, 
+    	PRIMARY KEY ("AlbumId"), 
+    	FOREIGN KEY("ArtistId") REFERENCES "Artist" ("ArtistId")
+    )
+    
+    /*
+    3 rows from Album table:
+    AlbumId	Title	ArtistId
+    1	For Those About To Rock We Salute You	1
+    2	Balls to the Wall	2
+    3	Restless and Wild	2
+    */
+    
+    
+    CREATE TABLE "Artist" (
+    	"ArtistId" INTEGER NOT NULL, 
+    	"Name" NVARCHAR(120), 
+    	PRIMARY KEY ("ArtistId")
+    )
+    
+    /*
+    3 rows from Artist table:
+    ArtistId	Name
+    1	AC/DC
+    2	Accept
+    3	Aerosmith
+    */
+    
+    
+    CREATE TABLE "Customer" (
+    	"CustomerId" INTEGER NOT NULL, 
+    	"FirstName" NVARCHAR(40) NOT NULL, 
+    	"LastName" NVARCHAR(20) NOT NULL, 
+    	"Company" NVARCHAR(80), 
+    	"Address" NVARCHAR(70), 
+    	"City" NVARCHAR(40), 
+    	"State" NVARCHAR(40), 
+    	"Country" NVARCHAR(40), 
+    	"PostalCode" NVARCHAR(10), 
+    	"Phone" NVARCHAR(24), 
+    	"Fax" NVARCHAR(24), 
+    	"Email" NVARCHAR(60) NOT NULL, 
+    	"SupportRepId" INTEGER, 
+    	PRIMARY KEY ("CustomerId"), 
+    	FOREIGN KEY("SupportRepId") REFERENCES "Employee" ("EmployeeId")
+    )
+    
+    /*
+    3 rows from Customer table:
+    CustomerId	FirstName	LastName	Company	Address	City	State	Country	PostalCode	Phone	Fax	Email	SupportRepId
+    1	Luís	Gonçalves	Embraer - Empresa Brasileira de Aeronáutica S.A.	Av. Brigadeiro Faria Lima, 2170	São José dos Campos	SP	Brazil	12227-000	+55 (12) 3923-5555	+55 (12) 3923-5566	luisg@embraer.com.br	3
+    2	Leonie	Köhler	None	Theodor-Heuss-Straße 34	Stuttgart	None	Germany	70174	+49 0711 2842222	None	leonekohler@surfeu.de	5
+    3	François	Tremblay	None	1498 rue Bélanger	Montréal	QC	Canada	H2G 1A7	+1 (514) 721-4711	None	ftremblay@gmail.com	3
+    */
+    
+    
+    CREATE TABLE "Employee" (
+    	"EmployeeId" INTEGER NOT NULL, 
+    	"LastName" NVARCHAR(20) NOT NULL, 
+    	"FirstName" NVARCHAR(20) NOT NULL, 
+    	"Title" NVARCHAR(30), 
+    	"ReportsTo" INTEGER, 
+    	"BirthDate" DATETIME, 
+    	"HireDate" DATETIME, 
+    	"Address" NVARCHAR(70), 
+    	"City" NVARCHAR(40), 
+    	"State" NVARCHAR(40), 
+    	"Country" NVARCHAR(40), 
+    	"PostalCode" NVARCHAR(10), 
+    	"Phone" NVARCHAR(24), 
+    	"Fax" NVARCHAR(24), 
+    	"Email" NVARCHAR(60), 
+    	PRIMARY KEY ("EmployeeId"), 
+    	FOREIGN KEY("ReportsTo") REFERENCES "Employee" ("EmployeeId")
+    )
+    
+    /*
+    3 rows from Employee table:
+    EmployeeId	LastName	FirstName	Title	ReportsTo	BirthDate	HireDate	Address	City	State	Country	PostalCode	Phone	Fax	Email
+    1	Adams	Andrew	General Manager	None	1962-02-18 00:00:00	2002-08-14 00:00:00	11120 Jasper Ave NW	Edmonton	AB	Canada	T5K 2N1	+1 (780) 428-9482	+1 (780) 428-3457	andrew@chinookcorp.com
+    2	Edwards	Nancy	Sales Manager	1	1958-12-08 00:00:00	2002-05-01 00:00:00	825 8 Ave SW	Calgary	AB	Canada	T2P 2T3	+1 (403) 262-3443	+1 (403) 262-3322	nancy@chinookcorp.com
+    3	Peacock	Jane	Sales Support Agent	2	1973-08-29 00:00:00	2002-04-01 00:00:00	1111 6 Ave SW	Calgary	AB	Canada	T2P 5M5	+1 (403) 262-3443	+1 (403) 262-6712	jane@chinookcorp.com
+    */
+    
+    
+    CREATE TABLE "Genre" (
+    	"GenreId" INTEGER NOT NULL, 
+    	"Name" NVARCHAR(120), 
+    	PRIMARY KEY ("GenreId")
+    )
+    
+    /*
+    3 rows from Genre table:
+    GenreId	Name
+    1	Rock
+    2	Jazz
+    3	Metal
+    */
+    
+    
+    CREATE TABLE "Invoice" (
+    	"InvoiceId" INTEGER NOT NULL, 
+    	"CustomerId" INTEGER NOT NULL, 
+    	"InvoiceDate" DATETIME NOT NULL, 
+    	"BillingAddress" NVARCHAR(70), 
+    	"BillingCity" NVARCHAR(40), 
+    	"BillingState" NVARCHAR(40), 
+    	"BillingCountry" NVARCHAR(40), 
+    	"BillingPostalCode" NVARCHAR(10), 
+    	"Total" NUMERIC(10, 2) NOT NULL, 
+    	PRIMARY KEY ("InvoiceId"), 
+    	FOREIGN KEY("CustomerId") REFERENCES "Customer" ("CustomerId")
+    )
+    
+    /*
+    3 rows from Invoice table:
+    InvoiceId	CustomerId	InvoiceDate	BillingAddress	BillingCity	BillingState	BillingCountry	BillingPostalCode	Total
+    1	2	2021-01-01 00:00:00	Theodor-Heuss-Straße 34	Stuttgart	None	Germany	70174	1.98
+    2	4	2021-01-02 00:00:00	Ullevålsveien 14	Oslo	None	Norway	0171	3.96
+    3	8	2021-01-03 00:00:00	Grétrystraat 63	Brussels	None	Belgium	1000	5.94
+    */
+    
+    
+    CREATE TABLE "InvoiceLine" (
+    	"InvoiceLineId" INTEGER NOT NULL, 
+    	"InvoiceId" INTEGER NOT NULL, 
+    	"TrackId" INTEGER NOT NULL, 
+    	"UnitPrice" NUMERIC(10, 2) NOT NULL, 
+    	"Quantity" INTEGER NOT NULL, 
+    	PRIMARY KEY ("InvoiceLineId"), 
+    	FOREIGN KEY("TrackId") REFERENCES "Track" ("TrackId"), 
+    	FOREIGN KEY("InvoiceId") REFERENCES "Invoice" ("InvoiceId")
+    )
+    
+    /*
+    3 rows from InvoiceLine table:
+    InvoiceLineId	InvoiceId	TrackId	UnitPrice	Quantity
+    1	1	2	0.99	1
+    2	1	4	0.99	1
+    3	2	6	0.99	1
+    */
+    
+    
+    CREATE TABLE "MediaType" (
+    	"MediaTypeId" INTEGER NOT NULL, 
+    	"Name" NVARCHAR(120), 
+    	PRIMARY KEY ("MediaTypeId")
+    )
+    
+    /*
+    3 rows from MediaType table:
+    MediaTypeId	Name
+    1	MPEG audio file
+    2	Protected AAC audio file
+    3	Protected MPEG-4 video file
+    */
+    
+    
+    CREATE TABLE "Playlist" (
+    	"PlaylistId" INTEGER NOT NULL, 
+    	"Name" NVARCHAR(120), 
+    	PRIMARY KEY ("PlaylistId")
+    )
+    
+    /*
+    3 rows from Playlist table:
+    PlaylistId	Name
+    1	Music
+    2	Movies
+    3	TV Shows
+    */
+    
+    
+    CREATE TABLE "PlaylistTrack" (
+    	"PlaylistId" INTEGER NOT NULL, 
+    	"TrackId" INTEGER NOT NULL, 
+    	PRIMARY KEY ("PlaylistId", "TrackId"), 
+    	FOREIGN KEY("TrackId") REFERENCES "Track" ("TrackId"), 
+    	FOREIGN KEY("PlaylistId") REFERENCES "Playlist" ("PlaylistId")
+    )
+    
+    /*
+    3 rows from PlaylistTrack table:
+    PlaylistId	TrackId
+    1	3402
+    1	3389
+    1	3390
+    */
+    
+    
+    CREATE TABLE "Track" (
+    	"TrackId" INTEGER NOT NULL, 
+    	"Name" NVARCHAR(200) NOT NULL, 
+    	"AlbumId" INTEGER, 
+    	"MediaTypeId" INTEGER NOT NULL, 
+    	"GenreId" INTEGER, 
+    	"Composer" NVARCHAR(220), 
+    	"Milliseconds" INTEGER NOT NULL, 
+    	"Bytes" INTEGER, 
+    	"UnitPrice" NUMERIC(10, 2) NOT NULL, 
+    	PRIMARY KEY ("TrackId"), 
+    	FOREIGN KEY("MediaTypeId") REFERENCES "MediaType" ("MediaTypeId"), 
+    	FOREIGN KEY("GenreId") REFERENCES "Genre" ("GenreId"), 
+    	FOREIGN KEY("AlbumId") REFERENCES "Album" ("AlbumId")
+    )
+    
+    /*
+    3 rows from Track table:
+    TrackId	Name	AlbumId	MediaTypeId	GenreId	Composer	Milliseconds	Bytes	UnitPrice
+    1	For Those About To Rock (We Salute You)	1	1	1	Angus Young, Malcolm Young, Brian Johnson	343719	11170334	0.99
+    2	Balls to the Wall	2	2	1	U. Dirkschneider, W. Hoffmann, H. Frank, P. Baltes, S. Kaufmann, G. Hoffmann	342562	5510424	0.99
+    3	Fast As a Shark	3	2	1	F. Baltes, S. Kaufman, U. Dirkscneider & W. Hoffman	230619	3990994	0.99
+    */
+
+
+We can pass this context into the preamble and re-run a query to see how it performs.
+
+
+```python
+preamble="""## Task And Context
+You use your advanced complex reasoning capabilities to help people by answering their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You may need to use multiple tools in parallel or sequentially to complete your task. You should focus on serving the user's needs as best you can, which will be wide-ranging.
+
+## Style Guide
+Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.
+
+## Additional Information
+You are an expert who answers the user's question by creating SQL queries and executing them.
+You are equipped with a number of relevant SQL tools.
+
+Here is information about the database:
+{schema_info}
+""".format(schema_info=context)
+```
+
+
+```python
+output=agent_executor.invoke({
+   "input": 'provide the name of the best customer? The customer who has spent the most money is the best.',
+   "preamble": preamble
+})
+```
+
+    
+    
+    [1m> Entering new AgentExecutor chain...[0m
+    [32;1m[1;3m
+    I will write a SQL query to find the customer who has spent the most money.
+    {'tool_name': 'sql_db_query', 'parameters': {'query': 'SELECT c.FirstName, c.LastName, SUM(i.Total) AS TotalSpent FROM Customer c JOIN Invoice i ON c.CustomerId = i.CustomerId GROUP BY c.CustomerId ORDER BY TotalSpent DESC LIMIT 1;'}}
+    [0m[36;1m[1;3m[('Helena', 'Holý', 49.62)][0m[32;1m[1;3mRelevant Documents: 0
+    Cited Documents: 0
+    Answer: The customer who has spent the most money is Helena Holý.
+    Grounded answer: The customer who has spent the most money is <co: 0>Helena Holý</co: 0>.[0m
+    
+    [1m> Finished chain.[0m
+
+
+
+```python
+print(output['output'])
+```
+
+    The customer who has spent the most money is Helena Holý.
+
+
+We can see that passing that additional context actually avoids the error seen in the previous section and gets to the answer in one tool call. This works as long as you have a few tables and a few columns per table. We will follow up with more techniques to improve stability and scalability in future work.

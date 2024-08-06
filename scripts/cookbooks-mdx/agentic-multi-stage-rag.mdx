@@ -1,0 +1,720 @@
+---
+title: Agentic Multi-Stage RAG with Cohere Tools API
+slug: /page/agentic-multi-stage-rag
+---
+
+<div class="cookbook-nav-container">
+  <a href="/page/cookbooks" class="back-button pt-10 group inline-block cursor-pointer font-medium " rel="noreferrer"
+    target="_self">
+    <div class="pr-1 inline-block group-hover:no-underline">
+      <svg width="11.8" height="11" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M1.1554 7.20808C1.35066 7.40335 1.66724 7.40335 1.8625 7.20808L7.18477 1.88582C7.38003 1.69055 7.38003 1.37397 7.18477 1.17871L6.83121 0.825157C6.63595 0.629895 6.31937 0.629896 6.12411 0.825157L0.801842 6.14742C0.60658 6.34269 0.60658 6.65927 0.801842 6.85453L1.1554 7.20808Z"
+          fill="currentColor" />
+        <path
+          d="M1.1554 5.79226C1.35066 5.597 1.66724 5.597 1.8625 5.79226L7.18477 11.1145C7.38003 11.3098 7.38003 11.6264 7.18477 11.8216L6.83121 12.1752C6.63595 12.3705 6.31937 12.3705 6.12411 12.1752L0.801842 6.85292C0.60658 6.65766 0.60658 6.34108 0.801842 6.14582L1.1554 5.79226Z"
+          fill="currentColor" />
+        <path
+          d="M2.52491 6.23674C2.52492 5.9606 2.74878 5.73675 3.02491 5.73675H6.28412C6.4513 5.73675 6.60742 5.8203 6.70015 5.95941L7.03347 6.45941C7.25499 6.79169 7.01679 7.23675 6.61745 7.23675H3.0249C2.74876 7.23675 2.5249 7.01289 2.5249 6.73674L2.52491 6.23674Z"
+          fill="currentColor" />
+        <path
+          d="M13.5517 6.73676C13.5517 7.0129 13.3278 7.23675 13.0517 7.23675H8.79246C8.62528 7.23675 8.46916 7.1532 8.37643 7.0141L8.04311 6.5141C7.8216 6.18182 8.05979 5.73675 8.45914 5.73675H13.0517C13.3278 5.73675 13.5517 5.96062 13.5517 6.23676L13.5517 6.73676Z"
+          fill="currentColor" />
+      </svg>
+    </div>
+    Back to Cookbooks
+  </a>
+
+  <a href=https://github.com/cohere-ai/notebooks/blob/main/notebooks/agents/agentic-RAG/agentic_multi_stage_rag_native.ipynb class="github-button pt-10 group inline-block cursor-pointer font-medium " rel="noreferrer"
+    target="_blank">
+    Open in GitHub
+    <div class="pl-1 inline-block group-hover:no-underline">
+      <svg width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M8.63218 0.366821C8.35604 0.366821 8.13218 0.590679 8.13218 0.866821V8.39364C8.13218 8.66978 8.35604 8.89364 8.63218 8.89364H9.13218C9.40832 8.89364 9.63218 8.66978 9.63218 8.39364V0.866821C9.63218 0.590678 9.40832 0.366821 9.13218 0.366821H8.63218Z"
+          fill="currentColor" />
+        <path
+          d="M9.63332 1.36796C9.63332 1.6441 9.40946 1.86796 9.13332 1.86796H1.6065C1.33035 1.86796 1.1065 1.6441 1.1065 1.36796V0.867956C1.1065 0.591813 1.33035 0.367956 1.6065 0.367956H9.13332C9.40946 0.367956 9.63332 0.591813 9.63332 0.867956V1.36796Z"
+          fill="currentColor" />
+        <path
+          d="M8.35063 2.02206C8.54588 2.21732 8.54588 2.5339 8.35062 2.72916L6.04601 5.03377C5.9278 5.15198 5.75833 5.20329 5.59439 5.1705L5.00515 5.05264C4.61356 4.97432 4.46728 4.49118 4.74966 4.2088L7.28997 1.66849C7.48523 1.47323 7.80182 1.47323 7.99708 1.6685L8.35063 2.02206Z"
+          fill="currentColor" />
+        <path
+          d="M0.199967 9.46558C0.0047119 9.27032 0.0047151 8.95374 0.199974 8.75848L3.21169 5.74677C3.3299 5.62855 3.49938 5.57724 3.66331 5.61003L4.25256 5.72789C4.64414 5.80621 4.79042 6.28935 4.50804 6.57173L1.26063 9.81915C1.06536 10.0144 0.748774 10.0144 0.553513 9.81914L0.199967 9.46558Z"
+          fill="currentColor" />
+      </svg>
+    </div>
+  </a>
+</div>
+
+<div>
+  <h1>Agentic Multi-Stage RAG with Cohere Tools API</h1>
+</div>
+
+<!-- Authors -->
+<div class="authors-container">
+  
+  <div class="author-container">
+    <img class="author-image" src="https://files.readme.io/0803e3d-Jason_Jung.jpg" alt="Jason Jung" />
+    <p class="author-name">Jason Jung</p>
+  </div>
+  
+</div>
+
+<style>
+  .header {
+    padding: 9px 0 17px 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  a[href],
+  .field-description a:not([href=""]),
+  .markdown-body a[href],
+  .markdown-body a:not([href=""]) {
+    text-decoration: none;
+  }
+
+  #content {
+    padding: 0 32px;
+  }
+
+  #content-head {
+    display: none;
+  }
+
+  .guide-page-title {
+    font-size: 29px !important;
+  }
+
+  .back-button .github-button {
+    border-radius: 0 !important;
+    border-width: 0 !important;
+    background-color: inherit !important;
+  }
+
+  .cookbook-nav-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .authors-container {
+    display: flex;
+    flex-direction: row;
+    flex-flow: row wrap;
+    gap: 2px 14px;
+    margin-top: 8px;
+  }
+
+  .author-container {
+    line-height: 1.5em;
+    display: flex;
+    flex-direction: row;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  .author-image {
+    height: 1.5em;
+    margin: 0px 6px 6px 0px !important;
+    border-radius: 50%;
+  }
+
+  .author-name {
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  @media only screen and (min-width: 620px) {
+    .guide-page-title {
+      width: 70%;
+    }
+
+    .header {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 0 17px 0;
+    }
+
+    .git--button {
+      width: 145px !important;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 16px;
+
+      width: 154px;
+      height: 35px;
+
+      background: #D4D9D4;
+      border: 1px solid #9DAAA4;
+      border-radius: 6px;
+    }
+  }
+
+
+  @media only screen and (min-width: 1024px) {
+    .guide-page-title {
+      font-size: 46px !important;
+    }
+
+    .header {
+      padding: 9px 0 32px 0;
+    }
+  }
+</style>
+
+
+## Motivation 
+
+Retrieval augmented generation (RAG) has been a go-to use case that enterprises have been adopting with large language models (LLMs). Even though it works well in general, there are edge cases where this can fail. Most commonly, when the retrieved document mentions the query but actually refers to another document, the model will fail to generate the correct answer. 
+
+We propose an agentic RAG system that leverages tool use to continue to retrieve documents if correct ones were not retrieved at first try. This is ideal for use cases where accuracy is a top priority and latency is not. For example, lawyers trying to find the most accurate answer from their contracts are willing to wait a few more seconds to get the answer instead of getting wrong answers fast. 
+
+
+## Objective
+
+This notebook, we will explore how we can build a simple agentic RAG using Cohere's native API. We have prepared a fake dataset to demonstrate the use case. 
+We ask three questions that require different depths of retrieval. We will see how the model answers the question between simple and agentic RAG. 
+
+
+## Disclaimer 
+
+One of the challenges in building a RAG system is that it has many moving pieces: vector database, type of embedding model, use of reranker, number of retrieved documents, chunking strategy, and more. These components can make debugging and evaluating RAG systems difficult. Since this notebook focuses on the concept of agentic RAG, it will simplify other parts of the RAG system. For example, we will only retrieve top 1 docuemnt to demonstrate what happens when retrieved document does not contain the answer needed. 
+
+
+## Result 
+
+|Type | Question | Simple Rag | Agentic Rag |  
+|---|--------------|---------|---------|
+|Single-stage retrieval|   Is there a state level law for wearing helmets?  | There is currently no state law requiring the use of helmets when riding a bicycle. However, some cities and counties do require helmet use. | There is currently no state law requiring helmet use. However, some cities and counties do require helmet use with bicycles. | 
+|Multi-stage retrieval|I live in orting, do I need to wear a helmet with a bike?|In the state of Washington, there is no law requiring you to wear a helmet when riding a bike. However, some cities and counties do require helmet use, so it is worth checking your local laws.|Yes, you do need to wear a helmet with a bike in Orting if you are under 17.|
+
+As you will see more below, the multi-stage retrieval is achieved by adding a new function `reference_extractor()` that extracts other references in the documents and updating the instruction so the agent continues to retrieve more documents.  
+
+
+
+
+```python
+import os
+from pprint import pprint
+
+import cohere
+import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+```
+
+
+```python
+# versions
+print('cohere version:', cohere.__version__)
+```
+
+    cohere version: 5.5.1
+
+
+## Setup 
+
+
+```python
+COHERE_API_KEY = os.environ.get("CO_API_KEY")
+COHERE_MODEL = 'command-r-plus'
+co = cohere.Client(api_key=COHERE_API_KEY)
+```
+
+## Data 
+
+We leveraged data from [Washington Department of Transportation](https://wsdot.wa.gov/travel/bicycling-walking/bicycling-washington/bicyclist-laws-safety) and modified to fit the need of this demo. 
+
+
+```python
+documents = [
+    {
+        "title": "Bicycle law",
+        "body": """
+        Traffic Infractions and fees - For all information related to bicycle traffic infractions such as not wearing a helmet and fee information, please visit Section 3b for more information.
+        Riding on the road - When riding on a roadway, a cyclist has all the rights and responsibilities of a vehicle driver (RCW 46.61.755). Bicyclists who violate traffic laws may be ticketed (RCW 46.61.750).
+        Roads closed to bicyclists - Some designated sections of the state's limited access highway system may be closed to bicyclists. See the permanent bike restrictions map for more information. In addition, local governments may adopt ordinances banning cycling on specific roads or on sidewalks within business districts.
+        Children bicycling - Parents or guardians may not knowingly permit bicycle traffic violations by their ward (RCW 46.61.700).
+        Riding side by side - Bicyclists may ride side by side, but not more than two abreast (RCW 46.61.770).
+        Riding at night - For night bicycle riding, a white front light (not a reflector) visible for 500 feet and a red rear reflector are required. A red rear light may be used in addition to the required reflector (RCW 46.61.780).
+        Shoulder vs. bike lane - Bicyclists may choose to ride on the path, bike lane, shoulder or travel lane as suits their safety needs (RCW 46.61.770).
+        Bicycle helmets - Currently, there is no state law requiring helmet use. However, some cities and counties do require helmets. For specific information along with location for bicycle helmet law please reference to section 21a.
+        Bicycle equipment - Bicycles must be equipped with a white front light visible for 500 feet and a red rear reflector (RCW 46.61.780). A red rear light may be used in addition to the required reflector.
+""",
+    },
+    {
+        "title": "Bicycle helmet requirement",
+        "body": "Currently, there is no state law requiring helmet use. However, some cities and counties do require helmet use with bicycles. Here is a list of those locations and when the laws were enacted. For specific information along with location for bicycle helmet law please reference to section 21a.",
+    },
+    {
+        "title": "Section 21a",
+        "body": """helmet rules by location: These are city and county level rules. The following group must wear helmets.
+        Location name | Who is affected | Effective date
+        Aberdeen | All ages | 2001
+        Bainbridge Island | All ages | 2001
+        Bellevue | All ages | 2001
+        Bremerton | All ages | 2000
+        DuPont | All ages | 2008
+        Eatonville | All ages | 1996
+        Fircrest | All ages | 1995
+        Gig Harbor | All ages | 1996
+        Kent | All ages | 1999
+        Lynnwood | All ages | 2004
+        Lakewood | All ages | 1996
+        Milton | All ages | 1997
+        Orting | Under 17 | 1997
+
+     For fines and rules, you will be charged in according with Section 3b of the law.
+     """,
+    },
+    {
+        "title": "Section 3b",
+        "body": """Traffic infraction - A person operating a bicycle upon a roadway or highway shall be subject to the provisions of this chapter relating to traffic infractions.
+        1. Stop for people in crosswalks. Every intersection is a crosswalk - It’s the law. Drivers must stop for pedestrians at intersections, whether it’s an unmarked or marked crosswalk, and bicyclists in crosswalks are considered pedestrians. Also, it is illegal to pass another vehicle stopped for someone at a crosswalk. In Washington, the leading action motorists take that results in them hitting someone is a failure to yield to pedestrians.
+        2. Put the phone down. Hand-held cell phone use and texting is prohibited for all Washington drivers and may result in a $136 fine for first offense, $235 on the second distracted-driving citation.
+        3. Helmets are required for all bicyclists according to the state and municipal laws. If you are in a group required to wear a helmet but do not wear it you can be fined $48. # If you are the parent or legal guardian of a child under 17 and knowingly allow them to ride without a helmet, you can be fined $136.
+""",
+    },
+]
+db = pd.DataFrame(documents)
+# comebine title and body
+db["combined"] = "Title: " + db["title"] + "\n" + "Body: " + db["body"]
+# generate embedding
+embeddings = co.embed(
+    texts=db.combined.tolist(), model="embed-english-v3.0", input_type="search_document"
+)
+db["embeddings"] = embeddings.embeddings
+
+```
+
+
+```python
+db
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>title</th>
+      <th>body</th>
+      <th>combined</th>
+      <th>embeddings</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Bicycle law</td>
+      <td>\n        Traffic Infractions and fees - For a...</td>
+      <td>Title: Bicycle law\nBody: \n        Traffic In...</td>
+      <td>[-0.024673462, -0.034729004, 0.0418396, 0.0121...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Bicycle helmet requirement</td>
+      <td>Currently, there is no state law requiring hel...</td>
+      <td>Title: Bicycle helmet requirement\nBody: Curre...</td>
+      <td>[-0.019180298, -0.037384033, 0.0027389526, -0....</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Section 21a</td>
+      <td>helmet rules by location: These are city and c...</td>
+      <td>Title: Section 21a\nBody: helmet rules by loca...</td>
+      <td>[0.031097412, 0.0007619858, -0.023010254, -0.0...</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Section 3b</td>
+      <td>Traffic infraction - A person operating a bicy...</td>
+      <td>Title: Section 3b\nBody: Traffic infraction - ...</td>
+      <td>[0.015602112, -0.016143799, 0.032958984, 0.000...</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+## Tools  
+
+Following functions and tools will be used in the subsequent tasks. 
+
+
+```python
+def retrieve_documents(query: str, n=1) -> dict:
+    """
+    Function to retrieve documents a given query.
+
+    Steps:
+    1. Embed the query
+    2. Calculate cosine similarity between the query embedding and the embeddings of the documents
+    3. Return the top n documents with the highest similarity scores
+    """
+    query_emb = co.embed(
+        texts=[query], model="embed-english-v3.0", input_type="search_query"
+    )
+
+    similarity_scores = cosine_similarity(
+        [query_emb.embeddings[0]], db.embeddings.tolist()
+    )
+    similarity_scores = similarity_scores[0]
+
+    top_indices = similarity_scores.argsort()[::-1][:n]
+    top_matches = db.iloc[top_indices]
+
+    return {"top_matched_document": top_matches.combined}
+
+
+functions_map = {
+    "retrieve_documents": retrieve_documents,
+}
+
+tools = [
+    {
+        "name": "retrieve_documents",
+        "description": "given a query, retrieve documents from a database to answer user's question",
+        "parameter_definitions": {
+            "query": {"description": "query", "type": "str", "required": True}
+        },
+    }
+]
+
+```
+
+## RAG function 
+
+
+
+```python
+def simple_rag(query, db):
+    """
+    Given user's query, retrieve top documents and generate response using documents parameter.
+    """
+    top_matched_document = retrieve_documents(query)["top_matched_document"]
+
+    print("top_matched_document", top_matched_document)
+
+    output = co.chat(
+        message=query, model=COHERE_MODEL, documents=[top_matched_document]
+    )
+
+    return output.text
+
+```
+
+## Agentic RAG - cohere_agent()
+
+
+```python
+def cohere_agent(
+    message: str,
+    preamble: str,
+    tools: list[dict],
+    force_single_step=False,
+    verbose: bool = False,
+    temperature: float = 0.3,
+) -> str:
+    """
+    Function to handle multi-step tool use api.
+
+    Args:
+        message (str): The message to send to the Cohere AI model.
+        preamble (str): The preamble or context for the conversation.
+        tools (list of dict): List of tools to use in the conversation.
+        verbose (bool, optional): Whether to print verbose output. Defaults to False.
+
+    Returns:
+        str: The final response from the call.
+    """
+
+    counter = 1
+
+    response = co.chat(
+        model=COHERE_MODEL,
+        message=message,
+        preamble=preamble,
+        tools=tools,
+        force_single_step=force_single_step,
+        temperature=temperature,
+    )
+
+    if verbose:
+        print(f"\nrunning 0th step.")
+        print(response.text)
+
+    while response.tool_calls:
+        tool_results = []
+
+        if verbose:
+            print(f"\nrunning {counter}th step.")
+
+        for tool_call in response.tool_calls:
+            output = functions_map[tool_call.name](**tool_call.parameters)
+            outputs = [output]
+            tool_results.append({"call": tool_call, "outputs": outputs})
+
+            if verbose:
+                print(
+                    f"= running tool {tool_call.name}, with parameters: \n{tool_call.parameters}"
+                )
+                print(f"== tool results:")
+                pprint(output)
+
+        response = co.chat(
+            model=COHERE_MODEL,
+            message="",
+            chat_history=response.chat_history,
+            preamble=preamble,
+            tools=tools,
+            force_single_step=force_single_step,
+            tool_results=tool_results,
+            temperature=temperature,
+        )
+
+        if verbose:
+            print(response.text)
+            counter += 1
+
+    return response.text
+
+```
+
+## Question 1 - single-stage retrieval 
+
+Here we are asking a question that can be answered easily with single-stage retrieval. Both regular and agentic RAG should be able to answer this question easily. Below is the comparsion of the response. 
+
+| Question | Simple Rag | Agentic Rag |  
+|--------------|---------|---------|
+|   Is there a state level law for wearing helmets?  | There is currently no state law requiring the use of helmets when riding a bicycle. However, some cities and counties do require helmet use. | There is currently no state law requiring helmet use. However, some cities and counties do require helmet use with bicycles. | 
+
+
+
+
+```python
+question1 = "Is there a state level law for wearing helmets?"
+```
+
+### Simple RAG 
+
+
+```python
+output = simple_rag(question1, db)
+print(output)
+```
+
+    top_matched_document 1    Title: Bicycle helmet requirement\nBody: Curre...
+    Name: combined, dtype: object
+    There is currently no state law requiring the use of helmets when riding a bicycle. However, some cities and counties do require helmet use.
+
+
+### Agentic RAG 
+
+
+```python
+preamble = """
+You are an expert assistant that helps users answers question about legal documents and policies.
+Use the provided documents to answer questions about an employee's specific situation.
+"""
+
+output = cohere_agent(question1, preamble, tools, verbose=True)
+```
+
+    
+    running 0th step.
+    I will search for 'state level law for wearing helmets' in the documents provided and write an answer based on what I find.
+    
+    running 1th step.
+    = running tool retrieve_documents, with parameters: 
+    {'query': 'state level law for wearing helmets'}
+    == tool results:
+    {'top_matched_document': 1    Title: Bicycle helmet requirement\nBody: Curre...
+    Name: combined, dtype: object}
+    There is currently no state law requiring helmet use. However, some cities and counties do require helmet use with bicycles.
+
+
+## Question 2 - double-stage retrieval 
+
+The second question requires a double-stage retrieval because top matched document references another document. You will see below that the agentic RAG is unable to produce the correct answer initially. But when given proper tools and instructions, it finds the correct answer. 
+
+
+| Question | Simple Rag | Agentic Rag |  
+|--------------|---------|---------|
+|I live in orting, do I need to wear a helmet with a bike?|In the state of Washington, there is no law requiring you to wear a helmet when riding a bike. However, some cities and counties do require helmet use, so it is worth checking your local laws.|Yes, you do need to wear a helmet with a bike in Orting if you are under 17.|
+
+
+```python
+question2 = "I live in orting, do I need to wear a helmet with a bike?"
+```
+
+### Simple RAG 
+
+
+```python
+output = simple_rag(question2, db)
+print(output)
+```
+
+    top_matched_document 1    Title: Bicycle helmet requirement\nBody: Curre...
+    Name: combined, dtype: object
+    In the state of Washington, there is no law requiring you to wear a helmet when riding a bike. However, some cities and counties do require helmet use, so it is worth checking your local laws.
+
+
+### Agentic RAG
+
+Produces same quality answer as the simple rag.
+
+
+```python
+preamble = """
+You are an expert assistant that helps users answers question about legal documents and policies.
+Use the provided documents to answer questions about an employee's specific situation.
+"""
+
+output = cohere_agent(question2, preamble, tools, verbose=True)
+```
+
+    
+    running 0th step.
+    I will search for 'helmet with a bike' and then write an answer.
+    
+    running 1th step.
+    = running tool retrieve_documents, with parameters: 
+    {'query': 'helmet with a bike'}
+    == tool results:
+    {'top_matched_document': 1    Title: Bicycle helmet requirement\nBody: Curre...
+    Name: combined, dtype: object}
+    There is no state law requiring helmet use, however, some cities and counties do require helmet use with bicycles. I cannot find any information about Orting specifically, but you should check with your local authority.
+
+
+### Agentic RAG - New Tools 
+
+In order for the model to retrieve correct documents, we do two things: 
+1. New reference_extractor() function is added. This function finds the references to other documents when given query and documents. 
+2. We update the instruction that directs the agent to keep retrieving relevant documents. 
+
+
+```python
+def reference_extractor(query: str, documents: list[str]) -> str:
+    """
+    Given a query and document, find references to other documents.
+    """
+    prompt = f"""
+    # instruction
+    Does the reference document mention any other documents? If so, list them.
+    If not, return empty string.
+
+    # user query
+    {query}
+
+    # retrieved documents
+    {documents}
+    """
+
+    return co.chat(message=prompt, model=COHERE_MODEL, preamble=None).text
+
+
+def retrieve_documents(query: str, n=1) -> dict:
+    """
+    Function to retrieve most relevant documents a given query.
+    It also returns other references mentioned in the top matched documents.
+    """
+    query_emb = co.embed(
+        texts=[query], model="embed-english-v3.0", input_type="search_query"
+    )
+
+    similarity_scores = cosine_similarity(
+        [query_emb.embeddings[0]], db.embeddings.tolist()
+    )
+    similarity_scores = similarity_scores[0]
+
+    top_indices = similarity_scores.argsort()[::-1][:n]
+    top_matches = db.iloc[top_indices]
+    other_references = reference_extractor(query, top_matches.combined.tolist())
+
+    return {
+        "top_matched_document": top_matches.combined,
+        "other_references_to_query": other_references,
+    }
+
+
+functions_map = {
+    "retrieve_documents": retrieve_documents,
+}
+
+tools = [
+    {
+        "name": "retrieve_documents",
+        "description": "given a query, retrieve documents from a database to answer user's question. It also finds references to other documents that should be leveraged to retrieve more documents",
+        "parameter_definitions": {
+            "query": {
+                "description": "user's question or question or name of other document sections or references.",
+                "type": "str",
+                "required": True,
+            }
+        },
+    }
+]
+
+```
+
+
+```python
+preamble2 = """# Instruction
+You are an expert assistant that helps users answers question about legal documents and policies.
+
+Please follow these steps:
+1. Using user's query, use `retrieve_documents` tool to retrieve the most relevant document from the database.
+2. If you see `other_references_to_query` in the tool result, search the mentioned referenced using `retrieve_documents(<other reference>)` tool to retrieve more documents.
+3. Keep trying until you find the answer.
+4. Answer with yes or no as much as you can to answer the question directly.
+"""
+
+output = cohere_agent(question2, preamble2, tools, verbose=True)
+```
+
+    
+    running 0th step.
+    I will search for 'Orting' and 'bike helmet' to find the relevant information.
+    
+    running 1th step.
+    = running tool retrieve_documents, with parameters: 
+    {'query': 'Orting bike helmet'}
+    == tool results:
+    {'other_references_to_query': 'Section 21a, Section 3b',
+     'top_matched_document': 0    Title: Bicycle law\nBody: \n        Riding on ...
+    Name: combined, dtype: object}
+    I have found that there is no state law requiring helmet use, but some cities and counties do require helmets. I will now search for 'Section 21a' to find out if Orting is one of these cities or counties.
+    
+    running 2th step.
+    = running tool retrieve_documents, with parameters: 
+    {'query': 'Section 21a'}
+    == tool results:
+    {'other_references_to_query': '- Section 3b',
+     'top_matched_document': 2    Title: Section 21a\nBody: helmet rules by loca...
+    Name: combined, dtype: object}
+    Yes, you do need to wear a helmet when riding a bike in Orting if you are under 17.

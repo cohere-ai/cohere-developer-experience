@@ -1,0 +1,575 @@
+---
+title: Financial CSV Agent with Langchain
+slug: /page/csv-agent
+---
+
+<div class="cookbook-nav-container">
+  <a href="/page/cookbooks" class="back-button pt-10 group inline-block cursor-pointer font-medium " rel="noreferrer"
+    target="_self">
+    <div class="pr-1 inline-block group-hover:no-underline">
+      <svg width="11.8" height="11" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M1.1554 7.20808C1.35066 7.40335 1.66724 7.40335 1.8625 7.20808L7.18477 1.88582C7.38003 1.69055 7.38003 1.37397 7.18477 1.17871L6.83121 0.825157C6.63595 0.629895 6.31937 0.629896 6.12411 0.825157L0.801842 6.14742C0.60658 6.34269 0.60658 6.65927 0.801842 6.85453L1.1554 7.20808Z"
+          fill="currentColor" />
+        <path
+          d="M1.1554 5.79226C1.35066 5.597 1.66724 5.597 1.8625 5.79226L7.18477 11.1145C7.38003 11.3098 7.38003 11.6264 7.18477 11.8216L6.83121 12.1752C6.63595 12.3705 6.31937 12.3705 6.12411 12.1752L0.801842 6.85292C0.60658 6.65766 0.60658 6.34108 0.801842 6.14582L1.1554 5.79226Z"
+          fill="currentColor" />
+        <path
+          d="M2.52491 6.23674C2.52492 5.9606 2.74878 5.73675 3.02491 5.73675H6.28412C6.4513 5.73675 6.60742 5.8203 6.70015 5.95941L7.03347 6.45941C7.25499 6.79169 7.01679 7.23675 6.61745 7.23675H3.0249C2.74876 7.23675 2.5249 7.01289 2.5249 6.73674L2.52491 6.23674Z"
+          fill="currentColor" />
+        <path
+          d="M13.5517 6.73676C13.5517 7.0129 13.3278 7.23675 13.0517 7.23675H8.79246C8.62528 7.23675 8.46916 7.1532 8.37643 7.0141L8.04311 6.5141C7.8216 6.18182 8.05979 5.73675 8.45914 5.73675H13.0517C13.3278 5.73675 13.5517 5.96062 13.5517 6.23676L13.5517 6.73676Z"
+          fill="currentColor" />
+      </svg>
+    </div>
+    Back to Cookbooks
+  </a>
+
+  <a href=https://github.com/cohere-ai/notebooks/blob/main/notebooks/agents/financial-csv-agent/financial_csv_publication.ipynb class="github-button pt-10 group inline-block cursor-pointer font-medium " rel="noreferrer"
+    target="_blank">
+    Open in GitHub
+    <div class="pl-1 inline-block group-hover:no-underline">
+      <svg width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M8.63218 0.366821C8.35604 0.366821 8.13218 0.590679 8.13218 0.866821V8.39364C8.13218 8.66978 8.35604 8.89364 8.63218 8.89364H9.13218C9.40832 8.89364 9.63218 8.66978 9.63218 8.39364V0.866821C9.63218 0.590678 9.40832 0.366821 9.13218 0.366821H8.63218Z"
+          fill="currentColor" />
+        <path
+          d="M9.63332 1.36796C9.63332 1.6441 9.40946 1.86796 9.13332 1.86796H1.6065C1.33035 1.86796 1.1065 1.6441 1.1065 1.36796V0.867956C1.1065 0.591813 1.33035 0.367956 1.6065 0.367956H9.13332C9.40946 0.367956 9.63332 0.591813 9.63332 0.867956V1.36796Z"
+          fill="currentColor" />
+        <path
+          d="M8.35063 2.02206C8.54588 2.21732 8.54588 2.5339 8.35062 2.72916L6.04601 5.03377C5.9278 5.15198 5.75833 5.20329 5.59439 5.1705L5.00515 5.05264C4.61356 4.97432 4.46728 4.49118 4.74966 4.2088L7.28997 1.66849C7.48523 1.47323 7.80182 1.47323 7.99708 1.6685L8.35063 2.02206Z"
+          fill="currentColor" />
+        <path
+          d="M0.199967 9.46558C0.0047119 9.27032 0.0047151 8.95374 0.199974 8.75848L3.21169 5.74677C3.3299 5.62855 3.49938 5.57724 3.66331 5.61003L4.25256 5.72789C4.64414 5.80621 4.79042 6.28935 4.50804 6.57173L1.26063 9.81915C1.06536 10.0144 0.748774 10.0144 0.553513 9.81914L0.199967 9.46558Z"
+          fill="currentColor" />
+      </svg>
+    </div>
+  </a>
+</div>
+
+<div>
+  <h1>Financial CSV Agent with Langchain</h1>
+</div>
+
+<!-- Authors -->
+<div class="authors-container">
+  
+  <div class="author-container">
+    <img class="author-image" src="https://files.readme.io/d17fc44-Shaan.jpg" alt="Shaan Desai" />
+    <p class="author-name">Shaan Desai</p>
+  </div>
+  
+</div>
+
+<style>
+  .header {
+    padding: 9px 0 17px 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  a[href],
+  .field-description a:not([href=""]),
+  .markdown-body a[href],
+  .markdown-body a:not([href=""]) {
+    text-decoration: none;
+  }
+
+  #content {
+    padding: 0 32px;
+  }
+
+  #content-head {
+    display: none;
+  }
+
+  .guide-page-title {
+    font-size: 29px !important;
+  }
+
+  .back-button .github-button {
+    border-radius: 0 !important;
+    border-width: 0 !important;
+    background-color: inherit !important;
+  }
+
+  .cookbook-nav-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .authors-container {
+    display: flex;
+    flex-direction: row;
+    flex-flow: row wrap;
+    gap: 2px 14px;
+    margin-top: 8px;
+  }
+
+  .author-container {
+    line-height: 1.5em;
+    display: flex;
+    flex-direction: row;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  .author-image {
+    height: 1.5em;
+    margin: 0px 6px 6px 0px !important;
+    border-radius: 50%;
+  }
+
+  .author-name {
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  @media only screen and (min-width: 620px) {
+    .guide-page-title {
+      width: 70%;
+    }
+
+    .header {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 0 17px 0;
+    }
+
+    .git--button {
+      width: 145px !important;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 16px;
+
+      width: 154px;
+      height: 35px;
+
+      background: #D4D9D4;
+      border: 1px solid #9DAAA4;
+      border-radius: 6px;
+    }
+  }
+
+
+  @media only screen and (min-width: 1024px) {
+    .guide-page-title {
+      font-size: 46px !important;
+    }
+
+    .header {
+      padding: 9px 0 32px 0;
+    }
+  }
+</style>
+
+
+# Notebook Overview
+
+## Motivation
+Tabular data reasoning continues to be an exciting application of Agents, particularly in the financial domain, where multiple reasoning steps may be needed to identify the right answer. For example, a financial analyst working with financial statements may be interested in computing various financial ratios with natural language queries.
+
+Some examples may include:
+- ROE (Return on Equity) = Net Income / Shareholder's Equity
+- Net Profit Margin = Net Income / Revenue
+- Asset Turnover = Revenue / Average Total Assets
+- Financial Leverage = Average Total Assets / Shareholder's Equity
+
+Having an Agent which is able to correctly compute these and other ratios would be a great help for any analyst in the field of Finance.
+
+## Objective
+In this notebook we explore how to setup a [Cohere ReAct Agent](https://github.com/langchain-ai/langchain-cohere/blob/main/libs/cohere/langchain_cohere/cohere_agent.py) to answer questions over tables in Apple's SEC10K 2020 form. We show how this can be done with two variants of a Langchain Python tool, one that requires you to pass the full path of the dataframe and another that requires the dataframe objects to be loaded in memory. While there is no major difference between the two approaches, we present both to show how to manage files that are loaded in memory vs files in storage. 
+
+## Table of Contents
+
+- [Setup](#sec_step0)
+- [Introduction](#sec_step1)
+- [QnA over Single Table](#sec_step2)
+    - [Agent with Python Tool](#sec_step2_sub1)
+    - [Agent with Python Tool that takes tables as input](#sec_step2_sub2)
+- [QnA over Multiple Tables](#sec_step3)
+
+<a id="sec_step0"></a>
+# Setup
+
+
+```python
+from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain.agents import AgentExecutor
+from langchain_cohere.react_multi_hop.agent import create_cohere_react_agent
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_cohere.chat_models import ChatCohere
+import pandas as pd
+from langchain.agents import Tool
+from langchain_experimental.utilities import PythonREPL
+from langchain_experimental.tools.python.tool import PythonAstREPLTool
+```
+
+
+```python
+# Uncomment if you need to install the following packages
+#!pip install --quiet langchain langchain_cohere langchain_experimental --upgrade
+#!pip install sec-api
+```
+
+<a id="sec_step1"></a>
+# Introduction
+
+The aim of this notebook is to showcase how Cohere Langchain Agents can be used to answer questions over tabular data.
+This notebook assumes the input is a set of csv files extracted from Apple's SEC 10K filings.
+
+### Data Loading
+
+We use the sec-api to download the income statement and balance sheet from the SEC 10K .htm file. Please note that the tables need to be parsed such that the index is numerical as the python code generation struggles to filter based on index. We have processed the tables and provided them for you. They can be found [here](https://github.com/cohere-ai/notebooks/tree/main/notebooks/agents/financial-csv-agent). 
+
+
+```python
+income_statement = pd.read_csv('income_statement.csv')
+balance_sheet = pd.read_csv('balance_sheet.csv')
+```
+
+<a id="sec_step2"></a>
+# QnA over Single Table 
+
+<a id="sec_step2_sub1"></a>
+## Agent with Python Tool
+
+In the example below, we show how the python tool can be used to load a dataframe and extract information from it. To do this successfully we need to:
+
+* Pass the file name to the preamble so the model knows how to load the dataframe.
+* Pass a preview of the dataframe in the preamble so the model knows which columns/rows to query.
+
+First, let's implement the ReAct agent.
+
+
+```python
+# instantiate the Cohere llm
+llm = ChatCohere(model="command-r", temperature=0.1,cohere_api_key="",verbose=True)
+
+# create the python tool
+python_repl = PythonREPL()
+python_tool = Tool(
+    name="python_repl",
+    description="Executes python code and returns the result. The code runs in a static sandbox without interactive mode, so print output or save output to a file.",
+    func=python_repl.run,
+)
+python_tool.name = "python_interpreter"
+
+class ToolInput(BaseModel):
+    code: str = Field(description="Python code to execute.")
+python_tool.args_schema = ToolInput
+tools=[python_tool]
+
+# define the prompt template
+prompt = ChatPromptTemplate.from_template("{input}")
+
+# instantiate the ReAct agent
+agent = create_cohere_react_agent(
+   llm=llm,
+   tools=tools,
+   prompt=prompt,
+)
+agent_executor = AgentExecutor(agent=agent,
+                               tools=tools,
+                               verbose=True,
+                               return_intermediate_steps=True
+                    )
+# finally, define the preamble
+preamble = """
+You are an expert who answers the user's question. You are working with a pandas dataframe in Python. The name of the dataframe is `income_statement.csv`.
+Here is a preview of the dataframe:
+{head_df}
+""".format(head_df=income_statement.head(3).to_markdown())
+
+```
+
+Then, we define the dictionary including the questions we want the Agent to answer, and their answer.
+
+
+```python
+question_dict ={
+    'q1': ['what is the highest value of cost of goods and service?',169559000000],
+    'q2': ['what is the largest gross profit margin?',0.3836194330595236],
+    'q3': ['what is the minimum ratio of operating income loss divided by non operating income expense',35.360599]
+}
+```
+
+Let's now see how the Agent answers each of the questions.
+
+
+```python
+for qsn,val in question_dict.items():
+    print(f'question:{qsn}')
+    agent_executor.invoke({
+       "input": val[0],
+       "preamble": preamble,
+    })
+    print(f'GT Answer:{val[1]}')
+    print('-'*50)
+```
+
+    question:q1
+    
+    
+    [1m> Entering new AgentExecutor chain...[0m
+    [32;1m[1;3m
+    I will write and execute Python code to find the highest value of Cost of Goods and Services Sold from the provided dataframe.
+    {'tool_name': 'python_interpreter', 'parameters': {'code': 'import pandas as pd\n\n# Read the CSV file into a DataFrame\ndf = pd.read_csv(\'income_statement.csv\')\n\n# Find the highest value in the \'CostOfGoodsAndServicesSold\' column\nmax_value = df[\'CostOfGoodsAndServicesSold\'].max()\n\nprint(f"The highest value of Cost of Goods and Services Sold is {max_value}")'}}
+    [0m[36;1m[1;3mThe highest value of Cost of Goods and Services Sold is 169559000000.0
+    [0m[32;1m[1;3mRelevant Documents: 0
+    Cited Documents: 0
+    Answer: The highest value of Cost of Goods and Services Sold is 169559000000.0.
+    Grounded answer: The highest value of Cost of Goods and Services Sold is <co: 0>169559000000.0</co: 0>.[0m
+    
+    [1m> Finished chain.[0m
+    GT Answer:169559000000
+    --------------------------------------------------
+    question:q2
+    
+    
+    [1m> Entering new AgentExecutor chain...[0m
+    [32;1m[1;3m
+    I will write and execute Python code to calculate the largest gross profit margin from the data frame provided.
+    {'tool_name': 'python_interpreter', 'parameters': {'code': 'import pandas as pd\n\n# Read the CSV file into a DataFrame\ndf = pd.read_csv(\'income_statement.csv\')\n\n# Calculate the gross profit margin as a percentage\ndf[\'GrossProfitMargin\'] = (df[\'GrossProfit\'] / df[\'RevenueFromContractWithCustomerExcludingAssessedTax\']) * 100\n\n# Find the row with the maximum gross profit margin\nmax_margin_row = df.loc[df[\'GrossProfitMargin\'].idxmax()]\n\nprint(f"The largest gross profit margin is {max_margin_row[\'GrossProfitMargin\']}% on {max_margin_row[\'index\']}")\n'}}
+    [0m[36;1m[1;3mThe largest gross profit margin is 38.36194330595236% on 2019-12-29-2020-03-28
+    [0m[32;1m[1;3mRelevant Documents: 0
+    Cited Documents: 0
+    Answer: The largest gross profit margin is approximately 38.36% on 2019-12-29 to 2020-03-28.
+    Grounded answer: The largest gross profit margin is <co: 0>approximately 38.36</co: 0>% on <co: 0>2019-12-29 to 2020-03-28</co: 0>.[0m
+    
+    [1m> Finished chain.[0m
+    GT Answer:0.3836194330595236
+    --------------------------------------------------
+    question:q3
+    
+    
+    [1m> Entering new AgentExecutor chain...[0m
+    [32;1m[1;3m
+    I will write and execute Python code to calculate the minimum ratio of Operating Income Loss divided by Non Operating Income Expense.
+    {'tool_name': 'python_interpreter', 'parameters': {'code': 'import pandas as pd\n\n# Read the CSV file into a DataFrame\ndf = pd.read_csv(\'income_statement.csv\')\n\n# Calculate the ratio\nratios = df[\'OperatingIncomeLoss\'] / df[\'NonoperatingIncomeExpense\']\n\nprint("Minimum ratio:", ratios.min())'}}
+    [0m[36;1m[1;3mMinimum ratio: 35.36059850374065
+    [0m[32;1m[1;3mRelevant Documents: 0
+    Cited Documents: 0
+    Answer: The minimum ratio of Operating Income Loss divided by Non Operating Income Expense is approximately **35.36**.
+    Grounded answer: The minimum ratio of Operating Income Loss divided by Non Operating Income Expense is approximately *<co: 0>*35.36</co: 0>**.[0m
+    
+    [1m> Finished chain.[0m
+    GT Answer:35.360599
+    --------------------------------------------------
+
+
+Nice! The agent uses the Python tool to write the code to access the data in the tables, and perform the required calculations.
+
+<a id="sec_step2_sub2"></a>
+## Agent with Python Tool that takes tables as input
+
+In the example above, the model needs to load the dataframe in the python call before carrying out operations. In this example, we show how to pass the dataframes to the python tool so it has the file already loaded.
+
+
+```python
+# call the PythonAstREPLTool in order to pass tables to the tool
+df_locals = {'df':pd.read_csv('income_statement.csv')}
+tools = [PythonAstREPLTool(locals=df_locals)]
+
+agent = create_cohere_react_agent(
+   llm=llm,
+   tools=tools,
+   prompt=prompt,
+)
+agent_executor = AgentExecutor(agent=agent,
+                               tools=tools,
+                               verbose=True,
+                               return_intermediate_steps=True
+                    )
+
+preamble = """
+You are an expert who answers the user's question. You are working with a pandas dataframe in Python. The name of the dataframe is `df`.
+Here is a preview of the dataframe:
+{head_df}
+""".format(head_df=income_statement.head(3).to_markdown())
+
+```
+
+Let's loop again over the same dictionary of questions.
+
+
+```python
+for qsn,val in question_dict.items():
+    print(f'question:{qsn}')
+    agent_executor.invoke({
+       "input": val[0],
+       "preamble": preamble,
+    })
+    print(f'GT Answer:{val[1]}')
+    print('-'*50)
+```
+
+    question:q1
+    
+    
+    [1m> Entering new AgentExecutor chain...[0m
+    [32;1m[1;3m
+    I will write and execute Python code to find the highest value of Cost of Goods and Services Sold from the provided dataframe.
+    {'tool_name': 'python_interpreter', 'parameters': {'code': "import pandas as pd\n\n# Read the CSV file into a DataFrame\ndf = pd.read_csv('income_statement.csv')\n\n# Find the highest value in the 'CostOfGoodsAndServicesSold' column\nmax_value = df['CostOfGoodsAndServicesSold'].max()\n\nprint(f'The highest value of Cost of Goods and Services Sold is {max_value:.2f}')\n"}}
+    [0m[36;1m[1;3mThe highest value of Cost of Goods and Services Sold is 169559000000.00
+    [0m[32;1m[1;3mRelevant Documents: 0
+    Cited Documents: 0
+    Answer: The highest value of Cost of Goods and Services Sold is 169559000000.00.
+    Grounded answer: The highest value of Cost of Goods and Services Sold is <co: 0>169559000000.00</co: 0>.[0m
+    
+    [1m> Finished chain.[0m
+    GT Answer:169559000000
+    --------------------------------------------------
+    question:q2
+    
+    
+    [1m> Entering new AgentExecutor chain...[0m
+    [32;1m[1;3m
+    I will write and execute Python code to calculate the largest gross profit margin from the data frame provided.
+    {'tool_name': 'python_interpreter', 'parameters': {'code': 'import pandas as pd\n\n# Read the CSV file into a DataFrame\ndf = pd.read_csv(\'income_statement.csv\')\n\n# Calculate the gross profit margin as a percentage\ndf[\'GrossProfitMargin\'] = (df[\'GrossProfit\'] / df[\'RevenueFromContractWithCustomerExcludingAssessedTax\']) * 100\n\n# Find the row with the maximum gross profit margin\nmax_margin_row = df.loc[df[\'GrossProfitMargin\'].idxmax()]\n\nprint(f"The largest gross profit margin is {max_margin_row[\'GrossProfitMargin\']}% on {max_margin_row[\'index\']}")\n'}}
+    [0m[36;1m[1;3mThe largest gross profit margin is 38.36194330595236% on 2019-12-29-2020-03-28
+    [0m[32;1m[1;3mRelevant Documents: 0
+    Cited Documents: 0
+    Answer: The largest gross profit margin is approximately 38.36% on 2019-12-29 to 2020-03-28.
+    Grounded answer: The largest gross profit margin is <co: 0>approximately 38.36</co: 0>% on <co: 0>2019-12-29 to 2020-03-28</co: 0>.[0m
+    
+    [1m> Finished chain.[0m
+    GT Answer:0.3836194330595236
+    --------------------------------------------------
+    question:q3
+    
+    
+    [1m> Entering new AgentExecutor chain...[0m
+    [32;1m[1;3m
+    I will write and execute Python code to calculate the minimum ratio of Operating Income Loss divided by Non Operating Income Expense.
+    {'tool_name': 'python_interpreter', 'parameters': {'code': "import pandas as pd\n\n# Read the CSV file into a DataFrame\ndf = pd.read_csv('income_statement.csv')\n\n# Calculate the ratio\nratios = df['OperatingIncomeLoss'] / df['NonoperatingIncomeExpense']\n\n# Find the minimum ratio\nmin_ratio = ratios.min()\n\nprint(f'Minimum ratio: {min_ratio:.2f}')\n"}}
+    [0m[36;1m[1;3mMinimum ratio: 35.36
+    [0m[32;1m[1;3mRelevant Documents: 0
+    Cited Documents: 0
+    Answer: The minimum ratio of Operating Income Loss divided by Non Operating Income Expense is approximately **35.36**.
+    Grounded answer: The minimum ratio of Operating Income Loss divided by Non Operating Income Expense is approximately *<co: 0>*35.36</co: 0>**.[0m
+    
+    [1m> Finished chain.[0m
+    GT Answer:35.360599
+    --------------------------------------------------
+
+
+Also in this case, the Agent correctly answers all the questions.
+
+<a id="sec_step3"></a>
+# QnA over Multiple Tables
+
+We now make the task for the Agent more complicated, by asking it questions whose answer can be computed only by retrieving relevant information from multiple tables.
+
+
+```python
+# define the Agent
+python_repl = PythonREPL()
+python_tool = Tool(
+    name="python_repl",
+    description="Executes python code and returns the result. The code runs in a static sandbox without interactive mode, so print output or save output to a file.",
+    func=python_repl.run,
+)
+python_tool.name = "python_interpreter"
+
+class ToolInput(BaseModel):
+    code: str = Field(description="Python code to execute.")
+python_tool.args_schema = ToolInput
+tools=[python_tool]
+
+prompt = ChatPromptTemplate.from_template("{input}")
+agent = create_cohere_react_agent(
+   llm=llm,
+   tools=tools,
+   prompt=prompt,
+)
+agent_executor = AgentExecutor(agent=agent,
+                               tools=tools,
+                               verbose=True,
+                               return_intermediate_steps=True
+                    )
+
+preamble = """
+You are an expert who answers the user's question in complete sentences. You are working with two pandas dataframe in Python. Ensure your output is a string.
+
+Here is a preview of the `income_statement.csv` dataframe:
+{table_1}
+
+Here is a preview of the `balance_sheet.csv` dataframe:
+{table_2}
+""".format(table_1=income_statement.head(3).to_markdown(),table_2=balance_sheet.head(3).to_markdown())
+
+```
+
+We now define a new question.
+
+
+```python
+question_dict ={
+    'q1': ['what is the ratio of the largest stockholders equity to the smallest revenue'],
+}
+```
+
+The answer to this question can be obtained only by accessing both the balance sheet and the income statement, as shown below:
+
+
+```python
+# get the largest stockholders equity
+x = balance_sheet['StockholdersEquity'].astype(float).max()
+print(f"The largest stockholders equity value is: {x}")
+
+# get the smallest revenue
+y = income_statement['RevenueFromContractWithCustomerExcludingAssessedTax'].astype(float).min()
+print(f"The smallest revenue value is: {y}")
+
+# compute the ratio
+ratio = x/y
+print(f"Their ratio is: {ratio}")
+```
+
+    The largest stockholders equity value is: 134047000000.0
+    The smallest revenue value is: 53809000000.0
+    Their ratio is: 2.4911631883142227
+
+
+Let's now get the answer from the Agent.
+
+
+```python
+for qsn,val in question_dict.items():
+    print(f'question:{qsn}')
+    agent_executor.invoke({
+       "input": val[0],
+       "preamble": preamble,
+    })
+```
+
+    question:q1
+    
+    
+    [1m> Entering new AgentExecutor chain...[0m
+    [32;1m[1;3m
+    I will write and execute Python code to find the largest and smallest values in the relevant columns of the dataframes, then calculate the ratio.
+    {'tool_name': 'python_interpreter', 'parameters': {'code': "import pandas as pd\n\nincome_statement = pd.read_csv('income_statement.csv')\nbalance_sheet = pd.read_csv('balance_sheet.csv')\n\n# Find largest and smallest values in relevant columns\nmax_stockholders_equity = max([balance_sheet['StockholdersEquity'].iloc[i] for i in range(len(balance_sheet))])\nmin_revenue = min([income_statement['RevenueFromContractWithCustomerExcludingAssessedTax'].iloc[i] for i in range(len(income_statement))])\n\n# Calculate ratio\nratio = max_stockholders_equity / min_revenue\n\nprint(f'The ratio of the largest stockholders equity to the smallest revenue is {ratio:.2f}'\n    )"}}
+    [0m[36;1m[1;3mNameError("name 'balance_sheet' is not defined")[0m[32;1m[1;3m
+    My code has thrown an error because the variable `balance_sheet` has not been defined. I will fix this by adding the line `balance_sheet = pd.read_csv('balance_sheet.csv')` to the beginning of my code.
+    {'tool_name': 'python_interpreter', 'parameters': {'code': "import pandas as pd\n\nincome_statement = pd.read_csv('income_statement.csv')\n\nbalance_sheet = pd.read_csv('balance_sheet.csv')\n\n# Find largest and smallest values in relevant columns\nmax_stockholders_equity = max([balance_sheet['StockholdersEquity'].iloc[i] for i in range(len(balance_sheet))])\nmin_revenue = min([income_statement['RevenueFromContractWithCustomerExcludingAssessedTax'].iloc[i] for i in range(len(income_statement))])\n\n# Calculate ratio\nratio = max_stockholders_equity / min_revenue\n\nprint(f'The ratio of the largest stockholders equity to the smallest revenue is {ratio:.2f}'\n    )"}}
+    [0m[36;1m[1;3mNameError("name 'balance_sheet' is not defined")[0m[32;1m[1;3m
+    The same error has occurred again, so I will check my code carefully to make sure the variable is being defined correctly.
+    {'tool_name': 'python_interpreter', 'parameters': {'code': "import pandas as pd\n\n# Load data\nincome_statement = pd.read_csv('income_statement.csv')\nbalance_sheet = pd.read_csv('balance_sheet.csv')\n\n# Find largest and smallest values in relevant columns\nmax_stockholders_equity = max(balance_sheet['StockholdersEquity'])\nmin_revenue = min(income_statement['RevenueFromContractWithCustomerExcludingAssessedTax'])\n\n# Calculate ratio\nratio = max_stockholders_equity / min_revenue\n\nprint(f'The ratio of the largest stockholders equity to the smallest revenue is {ratio:.2f}')"}}
+    [0m[36;1m[1;3mThe ratio of the largest stockholders equity to the smallest revenue is 2.49
+    [0m[32;1m[1;3mRelevant Documents: 0,1,2
+    Cited Documents: 2
+    Answer: The ratio of the largest stockholders equity to the smallest revenue is approximately **2.49**.
+    Grounded answer: The ratio of the largest stockholders equity to the smallest revenue is approximately *<co: 2>*2.49</co: 2>**.[0m
+    
+    [1m> Finished chain.[0m
+
+
+The Agent defined a plan ("write and execute Python code to find the largest and smallest values in the relevant columns of the dataframes, then calculate the ratio") and executed it. It made some mistakes when coding, that resulted in NameError errors, but it fixed them and finally got to the correct answer

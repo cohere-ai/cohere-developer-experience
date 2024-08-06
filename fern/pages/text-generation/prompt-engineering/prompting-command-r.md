@@ -1,0 +1,490 @@
+---
+title: "Prompting Command R"
+slug: "docs/prompting-command-r"
+
+hidden: true
+description: "This document discusses the importance of prompt engineering for LLMs, provides a structured prompt template for RAG tasks, and explains how to modify prompts for different tasks and styles. It also includes examples of changing the output format, style, and task context."
+image: "../../../assets/images/b2b492c-cohere_meta_image.jpg"
+keywords: "prompt engineering, large language model prompting"
+
+createdAt: "Thu Mar 14 2024 17:14:34 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Mon May 06 2024 19:22:34 GMT+0000 (Coordinated Universal Time)"
+---
+
+<style>
+  {`
+  .orange-text {
+  	color: #e69138 !important;
+  }
+  .dark-orange-text{
+  	color: #b45f06 !important;
+  }
+  .dark-red-text {
+  	color: #a20302 !important;
+  }
+  .red-text {
+  	color: #cc0100 !important;
+  }
+  .bloody-red-text {
+  	color: #a31515;
+  }
+  .dark-pink-text {
+  	color: #b80672;
+  }
+  .magenta-text {
+  	color: #cc669f !important;
+    white-space : pre-wrap !important;
+  }
+  .dark-magenta-text {
+  	color: #78345a !important;
+  }
+  .sangria-text {
+  	color: #981ea0 !important;
+  }
+  .dark-sangria-text {
+  	color: #6b1570 !important;
+  }
+  .brown-text {
+  	color: #5b0f00 !important;
+  }
+  .green-text {
+  	color: #6aa84f !important;
+  }
+  .grass-green-text {
+  	color: #38761d;
+  }
+  .dark-green-text {
+  	color: #284e13 !important;
+  }
+  .quartz-text {
+    color: #a64d79 !important;
+  }
+  .blue-text {
+  	color: #4078f2 !important;
+  }
+  .dark-blue-text {
+  	color: #1255cc !important;
+  }
+  .purple-text {
+  	color: #674ea7 !important;
+  }
+  .dark-purple-text {
+  	color: #361c75 !important;
+  }
+  .markdown-body code {
+    color: inherit !important;
+  }
+  .cm-s-neo .cm-keyword {
+    color: inherit !important;  
+  }
+  .cm-s-neo .cm-variable {
+    color: inherit !important;  
+  }
+  .cm-s-neo .cm-string {
+    color: inherit !important;  
+  }
+  .cm-s-neo .cm-property {
+    color: inherit !important;  
+  }
+  .theme-light {
+  	color: #cc669f !important;
+  }
+  .override {
+  	line-height:100% !important;
+  }
+  .yellow-highlight{
+            background-color: yellow;
+            display: inline-block;
+            width: 100px; /* Adjust the width as needed */
+            /*height: 20px;*/ /* Adjust the height as needed */
+  }
+  .code-block {
+    background-color: rgb(233 230 222);
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgb(228 222 210);
+    display: block !important;
+    overflow: auto;
+    padding: 1em;
+    border-radius:3px;
+  }
+  `}
+</style>
+
+Getting an LLM to do what you want and perform well on your task often requires some amount of prompt engineering. Depending on the complexity of the task and the strength of the model, this can be time consuming. Similarly, if you are trying to compare two models in a fair way, it is hard to know what differences in performance are due to actual superiority of a model vs an unoptimized prompt. At minimum, it is important to do simple things like making sure you are using the correct special tokens which can change from one family of model to the next but can have an important impact on performance. These tokens do things like indicate the beginning and end of prompts and distinguish between user and chatbot utterances.
+
+The easiest way to make sure your prompts will work well with Command R is to use our [tokenizer on Hugging Face](https://huggingface.co/CohereForAI/c4ai-command-r-v01) if your use-case is covered by the baked-in defaults. In this doc we will go over the structure of our prompts and general best practices on how to tweak it in a way that will have it performing best on your tasks. This gives you the control over how the model behaves to tweak and experiment what fits your unique use case the best.
+
+## Structured Prompts for RAG
+
+Before going into detail on the different components of the prompt and how they fit together, let’s start by looking at a fully rendered prompt. Let’s take an example of using Command R for a simple RAG use case where we are given a user query like: <span class="orange-text">What’s the biggest penguin in the world?</span>
+
+To solve this problem, we will use the model to perform the two steps of RAG:
+
+- 1/ Retrieval
+- 2/ Augmented Generation
+
+### Fully Rendered Default Tool-use Prompt
+
+Let’s start with retrieval, where the model will make calls to an <span class="quartz-text ">internet_search</span> tool to collect relevant documents needed to answer the user’s question. To enable that, we will create a rendered tool use prompt that will give the model access to two tools:
+
+- <span class="quartz-text ">def internet_search(query: str)</span>
+- <span class="quartz-text ">def directly_answer()</span>
+
+Let's take a look at what this fully rendered prompt would look like using our default settings.
+
+Note that you could get the same result if you were using the HuggingFace Tokenizer’s <span class="blue-text ">apply_tool_use_template</span> and setting the <span class="orange-text ">conversation</span> and <span class="quartz-text ">tools</span> parameters.
+
+> tool_use_prompt =
+>
+> <div class="code-block">"""<span class="dark-blue-text ">\<BOS_TOKEN> </span><span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|> </span><span class="red-text"># Safety Preamble</span>
+> <span class="red-text ">The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral.</span></div>
+>
+> <br />
+>
+> <span class="dark-green-text"># System Preamble</span>
+>
+> <div class="code-block">
+> <span class="green-text">## Basic Rules</span>
+> <span class="green-text">You are a powerful conversational AI trained by Cohere to help people. You are augmented by a number of tools, and your job is to use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see a specific instruction instructing you what kind of response to generate. When you answer the user's requests, you cite your sources in your answers, according to those instructions. </span></div>
+>
+> <br />
+>
+> <span class="dark-purple-text"># User Preamble</span>
+>
+> <div class="code-block"><span class="purple-text">## Task and Context</span>  
+> <span class="purple-text">You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.</span></div>
+>
+> <br />
+>
+> <span class="dark-sangria-text">## Style Guide</span>
+>
+> <div class="code-block">
+> <span class="dark-sangria-text">Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.</span></div>
+>
+> <br />
+>
+> <span class="magenta-text">## Available Tools</span>
+>
+> <div class="code-block">
+> <span class="magenta-text">Here is a list of tools that you have available to you:</span>
+>
+> <pre><span class="magenta-text">```python
+> def internet_search(query: str) -> List[Dict]:
+>      """Returns a list of relevant document snippets for a textual query retrieved from the internet
+>      Args:
+>          query (str): Query to search the internet with
+>      """
+>      pass
+> ```</span></pre>
+>
+> <pre><span class="magenta-text">```python
+> def directly_answer() -> List[Dict]:
+>     """Calls a standard (un-augmented) AI chatbot to generate a response given the conversation history
+>     """
+>     pass
+> ```</span></pre>
+>
+> <span class="brown-text ">\<|END_OF_TURN_TOKEN|> \<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|USER_TOKEN|></span>  
+> <span class="orange-text "> What's the biggest penguin in the world?</span><span class="brown-text ">\<|END_OF_TURN_TOKEN|> \<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|></span>  
+> <span class="magenta-text">Write 'Action:' followed by a json-formatted list of actions that you want to perform in order to produce a good response to the user's last input. You can use any of the supplied tools any number of times, but you should aim to execute the minimum number of necessary actions for the input. You should use the \`directly-answer\` tool if calling the other tools is unnecessary. The list of actions you want to call should be formatted as a list of json objects, for example:
+>
+> <pre><span class="magenta-text">```json
+> [
+>     {
+>         "tool_name": title of the tool in the specification,
+>         "parameters": a dict of parameters to input into the tool as they are defined in the specs, or {} if it takes no parameters
+>     }
+> ]
+> ```</span></pre>
+>
+> <span class="brown-text">\<|END_OF_TURN_TOKEN|></span>""" </div>
+
+### Structured Prompt Templates
+
+The fully rendered prompt above contains a lot of information but it is actually composed of several small structured sections. To get a clearer picture, let’s simplify the different component parts a bit so it's easier to see what's going on:
+
+> tool_prompt_template =
+>
+> <div class="code-block">"""<span class="dark-blue-text ">\<BOS_TOKEN> </span><span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">
+> \<|SYSTEM_TOKEN|> </span><span class="red-text"># Safety Preamble</span>
+> <span class="red-text">{SAFETY_PREAMBLE}</span>
+>
+> <br />
+>
+> <span class="dark-green-text"># System Preamble</span>
+>
+> <span class="green-text">## Basic Rules</span>  
+> <span class="green-text">{BASIC_RULES} </span>
+>
+> <br />
+>
+> <span class="dark-purple-text"># User Preamble</span>
+>
+> <span class="purple-text">## Task and Context</span>  
+> <span class="purple-text">{TASK_CONTEXT}</span>
+>
+> <br />
+>
+> <span class="dark-sangria-text">## Style Guide</span>
+>
+> <span class="dark-sangria-text">{STYLE_GUIDE}</span>
+>
+> <br />
+>
+> <span class="magenta-text">## Available Tools</span>
+>
+> <span class="magenta-text">{TOOLS}</span>  
+> <span class="brown-text ">\<|END_OF_TURN_TOKEN|></span> <span class="orange-text "> {CHAT_HISTORY} </span><span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|></span> <span class="magenta-text">{INSTRUCTIONS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span>"""</div>
+
+We can see that the prompt is set up in a structured way where we have sections for things like the <span class="green-text ">basic rules</span> we want the model to follow, the <span class="purple-text">task</span> we want it to solve, and the <span class="magenta-text">style</span> in which it should write its output in.
+
+We will take a closer look at these sections later but first lets see how the template changes when we shift from tool use to the second stage of RAG: augmented generation.
+
+> augmented_gen_prompt_template =
+>
+> <div class="code-block">"""<span class="dark-blue-text ">\<BOS_TOKEN> </span><span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|> </span><span class="red-text"># Safety Preamble</span>
+> <span class="red-text">{SAFETY_PREAMBLE}</span>
+>
+> <span class="dark-green-text"># System Preamble</span>  
+> <span class="green-text">## Basic Rules</span>  
+> <span class="green-text">{BASIC_RULES} </span>
+>
+> <span class="dark-purple-text"># User Preamble</span>  
+> <span class="purple-text">## Task and Context</span>  
+> <span class="purple-text">{TASK_CONTEXT}</span>
+>
+> <span class="dark-sangria-text">## Style Guide</span>  
+> <span class="dark-sangria-text">{STYLE_GUIDE}</span>
+>
+> <span class="yellow-highlight"> </span>
+>
+> <span class="brown-text ">\<|END_OF_TURN_TOKEN|></span> <span class="orange-text "> {CHAT_HISTORY} </span><span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|></span><span class="brown-text "><span style="color:#a31515;background-color:#ffff00;"> {TOOL_OUTPUTS}</span>\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|></span> <span class="magenta-text">{INSTRUCTIONS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span>"""</div>
+
+Here we can see that the overall structure of the template is very similar between tool use and augmented generation. There are, however, two spots that differ which are highlighted. The first is that we have removed the tool definitions which come after the style guide (you can see that there's no longer an <span class="magenta-text">## Available Tools</span> section), and the second is that we’ve added the <span style="color:#a31515;background-color:#ffff00;">TOOL_OUTPUTS</span> retrieved from search after the chat history.
+
+## Formatting Chat History and Tool Outputs
+
+For our augmented generation call we will need to render both our chat history and our documents in a particular format.
+
+### Chat History
+
+The rendered chat history is quite simple and the only thing to note is that each turn of the conversation should begin with a <span class="brown-text ">\<|START_OF_TURN_TOKEN|></span> followed by one of <span class="dark-orange-text ">\<|USER_TOKEN|></span>, <span class="dark-orange-text ">\<|CHATBOT_TOKEN|></span>, or <span class="dark-orange-text ">\<|SYSTEM_TOKEN|> </span>(depending on the role of the speaker), and finally <span class="brown-text ">\<|END_OF_TURN_TOKEN|></span>.
+
+> <span class="orange-text ">rendered_chat_history</span> =
+>
+> <div class="code-block">
+> """<span class="brown-text ">\<|END_OF_TURN_TOKEN|></span> <span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="brown-text "><span class="dark-orange-text ">\<|USER_TOKEN|></span><span class="orange-text "> What's the biggest penguin in the world? </span>\<|END_OF_TURN_TOKEN|></span>"""</div>
+
+### Tool outputs
+
+The tool outputs should be wrapped in a <span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text "><results> {TOOL_OUTPUTS}</span><span class="brown-text ">\<|END_OF_TURN_TOKEN|></span> and look something like:
+
+> <span class="dark-red-text ">rendered_tool_outputs</span> =
+>
+> <div class="code-block">"""<span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span>  
+> <span class="dark-red-text">\<results></span>  
+> <span class="dark-red-text">Document: 0</span>  
+> <span class="dark-red-text">Tall penguins</span>  
+> <span class="dark-red-text">Emperor penguins are the tallest growing up to 122 cm in height.</span>\*\*
+>
+> <span class="dark-red-text">Document: 1</span>  
+> <span class="dark-red-text">Penguin habitats</span>  
+> <span class="dark-red-text">Emperor penguins only live in Antarctica.</span>  
+> <span class="dark-red-text">\</results></span><span class="brown-text ">\<|END_OF_TURN_TOKEN|></span>"""</div>
+
+Each tool output should start with <span class="dark-red-text ">Document: {n}</span> and should be an ascending list of integers starting at 0. You can put all kinds of different things as a tool output. In our example, the tool outputs are simple key-value string-string pairs. In general keys should be relatively short descriptive strings, but values can have a lot of variety - e.g. markdown tables or json.
+
+## Changing sections of the Prompt
+
+In the next section we’ll demonstrate changes to the prompt’s structure.
+
+### Components of a Structured Prompt
+
+Next let’s go into a bit more detail about the different components and sections of the structured prompt with a high level description of what they do.
+
+#### Special Tokens
+
+- <span class="dark-blue-text ">`<BOS_TOKEN>`: This is a special token used by Command R models to signify the beginning of a prompt. When using raw_prompting, you should always start with this token.</span>
+- <span class="brown-text ">`<|START_OF_TURN_TOKEN|>`: This special token is used at the beginning of something said by either the USER, SYSTEM, or CHATBOT.</span>
+- <span class="dark-orange-text ">`<|USER_TOKEN|>`: This should immediately follow `<START_OF_TURN_TOKEN>` and signifies that the following output is meant to be from the user such as a query.</span>
+- <span class="dark-orange-text ">`<|SYSTEM_TOKEN|>`: Same as the `USER` token but indicating some system instruction.</span>
+- <span class="dark-orange-text ">`<|CHATBOT_TOKEN|>`: same as `USER` and `SYSTEM` token but indicating a chatbot output.</span>
+- <span class="brown-text ">`<|END_OF_TURN_TOKEN|>`: This will immediately follow the content of a `USER`, `CHATBOT`, or `SYSTEM` turn.</span>
+
+#### Preamble Sections
+
+> <div class="code-block"><span class="dark-red-text "># Safety Preamble: This will outline the safety instructions to the model to instruct it not to produce harmful outputs.</span>
+>
+> <span class="dark-green-text "># System Preamble: System specified rules.</span>  
+> <span class="green-text ">## Basic Rules: This outlines how the model should behave in general.</span>
+>
+> <span class="dark-purple-text"># User Preamble: User specified rules.</span>  
+> <span class="purple-text">## Task and Context: Here we outline the specific task it is that we want the model to solve and any additional required context.</span>
+>
+> <span class="dark-sangria-text">## Style Guide: Here we tell the model what the output should look like for example ‘respond in full sentences’ or ‘respond like a pirate’.</span>
+>
+> <span class="dark-magenta-text">## Available Tools: If applicable, this will contain definitions of the tools available to the model to use.</span>
+>
+> <span class="orange-text">{CHAT_HISTORY}: This will contain the current dialogue so far and include user queries plus any responses from the model. </span>
+>
+> <span class="bloody-red-text">{TOOL_OUTPUTS}: This is where we would add any rendered tool outputs, such as returned documents from a search.</span>
+>
+> <span class="dark-pink-text">{INSTRUCTIONS}: These are the specific instructions that the model should follow when producing its output. For example, we could tell the model that it should produce a tool function call in a particular format, or for augmented generation, we could tell the model to generate an answer along with citations.</span></div>
+
+<br />
+
+Now that we’ve looked at a high level of the structured prompt and what each of the sections mean, let's see how we can change the content of different sections to get the model to do different things.
+
+### Changing the Output Format: Citation Style
+
+The default instructions for augmented generation (such as in the HuggingFace Tokenizer) uses the following <span class="dark-pink-text">INSTRUCTIONS</span>:
+
+> <span class="dark-pink-text ">AUGMENTED_GENERATION_DEFAULT_INSTRUCTIONS</span> =
+>
+> <div class="code-block"><span style="color:#38761d">"Carefully perform the following instructions, in order, starting each with a new line.
+> Firstly, Decide which of the retrieved documents are relevant to the user's last input by writing 'Relevant Documents:' followed by comma-separated list of document numbers. If none are relevant, you should instead write 'None'.
+> Secondly, Decide which of the retrieved documents contain facts that should be cited in a good answer to the user's last input by writing 'Cited Documents:' followed a comma-separated list of document numbers. If you dont want to cite any of them, you should instead write 'None'.
+> Thirdly, Write 'Answer:' followed by a response to the user's last input in high quality natural english. Use the retrieved documents to help you. Do not insert any citations or grounding markup.
+> Finally, Write 'Grounded answer:' followed by a response to the user's last input in high quality natural english. Use the symbols \<co: doc> and \</co: doc> to indicate when a fact comes from a document in the search result, e.g \<co: 0>my fact\</co: 0> for a fact from document 0."</span></div>
+
+This default instruction will tell the model to generate four things:
+
+1. A list of docs relevant to the query.
+2. A list of docs that will be cited in the answer.
+3. A plain text answer to the question
+4. A grounded answer which includes citations with the format <span class="grass-green-text">`<co: 0>my fact</co: 0>`</span>.
+
+This will lead the model to produce an output like:
+
+> <div class="code-block"><span style="color:#38761d">Relevant Documents: 0,1
+> Cited Documents: 0,1
+> Answer: The Emperor Penguin is the tallest or biggest penguin in the world. It is a bird that lives only in Antarctica and grows to a height of around 122 centimetres.
+> Grounded answer: The \<co: 0>Emperor Penguin\</co: 0> is the \<co: 0>tallest\</co: 0> or biggest penguin in the world. It is a bird that \<co: 1>lives only in Antarctica\</co: 1> and \<co: 0>grows to a height of around 122 centimetres.\</co: 0></span></div>
+
+We can easily change the output format of the model by modifying the instruction in our prompt. Let’s get rid of the relevant and cited doc outputs as well as the raw answer. For the remaining grounded answer, let’s change the citation format to be brackets.
+
+> <span class="dark-pink-text ">MODIFIED_AUGMENTED_GENERATION_INSTRUCTIONS</span> =
+>
+> <div class="code-block"><span style="color:#38761d">"Carefully perform the following instructions, in order, starting each with a new line.
+> Write 'Grounded answer:' followed by a response to the user's last input in high quality natural english. Use the symbol [doc] to indicate when a fact comes from a document in the search result, e.g my fact [0] for a fact from document 0."</span></div>
+
+This will have the model output something like this:
+
+> <div class="code-block"><span style="color:#38761d">Grounded answer: The Emperor Penguin[0] is the tallest[0] or biggest penguin in the world. It is a bird that lives only in Antarctica[1] and grows to a height of around 122 centimetres.[0]</span></div>
+
+### Changing the Style
+
+In addition to changing the format of the output, we can also easily change the style by modifying the <span class="dark-sangria-text">STYLE_GUIDE</span>.
+
+> <span class="dark-sangria-text ">MODIFIED_STYLE_GUIDE</span> =
+>
+> <div class="code-block"><span style="color:#38761d">“””## Style Guide
+> Answer in the style of David Attenborough.”””</span></div>
+
+Which will have the model instead produce this majestic response:
+
+> <div class="code-block"><span style="color:#38761d">Grounded answer: And here, emerging from the icy waters, is the majestic emperor penguin, the largest species of its kind. Growing to an impressive height of 122 centimeters[0], these majestic birds rule the Antarctic[1] oceans. Their imposing stature and proud demeanor make them a sight to behold.</span></div>
+
+Inspiring.
+
+### Changing the Task: Grounded Summarization
+
+Grounded summarization is very similar to augmented generation; in both settings, the model takes in some documents and its response needs to be conditioned on those documents. However, the task itself is not exactly the same. In augmented generation we are likely searching through the documents to try and answer some user query.
+
+In grounded summarization, as the name implies, we instead want to create a summary of those documents. Additionally, unlike a set of search results, the order of the document chunks that the model receives actually matters.
+
+Starting from our augmented generation prompt, we can improve it a bit by changing the <span class="dark-purple-text">TASK_CONTEXT</span> to better fit what we want the model to do.
+
+> <span class="dark-purple-text ">TASK_CONTEXT</span> =
+>
+> <div class="code-block"><span style="color:#38761d">"You will receive a series of text fragments from an article that are presented in chronological order. As the assistant, you must generate responses to user's requests based on the information given in the fragments. Ensure that your responses are accurate and truthful, and that you reference your sources where appropriate to answer the queries, regardless of their complexity."</span></div>
+>
+> <span class="orange-text ">CHAT_HISTORY</span> =
+>
+> <div class="code-block">"<span class="brown-text ">\<|END_OF_TURN_TOKEN|></span> <span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="brown-text "><span class="dark-orange-text ">\<|USER_TOKEN|></span><span class="orange-text "> Summarize the documents in 20 words or less. </span>\<|END_OF_TURN_TOKEN|></span>"</div>
+
+Let’s switch back to our original `STYLE_GUIDE` and see what the fully rendered prompt looks like:
+
+> <div class="code-block"><span class="dark-blue-text ">\<BOS_TOKEN> </span><span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|> </span><span class="red-text"># Safety Preamble</span>
+> <span class="red-text">The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral.</span>
+>
+> <span class="dark-green-text"># System Preamble</span>  
+> <span class="green-text">## Basic Rules</span>  
+> <span class="green-text">You are a powerful conversational AI trained by Cohere to help people. You are augmented by a number of tools, and your job is to use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see a specific instruction instructing you what kind of response to generate. When you answer the user's requests, you cite your sources in your answers, according to those instructions. </span>
+>
+> <span class="dark-purple-text"># User Preamble</span>  
+> <span class="purple-text">## Task and Context</span>
+>
+> <span class="purple-text">You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.</span>
+>
+> <span class="dark-sangria-text">## Style Guide</span>  
+> <span class="dark-sangria-text">Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.</span>
+>
+> <span class="brown-text ">\<|END_OF_TURN_TOKEN|> \<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|USER_TOKEN|></span><span class="orange-text "> Summarize the documents in 20 words or less.</span><span class="brown-text ">\<|END_OF_TURN_TOKEN|> \<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|></span>
+>
+> <span class="dark-red-text">\<results></span>  
+> <span class="dark-red-text">Document: 0</span>  
+> <span class="dark-red-text">Tall penguins</span>  
+> <span class="dark-red-text">Emperor penguins are the tallest growing up to 122 cm in height.\</span>
+>
+> <span class="dark-red-text">Document: 1</span>  
+> <span class="dark-red-text">Penguin habitats</span>  
+> <span class="dark-red-text">Emperor penguins only live in Antarctica.</span>  
+> <span class="dark-red-text">\</results></span><span class="brown-text ">\<|END_OF_TURN_TOKEN|></span></span><span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text ">Carefully perform the following instructions, in order, starting each with a new line.  
+> Write 'Grounded answer:' followed by a response to the user's last input in high quality natural english. Use the symbol [doc] to indicate when a fact comes from a document in the search result, e.g my fact[0] for a fact from document 0.</span><span class="brown-text ">\<|END_OF_TURN_TOKEN|></span></div>
+
+And this has the model output:
+
+> <div class="code-block"><span style="color:#38761d">Grounded answer: Emperor penguins, the tallest species, grow up to 122 cm tall[0] and only live in Antarctica.[1].</span></div>
+
+## Appendix
+
+```python
+documents = [
+   { "title": "Tall penguins",
+      "text": "Emperor penguins are the tallest growing up to 122 cm in height." },
+   { "title": "Penguin habitats",
+      "text": "Emperor penguins only live in Antarctica."}
+]
+
+
+def render_docs(docs: list[dict]) -> str:
+ """Render a list of doc dicts to a single formatted string."""
+ doc_str_list = ["<results>"]
+ for doc_idx, doc in enumerate(docs):
+   if doc_idx > 0:
+     doc_str_list.append("")
+   doc_str_list.extend([f'Document: {doc_idx}', doc['title'], doc['text']])
+ doc_str_list.append("</results>")
+ return "\n".join(doc_str_list)
+
+
+rendered_docs = render_docs(documents)
+
+```
+
+```python
+conversation = [
+   {"role": "user", "content": "Whats the biggest penguin in the world?"}
+   {"role": "system", "content": rendered_docs}
+]
+
+
+def render_chat_history(_conversation: list[dict]) -> str:
+ chat_hist_str = ""
+ for turn in _conversation:
+   chat_hist_str += "<|START_OF_TURN_TOKEN|>"
+   if turn['role'] == 'user':
+     chat_hist_str += "<|USER_TOKEN|>"
+   elif turn['role'] == 'assistant':
+     chat_hist_str += "<|CHATBOT_TOKEN|>"
+   else: # role == system
+     chat_hist_str += "<|SYSTEM_TOKEN|>"
+   chat_hist_str += turn['content']
+ chat_hist_str += "<|END_OF_TURN_TOKEN|>"
+ return chat_hist_str
+
+
+rendered_chat_history = render_chat_history(conversation)
+```

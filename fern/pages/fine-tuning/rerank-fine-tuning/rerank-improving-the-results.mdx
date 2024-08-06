@@ -1,0 +1,27 @@
+---
+title: "Improving the Rerank Fine-tuning Results"
+slug: "docs/rerank-improving-the-results"
+
+hidden: false
+description: "This document provides tips for achieving the best fine-tuned rerank model, focusing on refining data quality through text cleaning, diversity of queries and documents, hard negatives, text length, and including a high-quality test set. It also offers a troubleshooting guide for fine-tuned models."
+image: "../../../assets/images/55d219e-cohere_meta_image.jpg"  
+keywords: "fine-tuning, fine-tuning language models, rerank"
+
+createdAt: "Thu Nov 16 2023 02:59:09 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Fri Mar 15 2024 04:42:26 GMT+0000 (Coordinated Universal Time)"
+---
+There are several things to take into account to achieve the best fine-tuned rerank model, most of which revolve around refining the quality of your data. 
+
+## Refining Data Quality
+
+- **Text cleaning**: Improving the quality of the data is often the best investment you can make when solving a problem with machine learning. If the text contains symbols, URLs, or HTML code which are not needed for a specific task, for example, make sure to remove them from the trained file (and from the text you later send to the trained model).
+- **Number of examples**: The minimum number of labeled examples is 256. Be aware, however, that the more examples you can include, the better!
+- **Diversity of queries:** It is important that the queries that are used to fine-tune the model are diverse in nature - simply paraphrasing the query for different examples will not lead to an increase in model quality. Moreover, it is important that the queries mirror the expected queries from users.
+- **Diversity of documents:** It is important that the documents that are used to fine-tune the model are diverse in nature. Try to make sure the model is aware of all the different types of documents it might encounter in your the course.
+- **Hard Negatives:** While hard negatives are optional, having more hard negative will greatly improve the quality of the fine-tuned model. What's more, we advise structuring hard negatives to be semantically similar, rather than obviously incorrect documents (e.g. we would not recommend mining hard negatives using BM25 or non-semantic approaches).
+- **Length of texts:** The context size for text is 510 tokens, which includes both the query and the relevant passage. Currently, if the sum of the tokens between the query and relevant passage is longer than 510 tokens, we will include the entire query, and as many relevant passage tokens as possible until 510 is reached. As a result, if you are trying to fine-tune with longer documents, it is recommended that you ensure the `relevant passage` contains the most relevant snippet from the long document, and the snippet and query together are less than 510 tokens when concatenated.
+- **High quality test set**: In the data upload step, include a separate test set of examples that you want to see the model benchmarked on. These can be examples that were manually written or verified.
+
+## Troubleshooting
+
+We have a dedicated guide for troubleshooting fine-tuned models which is consistent for all the different model types and endpoints. Check it out [here](/docs/troubleshooting-a-fine-tuned-model).

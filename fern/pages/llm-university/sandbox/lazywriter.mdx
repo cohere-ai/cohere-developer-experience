@@ -1,0 +1,150 @@
+---
+title: "REMOVE Building a Writing Assistant (Lazywriter) with Streamlit"
+slug: "docs/lazywriter"
+subtitle: "/page/lazywriter"
+hidden: true
+createdAt: "Sun Apr 30 2023 02:37:30 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Mon Oct 23 2023 14:40:59 GMT+0000 (Coordinated Universal Time)"
+---
+
+# Introduction and Code Repo
+
+In this chapter you'll use the generate endpoint to create a tool that helps you generate written content.
+
+The repository for this project is [here](https://github.com/cohere-ai/examples/tree/main/lazywriter), and we encourage you to follow the code along with this tutorial.
+
+Do you often have good ideas, but don’t have the time to string them together into a coherent blog? Or maybe you are trying to clear out your garage and sell the items on craigslist. Sometimes, our timeline and creativity level are not always in sync. Large language models can help you get it all done.
+
+In this demo, we use a few lines of code and Cohere’s command-xl language model (beta) to create Lazywriter, a writing tool that can save you time by generating content for blogs, product descriptions, and other common use cases.
+
+The steps to build Lazywriter are:
+
+- Step 1: Create a Streamlit form using the Streamlit Python library
+- Step 2: Write a custom generate function and max likelihood function
+- Step 3: Set generate parameters for the respective use case
+- Step 4: Make a second API call to generate a title
+- Step 5: Display the results in a web app
+
+Read on for more details on each of these steps.
+
+# Step 1: Create a Streamlit Form
+
+To get started, first install Streamlit and Cohere Python Libraries. Then create a Streamlit form using the Streamlit Python library. The form allows the user to select the specific use case, such as essay outline, email, or product description, and choose level of creativity (temperature), tone, etc. to guide the output. Each use case has its own set of parameters that allow users to optimize their use case.
+
+```
+use_case = st.selectbox("Use Case", ("","Blog Title and Content","Email","Review","Product Description","Custom"))
+if use_case == "Custom":
+    with st.form("my_form_1"):
+        prompt=st.text_area("Generate a custom prompt", placeholder="Try something like: Generate a blog post about the importance of Baroque music.  Write it in a formal tone.")
+        creativity = st.slider(label="Creativity",min_value=0.0,max_value=3.0, value=1.0, step=.25)
+        length=st.slider("Approximate Generation Length(words)", min_value=10, max_value=300, value=100)
+        submitted = st.form_submit_button("Submit")
+elif use_case=="Email":
+    with st.form("my_form_2"):
+        receipient=st.text_area("Who will your email be addressed to")
+        subject=st.text_area("What is the subject of your email")
+        tone=st.selectbox("Tone", ("","Formal","Informal", "Firenldy","Caring"))
+        bullets=st.text_area("What are the main points you want to make?",placeholder="Try something like: \n we have a meeting next Friday \n we need to be prepared for it \n lunch will be served \n bring all your customer notes")
+        creativity = st.slider(label="Creativity",min_value=0.0,max_value=3.0, value=1.0, step=.25)
+        length=st.slider("Approximate Generation Length(words)", min_value=10, max_value=300, value=100)
+        submitted = st.form_submit_button("Submit")
+
+else:
+    with st.form("my_form_3"):
+        tone = st.selectbox("Tone(Optional)", ("Friendly","Casual", "Formal", "Persuasive", "Informative", "Funny", "Serious", "Clever", "Creative", "Boring"))
+        creativity = st.slider(label="Creativity",min_value=0.0,max_value=3.0, value=1.0, step=.25)
+        subject = st.text_area("What should we write about!")
+        submitted = st.form_submit_button("Submit")
+```
+
+# Step 2: Write a Custom Generate Function and Max Likelihood Function
+
+Next, write a custom `generate` function that sets default parameters for your generate calls and makes a call to the Cohere Generate endpoint. For this demo, we set our default model as the `command-xlarge` (beta). In this example we also use an optional `return_likelihood` parameter that allows us to do multiple generations and choose the one with the response with the highest likelihood.
+
+```
+def generate(prompt,model_size="xlarge",n_generations=n_gens, temp=.75, tokens=250, stops=["--"], freq=freq):
+    prediction = co.generate(
+                    model=model_size,
+                    prompt=prompt,
+                    return_likelihoods = 'GENERATION',
+                    stop_sequences=stops,
+                    max_tokens=tokens,
+                    temperature=temp,
+                    num_generations=n_generations,
+                    k=0,
+                    frequency_penalty=freq,
+                    p=0.75)
+    return(prediction)
+```
+
+# Step 3: Set Generate Parameters for the Respective Use Cases
+
+Next, set parameters relative to each use case that you want the app to support. For example, longer generations like essays should have more tokens. Create a zero shot prompt for each use case and make calls to your generate function and max likelihood function.
+
+```
+with st.spinner('Generating Content...'):
+    if submitted:
+        if use_case == "Blog Title and Content":
+            prompt = "Write a blog about \n\n " + subject + "\n\n" +  "Write it in a " + tone + " tone."
+            prediction = generate(prompt=prompt, model_size='command-xlarge-20221108', temp=creativity, tokens=500, stops=["----"])
+            content = max_likely(prediction)
+            prompt2 = "Write a creative title for this blog. \n\n" + "Blog:" + content + "\n\nTitle:"
+            prediction = generate(prompt=prompt2, model_size='command-xlarge-20221108', temp=creativity, tokens=25, stops=["---"])
+            title = max_likely(prediction)
+            st.header(title)
+            st.write(content)
+        if use_case == "Review":
+            prompt = "Write a yelp review about \n\n " + subject + ".\n\n" +  "Write it in a " + tone + " tone."
+            prediction = generate(prompt=prompt, model_size='command-xlarge-20221108', temp=creativity, tokens=300, stops=["----"])
+            content = max_likely(prediction)
+            prompt2 = "Write a creative title for this review. \n\n" + "Review:" + content + "\n\nTitle:"
+            prediction = generate(prompt=prompt2, model_size='command-xlarge-20221108', temp=creativity, tokens=25, stops=["---"])
+            title = max_likely(prediction)
+            st.header(title)
+            st.write(content)
+        if use_case == "Product Description":
+            prompt = "Write an ecommerce product description about\n\n " + subject + "\n\n" +  "Write it in a " + tone + " tone."
+            prediction = generate(prompt=prompt, model_size='command-xlarge-20221108', temp=creativity, tokens=300, stops=["----"])
+            content = max_likely(prediction)
+            prompt2 = "Write a creative title for this product description. \n\n" + "Product:" + content + "\n\nTitle:"
+            prediction = generate(prompt=prompt2, model_size='command-xlarge-20221108', temp=creativity, tokens=25, stops=["---"])
+            title = max_likely(prediction)
+            st.header(title)
+            st.write(content)
+        if use_case == "Custom":
+            prediction = generate(prompt=prompt, model_size='command-xlarge-20221108', temp=creativity, tokens=length*3, stops=["----"])
+            content = max_likely(prediction)
+            st.write(content)
+        if use_case == "Email":
+            prompt="Write an email to " + receipient + " about " + subject + ".\n\n" + "Write it in a " + tone + " tone.\n\n" + "The main points are:\n\n" + bullets
+            prediction = generate(prompt=prompt, model_size='command-xlarge-20221108', temp=creativity, tokens=length*3, stops=["----"])
+            content = max_likely(prediction)
+            st.write(content)
+```
+
+# Step 4: Make a Second API Call to Generate a Title
+
+For generations that require a title, we can pass the content back to the generate model asking it to create a title. Below is shown one example for blog writing.
+
+```
+if use_case == "Blog Title and Content":
+  prompt = "Write a blog about \n\n " + subject + "\n\n" +  "Write it in a " + tone + " tone."
+  prediction = generate(prompt=prompt, model_size='command-xlarge-20221108', temp=creativity, tokens=500, stops=["----"])
+  content = max_likely(prediction)
+  prompt2 = "Write a creative title for this blog. \n\n" + "Blog:" + content + "\n\nTitle:"
+  prediction = generate(prompt=prompt2, model_size='command-xlarge-20221108', temp=creativity, tokens=25, stops=["---"])
+  title = max_likely(prediction)
+```
+
+# Step 5: Display the Results on a Web App
+
+Finally, we can easily display the results in our web app using Streamlit.
+
+```
+  st.header(title)
+  st.write(content)
+```
+
+# Conclusion
+
+In this demonstration, we created a zero shot copyright tool for multiple use cases. This tool takes in a subject from the user, makes a call to the Cohere Generate endpoint, and returns unique content that can be easily displayed to the screen.

@@ -1,0 +1,415 @@
+---
+title: Basic Semantic Search
+slug: /page/basic-semantic-search
+---
+
+import { AuthorsContainer } from "../../components/authors-container";
+import { CookbookHeader } from "../../components/cookbook-header";
+
+<CookbookHeader href="https://github.com/cohere-ai/notebooks/blob/main/notebooks/guides/Basic_Semantic_Search.ipynb" />
+
+Language models give computers the ability to search by meaning and go beyond searching by matching keywords. This capability is called semantic search.
+
+<img
+  alt="Searching an archive using sentence embeddings"
+  src="https://github.com/cohere-ai/notebooks/raw/main/notebooks/images/basic-semantic-search-overview.png?3"
+/>
+
+In this notebook, we'll build a simple semantic search engine. The applications of semantic search go beyond building a web search engine. They can empower a private search engine for internal documents or records. It can also be used to power features like StackOverflow's "similar questions" feature.
+
+1. Get the archive of questions
+2. [Embed](https://docs.cohere.ai/embed-reference/) the archive
+3. Search using an index and nearest neighbor search
+4. Visualize the archive based on the embeddings
+
+And if you're running an older version of the SDK, you might need to upgrade it like so:
+
+```python
+#!pip install --upgrade cohere
+```
+
+Get your Cohere API key by [signing up here](https://os.cohere.ai/register). Paste it in the cell below.
+
+## 1. Getting Set Up
+
+```python
+#@title Import libraries (Run this cell to execute required code) {display-mode: "form"}
+
+import cohere
+import numpy as np
+import re
+import pandas as pd
+from tqdm import tqdm
+from datasets import load_dataset
+import umap
+import altair as alt
+from sklearn.metrics.pairwise import cosine_similarity
+from annoy import AnnoyIndex
+import warnings
+warnings.filterwarnings('ignore')
+pd.set_option('display.max_colwidth', None)
+```
+
+You'll need your API key for this next cell. [Sign up to Cohere](https://os.cohere.ai/) and get one if you haven't yet.
+
+```python
+model_name = "embed-english-v3.0"
+api_key = ""
+input_type_embed = "search_document"
+
+co = cohere.Client(api_key)
+```
+
+## 2. Get The Archive of Questions
+
+We'll use the [trec](https://www.tensorflow.org/datasets/catalog/trec) dataset which is made up of questions and their categories.
+
+```python
+dataset = load_dataset("trec", split="train")
+
+df = pd.DataFrame(dataset)[:1000]
+
+df.head(10)
+```
+
+<div>
+  <table border="1" class="dataframe">
+    <thead>
+      <tr style={{ textAlign: "right" }}>
+        <th></th>
+        <th>label-coarse</th>
+        <th>label-fine</th>
+        <th>text</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th>0</th>
+        <td>0</td>
+        <td>0</td>
+        <td>How did serfdom develop in and then leave Russia ?</td>
+      </tr>
+      <tr>
+        <th>1</th>
+        <td>1</td>
+        <td>1</td>
+        <td>What films featured the character Popeye Doyle ?</td>
+      </tr>
+      <tr>
+        <th>2</th>
+        <td>0</td>
+        <td>0</td>
+        <td>How can I find a list of celebrities ' real names ?</td>
+      </tr>
+      <tr>
+        <th>3</th>
+        <td>1</td>
+        <td>2</td>
+        <td>
+          What fowl grabs the spotlight after the Chinese Year of the Monkey ?
+        </td>
+      </tr>
+      <tr>
+        <th>4</th>
+        <td>2</td>
+        <td>3</td>
+        <td>What is the full form of .com ?</td>
+      </tr>
+      <tr>
+        <th>5</th>
+        <td>3</td>
+        <td>4</td>
+        <td>What contemptible scoundrel stole the cork from my lunch ?</td>
+      </tr>
+      <tr>
+        <th>6</th>
+        <td>3</td>
+        <td>5</td>
+        <td>What team did baseball 's St. Louis Browns become ?</td>
+      </tr>
+      <tr>
+        <th>7</th>
+        <td>3</td>
+        <td>6</td>
+        <td>What is the oldest profession ?</td>
+      </tr>
+      <tr>
+        <th>8</th>
+        <td>0</td>
+        <td>7</td>
+        <td>What are liver enzymes ?</td>
+      </tr>
+      <tr>
+        <th>9</th>
+        <td>3</td>
+        <td>4</td>
+        <td>Name the scar-faced bounty hunter of The Old West .</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+## 2. Embed the archive
+
+The next step is to embed the text of the questions.
+
+<img
+  alt="embedding archive texts"
+  src="https://github.com/cohere-ai/notebooks/raw/main/notebooks/images/semantic-search-embed-text-archive.png"
+/>
+
+To get a thousand embeddings of this length should take about fifteen seconds.
+
+```python
+embeds = co.embed(texts=list(df['text']),
+                  model=model_name,
+                  input_type=input_type_embed).embeddings
+```
+
+```python
+embeds = np.array(embeds)
+embeds.shape
+```
+
+```
+(1000, 4096)
+```
+
+## 3. Search using an index and nearest neighbor search
+
+<img
+  alt="Building the search index from the embeddings"
+  src="https://github.com/cohere-ai/notebooks/raw/main/notebooks/images/semantic-search-index.png"
+/>
+
+Let's now use [Annoy](https://github.com/spotify/annoy) to build an index that stores the embeddings in a way that is optimized for fast search. This approach scales well to a large number of texts (other options include [Faiss](https://github.com/facebookresearch/faiss), [ScaNN](https://github.com/google-research/google-research/tree/master/scann), and [PyNNDescent](https://github.com/lmcinnes/pynndescent)).
+
+After building the index, we can use it to retrieve the nearest neighbors either of existing questions (section 3.1), or of new questions that we embed (section 3.2).
+
+```python
+search_index = AnnoyIndex(embeds.shape[1], 'angular')
+for i in range(len(embeds)):
+    search_index.add_item(i, embeds[i])
+
+search_index.build(10) # 10 trees
+search_index.save('test.ann')
+```
+
+```
+True
+```
+
+### 3.1. Find the neighbors of an example from the dataset
+
+If we're only interested in measuring the distance between the questions in the dataset (no outside queries), a simple way is to calculate the distance between every pair of embeddings we have.
+
+```python
+example_id = 92
+
+similar_item_ids = search_index.get_nns_by_item(example_id,10,
+                                                include_distances=True)
+results = pd.DataFrame(data={'texts': df.iloc[similar_item_ids[0]]['text'],
+                             'distance': similar_item_ids[1]}).drop(example_id)
+
+print(f"Question:'{df.iloc[example_id]['text']}'\nNearest neighbors:")
+results
+```
+
+```
+Question:'What are bear and bull markets ?'
+Nearest neighbors:
+```
+
+<div>
+  <table border="1" class="dataframe">
+    <thead>
+      <tr style={{ textAlign: "right" }}>
+        <th></th>
+        <th>texts</th>
+        <th>distance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th>614</th>
+        <td>What animals do you find in the stock market ?</td>
+        <td>0.904278</td>
+      </tr>
+      <tr>
+        <th>137</th>
+        <td>What are equity securities ?</td>
+        <td>0.992819</td>
+      </tr>
+      <tr>
+        <th>513</th>
+        <td>What do economists do ?</td>
+        <td>1.066583</td>
+      </tr>
+      <tr>
+        <th>307</th>
+        <td>What does NASDAQ stand for ?</td>
+        <td>1.080738</td>
+      </tr>
+      <tr>
+        <th>363</th>
+        <td>What does it mean `` Rupee Depreciates '' ?</td>
+        <td>1.086724</td>
+      </tr>
+      <tr>
+        <th>932</th>
+        <td>Why did the world enter a global depression in 1929 ?</td>
+        <td>1.099370</td>
+      </tr>
+      <tr>
+        <th>547</th>
+        <td>Where can stocks be traded on-line ?</td>
+        <td>1.105368</td>
+      </tr>
+      <tr>
+        <th>922</th>
+        <td>What is the difference between a median and a mean ?</td>
+        <td>1.141870</td>
+      </tr>
+      <tr>
+        <th>601</th>
+        <td>What is `` the bear of beers '' ?</td>
+        <td>1.154140</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+### 3.2. Find the neighbors of a user query
+
+We're not limited to searching using existing items. If we get a query, we can embed it and find its nearest neighbors from the dataset.
+
+```python
+query = "What is the tallest mountain in the world?"
+input_type_query = "search_query"
+
+query_embed = co.embed(texts=[query],
+                  model=model_name,
+                  input_type=input_type_query).embeddings
+
+similar_item_ids = search_index.get_nns_by_vector(query_embed[0],10,
+                                                include_distances=True)
+query_results = pd.DataFrame(data={'texts': df.iloc[similar_item_ids[0]]['text'],
+                             'distance': similar_item_ids[1]})
+
+
+print(f"Query:'{query}'\nNearest neighbors:")
+print(query_results) # NOTE: Your results might look slightly different to ours.
+```
+
+```
+Query:'What is the tallest mountain in the world?'
+Nearest neighbors:
+```
+
+<div>
+  <table border="1" class="dataframe">
+    <thead>
+      <tr style={{ textAlign: "right" }}>
+        <th></th>
+        <th>texts</th>
+        <th>distance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th>236</th>
+        <td>What is the name of the tallest mountain in the world ?</td>
+        <td>0.447309</td>
+      </tr>
+      <tr>
+        <th>670</th>
+        <td>What is the highest mountain in the world ?</td>
+        <td>0.552254</td>
+      </tr>
+      <tr>
+        <th>412</th>
+        <td>
+          What was the highest mountain on earth before Mount Everest was
+          discovered ?
+        </td>
+        <td>0.801252</td>
+      </tr>
+      <tr>
+        <th>907</th>
+        <td>
+          What mountain range is traversed by the highest railroad in the world
+          ?
+        </td>
+        <td>0.929516</td>
+      </tr>
+      <tr>
+        <th>435</th>
+        <td>What is the highest peak in Africa ?</td>
+        <td>0.930806</td>
+      </tr>
+      <tr>
+        <th>109</th>
+        <td>Where is the highest point in Japan ?</td>
+        <td>0.977315</td>
+      </tr>
+      <tr>
+        <th>901</th>
+        <td>What 's the longest river in the world ?</td>
+        <td>1.064209</td>
+      </tr>
+      <tr>
+        <th>114</th>
+        <td>What is the largest snake in the world ?</td>
+        <td>1.076390</td>
+      </tr>
+      <tr>
+        <th>962</th>
+        <td>What 's the second-largest island in the world ?</td>
+        <td>1.088034</td>
+      </tr>
+      <tr>
+        <th>27</th>
+        <td>What is the highest waterfall in the United States ?</td>
+        <td>1.091145</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+## 4. Visualizing the archive
+
+Finally, let's plot out all the questions onto a 2D chart so you're able to visualize the semantic similarities of this dataset!
+
+```python
+#@title Plot the archive {display-mode: "form"}
+
+reducer = umap.UMAP(n_neighbors=20)
+umap_embeds = reducer.fit_transform(embeds)
+df_explore = pd.DataFrame(data={'text': df['text']})
+df_explore['x'] = umap_embeds[:,0]
+df_explore['y'] = umap_embeds[:,1]
+
+chart = alt.Chart(df_explore).mark_circle(size=60).encode(
+    x=#'x',
+    alt.X('x',
+        scale=alt.Scale(zero=False)
+    ),
+    y=
+    alt.Y('y',
+        scale=alt.Scale(zero=False)
+    ),
+    tooltip=['text']
+).properties(
+    width=700,
+    height=400
+)
+chart.interactive()
+```
+
+<div id="altair-viz-1a157336aab148baac2f7b0488aa1e05"></div>
+
+Hover over the points to read the text. Do you see some of the patterns in clustered points? Similar questions, or questions asking about similar topics?
+
+This concludes this introductory guide to semantic search using sentence embeddings. As you continue the path of building a search product additional considerations arise (like dealing with long texts, or finetuning to better improve the embeddings for a specific use case).
+
+We can’t wait to see what you start building! Share your projects or find support on [Discord](https://discord.com/invite/co-mmunity).

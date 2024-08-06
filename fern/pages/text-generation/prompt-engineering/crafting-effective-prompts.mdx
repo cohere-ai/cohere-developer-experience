@@ -1,0 +1,287 @@
+---
+title: "Crafting Effective Prompts"
+slug: "docs/crafting-effective-prompts"
+
+hidden: false
+createdAt: "Tue Mar 12 2024 18:51:36 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Thu May 23 2024 05:23:40 GMT+0000 (Coordinated Universal Time)"
+---
+The most effective prompts are those that are clear, concise, specific, and include examples of exactly what a response should look like. In this chapter, we will cover several strategies and tactics to get the most effective responses from the Command family of models. We will cover formatting and delimiters, context, using examples, structured output, do vs. do not do, length control, begin the completion yourself, and task splitting. We will highlight best practices as a user crafting prompts in the Cohere playground, as well as through the API. 
+
+## Formatting and Delimiters
+
+A clear, concise, and specific prompt can be more effective for an LLM with careful formatting. Instructions should be placed at the beginning of the prompt, and different types of information, such as instructions, context, and resources, should be delimited with an explanatory header. Headers can be made more clear by prepending them with `##`. 
+
+For example:
+
+```
+## Instructions
+Summarize the text below.
+
+## Input Text
+{input_text}
+```
+
+Then use the Chat API to send a message to the model:
+
+```python python
+import cohere
+co = cohere.Client(api_key="<YOUR API KEY>")
+
+message = """
+## Instructions
+Summarize the text below.
+
+## Input Text
+{input_text}
+"""
+
+# get model response
+response = co.chat(
+  message=message,
+  model="command-r-plus",
+  temperature=0.3
+)
+```
+
+## Context
+
+The previous prompt has concise instructions that begin the prompt (“summarize the text”) and is formatted clearly, where the instructions and resources are separated with delimiters. However, it lacks context that the LLM could use to produce a better-quality summary for the desired output. Including information about the input text could improve the prompt.  
+
+```
+## Instructions
+Below there is a long form news article discussing the 1972 Canada–USSR Summit Series,
+an eight-game ice hockey series between the Soviet Union and Canada, held in September 1972.
+Please summarize the salient points of the text and do so in a flowing high natural language
+quality text. Use bullet points where appropriate.
+
+## News Article
+{news_article}
+
+```
+
+While embedding a news article directly in a prompt works well, Cohere grounded generation is directly available through the Chat API which can result in a much improved completion. Grounded completion focuses on generating accurate and relevant responses by avoiding preambles, or having to include documents directly in the message. The benefits include:
+
+- Less incorrect information.
+- More directly useful responses.
+- Responses with precise citations for source tracing.
+
+For this method, we recommend providing documents through the documents parameter. Our models process conversations and document snippets (100-400 word chunks in key-value pairs) as input, and you have the option of including a system preamble.
+
+For the example above, we can split the original news article into different sections and attach them via the `documents` parameter. The Chat API will then provide us not only with the completion but also citations that ground information from the documents. See the following:
+
+```python python
+# Sections from the original news article
+documents = [
+    {"title": "background", "snippet": "From the beginning of the IIHF Ice Hockey World Championships in 1920, Canada would send a ..."},
+    {"title": "expectations", "snippet": "At the time, the National Hockey League was considered to be where the best hockey players ..."},
+    {"title": "legacy", "snippet": "While Canada won the series, the Soviets earned the respect of fans and players alike. The Canadians ..."},
+]
+
+# New request
+query = '''The 1972 Canada–USSR Summit Series was an eight-game ice hockey series between the Soviet Union and Canada, held in September 1972. Please summarize the salient points of the included documents and do so in a flowing high natural language quality text. Use bullet points where appropriate.'''
+
+# Call the model
+response = co.chat(
+  message=query,
+  documents=documents,
+  model="command-r-plus",
+  temperature=0.3
+)
+```
+
+The model returns a high quality summary in `response.text`:
+
+```
+The 1972 Canada–USSR Summit Series marked a significant moment in the history of ice hockey,
+showcasing a high-stakes competition between the Canadian national team and the Soviet Union's
+elite hockey squad. Here are some key points about the series:
+
+- The Summit Series represented a clash of hockey powers, with Canada, dominated by National Hockey
+League (NHL) players, expected to beat the Soviet Union's team effortlessly. The Canadian side was
+favoured by fans and pundits alike, putting the Soviets down as amateurs.
+
+- However, the Soviet Union's purposeful shift towards adopting the Canadian style of play since
+the 1940s, along with their full-time dedication to the sport, had paid off. The series saw them
+emerge as formidable opponents, surprising Canada and many fans. 
+
+- Canada ultimately won the series, but the Soviet Union's impressive performance earned them the
+respect of their competitors. The Canadians' preconceptions were challenged, and the series marked
+a turning point in acknowledging the global nature of elite hockey.
+
+- The success of the Summit Series led the NHL to organise further exhibitions against top Soviet
+clubs, including the 1975-76 Super Series. It also paved the way for the inaugural Canada Cup
+"best-on-best" tournament in 1976.
+
+- The series heightened the profile of international ice hockey and cemented the fact that national
+teams could now rival the long-dominant Canadians, transforming the sport into a truly global
+phenomenon.
+```
+
+But importantly, it also returns citations that ground the completion in the included `documents`. The citations are returned in `response.citations` as a list of JSON dictionaries:
+
+```json json
+[{'start': 142,
+  'end': 164,
+  'text': 'Canadian national team',
+  'document_ids': ['doc_0']},
+ {'start': 173,
+  'end': 207,
+  'text': "Soviet Union's elite hockey squad.",
+  'document_ids': ['doc_0']},
+ {'start': 286,
+  'end': 308,
+  'text': 'clash of hockey powers',
+  'document_ids': ['doc_0', 'doc_1']},
+ ...
+```
+
+These can easily be rendered into the text to show the source of each piece of information. The following Python function adds the returned citations to the returned completion.
+
+```python
+def insert_citations(text: str, citations: list[dict]):
+    """
+    A helper function to pretty print citations.
+    """
+    offset = 0
+    # Process citations in the order they were provided
+    for citation in citations:
+        # Adjust start/end with offset
+        start, end = citation['start'] + offset, citation['end'] + offset
+        cited_docs = [str(int(doc[4:]) + 1) for doc in citation["document_ids"]]
+        # Shorten citations if they're too long for convenience
+        if len(cited_docs) > 3:
+            placeholder = "[" + ", ".join(cited_docs[:3]) + "...]"
+        else:
+            placeholder = "[" + ", ".join(cited_docs) + "]"
+        # ^ doc[4:] removes the 'doc_' prefix, and leaves the quoted document
+        modification = f'{text[start:end]} {placeholder}'
+        # Replace the cited text with its bolded version + placeholder
+        text = text[:start] + modification + text[end:]
+        # Update the offset for subsequent replacements
+        offset += len(modification) - (end - start)
+
+    return text
+```
+
+Then, `print(insert_citations(response.text, response.citations))` results in:
+
+```
+The 1972 Canada–USSR Summit Series marked a significant moment in the history of ice hockey,
+  showcasing a high-stakes competition between the Canadian national team [1] and the Soviet
+  Union's elite hockey squad. [1] Here are some key points about the series:
+
+- The Summit Series represented a clash of hockey powers [1, 2], with Canada, dominated by
+National Hockey League (NHL) players [2], expected to beat the Soviet Union's team effortlessly.[2]
+The Canadian side was favoured by fans and pundits alike [2], putting the Soviets down as
+amateurs. [2]
+
+- However, the Soviet Union's purposeful shift towards adopting the Canadian style of play since
+the 1940s [1], along with their full-time dedication to the sport [1], had paid off. The series
+saw them emerge as formidable opponents [2], surprising Canada [2, 3] and many fans. [2] 
+
+- Canada ultimately won the series [3], but the Soviet Union's impressive performance earned them
+the respect of their competitors. [3] The Canadians' preconceptions were challenged [3], and the
+series marked a turning point in acknowledging the global nature of elite hockey. [3]
+
+- The success of the Summit Series led the NHL to organise further exhibitions against top Soviet
+clubs [3], including the 1975-76 Super Series. [3] It also paved the way for the inaugural Canada
+Cup "best-on-best" tournament in 1976. [3]
+
+- The series heightened the profile of international ice hockey [3] and cemented the fact that
+national teams could now rival the long-dominant Canadians [3], transforming the sport into a 
+truly global phenomenon. [3]
+```
+
+## Incorporating Example Outputs
+
+LLMs respond well when they have specific examples to work from. For example, instead of asking for the salient points of the text and using bullet points “where appropriate”, give an example of what the output should look like.
+
+```
+## Instructions
+Below there is a long form news article discussing the 1972 Canada–USSR Summit Series, an eight-game ice hockey series between the Soviet Union and Canada, held in September 1972. Please summarize the salient points of the text and do so in a flowing high natural language quality text. Use bullet points where appropriate.
+
+## Example Output
+High level summary: <summary>
+3 important events related to the series:
+* <important event 1>
+* <important event 2>
+* <important event 3>
+
+## News Article
+{news_article}
+
+```
+
+## Structured Output
+
+In addition to examples, asking the model for structured output with a clear and demonstrated output format can help constrain the output to match desired requirements. JSON works particularly well with the Command R models.
+
+```
+Output the summary in the following JSON format:
+{
+  "short_summary": "<include a short summary of the text here>",
+  "most_important_events": [
+    "<one important event>",
+    "<another important event>",
+    "<another important event>"
+  ]
+}
+
+```
+
+## Do vs. Do Not Do
+
+Be explicit in **exactly** what you want the model to do. Be as assertive as possible and avoid language that could be considered vague. To encourage abstract summarization, do not write something like “avoid extracting full sentences from the input text,” and instead do the following:
+
+```
+## Instructions
+Below there is a long form news article discussing the 1972 Canada–USSR Summit Series, an eight-game ice hockey series between the Soviet Union and Canada, held in September 1972. Please summarize the salient points of the text and do so in a flowing high natural language quality text. Use bullet points where appropriate.
+
+Paraphrase the content into re-written, easily digestible sentences. Do not extract full sentences from the input text. 
+
+## News Article
+{news_article}
+
+```
+
+## Length Control
+
+Command R models excel at length control. Use this to your advantage by being explicit about the desired length of completion. Different units of length work well, including paragraphs (“give a summary in two paragraphs”); sentences (“make the response between 3 and 5 sentences long”); and words (“the completion should be at least 100 and no more than 200 words long”).
+
+```
+...
+The output summary should be at least 250 words and no more than 300 words long.
+```
+
+## Begin the Completion Yourself
+
+LLMs can easily be constrained by beginning the completion as part of the input prompt. For example, if it is very important that the output is HTML code and that it must be a well-formed HTML document, you can show the model how the completion should begin, and it will tend to follow suit.
+
+```
+...
+Please generate the response in a well-formed HTML document. The completion should begin as
+follows:
+
+<!DOCTYPE html>
+<html>
+
+```
+
+## Task Splitting
+
+Finally, task splitting should be used when the requested task is complex and can be broken down into sub-tasks. Doing this for the model can help guide it to the best possible answer. Instead of asking for a summary of the most important sentence in the most important paragraph in the input, break it down piece by piece in the prompt:
+
+```
+## Instructions
+Using the included text below, perform the following steps:
+
+1. Read through the entire text carefully
+2. Extract the most important paragraph
+3. From the paragraph extracted in step 2, extract the most important sentence
+4. Summarize the sentence extracted in step 3 and make it between 30 and 50 words long.
+5. Only return the result of step 4 in your response.
+
+```
+
+In the next chapter, we will discuss more advanced prompt engineering techniques, including few-shot prompting and chain-of-thought.

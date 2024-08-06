@@ -1,0 +1,915 @@
+---
+title: Agentic RAG for PDFs with mixed data
+slug: /page/agentic-rag-mixed-data
+---
+
+<div class="cookbook-nav-container">
+  <a href="/page/cookbooks" class="back-button pt-10 group inline-block cursor-pointer font-medium " rel="noreferrer"
+    target="_self">
+    <div class="pr-1 inline-block group-hover:no-underline">
+      <svg width="11.8" height="11" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M1.1554 7.20808C1.35066 7.40335 1.66724 7.40335 1.8625 7.20808L7.18477 1.88582C7.38003 1.69055 7.38003 1.37397 7.18477 1.17871L6.83121 0.825157C6.63595 0.629895 6.31937 0.629896 6.12411 0.825157L0.801842 6.14742C0.60658 6.34269 0.60658 6.65927 0.801842 6.85453L1.1554 7.20808Z"
+          fill="currentColor" />
+        <path
+          d="M1.1554 5.79226C1.35066 5.597 1.66724 5.597 1.8625 5.79226L7.18477 11.1145C7.38003 11.3098 7.38003 11.6264 7.18477 11.8216L6.83121 12.1752C6.63595 12.3705 6.31937 12.3705 6.12411 12.1752L0.801842 6.85292C0.60658 6.65766 0.60658 6.34108 0.801842 6.14582L1.1554 5.79226Z"
+          fill="currentColor" />
+        <path
+          d="M2.52491 6.23674C2.52492 5.9606 2.74878 5.73675 3.02491 5.73675H6.28412C6.4513 5.73675 6.60742 5.8203 6.70015 5.95941L7.03347 6.45941C7.25499 6.79169 7.01679 7.23675 6.61745 7.23675H3.0249C2.74876 7.23675 2.5249 7.01289 2.5249 6.73674L2.52491 6.23674Z"
+          fill="currentColor" />
+        <path
+          d="M13.5517 6.73676C13.5517 7.0129 13.3278 7.23675 13.0517 7.23675H8.79246C8.62528 7.23675 8.46916 7.1532 8.37643 7.0141L8.04311 6.5141C7.8216 6.18182 8.05979 5.73675 8.45914 5.73675H13.0517C13.3278 5.73675 13.5517 5.96062 13.5517 6.23676L13.5517 6.73676Z"
+          fill="currentColor" />
+      </svg>
+    </div>
+    Back to Cookbooks
+  </a>
+
+  <a href=https://github.com/cohere-ai/notebooks/blob/main/notebooks/agents/agentic-RAG/agentic_rag_langchain.ipynb class="github-button pt-10 group inline-block cursor-pointer font-medium " rel="noreferrer"
+    target="_blank">
+    Open in GitHub
+    <div class="pl-1 inline-block group-hover:no-underline">
+      <svg width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M8.63218 0.366821C8.35604 0.366821 8.13218 0.590679 8.13218 0.866821V8.39364C8.13218 8.66978 8.35604 8.89364 8.63218 8.89364H9.13218C9.40832 8.89364 9.63218 8.66978 9.63218 8.39364V0.866821C9.63218 0.590678 9.40832 0.366821 9.13218 0.366821H8.63218Z"
+          fill="currentColor" />
+        <path
+          d="M9.63332 1.36796C9.63332 1.6441 9.40946 1.86796 9.13332 1.86796H1.6065C1.33035 1.86796 1.1065 1.6441 1.1065 1.36796V0.867956C1.1065 0.591813 1.33035 0.367956 1.6065 0.367956H9.13332C9.40946 0.367956 9.63332 0.591813 9.63332 0.867956V1.36796Z"
+          fill="currentColor" />
+        <path
+          d="M8.35063 2.02206C8.54588 2.21732 8.54588 2.5339 8.35062 2.72916L6.04601 5.03377C5.9278 5.15198 5.75833 5.20329 5.59439 5.1705L5.00515 5.05264C4.61356 4.97432 4.46728 4.49118 4.74966 4.2088L7.28997 1.66849C7.48523 1.47323 7.80182 1.47323 7.99708 1.6685L8.35063 2.02206Z"
+          fill="currentColor" />
+        <path
+          d="M0.199967 9.46558C0.0047119 9.27032 0.0047151 8.95374 0.199974 8.75848L3.21169 5.74677C3.3299 5.62855 3.49938 5.57724 3.66331 5.61003L4.25256 5.72789C4.64414 5.80621 4.79042 6.28935 4.50804 6.57173L1.26063 9.81915C1.06536 10.0144 0.748774 10.0144 0.553513 9.81914L0.199967 9.46558Z"
+          fill="currentColor" />
+      </svg>
+    </div>
+  </a>
+</div>
+
+<div>
+  <h1>Agentic RAG for PDFs with mixed data</h1>
+</div>
+
+<!-- Authors -->
+<div class="authors-container">
+  
+  <div class="author-container">
+    <img class="author-image" src="https://files.readme.io/d17fc44-Shaan.jpg" alt="Shaan Desai" />
+    <p class="author-name">Shaan Desai</p>
+  </div>
+  
+</div>
+
+<style>
+  .header {
+    padding: 9px 0 17px 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  a[href],
+  .field-description a:not([href=""]),
+  .markdown-body a[href],
+  .markdown-body a:not([href=""]) {
+    text-decoration: none;
+  }
+
+  #content {
+    padding: 0 32px;
+  }
+
+  #content-head {
+    display: none;
+  }
+
+  .guide-page-title {
+    font-size: 29px !important;
+  }
+
+  .back-button .github-button {
+    border-radius: 0 !important;
+    border-width: 0 !important;
+    background-color: inherit !important;
+  }
+
+  .cookbook-nav-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .authors-container {
+    display: flex;
+    flex-direction: row;
+    flex-flow: row wrap;
+    gap: 2px 14px;
+    margin-top: 8px;
+  }
+
+  .author-container {
+    line-height: 1.5em;
+    display: flex;
+    flex-direction: row;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  .author-image {
+    height: 1.5em;
+    margin: 0px 6px 6px 0px !important;
+    border-radius: 50%;
+  }
+
+  .author-name {
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  @media only screen and (min-width: 620px) {
+    .guide-page-title {
+      width: 70%;
+    }
+
+    .header {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 0 17px 0;
+    }
+
+    .git--button {
+      width: 145px !important;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 16px;
+
+      width: 154px;
+      height: 35px;
+
+      background: #D4D9D4;
+      border: 1px solid #9DAAA4;
+      border-radius: 6px;
+    }
+  }
+
+
+  @media only screen and (min-width: 1024px) {
+    .guide-page-title {
+      font-size: 46px !important;
+    }
+
+    .header {
+      padding: 9px 0 32px 0;
+    }
+  }
+</style>
+
+
+## Motivation
+Retrieval-augmented generation (RAG) allows language models to generate grounded answers to questions about documents. However, the complexity of the documents can significantly influence overall RAG performance. For instance, the documents may be PDFs that contain a mix of text and tables. 
+
+More broadly, the implementation of a RAG pipeline - including parsing and chunking of documents, along with the embedding and retrieval of the chunks - is critical to the accuracy of grounded answers. Additionally, it is sometimes not sufficient to merely retrieve the answers; a user may want further postprocessing performed on the output. This use case would benefit from giving the model access to tools.
+
+## Objective
+In this notebook, we will guide you through best practices for setting up a RAG pipeline to process documents that contain both tables and text. We will also demonstrate how to create a [ReAct](https://python.langchain.com/v0.1/docs/modules/agents/agent_types/react/) agent with a Cohere model, and then give the agent access to a RAG pipeline tool to improve accuracy. The general structure of the notebook is as follows:
+
+- individual components around parsing, retrieval and generation are covered for documents with mixed tabular and textual data
+- a class object is created that can be used to instantiate the pipeline with parametric input
+- the RAG pipeline is then used as a tool for a Cohere ReACT agent
+
+# Reference Documents
+We recommend the following notebook as a guide to [semi-structured RAG](https://github.com/langchain-ai/langchain/blob/master/cookbook/Semi_Structured_RAG.ipynb).
+
+We also recommend the following notebook to explore various parsing techniques for [PDFs](https://github.com/cohere-ai/notebooks/blob/main/notebooks/guides/Document_Parsing_For_Enterprises.ipynb).
+
+Various LangChain-supported parsers can be found [here](https://python.langchain.com/docs/modules/data_connection/document_loaders/pdf/).
+
+## Table of Contents
+- Section 1
+    - [Parsing](#sec_step1)
+    - [Vector Store Setup](#sec_step2)
+    - [RAG Pipeline](#sec_step3)
+- Section 2
+    - [RAG Pipeline Class](#sec_step4)
+- Section 3
+    - [ReAct Agent with RAG Tool](#sec_step5)
+
+## Install Dependencies
+
+
+```python
+# there may be other dependencies that will need installation
+# ! pip install --quiet langchain langchain_cohere langchain_experimental
+# !pip --quiet install faiss-cpu tiktoken
+# !pip install pypdf
+# !pip install pytesseract
+# !pip install opencv-python --upgrade
+# !pip install "unstructured[all-docs]"
+# !pip install chromadb
+```
+
+
+```python
+# LLM
+import os
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import WebBaseLoader
+from langchain_community.vectorstores import FAISS
+from langchain_cohere import CohereEmbeddings
+from pydantic import BaseModel
+from unstructured.partition.pdf import partition_pdf
+from langchain_community.document_loaders import PyPDFLoader
+import os
+from typing import Any
+import uuid
+from langchain.retrievers.multi_vector import MultiVectorRetriever
+from langchain.storage import InMemoryStore
+from langchain_community.vectorstores import Chroma
+from langchain_core.documents import Document
+import cohere, json
+import pandas as pd
+from datasets import load_dataset
+from joblib import Parallel, delayed
+
+os.environ['COHERE_API_KEY'] = ""
+```
+
+<a name="sec_step1"></a>
+# Parsing
+
+To improve RAG performance on PDFs with mixed types (text and tables), we investigated a number of parsing and chunking strategies from various libraries:
+- [PyPDFLoader (LC)](https://api.python.langchain.com/en/latest/document_loaders/langchain_community.document_loaders.pdf.PyPDFLoader.html)
+- [LlamaParse](https://docs.llamaindex.ai/en/stable/llama_cloud/llama_parse/) (Llama-Index)
+- [Unstructured](https://unstructured.io/)
+
+
+We have found that the best option for parsing is unstructured.io since the parser can:
+- separate tables from text
+- automatically chunk the tables and text by title during the parsing step so that similar elements are grouped
+
+
+
+```python
+# UNSTRUCTURED pdf loader
+# Get elements
+raw_pdf_elements = partition_pdf(
+    filename="city_ny_popular_fin_report.pdf",
+    # Unstructured first finds embedded image blocks
+    extract_images_in_pdf=False,
+    # Use layout model (YOLOX) to get bounding boxes (for tables) and find titles
+    # Titles are any sub-section of the document
+    infer_table_structure=True,
+    # Post processing to aggregate text once we have the title
+    chunking_strategy="by_title",
+    # Chunking params to aggregate text blocks
+    # Attempt to create a new chunk 3800 chars
+    # Attempt to keep chunks > 2000 chars
+    max_characters=4000,
+    new_after_n_chars=3800,
+    combine_text_under_n_chars=2000,
+    image_output_dir_path='.',
+)
+
+```
+
+
+```python
+# extract table and textual objects from parser
+class Element(BaseModel):
+    type: str
+    text: Any
+
+# Categorize by type
+categorized_elements = []
+for element in raw_pdf_elements:
+    if "unstructured.documents.elements.Table" in str(type(element)):
+        categorized_elements.append(Element(type="table", text=str(element)))
+    elif "unstructured.documents.elements.CompositeElement" in str(type(element)):
+        categorized_elements.append(Element(type="text", text=str(element)))
+
+# Tables
+table_elements = [e for e in categorized_elements if e.type == "table"]
+print(len(table_elements))
+
+# Text
+text_elements = [e for e in categorized_elements if e.type == "text"]
+print(len(text_elements))
+```
+
+    14
+    24
+
+
+<a name="sec_step2"></a>
+# Vector Store Setup
+
+There are many options for setting up a vector store. Here, we show how to do so using [Chroma](https://www.trychroma.com/) and Langchain's Multi-vector retrieval.
+As the name implies, multi-vector retrieval allows us to store multiple vectors per document; for instance, for a single document chunk, one could keep embeddings for both the chunk itself, and a summary of that document. A summary may be able to distill more accurately what a chunk is about, leading to better retrieval.
+
+You can read more about this here: https://python.langchain.com/docs/modules/data_connection/retrievers/multi_vector/
+
+Below, we demonstrate the following process:
+- summaries of each chunk are embedded
+- during inference, the multi-vector retrieval returns the full context document related to the summary
+
+
+```python
+co = cohere.Client()
+def get_chat_output(message, preamble, chat_history, model, temp, documents=None):
+    return co.chat(
+    message=message,
+    preamble=preamble,
+    chat_history=chat_history,
+    documents=documents,
+    model=model,
+    temperature=temp
+    ).text
+
+def parallel_proc_chat(prompts,preamble,chat_history=None,model='command-r-plus',temp=0.1,n_jobs=10):
+    """Parallel processing of chat endpoint calls."""
+    responses = Parallel(n_jobs=n_jobs, prefer="threads")(delayed(get_chat_output)(prompt,preamble,chat_history,model,temp) for prompt in prompts)
+    return responses
+
+def rerank_cohere(query, returned_documents,model:str="rerank-multilingual-v3.0",top_n:int=3):
+    response = co.rerank(
+        query=query,
+        documents=returned_documents,
+        top_n=top_n,
+        model=model,
+        return_documents=True
+    )
+    top_chunks_after_rerank = [results.document.text for results in response.results]
+    return top_chunks_after_rerank
+
+```
+
+
+```python
+# generate table and text summaries
+prompt_text = """You are an assistant tasked with summarizing tables and text. \ 
+Give a concise summary of the table or text. Table or text chunk: {element}. Only provide the summary and no other text."""
+
+table_prompts = [prompt_text.format(element=i.text) for i in table_elements]
+table_summaries = parallel_proc_chat(table_prompts,None)
+text_prompts = [prompt_text.format(element=i.text) for i in text_elements]
+text_summaries = parallel_proc_chat(text_prompts,None)
+tables = [i.text for i in table_elements]
+texts = [i.text for i in text_elements]
+```
+
+
+```python
+# The vectorstore to use to index the child chunks
+vectorstore = Chroma(collection_name="summaries", embedding_function=CohereEmbeddings())
+# The storage layer for the parent documents
+store = InMemoryStore()
+id_key = "doc_id"
+# The retriever (empty to start)
+retriever = MultiVectorRetriever(
+    vectorstore=vectorstore,
+    docstore=store,
+    id_key=id_key,
+)
+# Add texts
+doc_ids = [str(uuid.uuid4()) for _ in texts]
+summary_texts = [
+    Document(page_content=s, metadata={id_key: doc_ids[i]})
+    for i, s in enumerate(text_summaries)
+]
+retriever.vectorstore.add_documents(summary_texts)
+retriever.docstore.mset(list(zip(doc_ids, texts)))
+# Add tables
+table_ids = [str(uuid.uuid4()) for _ in tables]
+summary_tables = [
+    Document(page_content=s, metadata={id_key: table_ids[i]})
+    for i, s in enumerate(table_summaries)
+]
+retriever.vectorstore.add_documents(summary_tables)
+retriever.docstore.mset(list(zip(table_ids, tables)))
+```
+
+<a name="sec_step3"></a>
+# RAG Pipeline
+
+With our database in place, we can run queries against it. The query process can be broken down into the following steps:
+
+- augment the query, this really helps retrieve all the relevant information
+- use each augmented query to retrieve the top k docs and then rerank them
+- concatenate all the shortlisted/reranked docs and pass them to the generation model
+
+
+```python
+def process_query(query, retriever):
+    """Runs query augmentation, retrieval, rerank and final generation in one call."""
+    augmented_queries=co.chat(message=query,model='command-r-plus',temperature=0.2, search_queries_only=True)
+        #augment queries
+    if augmented_queries.search_queries:
+        reranked_docs=[]
+        for itm in augmented_queries.search_queries:
+            docs=retriever.invoke(itm.text)
+            temp_rerank = rerank_cohere(itm.text,docs)
+            reranked_docs.extend(temp_rerank)
+        documents = [{"title": f"chunk {i}", "snippet": reranked_docs[i]} for i in range(len(reranked_docs))]
+    else:
+        #no queries will be run through RAG
+        documents = None
+    
+    preamble = """
+## Task & Context
+You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.
+
+## Style Guide
+Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.
+"""
+    model = 'command-r-plus'
+    temp = 0.2
+
+    
+    
+    response = co.chat(
+      message=query,
+      documents=documents,
+      preamble=preamble,
+      model=model,
+      temperature=temp
+    )
+
+    final_answer_docs="""The final answer is from the documents below:
+    
+    {docs}""".format(docs=str(response.documents))
+
+    final_answer = response.text
+    return final_answer, final_answer_docs
+```
+
+## Example 
+
+We can now test out a query. In this example, the final answer can be found on page 12 of the PDF, which aligns with the response provided by the model:
+
+
+```python
+query = "what are the charges for services in 2022"
+final_answer, final_answer_docs = process_query(query, retriever)
+print(final_answer)
+print(final_answer_docs)
+
+
+chat_history=[{'role':"USER", 'message':query},{'role':"CHATBOT", 'message':f'The final answer is: {final_answer}.' + final_answer_docs}]
+    
+```
+
+    The charges for services in 2022 were $5,266 million.
+    The final answer is from the documents below:
+        
+        [{'id': 'doc_0', 'snippet': 'Program and General Revenues FY 2023 FY 2022 FY 2021 Category (in millions) Charges for Services (CS) $5,769 $5,266 $5,669 Operating Grants and Contributions (OGC) 27,935 31,757 28,109 Capital Grants and Contributions (CGC) 657 656 675 Real Estate Taxes (RET) 31,502 29,507 31,421 Sales and Use Taxes (SUT) 10,577 10,106 7,614 Personal Income Taxes (PIT) 15,313 15,520 15,795 Income Taxes, Other (ITO) 13,181 9,521 9,499 Other Taxes* (OT) 3,680 3,777 2,755 Investment Income* (II) 694 151 226 Unrestricted Federal and State Aid (UFSA) 234 549 108 Other* (O) Total Program and General Revenues - Primary Government 2,305 $110,250 $107,535 $104,176 708 725', 'title': 'chunk 0'}]
+
+
+### Chat History Management
+
+In the example below, we ask a follow up question that relies on the chat history, but does not require a rerun of the RAG pipeline.
+
+We detect questions that do not require RAG by examining the `search_queries` object returned by calling `co.chat` to generate candidate queries to answer our question. If this object is empty, then the model has determined that a document query is not needed to answer the question.
+
+In the example below, the `else` statement is invoked based on `query2`. We still pass in the chat history, allowing the question to be answered with only the prior context.
+
+
+```python
+query2='divide this by two'
+augmented_queries=co.chat(message=query2,model='command-r-plus',temperature=0.2, search_queries_only=True)
+if augmented_queries.search_queries:
+    print('RAG is needed')
+    final_answer, final_answer_docs = process_query(query, retriever)
+    print(final_answer)
+else:
+    print('RAG is not needed')
+    response = co.chat(
+      message=query2,
+      model='command-r-plus',
+      chat_history=chat_history,
+      temperature=0.3
+    )
+    
+    print("Final answer:")
+    print(response.text)
+```
+
+    RAG is not needed
+    Final answer:
+    The result of dividing the charges for services in 2022 by two is $2,633.
+
+
+## ------------------------------------------------------- ##
+
+<a name="sec_step4"></a>
+# RAG Pipeline Class
+
+Here, we connect all of the pieces discussed above into one class object, which is then used as a tool for a Cohere ReAct agent. This class definition consolidates and clarify the key parameters used to define the RAG pipeline.
+
+
+```python
+co = cohere.Client()
+```
+
+
+```python
+class Element(BaseModel):
+    type: str
+    text: Any
+    
+class RAG_pipeline():
+    def __init__(self,paths):
+        self.embedding_model="embed-english-v3.0"
+        self.generation_model="command-r-plus"
+        self.summary_model="command-r-plus"
+        self.rerank_model="rerank-multilingual-v3.0"
+        self.num_docs_to_retrieve = 10
+        self.top_k_rerank=3
+        self.temperature=0.2
+        self.preamble="""
+## Task & Context
+You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.
+
+## Style Guide
+Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.
+"""     
+        self.n_jobs=10 #number of parallel processes to run summarization of chunks
+        self.extract_images_in_pdf=False
+        self.infer_table_structure=True
+        self.chunking_strategy="by_title"
+        self.max_characters=4000
+        self.new_after_n_chars=3800
+        self.combine_text_under_n_chars=2000
+        self.image_output_dir_path='.'
+        self.paths = paths
+        self.parse_and_build_retriever()
+        
+    def parse_and_build_retriever(self,):
+        #step1, parse pdfs
+        # if condition just for debugging since perf_audit.pdf is parsed in the prev step, no need to rerun
+        parsed_pdf_list=self.parse_pdfs(self.paths)
+        #separate tables and text
+        extracted_tables, extracted_text = self.extract_text_and_tables(parsed_pdf_list)
+        #generate summaries for everything
+        tables, table_summaries, texts, text_summaries=self.generate_summaries(extracted_tables,extracted_text)
+        self.tables = tables
+        self.table_summaries = table_summaries
+        self.texts = texts
+        self.text_summaries=text_summaries
+        #setup the multivector retriever
+        self.make_retriever(tables, table_summaries, texts, text_summaries)
+        
+    def extract_text_and_tables(self,parsed_pdf_list):
+        # extract table and textual objects from parser
+        # Categorize by type
+        all_table_elements = []
+        all_text_elements = []
+        for raw_pdf_elements in parsed_pdf_list:
+            categorized_elements = []
+            for element in raw_pdf_elements:
+                if "unstructured.documents.elements.Table" in str(type(element)):
+                    categorized_elements.append(Element(type="table", text=str(element)))
+                elif "unstructured.documents.elements.CompositeElement" in str(type(element)):
+                    categorized_elements.append(Element(type="text", text=str(element)))
+            
+            # Tables
+            table_elements = [e for e in categorized_elements if e.type == "table"]
+            print(len(table_elements))
+            
+            # Text
+            text_elements = [e for e in categorized_elements if e.type == "text"]
+            print(len(text_elements))
+            all_table_elements.extend(table_elements)
+            all_text_elements.extend(text_elements)
+
+        return all_table_elements, all_text_elements
+            
+    def parse_pdfs(self, paths):
+
+        path_raw_elements = []
+        for path in paths:
+            raw_pdf_elements = partition_pdf(
+            filename=path,
+            # Unstructured first finds embedded image blocks
+            extract_images_in_pdf=self.extract_images_in_pdf,
+            # Use layout model (YOLOX) to get bounding boxes (for tables) and find titles
+            # Titles are any sub-section of the document
+            infer_table_structure=self.infer_table_structure,
+            # Post processing to aggregate text once we have the title
+            chunking_strategy=self.chunking_strategy,
+            # Chunking params to aggregate text blocks
+            # Attempt to create a new chunk 3800 chars
+            # Attempt to keep chunks > 2000 chars
+            max_characters=self.max_characters,
+            new_after_n_chars=self.new_after_n_chars,
+            combine_text_under_n_chars=self.combine_text_under_n_chars,
+            image_output_dir_path=self.image_output_dir_path,
+            )
+            path_raw_elements.append(raw_pdf_elements)
+        print('PDFs parsed')
+        return path_raw_elements
+        
+
+    def get_chat_output(self,message, preamble, model, temp):
+        # print("**message")
+        # print(message)
+        
+        response=co.chat(
+            message=message,
+            preamble=preamble,
+            model=model,
+            temperature=temp
+            ).text
+        # print("**output")
+        # print(response)
+        return response
+
+    def parallel_proc_chat(self,prompts,preamble,model,temp,n_jobs):
+        """Parallel processing of chat endpoint calls."""
+        responses = Parallel(n_jobs=n_jobs, prefer="threads")(delayed(self.get_chat_output)(prompt,preamble,model,temp) for prompt in prompts)
+        return responses
+    
+    def rerank_cohere(self,query, returned_documents,model, top_n):
+        response = co.rerank(
+            query=query,
+            documents=returned_documents,
+            top_n=top_n,
+            model=model,
+            return_documents=True
+        )
+        top_chunks_after_rerank = [results.document.text for results in response.results]
+        return top_chunks_after_rerank
+
+    def generate_summaries(self,table_elements,text_elements):
+        # generate table and text summaries
+
+        summarize_prompt = """You are an assistant tasked with summarizing tables and text. \ 
+        Give a concise summary of the table or text. Table or text chunk: {element}. Only provide the summary and no other text."""
+        
+        table_prompts = [summarize_prompt.format(element=i.text) for i in table_elements]
+        table_summaries = self.parallel_proc_chat(table_prompts,self.preamble,self.summary_model,self.temperature,self.n_jobs)
+        text_prompts = [summarize_prompt.format(element=i.text) for i in text_elements]
+        text_summaries = self.parallel_proc_chat(text_prompts,self.preamble,self.summary_model,self.temperature,self.n_jobs)
+        tables = [i.text for i in table_elements]
+        texts = [i.text for i in text_elements]
+        print('summaries generated')
+        return tables, table_summaries, texts, text_summaries
+
+    def make_retriever(self,tables, table_summaries, texts, text_summaries):
+        # The vectorstore to use to index the child chunks
+        vectorstore = Chroma(collection_name="summaries", embedding_function=CohereEmbeddings())
+        # The storage layer for the parent documents
+        store = InMemoryStore()
+        id_key = "doc_id"
+        # The retriever (empty to start)
+        retriever = MultiVectorRetriever(
+            vectorstore=vectorstore,
+            docstore=store,
+            id_key=id_key,
+            search_kwargs={"k": self.num_docs_to_retrieve}
+        )
+        # Add texts
+        doc_ids = [f'text_{i}' for i in range(len(texts))]#[str(uuid.uuid4()) for _ in texts]
+        summary_texts = [
+            Document(page_content=s, metadata={id_key: doc_ids[i]})
+            for i, s in enumerate(text_summaries)
+        ]
+        retriever.vectorstore.add_documents(summary_texts,ids=doc_ids)
+        retriever.docstore.mset(list(zip(doc_ids, texts)))
+        # Add tables
+        table_ids = [f'table_{i}' for i in range(len(texts))]#[str(uuid.uuid4()) for _ in tables]
+        summary_tables = [
+            Document(page_content=s, metadata={id_key: table_ids[i]})
+            for i, s in enumerate(table_summaries)
+        ]
+        retriever.vectorstore.add_documents(summary_tables,ids=table_ids)
+        retriever.docstore.mset(list(zip(table_ids, tables)))
+        self.retriever = retriever
+        print('retriever built')
+        
+    def process_query(self,query):
+        """Runs query augmentation, retrieval, rerank and generation in one call."""
+        augmented_queries=co.chat(message=query,model=self.generation_model,temperature=self.temperature, search_queries_only=True)
+        #augment queries
+        if augmented_queries.search_queries:
+            reranked_docs=[]
+            for itm in augmented_queries.search_queries:
+                docs=self.retriever.invoke(itm.text)
+                temp_rerank = self.rerank_cohere(itm.text,docs,model=self.rerank_model,top_n=self.top_k_rerank)
+                reranked_docs.extend(temp_rerank)
+            documents = [{"title": f"chunk {i}", "snippet": reranked_docs[i]} for i in range(len(reranked_docs))]
+        else:
+            documents = None
+            
+        response = co.chat(
+          message=query,
+          documents=documents,
+          preamble=self.preamble,
+          model=self.generation_model,
+          temperature=self.temperature
+        )
+    
+        final_answer_docs="""The final answer is from the documents below:
+        
+        {docs}""".format(docs=str(response.documents))
+    
+        final_answer = response.text
+        return final_answer, final_answer_docs
+
+```
+
+
+```python
+rag_object=RAG_pipeline(paths=["city_ny_popular_fin_report.pdf"])
+```
+
+    This function will be deprecated in a future release and `unstructured` will simply use the DEFAULT_MODEL from `unstructured_inference.model.base` to set default model name
+
+
+    PDFs parsed
+    14
+    24
+    summaries generated
+    retriever built
+
+
+<a name="sec_step5"></a>
+# Cohere ReAct Agent with RAG Tool
+
+Finally, we build a simple agent that utilizes the RAG pipeline defined above. We do this by granting the agent access to two tools:
+
+- the end-to-end RAG pipeline 
+- a Python interpreter
+
+The intention behind coupling these tools is to enable the model to perform mathematical and other postprocessing operations on RAG outputs using Python.
+
+
+```python
+from langchain.agents import Tool
+from langchain_experimental.utilities import PythonREPL
+from langchain.agents import AgentExecutor
+from langchain_cohere.react_multi_hop.agent import create_cohere_react_agent
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_cohere.chat_models import ChatCohere
+from langchain.tools.retriever import create_retriever_tool
+from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain_core.tools import tool
+
+class react_agent():
+    def __init__(self,rag_retriever,model="command-r-plus",temperature=0.2):
+        self.llm = ChatCohere(model=model, temperature=temperature)
+        self.preamble="""
+## Task & Context
+You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.
+
+## Style Guide
+Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.
+
+## Guidelines
+You are an expert who answers the user's question. 
+You have access to a vectorsearch tool that will use your query to search through documents and find the relevant answer.
+You also have access to a python interpreter tool which you can use to run code for mathematical operations.
+"""
+        self.get_tools(rag_retriever)
+        self.build_agent()
+        
+    def get_tools(self,rag_retriever):
+        @tool
+        def vectorsearch(query: str):
+            """Uses the query to search through a list of documents and return the most relevant documents as well as the answer."""
+            final_answer, final_answer_docs=rag_retriever.process_query(query)
+            return final_answer + final_answer_docs
+        vectorsearch.name = "vectorsearch" # use python case
+        vectorsearch.description = "Uses the query to search through a list of documents and return the most relevant documents as well as the answer."
+        class vectorsearch_inputs(BaseModel):
+            query: str = Field(description="the users query")
+        vectorsearch.args_schema = vectorsearch_inputs
+
+        
+        python_repl = PythonREPL()
+        python_tool = Tool(
+            name="python_repl",
+            description="Executes python code and returns the result. The code runs in a static sandbox without interactive mode, so print output or save output to a file.",
+            func=python_repl.run,
+        )
+        python_tool.name = "python_interpreter"
+        class ToolInput(BaseModel):
+            code: str = Field(description="Python code to execute.")
+        python_tool.args_schema = ToolInput
+
+        self.alltools = [vectorsearch,python_tool]
+
+    def build_agent(self):
+        # Prompt template
+        prompt = ChatPromptTemplate.from_template("{input}")
+        # Create the ReAct agent
+        agent = create_cohere_react_agent(
+            llm=self.llm,
+            tools=self.alltools,
+            prompt=prompt,
+        )
+        self.agent_executor = AgentExecutor(agent=agent, tools=self.alltools, verbose=True,return_intermediate_steps=True)
+
+
+    def run_agent(self,query,history=None):
+        if history:
+            response=self.agent_executor.invoke({
+            "input": query,
+            "preamble": self.preamble,
+            "chat_history": history
+        })
+        else:
+            response=self.agent_executor.invoke({
+            "input": query,
+            "preamble": self.preamble,
+        })
+        return response
+         
+```
+
+
+```python
+agent_object=react_agent(rag_retriever=rag_object)
+```
+
+
+```python
+step1_response=agent_object.run_agent("what are the charges for services in 2022 and 2023")
+```
+
+    
+    
+    [1m> Entering new AgentExecutor chain...[0m
+    [32;1m[1;3m
+    I will search for the charges for services in 2022 and 2023.
+    {'tool_name': 'vectorsearch', 'parameters': {'query': 'charges for services in 2022 and 2023'}}
+    [0m[36;1m[1;3mThe charges for services in 2022 were $5,266 million and in 2023 were $5,769 million.The final answer is from the documents below:
+            
+            [{'id': 'doc_0', 'snippet': 'Program and General Revenues FY 2023 FY 2022 FY 2021 Category (in millions) Charges for Services (CS) $5,769 $5,266 $5,669 Operating Grants and Contributions (OGC) 27,935 31,757 28,109 Capital Grants and Contributions (CGC) 657 656 675 Real Estate Taxes (RET) 31,502 29,507 31,421 Sales and Use Taxes (SUT) 10,577 10,106 7,614 Personal Income Taxes (PIT) 15,313 15,520 15,795 Income Taxes, Other (ITO) 13,181 9,521 9,499 Other Taxes* (OT) 3,680 3,777 2,755 Investment Income* (II) 694 151 226 Unrestricted Federal and State Aid (UFSA) 234 549 108 Other* (O) Total Program and General Revenues - Primary Government 2,305 $110,250 $107,535 $104,176 708 725', 'title': 'chunk 0'}][0m[32;1m[1;3mRelevant Documents: 0
+    Cited Documents: 0
+    Answer: The charges for services in 2022 were $5,266 million and in 2023 were $5,769 million.
+    Grounded answer: The charges for services in <co: 0>2022</co: 0> were <co: 0>$5,266 million</co: 0> and in <co: 0>2023</co: 0> were <co: 0>$5,769 million</co: 0>.[0m
+    
+    [1m> Finished chain.[0m
+
+
+Just like earlier, we can also pass chat history to the LangChain agent to refer to for any other queries.
+
+
+```python
+from langchain_core.messages import HumanMessage, AIMessage
+```
+
+
+```python
+chat_history=[
+HumanMessage(content=step1_response['input']),
+AIMessage(content=step1_response['output'])
+]
+```
+
+
+```python
+agent_object.run_agent("what is the mean of the two values",history=chat_history)
+```
+
+    
+    
+    [1m> Entering new AgentExecutor chain...[0m
+
+
+    Python REPL can execute arbitrary code. Use with caution.
+
+
+    [32;1m[1;3m
+    I will use the Python Interpreter tool to calculate the mean of the two values.
+    {'tool_name': 'python_interpreter', 'parameters': {'code': 'import numpy as np\n\n# Data\nvalues = [5266, 5769]\n\n# Calculate the mean\nmean_value = np.mean(values)\n\nprint(f"The mean of the two values is: {mean_value:.0f} million")'}}
+    [0m[33;1m[1;3mThe mean of the two values is: 5518 million
+    [0m[32;1m[1;3mRelevant Documents: 0
+    Cited Documents: 0
+    Answer: The mean of the two values is 5518 million.
+    Grounded answer: The mean of the two values is <co: 0>5518 million</co: 0>.[0m
+    
+    [1m> Finished chain.[0m
+
+
+
+
+
+    {'input': 'what is the mean of the two values',
+     'preamble': "\n## Task & Context\nYou help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.\n\n## Style Guide\nUnless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.\n\n## Guidelines\nYou are an expert who answers the user's question. \nYou have access to a vectorsearch tool that will use your query to search through documents and find the relevant answer.\nYou also have access to a python interpreter tool which you can use to run code for mathematical operations.\n",
+     'chat_history': [HumanMessage(content='what are the charges for services in 2022 and 2023'),
+      AIMessage(content='The charges for services in 2022 were $5,266 million and in 2023 were $5,769 million.')],
+     'output': 'The mean of the two values is 5518 million.',
+     'citations': [CohereCitation(start=30, end=42, text='5518 million', documents=[{'output': 'The mean of the two values is: 5518 million\n'}])],
+     'intermediate_steps': [(AgentActionMessageLog(tool='python_interpreter', tool_input={'code': 'import numpy as np\n\n# Data\nvalues = [5266, 5769]\n\n# Calculate the mean\nmean_value = np.mean(values)\n\nprint(f"The mean of the two values is: {mean_value:.0f} million")'}, log='\nI will use the Python Interpreter tool to calculate the mean of the two values.\n{\'tool_name\': \'python_interpreter\', \'parameters\': {\'code\': \'import numpy as np\\n\\n# Data\\nvalues = [5266, 5769]\\n\\n# Calculate the mean\\nmean_value = np.mean(values)\\n\\nprint(f"The mean of the two values is: {mean_value:.0f} million")\'}}\n', message_log=[AIMessage(content='\nPlan: I will use the Python Interpreter tool to calculate the mean of the two values.\nAction: ```json\n[\n    {\n        "tool_name": "python_interpreter",\n        "parameters": {\n            "code": "import numpy as np\\n\\n# Data\\nvalues = [5266, 5769]\\n\\n# Calculate the mean\\nmean_value = np.mean(values)\\n\\nprint(f\\"The mean of the two values is: {mean_value:.0f} million\\")"\n        }\n    }\n]\n```')]),
+       'The mean of the two values is: 5518 million\n')]}
+
+
+
+# Conclusion
+As you can see, the RAG pipeline can be used as a tool for a Cohere ReAct agent. This allows the agent to access the RAG pipeline for document retrieval and generation, as well as a Python interpreter for postprocessing mathematical operations to improve accuracy. This setup can be used to improve the accuracy of grounded answers to questions about documents that contain both tables and text.

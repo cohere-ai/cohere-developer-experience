@@ -1,0 +1,92 @@
+---
+title: "Getting Started with Coral Toolkit"
+slug: "docs/getting-started-with-coral-toolkit"
+
+hidden: true
+createdAt: "Mon Mar 18 2024 17:43:10 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Tue Mar 19 2024 15:31:41 GMT+0000 (Coordinated Universal Time)"
+---
+With Cohere's decision to open source some of our Github repositories, it has now become possible to launch your own Coral web application in under a minute. This will make it much easier to leverage the power of large language models for a variety of use cases. 
+
+## Setting up
+
+To begin, make sure you have the  with the SDK installed (the examples below are in Python, Typescript, and Go):
+
+```python
+pip install cohere
+```
+```typescript
+npm i -s cohere-ai
+```
+```go
+go get github.com/cohere-ai/cohere-go/v2
+```
+
+Import dependencies and set up the Cohere client.
+
+```python
+import cohere
+co = cohere.Client('Your API key')
+```
+```typescript
+import { CohereClient } from "cohere-ai";
+
+const cohere = new CohereClient({
+    token: "YOUR_API_KEY",
+});
+
+(async () => {
+    const prediction = await cohere.generate({
+        prompt: "hello",
+        maxTokens: 10,
+    });
+    
+    console.log("Received prediction", prediction);
+})();
+```
+```go
+import cohereclient "github.com/cohere-ai/cohere-go/v2/client"
+
+client := cohereclient.NewClient(cohereclient.WithToken("<YOUR_AUTH_TOKEN>"))
+```
+
+(All the rest of the examples on this page will be in Python, but you can find more detailed instructions for getting set up by checking out the Github repositories for [Python](https://github.com/cohere-ai/cohere-python), [Typescript](https://github.com/cohere-ai/cohere-typescript), and [Go](https://github.com/cohere-ai/cohere-go).)
+
+You're also welcome to try our hosted Coral instance at [coral.cohere.com](http://coral.cohere.com).
+
+## What is Coral Toolkit?
+
+Coral Toolkit is a collection of components for building [retrieval augmented generation](/docs/retrieval-augmented-generation-rag) (RAG) applications and deploying them to production. It includes the following pieces:
+
+### Retrieval Chains
+
+The two basic parts of a RAG workflow are "retrieval" and "augmented generation." The first part of this process are handled through tools known as "retrieval chains," and ours are written in Langchain and LlamaIndex.
+
+A developer can upload a PDF (to be parsed using LlamaIndex), or retrieve information from Wikipedia (using Langchain’s `WikipediaRetriever`).
+
+You can also optionally configure your web app to utilize vector database retrieval or [Cohere Connectors](/docs/connectors).
+
+### Model configurations
+
+By default, Coral uses whichever Command and Embed models most recently hosted on the Cohere platform to perform generation and [reranking](/docs/reranking) in RAG.
+
+### Coral Showcase UI
+
+If you're interested in creating something like Cohere's Coral Showcase interface, it's set up as a Next.js web app with a SQL database for persistent chat history, [documents](/docs/documents-and-citations), and citations.
+
+## Limitations
+
+There are a few limitations you should be aware of, as they can impact the sort of applications you'll be able to build with Coral.
+
+### Model Configurations
+
+First, the components required to support Cohere models are hosted on AWS Bedrock, AWS SageMaker, and OCI Generative ML Service. [WHY ARE THESE LIMITATIONS?]
+
+### Coral UI
+
+Finally, you should be aware that the following capabilities are supported in the Coral interface but _not_ in the open source toolkit being released:
+
+- Authentication
+- Configuring web search with a search API
+- Easily change colours, fonts, logo (coming soon)
+- Configuring a custom DB for chat history

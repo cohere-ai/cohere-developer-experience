@@ -1,0 +1,95 @@
+---
+title: "Embed on LangChain"
+slug: "docs/embed-on-langchain"
+
+hidden: false
+createdAt: "Fri Mar 01 2024 16:19:22 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Thu May 30 2024 15:58:05 GMT+0000 (Coordinated Universal Time)"
+---
+Cohere supports various integrations with LangChain, a large language model (LLM) framework which allows you to quickly create applications based on Cohere's models. This doc will guide you through how to leverage different Cohere embeddings with LangChain. 
+
+### Prerequisites
+
+Running Cohere embeddings with LangChain doesn't require many prerequisites, consult the [top-level document](/docs/cohere-and-langchain) for more information.
+
+### Cohere Embeddings with LangChain
+
+To use [Cohere's Embeddings](/docs/embeddings) with LangChain, create a [CohereEmbedding](https://github.com/langchain-ai/langchain/blob/master/libs/community/langchain_community/embeddings/cohere.py) object as follows (the available cohere embedding models [are listed here](/reference/embed)): 
+
+```python
+from langchain_community.embeddings import CohereEmbeddings
+cohere_embeddings = CohereEmbeddings(cohere_api_key="{API_KEY}",
+                                     model="embed-english-light-v3.0")
+text = "This is a test document."
+query_result = cohere_embeddings.embed_query(text)
+print(query_result)
+doc_result = cohere_embeddings.embed_documents([text])
+print(doc_result)
+```
+
+To use these embeddings with Cohere's RAG functionality, you will need to use one of the vector DBs [from this list](https://python.langchain.com/docs/integrations/vectorstores). In this example we use chroma, so in order to run it you will need to install chroma using `pip install chromadb`.
+
+```python
+from langchain.retrievers import ContextualCompressionRetriever, CohereRagRetriever
+from langchain.retrievers.document_compressors import CohereRerank
+from langchain_community.embeddings import CohereEmbeddings
+from langchain_community.chat_models import ChatCohere
+from langchain.text_splitter import CharacterTextSplitter
+from langchain_community.document_loaders import TextLoader
+from langchain_community.vectorstores import Chroma
+
+user_query = "When was Cohere started?"
+# Create cohere's chat model and embeddings objects
+cohere_chat_model = ChatCohere(cohere_api_key="{API-KEY}")
+cohere_embeddings = CohereEmbeddings(cohere_api_key="{API-KEY}")
+# Load text files and split into chunks, you can also use data gathered elsewhere in your application
+raw_documents = TextLoader('test.txt').load()
+text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+documents = text_splitter.split_documents(raw_documents)
+# Create a vector store from the documents
+db = Chroma.from_documents(documents, cohere_embeddings)
+input_docs = db.as_retriever().get_relevant_documents(user_query)
+
+# Create the cohere rag retriever using the chat model 
+rag = CohereRagRetriever(llm=cohere_chat_model)
+docs = rag.get_relevant_documents(
+    user_query,
+    source_documents=input_docs,
+)
+# Print the documents
+for doc in docs[:-1]:
+    print(doc.metadata)
+    print("\n\n" + doc.page_content)
+    print("\n\n" + "-" * 30 + "\n\n")
+# Print the final generation 
+answer = docs[-1].page_content
+print(answer)
+# Print the final citations 
+citations = docs[-1].metadata['citations']
+print(citations)
+```
+
+### Cohere with LangChain and Bedrock
+
+#### Prerequisite
+
+In addition to the prerequisites above, integrating Cohere with LangChain on Amazon Bedrock also requires: 
+
+- AWS Python SDK. To install it, run `pip install boto3`. You can find [more details here ](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html#install-boto3).
+- Configured authentication credentials for AWS. For more details, [see this document](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html#configuration). 
+
+#### Cohere Embeddings with LangChain and Amazon Bedrock
+
+In this example, we create embeddings for a query using Bedrock and LangChain: 
+
+```python
+from langchain_community.embeddings import BedrockEmbeddings
+
+# Replace the profile name with the one created in the setup. 
+embeddings = BedrockEmbeddings(
+    credentials_profile_name="{PROFILE-NAME}",
+    region_name="us-east-1",
+    model_id="cohere.embed-english-v3"
+)
+embeddings.embed_query("This is a content of the document")
+```

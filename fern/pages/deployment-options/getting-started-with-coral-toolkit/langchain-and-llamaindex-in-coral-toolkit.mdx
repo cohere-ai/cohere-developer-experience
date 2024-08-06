@@ -1,0 +1,113 @@
+---
+title: "LangChain and LlamaIndex in Coral Toolkit"
+slug: "docs/langchain-and-llamaindex-in-coral-toolkit"
+
+hidden: true
+createdAt: "Mon Mar 18 2024 17:45:39 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Tue Mar 19 2024 15:28:20 GMT+0000 (Coordinated Universal Time)"
+---
+Having covered Coral in the previous document, let's take a look at two of the more important parts of the retrieval chain: LangChain and LlamaIndex. 
+
+Toolkit integrates with many data frameworks to make it easier to use sources for [retrieval augmented generation](/docs/retrieval-augmented-generation-rag) (RAG).
+
+At present, the V1 of the Coral toolkit supports three types of data loading:
+
+- **Langchain Wikipedia retriever**: `WikiRetriever` can be selected to automatically query wikipedia using LangChain. Toolkit then extracts the title, url, and text of these wiki pages and uses them to ground its replies for RAG.
+- **PDF upload**: for existing conversations, you can use the toolkit interface to upload a PDF, and then select that file to be used as a source for RAG.
+  - **LlamaIndex**: Toolkit then uses LlamaIndex’s PDF reader to extract the text from the PDF and attach the raw text to the request to the model as a document.
+  - **Langchain**: With an uploaded PDF, toolkit can use LangChain to create a `VectorStore` of the text using Cohere’s embeddings and ChromaDB. This `VectorStore` can then be searched to find the snippets within the document that are relevant for a RAG query. This can be useful if the documents are very large, as searching on the embeddings is much faster and can fit in the context length.
+
+## How to Configure Retrieval Chains
+
+There are two steps involved in adding new tools to the toolkit:
+
+1. Create a class that extends `BaseRetrieval`, which includes a `retrieve_documents` method. You can find two examples of this with LangChain [here](https://github.com/cohere-ai/toolkit/blob/fed0ea3808ad63c7935d2b12576d5f2695877c40/backend/chat/custom/retrieval/lang_chain.py#L14), and a template [here](https://github.com/cohere-ai/toolkit/blob/main/backend/chat/custom/retrieval/connector.py).
+2. Add the new tool to the list of available tools [here](https://github.com/cohere-ai/toolkit/blob/fed0ea3808ad63c7935d2b12576d5f2695877c40/backend/config/tools.py#L5). Each tool in the list should contain an implementation linking to the class created in step 1, and a boolean indicating whether it requires an uploaded file. Additional arguments can be supported with the use of kwargs.
+
+And, that's it! Once you've completed the steps, the model works behind the scenes to generate search queries and [apply the available tools](https://github.com/cohere-ai/toolkit/blob/21c123f844fb2acfff93674d2defd0ec408809ec/backend/chat/custom/custom.py#L24) to the documents before generating a grounded response when you make a request to chat.
+
+### Examples
+
+Let's concretize this by walking through a couple of examples.
+
+#### `LangChainVectorDBRetriever`
+
+Start by creating a `LangChainVectorDBRetriever` class that extends `BaseRetrieval`, and implement `__init__` with any additional parameters required to run the retriever. In this example, we need the path to the PDF in which we're searching.
+
+Then, implement the `retrieve_documents` function. This function loads the PDF, splits it, queries the vector database, and returns the relevant documents as dictionaries containing the relevant texts.
+
+Add `LangChainVectorDBRetriever` to `AVAILABLE_TOOLS` and set `require_file` to `True`.
+
+```
+class LangChainVectorDBRetriever(BaseRetrieval):
+
+    def __init__(self, filepath: str):
+        self.filepath = filepath
+
+    def retrieve_documents(self, query: str, **kwargs: Any) -> List[Dict[str, Any]]:
+        try:
+            from langchain.text_splitter import CharacterTextSplitter
+            from langchain_community.document_loaders import PyPDFLoader
+            from langchain_community.embeddings import CohereEmbeddings
+            from langchain_community.vectorstores import Chroma
+        except ImportError as e:
+            raise ImportError(
+                "You must install the `langchain` package to use langchain."
+                "Please `pip install langchain`"
+            ) from e
+
+        cohere_embeddings = CohereEmbeddings(
+            cohere_api_key=os.environ["COHERE_API_KEY"]
+        )
+        # Load text files and split into chunks
+        loader = PyPDFLoader(self.filepath)
+        text_splitter = CharacterTextSplitter(chunk_size=300, chunk_overlap=0)
+        pages = loader.load_and_split(text_splitter)
+        # Create a vector store from the documents
+        db = Chroma.from_documents(pages, cohere_embeddings)
+        input_docs = db.as_retriever().get_relevant_documents(query)
+        return [dict({"text": doc.page_content}) for doc in input_docs]
+```
+
+```
+"Search": {
+    "implementation": lang_chain.LangChainVectorDBRetriever,
+    "require_file": False,
+},
+```
+
+You can find the full code for this example [here](https://github.com/cohere-ai/toolkit/blob/21c123f844fb2acfff93674d2defd0ec408809ec/backend/chat/custom/retrieval/lang_chain.py#L45) and [here](https://github.com/cohere-ai/toolkit/blob/main/backend/config/tools.py).
+
+#### Request using the Wiki tool
+
+In the code snippet below, you'll find a `curl` command that uses the Wiki tool to execute a request. 
+
+```
+curl --location 'http://localhost:8000/chat' \
+--header 'Content-Type: application/json' \
+--data '{
+    "message": "hey",
+    "user_id": "username",
+    "tools": ["Wiki"]
+}'
+```
+
+#### How to use a tool that requires a file
+
+In the code snippet below, you'll find a `curl` command demonstrating how to use a tool which can only operate on a file.
+
+```
+# First upload a file -- this will return a file id
+curl --location --globoff 'http://localhost:8000/conversations/{conv_id}/upload_file' \
+--form 'file=@"/path/to/file"'
+
+# Make a chat request using the file id
+curl --location 'http://localhost:8000/chat' \
+--header 'Content-Type: application/json' \
+--data '{
+    "message": "hey",
+    "user_id": "username",
+    "file_ids": ["FILE", "ID"],
+    "tools": ["PDF"]
+}'
+```

@@ -1,0 +1,336 @@
+---
+title: "Advanced Prompt Engineering Techniques"
+slug: "docs/advanced-prompt-engineering-techniques"
+
+hidden: false
+createdAt: "Tue Mar 12 2024 19:04:04 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Thu May 23 2024 05:26:16 GMT+0000 (Coordinated Universal Time)"
+---
+The previous chapter discussed general rules and heuristics to follow for successfully prompting the Command family of models. Here, we will discuss specific advanced prompt engineering techniques that can in many cases vastly improve the quality of the model’s completions. These include how to give clear and unambiguous instructions, few-shot prompting, chain-of-thought (CoT) techniques, and prompt chaining. 
+
+As we develop these techniques, we will work through an example where our aim is to improve a prompt from the [LegalBench](https://hazyresearch.stanford.edu/legalbench/) “hearsay” task. The task asks an LLM to determine whether a particular piece of evidence qualifies as hearsay. Hearsay is an out-of-court statement introduced to prove the truth of the matter asserted. For example, the following two samples provide examples of statements that are, and are not, hearsay.
+
+```
+Q: On the issue of whether David is fast, the fact that David set a high school track record.
+Is there hearsay?
+A: No
+
+Q: On the issue of whether Rebecca was ill, the fact that Rebecca told Ronald that she was unwell.
+Is there hearsay?
+A: Yes
+```
+
+Before we apply any specific prompting techniques, we can see that simply prompting the model with the direct question results in too much unwanted and ambiguous information:
+
+```
+[prompt]
+On the issue of Albert's wellbeing after the accident, Angela testified
+that he gave a thumbs up when asked how he was feeling. Is there hearsay?
+
+[completion]
+No, there is no hearsay. Hearsay is a statement that is repeated by someone
+other than the person who originally made the statement. Angela's testimony
+is not hearsay because she is testifying about her own personal knowledge of
+the event; she saw Albert give a thumbs up sign. This is considered direct evidence
+and would likely be admissible in court. 
+
+The thumbs up sign can be interpreted as a current state of well-being and
+could hold some weight in refuting concerns about Albert's health after the
+accident. However, the defense could argue that a thumbs up sign is not a
+reliable indicator of a person's overall health and could have many interpretations,
+especially given the context of an accident and the potential for injury. But as part
+of Angela's firsthand account, the statement itself isn't hearsay.
+
+```
+
+Using the Chat API, we could do the following:
+
+```python
+example = '''On the issue of Albert's wellbeing after the accident, Angela testified that he
+gave a thumbs up when asked how he was feeling.'''
+message = f'''{example} Is there hearsay?'''
+
+response = co.chat(
+  message=message,
+  model='command-r',
+  temperature=0.3,
+)
+
+print(response.text)
+```
+
+The answer returned with this method is unfortunately wrong. The correct answer is "Yes" (non-verbal hearsay). Without a definition of the task or other additional context the model can sometimes make an incorrect assertion and then attempt to reconcile what has already been generated.
+
+## Defining the Task
+
+Rather than simply asking a question directly, one should clearly define the task while providing concise and unambiguous instructions. The model can generally construct a much more grounded response by including relevant background knowledge, domain-specific terminology, and related examples. Optimizing the length of the prompt itself to only provide sufficient information without overwhelming the model's context window can also improve performance.
+
+The obvious thing missing in the prompt above is concise and unambiguous instructions. There is also no background knowledge provided or domain-specific terminology (the model seems to know what hearsay is, but it could help by quickly explaining it). A good zero-shot prompt for the same question could then be:
+
+```
+[prompt]
+Hearsay is an out-of-court statement introduced to prove the truth of the matter
+asserted. Answer the following question regarding hearsay with either Yes or No.
+
+On the issue of Albert's wellbeing after the accident, Angela testified that he
+gave a thumbs up when asked how he was feeling. Is there hearsay?
+
+[completion]
+Yes.
+
+```
+
+This is correct. It could be that defining the task has helped enough to arrive at the correct answer, but it is also possible that we just got lucky. Some further explanation could be helpful and if we were applying this prompt template to a whole set of questions (for example the entire task from LegalBench), having some more robustness would surely be helpful.
+
+## Few-shot Prompting
+
+Unlike the zero-shot examples above, few-shot prompting is a technique that provides a model with examples of the task being performed before asking the specific question to be answered. We can steer the LLM toward a high-quality solution by providing a few relevant and diverse examples in the prompt. Good examples condition the model to the expected response type and style.
+
+In addition to giving correct examples, including negative examples with a clear indication of why they are wrong can help the LLM learn to distinguish between correct and incorrect responses. Ordering the examples can also be important; if there are patterns that could be picked up on that are not relevant to the correctness of the question, the model may incorrectly pick up on those instead of the semantics of the question itself.
+
+To improve the above question, we can include several positive and negative examples in random order from the LegalBench training set as follows:
+
+```
+[prompt]
+Hearsay is an out-of-court statement introduced to prove the truth of the matter asserted.
+
+Q: On the issue of whether David is fast, the fact that David set a high school track record.
+Is there hearsay?
+A: No
+
+Q: On the issue of whether Rebecca was ill, the fact that Rebecca told Ronald that she was unwell.
+Is there hearsay?
+A: Yes
+
+Q: To prove that Tim was a soccer fan, the fact that Tim told Jimmy that "Real Madrid was the best
+soccer team in the world." Is there hearsay?
+A: No
+
+Q: When asked by the attorney on cross-examination, Alice testified that she had "never seen the
+plaintiff before, and had no idea who she was." Is there hearsay?
+A: No
+
+Q: On the issue of whether Martin punched James, the fact that Martin smiled and nodded when asked
+if he did so by an officer on the scene. Is there hearsay?
+A: Yes
+
+On the issue of Albert's wellbeing after the accident, Angela testified that he gave a thumbs up
+when asked how he was feeling. Is there hearsay?
+A:
+
+[completion]
+Yes, Angela's testimony about Albert's non-verbal conduct is hearsay, as it's an out-of-court
+statement (Albert's thumbs up) being used to prove the truth of the matter asserted (that Albert was feeling well). 
+
+Hearsay is defined as an out-of-court statement made by someone other than the witness testifying,
+and it's offered to prove the truth of the content of the statement. In this scenario, Albert's
+gesture is being used as evidence of his wellbeing, making it hearsay under the legal
+definition.
+
+```
+
+The model continues to answer correctly, and now it also backs up the answer with a clear explanation.
+
+## Chain of Thought Prompting
+
+Finally, chain of thought (sometimes abbreviated CoT) prompting encourages the LLM to provide a step-by-step explanation of its reasoning that can improve transparency, allow for better error analysis, and help guide the model to the correct answer. Problems can arise when the model gives an answer right away and then ends up being "stuck" with it and has to find a way to reconcile the already given answer.
+
+With CoT prompting, one can also request intermediate outputs at each step, which can help identify and correct errors early in the process. This forced "thinking before you answer" helps emulate human thought processes and incorporate common-sense knowledge into the task.
+
+There are several different ways to incorporate CoT prompting into a task. With "zero-shot CoT," one can simply ask the model to "think step by step":
+
+```
+[prompt]
+Hearsay is an out-of-court statement introduced to prove the truth of the matter asserted.
+
+Q: On the issue of Albert's wellbeing after the accident, Angela testified that he gave a
+thumbs up when asked how he was feeling. Is there hearsay?
+A: Work through the problem step by step first and then answer the question.
+
+[completion]
+Yes, let's work through this scenario step by step to identify if there's hearsay involved.
+
+1. Angela's Testimony: According to Angela's testimony, Albert gave a "thumbs up" when asked
+about his well-being. This statement was made by Angela in court, which means it's in-court testimony.
+
+2. Nature of the Statement: Angela's statement about Albert's "thumbs up" gesture is being
+used to imply that Albert is doing well or feeling good after the accident.
+
+3. Out-of-Court Statement: The actual statement being discussed here - "I'm feeling good" - was
+allegedly made by Albert out of court. This is a classic example of an out-of-court statement.
+
+4. Purpose of the Statement: Angela's testimony, including the reference to Albert's gesture,
+  is being used to prove Albert's subjective state of well-being.
+
+Therefore, yes, there is hearsay in Angela's testimony. The statement made by Albert, describing
+his feelings, is hearsay because it's an out-of-court assertion being used to prove the truth
+of the matter - in this case, that Albert was feeling well after the accident.
+
+```
+
+This answer is quite satisfying not only because we get the correct answer, but we also see how it was arrived at by applying the rules of the situation. In many situations this approach can bring a wrong answer to a correct one and it also adds some level of trustworthiness to the answer when we can follow along with the reasoning. While we have the answer now, it is not easily extractable (we would prefer either "yes" or "no" separate from the reasoning). One approach is to incorporate CoT in the few-shot setup and simultaneously demonstrate the desired output format.
+
+```
+[prompt]
+Hearsay is an out-of-court statement introduced to prove the truth of the matter asserted.
+
+Q: On the issue of whether David is fast, the fact that David set a high school track record.
+Is there hearsay?
+Reasoning: The statement is non-assertive conduct.
+A: No
+
+Q: On the issue of whether Rebecca was ill, the fact that Rebecca told Ronald that she was
+unwell. Is there hearsay?
+Reasoning: The statement is standard hearsay.
+A: Yes
+
+Q: To prove that Tim was a soccer fan, the fact that Tim told Jimmy that "Real Madrid was
+the best soccer team in the world." Is there hearsay?
+Reasoning: The statement is not introduced to prove truth.
+A: No
+
+Q: When asked by the attorney on cross-examination, Alice testified that she had "never seen
+the plaintiff before, and had no idea who she was." Is there hearsay?
+Reasoning: The statement was made in-court.
+A: No
+
+Q: On the issue of whether Martin punched James, the fact that Martin smiled and nodded when
+asked if he did so by an officer on the scene. Is there hearsay?
+Reasoning: The statement is non-verbal hearsay.
+A: Yes
+
+Q: On the issue of Albert's wellbeing after the accident, Angela testified that he gave a
+thumbs up when asked how he was feeling. Is there hearsay?
+
+[completion]
+Yes. Angela's testimony about Albert's non-verbal conduct, i.e., giving a "thumbs up," falls
+under the definition of hearsay, as it is an out-of-court statement (Albert's gesture) used
+to prove the truth of the matter asserted (that Albert was doing well after the accident). 
+
+Hearsay is typically defined as an out-of-court statement offered in court for the truth of
+the matter asserted. Non-verbal conduct, such as gestures or nods, can indeed constitute
+hearsay if they are intended to assert a fact. In this scenario, Albert's thumbs up is
+interpreted as asserting the fact that he is feeling well, hence it is considered hearsay.
+
+```
+
+Good. The answer now begins simply with "Yes," so theoretically it should be easy to extract. Another approach to simplify answer extraction is to ask the model to format the response in a structured way such as JSON. For example:
+
+```
+[prompt]
+Hearsay is an out-of-court statement introduced to prove the truth of the matter asserted.
+Given a statement, respond with a JSON object that has two keys: `reasoning` and `answer`.
+The first key's value should contain the reasoning used to arrive at the answer.
+The second key's value should contain either "Yes" or "No".
+
+Q: On the issue of whether David is fast, the fact that David set a high school track record.
+Is there hearsay?
+{
+  "reasoning": "The statement is non-assertive conduct."
+  "answer": "No"
+}
+
+Q: On the issue of whether Rebecca was ill, the fact that Rebecca told Ronald that she was
+unwell. Is there hearsay?
+{
+  "reasoning": "The statement is standard hearsay."
+  "answer": "Yes"
+}
+
+Q: To prove that Tim was a soccer fan, the fact that Tim told Jimmy that "Real Madrid was
+the best soccer team in the world." Is there hearsay?
+{
+  "reasoning": "The statement is not introduced to prove truth."
+  "answer": "No"
+}
+
+Q: When asked by the attorney on cross-examination, Alice testified that she had "never seen
+the plaintiff before, and had no idea who she was." Is there hearsay?
+{
+  "reasoning": "The statement was made in-court."
+  "answer": "No"
+}
+
+Q: On the issue of whether Martin punched James, the fact that Martin smiled and nodded
+when asked if he did so by an officer on the scene. Is there hearsay?
+{
+  "reasoning": "The statement is non-verbal hearsay."
+  "answer": "Yes"
+}
+
+Q: On the issue of Albert's wellbeing after the accident, Angela testified that he gave
+a thumbs up when asked how he was feeling. Is there hearsay?
+{
+  "reasoning": "<the reasoning used to arrive at the above answer>",
+  "answer": "<Yes if there was hearsay, No if there was not>"
+}
+
+[completion]
+{
+  "reasoning": "The statement is a non-verbal assertion, which also counts as hearsay.",
+  "answer": "Yes"
+}
+
+```
+
+Much better! Now that the outputs are structured, we can easily parse the completion and directly extract the answer.
+
+## Prompt Chaining
+
+Finally, prompt chaining can explicitly force a model to slow down and break a task into constituent parts. As explained in the previous chapter, task splitting can be an effective technique to improve the quality of completions. However, an LLM will sometimes try to jump to the answer immediately. Further, one can include more complex instructions without as high of a chance of them being lost in the information overload.
+
+For example, instead of asking the model to "work through the problem step by step" before answering (which in certain cases LLMs can forget to do), we can first ask for an analysis of the situation, then ask for a simple "yes" or "no" answer.
+
+```
+[prompt 1]
+Hearsay is an out-of-court statement introduced to prove the truth of the matter asserted.
+
+In determining whether a piece of evidence meets the definition of hearsay, lawyers ask three
+questions:
+
+1. Was there a statement?
+2. Was it made outside of court?
+3. Is it being introduced to prove the truth of the matter asserted?
+
+Apply this reasoning to the following question.
+
+Q: On the issue of Albert's wellbeing after the accident, Angela testified that he gave a
+thumbs up when asked how he was feeling.
+
+[completion]
+Yes, this is hearsay, based on the definition you provided.
+
+1. There was a statement: Angela testified that Albert gave a thumbs up. This would constitute
+a gesture as a form of statement, indicating Albert's state of being. 
+
+2. It was made outside of court: According to the scenario, Angela's observation of Albert's
+gesture occurred outside the courtroom, making it an out-of-court statement. 
+
+3. It's being introduced to prove the truth of the matter asserted: Angela's testimony,
+including the thumbs-up gesture, is being used as evidence of Albert's well-being after the
+accident. The gesture is being used literally for its assertional value, suggesting that Albert
+is doing well, or at least, that he is feeling fine. 
+
+Therefore, Angela's testimony regarding Albert's gesture fits the definition of hearsay and
+would be treated as such in a legal setting.
+
+```
+
+The issue was analyzed correctly in the above completion, but we are seeking a clear “Yes” or “No” answer that a downstream task can easily ingest. Therefore, we chain the completion of the first prompt with a second prompt:
+
+```
+[prompt 2]
+Given the question below and the accompanying analysis, answer with only "Yes" or "No".
+
+## question
+{question}
+
+## analysis
+{completion_from_prompt_1}
+
+[completion]
+Yes
+
+```
+
+Chaining prompts together allows us to use the first prompt to focus on the analysis, and the second to properly extract the information in a single-word response.

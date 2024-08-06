@@ -1,0 +1,72 @@
+---
+title: "Semantic Search Using Embeddings"
+slug: "docs/semantic-search-using-embeddings"
+subtitle: "In the previous chapter you used an embedding to visualize a dataset of sentences. In this chapter, you'll learn how to use this embedding to search for the answer to a given query among the sentences in this dataset. Since the embedding takes semantics into account, this process is called _semantic search_. If you need a refresher, please check the <a target'_blank' href='/docs/semantic-search'>semantic search chapter</a> in Module 2."
+hidden: true
+ 
+image: "../../../assets/images/be590f7-Cohere_LLM_University.png"
+createdAt: "Wed May 03 2023 14:26:02 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Wed Apr 03 2024 19:03:06 GMT+0000 (Coordinated Universal Time)"
+---
+### Introduction
+
+In this chapter you'll learn how to use embeddings for search. If you'd like to dive deeper into search, please check the [Search Module](/docs/intro-semantic-search) at LLMU. 
+
+### Colab notebook
+
+This chapter uses the same [notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/llmu/Visualizing_Text_Embeddings.ipynb) as the previous chapter.
+
+For the setup, please refer to the <a target="_blank" href="/docs/setting-up">Setting Up</a> chapter at the beginning of this module.
+
+### Semantic Search Using Embeddings
+
+We deal with unstructured text data on a regular basis, and one of the common needs is to search for information from a vast repository. This calls for effective search methods that, when given a query, are capable of surfacing highly relevant information.
+
+A common approach is keyword-matching, but the problem with this is that the results are limited to the exact query entered. What if we could have a search capability that can surface results based on the context or semantic meaning of a query?
+
+This is where we can utilize text embeddings. Embeddings can capture the meaning of a piece of text beyond keyword-matching. Let’s look at an example.
+
+Let’s use the same 9 data points that we have been using and pretend that those make up a list of Frequently Asked Questions (FAQ). And whenever a new query comes in, we want to match that query to the closest FAQ so we can provide the most relevant answer. Here is the list again:
+
+```
+1 - which airlines fly from boston to washington dc via other cities
+2 - show me the airlines that fly between toronto and denver
+3 - show me round trip first class tickets from new york to miami
+4 - i'd like the lowest fare from denver to pittsburgh
+5 - show me a list of ground transportation at boston airport
+6 - show me boston ground transportation
+7 - of all airlines which airline has the most arrivals in atlanta
+8 - what ground transportation is available in boston
+9 - i would like your rates between atlanta and boston on september third
+```
+
+Let’s say a person enters the query “show business fares”. Note that there the “business” keyword doesn't exist anywhere in our FAQ, so let’s see what results we get with semantic search.
+
+Implementation-wise, there are many ways we can approach this. And in our case (more details in the notebook), we use cosine similarity to compare the embeddings of the search query with those from the FAQ and find the most similar ones.
+
+Below are the results, showing the top 3 most similar FAQs with their similarity score (ranging from 0 to 1; higher scores are better). The top-ranked FAQ we get is an inquiry about first-class tickets, which is very relevant considering the other options. Notice that it doesn’t contain the keyword “business” and nor does the search query contain the keyword “class”. But you would probably agree that they are the most similar in meaning compared to the rest, and their embeddings capture this.
+
+```
+New inquiry:
+show business fares 
+
+Most similar FAQs:
+Similarity: 0.52;  show me round trip first class tickets from new york to miami
+Similarity: 0.43;  i'd like the lowest fare from denver to pittsburgh
+Similarity: 0.39;  show me a list of ground transportation at boston airport
+```
+
+We can also plot this new query on a 2D plot as we did earlier. And we see that the new query is located closest to the FAQ about first-class tickets.
+
+<img src='../../../assets/images/289e8be-image.png' alt='tickets' />
+
+
+### Conclusion
+
+In this chapter you learned how to use embedding and similarity to build a semantic search model. If you'd like to dive deeper into this topic, please jump to this subsequent <a target="_blank" href="/docs/deeper-semantic-search">chapter on semantic search</a>.
+
+There are many more applications of embeddings, which you'll learn in the following chapters!
+
+### Original Source
+
+This material comes from the post <a target="_blank" href="https://txt.cohere.com/text-embeddings/">Text Embeddings Visually Explained</a>

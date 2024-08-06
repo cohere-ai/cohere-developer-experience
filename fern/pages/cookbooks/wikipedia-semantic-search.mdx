@@ -1,0 +1,88 @@
+---
+title: Wikipedia Semantic Search with Cohere Embedding Archives
+slug: /page/wikipedia-semantic-search
+---
+
+import { AuthorsContainer } from "../../components/authors-container";
+import { CookbookHeader } from "../../components/cookbook-header";
+
+<CookbookHeader href="https://github.com/cohere-ai/notebooks/blob/main/notebooks/Wikipedia_Semantic_Search_With_Cohere_Embeddings_Archives.ipynb" />
+
+This notebook contains the starter code to do simple [semantic search](https://txt.cohere.ai/what-is-semantic-search/) on the [Wikipedia embeddings archives](https://txt.cohere.ai/embedding-archives-wikipedia/) published by Cohere. These archives embed Wikipedia sites in multiple languages. In this example, we'll use [Wikipedia Simple English](https://huggingface.co/datasets/Cohere/wikipedia-22-12-simple-embeddings).
+
+Let's now download 1,000 records from the English Wikipedia embeddings archive so we can search it afterwards.
+
+```python
+from datasets import load_dataset
+import torch
+import cohere
+s
+co = cohere.Client("")
+
+#Load at max 1000 documents + embeddings
+max_docs = 1000
+docs_stream = load_dataset(f"Cohere/wikipedia-22-12-simple-embeddings", split="train", streaming=True)
+
+docs = []
+doc_embeddings = []
+
+for doc in docs_stream:
+    docs.append(doc)
+    doc_embeddings.append(doc['emb'])
+    if len(docs) >= max_docs:
+        break
+
+doc_embeddings = torch.tensor(doc_embeddings)
+```
+
+```txt title="Output"
+Downloading:   0%|          | 0.00/1.29k [00:00<?, ?B/s]
+
+
+Using custom data configuration Cohere--wikipedia-22-12-simple-embeddings-94deea3d55a22093
+```
+
+Now, `doc_embeddings` holds the embeddings of the first 1,000 documents in the dataset. Each document is represented as an [embeddings vector](https://txt.cohere.ai/sentence-word-embeddings/) of 768 values.
+
+```python
+doc_embeddings.shape
+```
+
+```txt title="Output"
+torch.Size([1000, 768])
+```
+
+We can now search these vectors for any query we want. For this toy example, we'll ask a question about Wikipedia since we know the Wikipedia page is included in the first 1000 documents we used here.
+
+To search, we embed the query, then get the nearest neighbors to its embedding (using dot product).
+
+```python
+
+query = 'Who founded Wikipedia'
+response = co.embed(texts=[query], model='multilingual-22-12')
+query_embedding = response.embeddings
+query_embedding = torch.tensor(query_embedding)
+
+dot_scores = torch.mm(query_embedding, doc_embeddings.transpose(0, 1))
+top_k = torch.topk(dot_scores, k=3)
+
+print("Query:", query)
+for doc_id in top_k.indices[0].tolist():
+    print(docs[doc_id]['title'])
+    print(docs[doc_id]['text'], "\n")
+
+```
+
+```txt title="Output"
+Query: Who founded Wikipedia
+Wikipedia
+Larry Sanger and Jimmy Wales are the ones who started Wikipedia. Wales is credited with defining the goals of the project. Sanger created the strategy of using a wiki to reach Wales' goal. On January 10, 2001, Larry Sanger proposed on the Nupedia mailing list to create a wiki as a "feeder" project for Nupedia. Wikipedia was launched on January 15, 2001. It was launched as an English-language edition at www.wikipedia.com, and announced by Sanger on the Nupedia mailing list. Wikipedia's policy of "neutral point-of-view" was enforced in its initial months, and was similar to Nupedia's earlier "nonbiased" policy. Otherwise, there weren't very many rules initially, and Wikipedia operated independently of Nupedia.
+
+Wikipedia
+Wikipedia began as a related project for Nupedia. Nupedia was a free English-language online encyclopedia project. Nupedia's articles were written and owned by Bomis, Inc which was a web portal company. The important people of the company were Jimmy Wales, the person in charge of Bomis, and Larry Sanger, the editor-in-chief of Nupedia. Nupedia was first licensed under the Nupedia Open Content License which was changed to the GNU Free Documentation License before Wikipedia was founded and made their first article when Richard Stallman requested them.
+
+Wikipedia
+Wikipedia was started on January 10, 2001, by Jimmy Wales and Larry Sanger as part of an earlier online encyclopedia named Nupedia. On January 15, 2001, Wikipedia became a separate website of its own. It is a wiki that uses the software MediaWiki (like all other Wikimedia Foundation projects).
+```
+
+This shows the top three passages that are relevant to the query. We can retrieve more results by changing the `k` value. The question in this simple demo is about Wikipedia because we know that the Wikipedia page is part of the documents in this subset of the archive.

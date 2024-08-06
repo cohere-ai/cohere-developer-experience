@@ -1,0 +1,49 @@
+---
+title: "Force JSON object response format"
+slug: "changelog/force-json-object-response-format"
+type: ""
+createdAt: "Tue Jun 11 2024 15:45:40 GMT+0000 (Coordinated Universal Time)"
+hidden: false
+---
+Users can now force `command-nightly`to generate outputs in JSON objects by setting the `response_format` parameter in the Chat API. Users can also specify a JSON schema for the output.
+
+This feature is available across all of Cohere's SDKs (Python, Typescript, Java, Go).
+
+Example request for forcing JSON response format: 
+
+```Text cURL
+POST https://api.cohere.ai/v1/chat
+{
+    "message": "Generate a JSON that represents a person, with name and age",
+    "model": "command-nightly",
+    "response_format": {
+        "type": "json_object"
+    }
+}
+```
+
+<br />
+
+Example request for forcing JSON response format in user defined schema: 
+
+```Text cURL
+POST https://api.cohere.ai/v1/chat
+{
+    "message": "Generate a JSON that represents a person, with name and age",
+    "model": "command-nightly",
+    "response_format": {
+        "type": "json_object",
+        "schema": {
+            "type": "object",
+            "required": ["name", "age"],
+            "properties": {
+                "name": { "type": "string" },
+                "age": { "type": "integer" }
+            }
+        }
+    }
+}
+
+```
+
+Currently only compatible with \`command-nightly model.

@@ -1,0 +1,466 @@
+---
+title: Grounded Summarization Using Command R
+slug: /page/grounded-summarization
+---
+
+<div class="cookbook-nav-container">
+  <a href="/page/cookbooks" class="back-button pt-10 group inline-block cursor-pointer font-medium " rel="noreferrer"
+    target="_self">
+    <div class="pr-1 inline-block group-hover:no-underline">
+      <svg width="11.8" height="11" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M1.1554 7.20808C1.35066 7.40335 1.66724 7.40335 1.8625 7.20808L7.18477 1.88582C7.38003 1.69055 7.38003 1.37397 7.18477 1.17871L6.83121 0.825157C6.63595 0.629895 6.31937 0.629896 6.12411 0.825157L0.801842 6.14742C0.60658 6.34269 0.60658 6.65927 0.801842 6.85453L1.1554 7.20808Z"
+          fill="currentColor" />
+        <path
+          d="M1.1554 5.79226C1.35066 5.597 1.66724 5.597 1.8625 5.79226L7.18477 11.1145C7.38003 11.3098 7.38003 11.6264 7.18477 11.8216L6.83121 12.1752C6.63595 12.3705 6.31937 12.3705 6.12411 12.1752L0.801842 6.85292C0.60658 6.65766 0.60658 6.34108 0.801842 6.14582L1.1554 5.79226Z"
+          fill="currentColor" />
+        <path
+          d="M2.52491 6.23674C2.52492 5.9606 2.74878 5.73675 3.02491 5.73675H6.28412C6.4513 5.73675 6.60742 5.8203 6.70015 5.95941L7.03347 6.45941C7.25499 6.79169 7.01679 7.23675 6.61745 7.23675H3.0249C2.74876 7.23675 2.5249 7.01289 2.5249 6.73674L2.52491 6.23674Z"
+          fill="currentColor" />
+        <path
+          d="M13.5517 6.73676C13.5517 7.0129 13.3278 7.23675 13.0517 7.23675H8.79246C8.62528 7.23675 8.46916 7.1532 8.37643 7.0141L8.04311 6.5141C7.8216 6.18182 8.05979 5.73675 8.45914 5.73675H13.0517C13.3278 5.73675 13.5517 5.96062 13.5517 6.23676L13.5517 6.73676Z"
+          fill="currentColor" />
+      </svg>
+    </div>
+    Back to Cookbooks
+  </a>
+
+  <a href=https://github.com/cohere-ai/notebooks/blob/main/notebooks/guides/Grounded_summarisation_using_Command_R.ipynb class="github-button pt-10 group inline-block cursor-pointer font-medium " rel="noreferrer"
+    target="_blank">
+    Open in GitHub
+    <div class="pl-1 inline-block group-hover:no-underline">
+      <svg width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M8.63218 0.366821C8.35604 0.366821 8.13218 0.590679 8.13218 0.866821V8.39364C8.13218 8.66978 8.35604 8.89364 8.63218 8.89364H9.13218C9.40832 8.89364 9.63218 8.66978 9.63218 8.39364V0.866821C9.63218 0.590678 9.40832 0.366821 9.13218 0.366821H8.63218Z"
+          fill="currentColor" />
+        <path
+          d="M9.63332 1.36796C9.63332 1.6441 9.40946 1.86796 9.13332 1.86796H1.6065C1.33035 1.86796 1.1065 1.6441 1.1065 1.36796V0.867956C1.1065 0.591813 1.33035 0.367956 1.6065 0.367956H9.13332C9.40946 0.367956 9.63332 0.591813 9.63332 0.867956V1.36796Z"
+          fill="currentColor" />
+        <path
+          d="M8.35063 2.02206C8.54588 2.21732 8.54588 2.5339 8.35062 2.72916L6.04601 5.03377C5.9278 5.15198 5.75833 5.20329 5.59439 5.1705L5.00515 5.05264C4.61356 4.97432 4.46728 4.49118 4.74966 4.2088L7.28997 1.66849C7.48523 1.47323 7.80182 1.47323 7.99708 1.6685L8.35063 2.02206Z"
+          fill="currentColor" />
+        <path
+          d="M0.199967 9.46558C0.0047119 9.27032 0.0047151 8.95374 0.199974 8.75848L3.21169 5.74677C3.3299 5.62855 3.49938 5.57724 3.66331 5.61003L4.25256 5.72789C4.64414 5.80621 4.79042 6.28935 4.50804 6.57173L1.26063 9.81915C1.06536 10.0144 0.748774 10.0144 0.553513 9.81914L0.199967 9.46558Z"
+          fill="currentColor" />
+      </svg>
+    </div>
+  </a>
+</div>
+
+<div>
+  <h1>Grounded Summarization Using Command R</h1>
+</div>
+
+<style>
+  .header {
+    padding: 9px 0 17px 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  a[href],
+  .field-description a:not([href=""]),
+  .markdown-body a[href],
+  .markdown-body a:not([href=""]) {
+    text-decoration: none;
+  }
+
+  #content {
+    padding: 0 32px;
+  }
+
+  #content-head {
+    display: none;
+  }
+
+  .guide-page-title {
+    font-size: 29px !important;
+  }
+
+  .back-button .github-button {
+    border-radius: 0 !important;
+    border-width: 0 !important;
+    background-color: inherit !important;
+  }
+
+  .cookbook-nav-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  @media only screen and (min-width: 620px) {
+    .guide-page-title {
+      width: 70%;
+    }
+
+    .header {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 0 17px 0;
+    }
+
+    .git--button {
+      width: 145px !important;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 16px;
+
+      width: 154px;
+      height: 35px;
+
+      background: #D4D9D4;
+      border: 1px solid #9DAAA4;
+      border-radius: 6px;
+    }
+  }
+
+
+  @media only screen and (min-width: 1024px) {
+    .guide-page-title {
+      font-size: 46px !important;
+    }
+
+    .header {
+      padding: 9px 0 32px 0;
+    }
+  }
+</style>
+
+Note: we are in the process of updating the links in this notebook. If a link doesn't work, please open an issue and we'll rectify it ASAP. Thanks for your understanding!
+
+Links to add:
+* Cell 1: long-form, grounded summarisation blog post
+* Section 4: to text-rank method (context filtering)
+
+
+This notebook provides the code to produce the outputs described in [this blog post](https://docs.google.com/document/d/1Eeakpz_FZoeMzJnQieqQWCpPtQuNiTGW4fueU9J0QHA/edit).
+
+## Table of contents
+
+1. [Setup](#setup)
+2. [Out-of-the-box summarization with Command-R](#out-of-the-box-summarization-with-command-r)
+3. [Introduce citations to the summary for grounding](#introduce-citations-to-the-summary-for-grounding)
+4. [Reduce the cost of summarization calls](#reduce-the-cost-of-summarization-calls)
+
+<a id="setup"></a>
+<a name="setup"></a>
+## 1. Setup
+
+
+```python
+%%capture
+
+import cohere
+import networkx as nx
+import nltk
+nltk.download("punkt")
+from nltk.tokenize import sent_tokenize
+import numpy as np
+import spacy
+
+from collections import deque
+from getpass import getpass
+import re
+from typing import List, Tuple
+
+co_api_key = getpass("Enter your Cohere API key: ")
+co_model = "command-r"
+co = cohere.Client(co_api_key)
+
+```
+
+
+```python
+
+from google.colab import drive
+drive.mount("/content/drive", force_remount=True)
+
+fpath = "drive/Shareddrives/FDE/Cookbooks/Long-form summarisation/ai_and_future_of_work.txt"
+with open(fpath, "r") as f:
+  text = f.read()
+
+num_tokens = co.tokenize(text).length
+print(f"Loaded IMF report with {num_tokens} tokens")
+
+
+```
+
+### Aside: define utils
+
+
+```python
+
+def split_text_into_sentences(text: str) -> List[str]:
+    sentences =  sent_tokenize(text)
+    return sentences
+
+def group_sentences_into_passages(sentence_list: List[str], n_sentences_per_passage: int = 10):
+    """
+    Group sentences into passages of n_sentences sentences.
+    """
+    passages = []
+    passage = ""
+    for i, sentence in enumerate(sentence_list):
+        passage += sentence + " "
+        if (i + 1) % n_sentences_per_passage == 0:
+            passages.append(passage)
+            passage = ""
+    return passages
+
+def build_simple_chunks(text, n_sentences: int = 10):
+    """
+    Build chunks of text from the input text.
+    """
+    sentences = split_text_into_sentences(text)
+    chunks = group_sentences_into_passages(sentences, n_sentences_per_passage=n_sentences)
+    return chunks
+
+
+
+def insert_citations(text: str, citations: List[dict]):
+    """
+    A helper function to pretty print citations.
+    """
+    offset = 0
+    # Process citations in the order they were provided
+    for citation in citations:
+        # Adjust start/end with offset
+        start, end = citation['start'] + offset, citation['end'] + offset
+        placeholder = "[" + ", ".join(doc[4:] for doc in citation["document_ids"]) + "]"
+        # ^ doc[4:] removes the 'doc_' prefix, and leaves the quoted document
+        modification = f'{text[start:end]} {placeholder}'
+        # Replace the cited text with its bolded version + placeholder
+        text = text[:start] + modification + text[end:]
+        # Update the offset for subsequent replacements
+        offset += len(modification) - (end - start)
+
+    return text
+
+
+
+def textrank(text: str, co, max_tokens: int, n_sentences_per_passage: int) -> str:
+    """
+    Shortens `text` by extracting key units of text from `text` based on their centrality and concatenating them.
+    The output is the concatenation of those key units, in their original order. Centrality is graph-theoretic
+    measure of connectedness of a node; the more connected a node is to surrounding nodes (and the more sparsely
+    those neighbours are connected), the higher centrality.
+
+    Key passages are identified via clustering in a three-step process:
+    1. Break up `long` into chunks (either sentences or passages, based on `unit`)
+    2. Embed each chunk using Cohere's embedding model and construct a similarity matrix
+    3. Compute the centrality of each chunk
+    4. Keep the highest-centrality chunks until `max_tokens` is reached
+    5. Put together shorterned text by reordering chunks in their original order
+
+    This approach is based on summarise.long_doc_summarization.extraction::extract_single_doc with sorting by
+    centrality. Adapted here because installing the `summarise` repo would have added a lot of unused functionalities
+    and dependencies.
+    """
+
+    # 1. Chunk text into units
+    chunks = build_simple_chunks(text, n_sentences_per_passage)
+
+    # 2. Embed and construct similarity matrix
+    embeddings = np.array(
+        co.embed(
+            texts=chunks,
+            model="embed-english-v3.0",
+            input_type="clustering",
+        ).embeddings
+    )
+    similarities = np.dot(embeddings, embeddings.T)
+
+    # 3. Compute centrality and sort sentences by centrality
+    # Easiest to use networkx's `degree` function with similarity as weight
+    g = nx.from_numpy_array(similarities, edge_attr="weight")
+    centralities = g.degree(weight="weight")
+    idcs_sorted_by_centrality = [node for node, degree in sorted(centralities, key=lambda item: item[1], reverse=True)]
+
+    # 4. Add chunks back in order of centrality
+    selected = _add_chunks_by_priority(co, chunks, idcs_sorted_by_centrality, max_tokens)
+
+    # 5. Put condensed text back in original order
+    separator = "\n"
+    short = separator.join([chunk for index, chunk in sorted(selected, key=lambda item: item[0], reverse=False)])
+
+    return short
+
+
+def _add_chunks_by_priority(
+    co, chunks: List[str], idcs_sorted_by_priority: List[int], max_tokens: int
+) -> List[Tuple[int, str]]:
+    """
+    Given chunks of text and their indices sorted by priority (highest priority first), this function
+    fills the model context window with as many highest-priority chunks as possible.
+
+    The output is a list of (index, chunk) pairs, ordered by priority. To stitch back the chunks into
+    a cohesive text that preserves chronological order, sort the output on its index.
+    """
+
+    selected = []
+    num_tokens = 0
+    idcs_queue = deque(idcs_sorted_by_priority)
+
+    while num_tokens < max_tokens and len(idcs_queue) > 0:
+        next_idx = idcs_queue.popleft()
+        num_tokens += co.tokenize(chunks[next_idx]).length - 2
+        # num_tokens += len(tokenizer.encode(chunks[next_idx]).ids) - 2
+        # ^ removing BOS and EOS tokens from count
+        selected.append((next_idx, chunks[next_idx]))
+        # ^ keep index and chunk, to reorder chronologically
+    if num_tokens > max_tokens:
+        selected.pop()
+
+    return selected
+
+```
+
+<a id="out-of-the-box-summarization-with-command-r"></a>
+<a name="out-of-the-box-summarization-with-command-r"></a>
+## 2. Out-of-the-box summarization with Command-R
+
+First, let's see Command-R's out-of-the-box performance. It's a 128k-context model, so we can pass the full IMF report in a single call. We replicate the exact instructions from the original tweet (correcting for a minor typo) for enabling fair comparisons.
+
+
+```python
+prompt_template = """\
+## text
+{text}
+
+## instructions
+Step 1. Read the entire text from the first to the last page.
+Step 2. Create a summary of every chapter from the first to the last page.
+
+## summary
+"""
+
+prompt = prompt_template.format(text=text)
+resp = co.chat(
+  message=prompt,
+  model=co_model,
+  temperature=0.3,
+  return_prompt=True
+)
+
+num_tokens_in = co.tokenize(resp.prompt).length
+num_tokens_out = resp.meta["billed_units"]["output_tokens"]
+print(f"Generated summary with {num_tokens_in} tokens in, {num_tokens_out} tokens out")
+print()
+print("--- Out-of-the-box summary with Command-R ---")
+print()
+print(resp.text)
+
+```
+
+<a id="introduce-citations-to-the-summary-for-grounding"></a>
+<a name="introduce-citations-to-the-summary-for-grounding"></a>
+## 3. Introduce citations to the summary for grounding
+
+When summarizing long documents, introducing citations is one simple method for checking the factuality of the summary without needing to read the full document.
+
+
+We've trained Command-R to introduce citations whenever prompted by our grounded generations instructions. Triggering this grounded mode is straightforward. Starting from the previous snippet, we only need to make two changes:
+1. Pass our text to the `documents` argument
+2. Pass our instructions to the `message` argument
+
+For more information on how to enable grounded generation via our `co.chat` API, please refer to our [documentation](https://docs.cohere.com/reference/chat).
+
+Finally, note that we chunk the IMF report into multiple documents before passing them to `co.chat`. This isn't necessary (`co.chat` annotates citations at the character level), but allows for more human-readable citations.
+
+
+```python
+summarize_preamble = """\
+You will receive a series of text fragments from an article that are presented in chronological order. \
+As the assistant, you must generate responses to user's requests based on the information given in the fragments. \
+Ensure that your responses are accurate and truthful, and that you reference your sources where appropriate to answer \
+the queries, regardless of their complexity.\
+"""
+
+instructions = """\
+## instructions
+Step 1. Read the entire text from the first to the last page.
+Step 2. Create a summary of every chapter from the first to the last page.
+"""
+
+chunked = build_simple_chunks(text, n_sentences=30)
+resp = co.chat(
+  preamble=summarize_preamble,
+  message=instructions,
+  documents=[{"text": chunk} for chunk in chunked],
+  model=co_model,
+  temperature=0.3,
+  return_prompt=True
+)
+
+num_tokens_in = co.tokenize(resp.prompt).length
+num_tokens_out = resp.meta["billed_units"]["output_tokens"]
+print(f"Generated summary with {num_tokens_in} tokens in, {num_tokens_out} tokens out")
+print()
+print("--- Summary with citations using grounded generation in Command-R ---")
+print()
+print(resp.text)
+
+```
+
+Let's display the citations inside our answer:
+
+
+```python
+print(insert_citations(resp.text, resp.citations))
+```
+
+We can now visualise which section of the answer is based on which passage in the main text. Verifying factuality is straightforward: pick a section and verify that the relevant information is contained in the cited chunk.
+
+For instance, let's verify the statement
+```
+Around 40% of employment worldwide is exposed to AI [1, 6]
+```
+by checking its chunk:
+
+
+```python
+print(chunked[6])
+```
+
+Seems convincing!
+By repeating such checks, it's straightforward to build trust in your summaries.
+
+<a id="reduce-the-cost-of-summarization-calls"></a>
+<a name="reduce-the-cost-of-summarization-calls"></a>
+## 4. Reduce the cost of summarization calls
+
+Even though Command-R is an efficient, light-weight model, for some applications we may accept trading off some summarization quality for lower costs. To do this, we must reduce the amount of tokens sent to the model -- but how do we select the most relevant bits?
+
+We have a whole notebook dedicated to methods for reducing context length. Here, we call our 'text-rank' method to select maximally central chunks in a graph based on the chunk-to-chunk similarties. For more detail, please refer [to this cookbook](https://colab.research.google.com/drive/1zxSAbruOWwWJHNsj3N56uxZtUeiS7Evd).
+
+
+```python
+num_tokens = 8192
+shortened = textrank(text, co, num_tokens, n_sentences_per_passage=30)
+
+chunked = build_simple_chunks(shortened)
+resp = co.chat(
+  message=instructions,
+  documents=[{"text": chunk} for chunk in chunked],
+  model=co_model,
+  temperature=0.3,
+  return_prompt=True
+)
+
+num_tokens_in = co.tokenize(resp.prompt).length
+num_tokens_out = resp.meta["billed_units"]["output_tokens"]
+print(f"Generated summary with {num_tokens_in} tokens in, {num_tokens_out} tokens out")
+print()
+print("--- Summary with citations using text-rank + grounding in Command-R ---")
+print()
+print(resp.text)
+
+```
+
+The summary is looking convincing! In practice, the trade-off between cost-efficiency and performance should be considered carefully.

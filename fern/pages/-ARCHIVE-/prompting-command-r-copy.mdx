@@ -1,0 +1,82 @@
+---
+title: "Prompting Command-R (COPY)"
+slug: "prompting-command-r-copy"
+
+hidden: true
+createdAt: "Fri Mar 15 2024 20:42:17 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Wed Mar 20 2024 15:37:06 GMT+0000 (Coordinated Universal Time)"
+---
+
+Getting an LLM to do what you want and perform well on your task often requires some amount of prompt engineering. Depending on the complexity of the task and the strength of the model, this can be time consuming. Similarly, if you are trying to compare two models in a fair way, it is hard to know what differences in performance are due to actual superiority of a model vs an unoptimized prompt. At minimum, it is important to do simple things like making sure you are using the correct special tokens which can change from one family of model to the next but can have an important impact on performance. These tokens do things like indicate the beginning and end of prompts and distinguish between user and chatbot utterances.
+
+The easiest way to make sure your prompts will work well with Command-R is to use our [tokenizer on Hugging Face](https://huggingface.co/CohereForAI/c4ai-command-r-v01) if your use-case is covered by the baked-in defaults. In this doc we will go over the structure of our prompts and general best practices on how to tweak it in a way that will have it performing best on your tasks. This gives you the control over how the model behaves to tweak and experiment what fits your unique use case the best.
+
+## Structured Prompts for RAG
+
+### Fully Rendered Default Tool-use Prompt
+
+Before going into detail on the different components of the prompt and how they fit together, let’s start by looking at a fully rendered prompt. Let’s take an example of using Command-R for a simple RAG use case where we are given a user query like <span className="orange-text">What’s the biggest penguin in the world?</span>
+
+To solve this problem, we will use the model to perform the two steps of RAG:
+
+1. Retrieval
+2. Augmented Generation
+
+Let’s start with retrieval, where the model will make calls to an <span className="quartz-text ">`internet_search`</span> tool to collect relevant documents needed to answer the user’s question. To enable that, we will create a rendered tool use prompt that will give the model access to two tools:
+
+1. <span className="quartz-text ">`def internet_search(query: str)`</span>
+2. <span className="quartz-text ">`def directly_answer()`</span>
+
+Let's take a look at what this fully rendered prompt would look like using our default settings.
+
+tool_use_prompt = <span className="dark-blue-text ">`<BOS_TOKEN>`</span><span className="brown-text ">`<|START_OF_TURN_TOKEN|>`</span><span className="dark-orange-text ">`<|SYSTEM_TOKEN|>` </span>
+
+<p className="dark-red-text">
+  #Safety Preamble <br />
+  <span className="red-text">
+    The instructions in this section override those in the task description and
+    style guide sections. Don't answer questions that are harmful or immoral.
+  </span>
+</p>
+
+<p className="dark-green-text">
+  # System Preamble
+  <br />
+  ## Basic Rules <br />
+  <span className="green-text">
+    You are a powerful conversational AI trained by Cohere to help people. You
+    are augmented by a number of tools, and your job is to use and consume the
+    output of these tools to best help the user. You will see a conversation
+    history between yourself and a user, ending with an utterance from the user.
+    You will then see a specific instruction instructing you what kind of
+    response to generate. When you answer the user's requests, you cite your
+    sources in your answers, according to those instructions.
+  </span>
+</p>
+
+<p className="dark-purple-text">
+  # User Preamble <br />
+  ## Task and Context <br />
+  <span className="purple-text">
+    You help people answer their questions and other requests interactively. You
+    will be asked a very wide array of requests on all kinds of topics. You will
+    be equipped with a wide range of search engines or similar tools to help
+    you, which you use to research your answer. You should focus on serving the
+    user's needs as best you can, which will be wide-ranging.
+  </span>
+</p>
+
+<p className="dark-sangria-text">
+  ## Style Guide <br />
+  <span className="sangria-text">
+    Unless the user asks for a different style of answer, you should answer in
+    full sentences, using proper grammar and spelling.
+  </span>
+</p>
+
+<p className="dark-magenta-text">
+  ## Available Tools <br />
+  <span className="magenta-text">
+    Here is a list of tools that you have available to you:
+  </span>
+</p>

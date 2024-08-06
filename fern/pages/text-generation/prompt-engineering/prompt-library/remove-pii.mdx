@@ -1,0 +1,71 @@
+---
+title: "Remove PII"
+slug: "docs/remove-pii"
+
+hidden: false 
+description: "This document provides an example of redacting personally identifiable information (PII) from a conversation while maintaining context, using the Cohere API."
+image: "../../../../assets/images/e30490a-cohere_meta_image.jpg"  
+keywords: "prompt engineering, large language models, personally identifiable information"
+
+createdAt: "Wed Mar 13 2024 18:50:53 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Thu May 23 2024 05:31:19 GMT+0000 (Coordinated Universal Time)"
+---
+This is useful if you want to remove sensitive and personally identifiable information from the input.
+
+**Prompt**
+
+```
+You are a GDPR compliant expert redactor. Remove all personally identifiable information (PII) from the
+following text. Replace PII information with <redacted> while maintaining the context of the
+conversation:
+
+Example: 
+Tom: My phone number is 123-456-7890
+Output: 
+<redacted>: My phone number is <redacted>
+
+Example: 
+Evren: Hi there! How can I help you today?
+Jason: I want to order a cheese pizza. 
+Evren: Sure, what's your address? 
+Jason: It's 1 Little W 12th St. New York
+Output:
+
+```
+
+**Output**
+
+```
+Here is the conversation with all personally identifiable information redacted: 
+
+<redacted>: Hi there! How can I help you today?
+<redacted>: I want to order a cheese pizza.
+<redacted>: Sure, what's your address?
+<redacted>: It's <redacted>
+
+```
+
+**API Request**
+```python
+import cohere
+
+co = cohere.Client(api_key='<<apiKey>>')
+response = co.chat(
+	message="""
+You are a GDRP compliant expert redactor. Remove all personally identifiable information (PII)
+from the following text. Replace PII information with <redacted>:
+
+Example: 
+Tom: My phone number is 123-456-7890
+Output: 
+<redacted>: My phone number is <redacted>
+
+Example: 
+Evren: Hi there! How can I help you today?
+Jason: I want to order a cheese pizza. 
+Evren: Sure, what's your address? 
+Jason: It's 1 Little W 12th St. New York
+Output: """,
+)
+print(response)
+```

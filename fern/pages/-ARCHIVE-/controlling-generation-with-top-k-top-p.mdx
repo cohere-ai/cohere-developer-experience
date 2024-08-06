@@ -1,0 +1,53 @@
+---
+title: "Top-k & Top-p"
+slug: "docs/controlling-generation-with-top-k-top-p"
+
+hidden: true
+description: "This document discusses different decoding strategies for generating text with language models, focusing on top-k sampling and top-p sampling to pick output tokens based on likelihood scores."
+image: "../../assets/images/92ac9fa-cohere_docs_preview_image_1200x630_copy.jpg"  
+keywords: "top-k, top-p, generative AI"
+
+createdAt: "Tue Aug 30 2022 15:28:26 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Thu Mar 21 2024 14:56:24 GMT+0000 (Coordinated Universal Time)"
+---
+The method you use to pick output tokens is an important part of successfully generating text with language models. There are several methods (also called decoding strategies) for picking the output token, with two of the leading ones being top-k sampling and top-p sampling.
+
+Let’s look at the example where the input to the model is the prompt `The name of that country is the`:
+
+<img src='../../assets/images/d3311c2-Top-KTop-P_Visual_1.png' alt='model.' />
+
+
+The output token in this case, `United`was picked in the last step of processing -- after the language model has processed the input and calculated a likelihood score for every token in its vocabulary. This score indicates the likelihood that it will be the next token in the sentence (based on all the text the model was trained on).
+
+<img src='../../assets/images/61259d5-Top-KTop-P_Visual_2.png' alt='output.' />
+
+
+## 1. Pick the top token: greedy decoding
+
+You can see in this example that we picked the token with the highest likelihood, `United`.
+
+<img src='../../assets/images/2a0cc2f-Top-KTop-P_Visual_3.png' alt='drawbacks.' />
+
+
+Greedy decoding is a reasonable strategy, but has some drawbacks; outputs can get stuck in repetitive loops, for example. Think of the suggestions in your smartphone's auto-suggest. When you continually pick the highest suggested word, it may devolve into repeated sentences.
+
+## 2. Pick from amongst the top tokens: top-k
+
+Another commonly-used strategy is to sample from a shortlist of the top 3 tokens. This approach allows the other high-scoring tokens a chance of being picked. The randomness introduced by this sampling helps the quality of generation in a lot of scenarios.
+
+<img src='../../assets/images/8beb940-Top-KTop-P_Visual_4.png' alt='scores.' />
+
+
+More broadly, choosing the top three tokens means setting the top-k parameter to 3. Changing the top-k parameter sets the size of the shortlist the model samples from as it outputs each token. Setting top-k to 1 gives us greedy decoding.
+
+<img src='../../assets/images/1810654-Top-KTop-P_Visual_5.png' alt='setting.' />
+
+
+## 3. Pick from amongst the top tokens whose probabilities add up to 15%: top-p
+
+The difficulty of selecting the best top-k value opens the door for a popular decoding strategy that dynamically sets the size of the shortlist of tokens. This method, called _Nucleus Sampling_, creates the shortlist by selecting the top tokens whose sum of likelihoods does not exceed a certain value. A toy example with a top-p value of 0.15 could look like this:
+
+<img src='../../assets/images/fb9c5f9-Top-KTop-P_Visual_6.png' alt='threshold.' />
+
+
+Top-p is usually set to a high value (like 0.75) with the purpose of limiting the long tail of low-probability tokens that may be sampled. We can use both top-k and top-p together. If both `k` and `p` are enabled, `p` acts after `k`.
