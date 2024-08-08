@@ -4,13 +4,14 @@ slug: "docs/rerank-starting-the-training"
 
 hidden: false
 description: "This document provides a guide on how to start training a fine-tuning model for Rerank using both the Web UI and the Python SDK, including steps for creating the model, uploading data, previewing the data, starting training, and calling the fine-tuned model."
-image: "../../../assets/images/062ae18-cohere_meta_image.jpg"  
+image: "../../../assets/images/062ae18-cohere_meta_image.jpg"
 keywords: "fine-tuning, fine-tuning language models"
 
 createdAt: "Mon Nov 13 2023 19:52:04 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Tue May 07 2024 21:37:02 GMT+0000 (Coordinated Universal Time)"
 ---
-In this section, we will walk through how you can start training a fine-tuning model for Rerank on both the Web UI and  the Python SDK.
+
+In this section, we will walk through how you can start training a fine-tuning model for Rerank on both the Web UI and the Python SDK.
 
 ## Web UI
 
@@ -20,30 +21,27 @@ Creating a fine-tuned model for Rerank via the Web UI consists of a few simple s
 
 Go to the [fine-tuning page](http://dashboard.cohere.com/fine-tuning) and click on 'Create a Rerank model'.
 
-<img src='../../../assets/images/465773a-image.png' />
-
+<img src="../../../assets/images/465773a-image.png" />
 
 ### Upload Your Data
 
-Upload your custom dataset data by going to 'Training data' and clicking on the upload file button. Your data should be in `jsonl` format with three fields: `query`, `relevant_passages`, and `hard_negatives`. 
+Upload your custom dataset data by going to 'Training data' and clicking on the upload file button. Your data should be in `jsonl` format with three fields: `query`, `relevant_passages`, and `hard_negatives`.
 
 - `query`: this field contains the question or target
 - `relevant_passages`: this field contains a list of documents or passages with information that answers the `query`. For every query there must be at least one `relevant_passage`
 - `hard_negatives`: this represents examples that appear to be relevant to the query but ultimately are not because they don’t contain the answer. They differ from easy negatives which are totally unrelated to the query. Hard negatives are optional but providing them lead to improvements of the overall performance. We believe ~five hard negatives leads to meaningful improvement, so include that many, if possible.
 
-<img src='../../../assets/images/a98699a-rerank_create_custom_model_page.png' />
-
+<img src="../../../assets/images/a98699a-rerank_create_custom_model_page.png" />
 
 You also have the option of uploading a validation dataset. This will not be used during training, but will be used for evaluating the model’s performance during training. To do so, go to 'Upload validation set (optional)' and repeat the same steps you just completed with the training dataset. If you don’t upload a validation dataset, the platform will automatically set aside part of the training dataset to use for validation.
 
 At this point in time, the platform will error if you upload a query in which a passage is listed as both a relevant passage and a hard negative
 
 <Frame caption="In the image above, there is a row in the training file where the query `What can make Physics easy to learn?` has the string `How can you make physics easy to learn` in both the `relevant_passages` list and the `hard_negatives` list.">
-<img src='../../../assets/images/4ca7ba9-rerank_3.png' alt='list.' />
+  <img src="../../../assets/images/4ca7ba9-rerank_3.png" alt="list." />
 </Frame>
 
-
-In addition, if your `hard_negatives` are empty strings or duplicated in a given row, we will remove those from the training set as well. 
+In addition, if your `hard_negatives` are empty strings or duplicated in a given row, we will remove those from the training set as well.
 
 Once done, click 'Next'.
 
@@ -51,13 +49,11 @@ Once done, click 'Next'.
 
 The preview window will show a few samples of your custom training dataset, and your validation dataset (if you uploaded it).
 
-<img src='../../../assets/images/6e3dd90-rerank_dataset_toggle.png' />
+<img src="../../../assets/images/6e3dd90-rerank_dataset_toggle.png" />
 
+Toggle between the 'Training' and 'Validation' tabs to see a sample of your respective datasets.
 
-Toggle between the 'Training' and 'Validation' tabs to see a sample of your respective datasets. 
-
-<img src='../../../assets/images/0604e15-rerank_4.png' />
-
+<img src="../../../assets/images/0604e15-rerank_4.png" />
 
 At the top of this page, we will show some dataset statistics, such as the average number of relevant passages per query and the average number of hard negatives per query. We will also display a total of three queries from your dataset so you can check for formatting.
 
@@ -67,8 +63,7 @@ If you are happy with how the samples look, click 'Continue'.
 
 Now, everything is set for training to begin. Click 'Start training' to proceed.
 
-<img src='../../../assets/images/455c407-rerank_finetune_start.png' />
-
+<img src="../../../assets/images/455c407-rerank_finetune_start.png" />
 
 ### Calling the Fine-tuned Model
 
@@ -92,7 +87,7 @@ rerank_dataset = co.datasets.create(name="rerank-dataset",
                                     data=open("path/to/train.jsonl", "rb"),
                                     type="reranker-finetune-input")
 print(co.wait(rerank_dataset))
-                                              
+
 # start the fine-tune job using this dataset
 finetune = co.finetuning.create_finetuned_model(
   request=FinetunedModel(
@@ -114,12 +109,12 @@ print(f"fine-tune ID: {finetune.id}, fine-tune status: {finetune.status}")
 
 Please see our API docs for the full documentation, for passing the request. For base_model, we currently have 2 parameters for rerank:
 
-- `base_type` -  For rerank, this should always be "BASE_TYPE_RERANK"
+- `base_type` - For rerank, this should always be "BASE_TYPE_RERANK"
 - `name`(str) – The baseline rerank model you would like to train - we currently have two model options: english and multilingual. By default we will always train on the most recent version of the rerank models.
 
 ### Calling a fine-tune
 
-```python Python
+```python PYTHON
 import cohere
 
 co = cohere.Client('Your API key')
