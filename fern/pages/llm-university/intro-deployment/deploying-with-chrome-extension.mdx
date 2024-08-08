@@ -32,7 +32,7 @@ The first step is to create a folder for this extension, which we’ll call `con
 
 First, we’ll create a function for text display, which will display the generated summary of a web page at the top of the page. This function, `display(text)`, creates the elements and styling for the header and the summary. Finally, it inserts the header immediately before the HTML body.
 
-```javascript
+```javascript condense/scripts/content.js
 // Display the text at the top of the page
 function display(text) {
   // Create a purple header
@@ -61,7 +61,7 @@ Next, we’ll create a function, `summarize(text)`, to perform the text summariz
 
 This function then takes the endpoint response, `response.text`, and sends it to the `display(text)` function we created in the previous section.
 
-```javascript
+```javascript condense/scripts/content.js
 // Fetch the summary for the given text and display it
 function summarize(text) {
   // Use the user's stored API key
@@ -105,7 +105,7 @@ function summarize(text) {
 
 Now we create a function that feeds the text needed by the `summarize(text)` function. Here, `getVisibleText()` returns only the visible text from the page. It uses jQuery selectors (requires jQuery v3.7.0 to be added to the `scripts` folder) to try to find the page's main body of content, often in a `content` or `main` element. It also defines a fallback to using the whole body content.
 
-```javascript
+```javascript condense/scripts/content.js
 // Returns true if the given element isn't visible on the page
 function isHidden(el) {
   var style = window.getComputedStyle(el);
@@ -156,7 +156,7 @@ function getVisibleText() {
 
 The following code block stitches together the three steps we created to capture visible text from a web page, summarize it, and display it at the top.
 
-```javascript
+```javascript condense/scripts/content.js
 // This code block runs when pages are loaded.
 chrome.storage.sync.get("apiKey", (key) => {
   if (key.apiKey === undefined) {
@@ -184,42 +184,42 @@ The manifest file is required by a Chrome extension, describing how the extensio
 
 So let’s create a `manifest.json` file at the root of our folder. The contents of the file are shown below. It contains the metadata, permissions, description of the UI for adding the API key, and the scripts to run.
 
-```javascript
+```json manifest.json
 // This file describes how the extension is configured.
 {
-    // Metadata
-    "name": "co:ndense",
-    "version": "1.0",
-    "description": "Summarizes web pages",
-    "manifest_version": 3,
+  // Metadata
+  "name": "co:ndense",
+  "version": "1.0",
+  "description": "Summarizes web pages",
+  "manifest_version": 3,
 
-    // - activeTab gives us access to the user's currently active tab
-    // - scripting gives us permission to run our code
-    // - storage allows us to store the user's API key
-    "permissions": ["activeTab", "scripting", "storage"],
+  // - activeTab gives us access to the user's currently active tab
+  // - scripting gives us permission to run our code
+  // - storage allows us to store the user's API key
+  "permissions": ["activeTab", "scripting", "storage"],
 
-    // This describes the UI for user options
-    "options_ui": {
-        // This page contains the UI
-        "page": "options/options.html",
-        // The options will open as a pop-up, not a new tab
-        "open_in_tab": false
-    },
+  // This describes the UI for user options
+  "options_ui": {
+    // This page contains the UI
+    "page": "options/options.html",
+    // The options will open as a pop-up, not a new tab
+    "open_in_tab": false
+  },
 
-    "content_scripts": [{
-        // scripts/content.js contains the extension's main logic.
-        // It relies on jQuery so we need to configure the path to that too.
-        "js": ["scripts/content.js", "scripts/jquery-3.7.0.min.js"],
-        // This extension will run on all webpages by default.
-        "matches": [
-            "<all_urls>"
-        ],
-        // Don't run the extension on these specific sites
-        "exclude_globs": [
-            // The header breaks cursor alignment in Google Docs
-            "*://docs.google.com/*"
-        ]
-    }]
+  "content_scripts": [
+    {
+      // scripts/content.js contains the extension's main logic.
+      // It relies on jQuery so we need to configure the path to that too.
+      "js": ["scripts/content.js", "scripts/jquery-3.7.0.min.js"],
+      // This extension will run on all webpages by default.
+      "matches": ["<all_urls>"],
+      // Don't run the extension on these specific sites
+      "exclude_globs": [
+        // The header breaks cursor alignment in Google Docs
+        "*://docs.google.com/*"
+      ]
+    }
+  ]
 }
 ```
 

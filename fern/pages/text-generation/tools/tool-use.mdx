@@ -2,7 +2,7 @@
 title: "Single-Step Tool Use"
 slug: "docs/tool-use"
 
-hidden: false 
+hidden: false
 description: "This document explains how tool use allows customers to connect large language models to external tools, enabling more advanced interactions beyond simple chat. Customers can provide tools to the model, which then dynamically selects the right tools to call based on user messages, and customers can execute these tool calls to enhance the model's responses."
 image: "../../../assets/images/39c2d8c-cohere_meta_image.jpg"
 keywords: "natural language processing, Cohere, large language models, tool use with LLMs, generative AI tool use"
@@ -10,6 +10,7 @@ keywords: "natural language processing, Cohere, large language models, tool use 
 createdAt: "Thu Feb 29 2024 18:14:38 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Mon Jun 17 2024 19:35:37 GMT+0000 (Coordinated Universal Time)"
 ---
+
 Tool use is a technique which allows developers to connect Cohere's Command family of models to external tools like search engines, APIs, functions, databases, etc. It comes in two variants, single-step and multi-step, and this doc will focus on single-step tool use.
 
 Single-step tool use enables a richer set of behaviors by leveraging data stored in tools, taking actions through APIs, interacting with a vector database, querying a search engine, etc. To use it, set `force_single_step=True` when creating the model.
@@ -20,7 +21,7 @@ Check out [this notebook](https://github.com/cohere-ai/notebooks/blob/main/noteb
 
 ## What Is Possible with Single-Step Tool Use?
 
-Single-step tool use (or “function calling”) opens up a wide range of new use cases. Below, we walk through a few examples. 
+Single-step tool use (or “function calling”) opens up a wide range of new use cases. Below, we walk through a few examples.
 
 It's now possible to reliably ask the model to recommend a tool (or set of tools) to use and offer advice on how to use them, which you can pass back to the model for more flexible workflows. Tool use allows your chatbot to interact with your CRM to change the status of a deal, for example, or to engage with a Python interpreter to conduct data science analysis.
 
@@ -36,8 +37,7 @@ We want to stress that it's the _developers_ executing tool calls and submitting
 
 Here's a graphic that represents the four steps discussed below:
 
-<img src='../../../assets/images/c96afce-diagrams.svg' />
-
+<img src="../../../assets/images/c96afce-diagrams.svg" />
 
 Feel free to refer back to it as you read on.
 
@@ -247,7 +247,7 @@ print(response.text)
 
 
 # Final answer:
-# On the 29th of September 2023, there were 250 units sold, with a total sales amount of 10,000. 
+# On the 29th of September 2023, there were 250 units sold, with a total sales amount of 10,000.
 
 
 # The Electronics category contains three products:
@@ -321,7 +321,7 @@ To get good answers with single-step tool use, make sure that the tool name and 
 
 When you pass the tool results back to the model make sure that they are structured in a comprehensive way. For example, if you are passing the results of a `add_numbers` function:
 
-```
+```python PYTHON
 outputs = [{"number": 2343}] # Not Great
 outputs = [{"sum": 2343}] # Better
 ```
@@ -334,7 +334,7 @@ Here, we'll preview some of the functionality we plan on adding in the coming mo
 
 The model can currently handle any tool provided by the developer. That having been said, Cohere has implemented some pre-defined tools that users can leverage out-of-the-box.
 
-Specifically we're going to roll out a **Python interpreter** tool and a **Web search** tool. 
+Specifically we're going to roll out a **Python interpreter** tool and a **Web search** tool.
 
 Please [reach out](mailto:MAXIMEVOISIN@COHERE.COM) to join the beta.
 
@@ -350,7 +350,7 @@ You should operate in single-step mode when you want the model to answer a quest
 
 ### If I provide many tools to the model, will the model ignore the tools that aren’t useful for the user message?
 
-- Yes. The model has the ability of assessing the value of a given tool in answering a given query, and will ignore any (and all) tools that don't serve that purpose. 
+- Yes. The model has the ability of assessing the value of a given tool in answering a given query, and will ignore any (and all) tools that don't serve that purpose.
 
 ### If I provide many tools to the model, can the model call each tool multiple times?
 
@@ -364,11 +364,10 @@ You should operate in single-step mode when you want the model to answer a quest
 ### Why is the output of a tool a list of objects?
 
 - Some tools (such as search for example) might produce many different documents (eg: search results). In order for the model to cite the documents individually when generating the response, the output has to be a list of objects. If your tool returns a single object, wrap it in a list. For example:
-  ```
+  ```python PYTHON
   outputs=[{"sum": 25}]
   ```
 
 Are there any other caveats I should be aware of?
 
 - Yes. An important one is that the model may return tool parameters that are invalid, so be sure to give everything a thorough once-over.
-

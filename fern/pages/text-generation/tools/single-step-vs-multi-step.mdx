@@ -6,17 +6,18 @@ hidden: true
 createdAt: "Wed May 29 2024 16:21:45 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Mon Jun 17 2024 19:34:44 GMT+0000 (Coordinated Universal Time)"
 ---
-This guide outlines the difference in model behavior for [single-step](/docs/tool-use#step-3---the-developer-can-then-execute-the-tool-calls) and [multi-step ](/docs/multi-step-tool-use) tool use. This is a mode that can be toggled in the Chat API by providing `tools` and setting the `force_single_step` parameter. 
+
+This guide outlines the difference in model behavior for [single-step](/docs/tool-use#step-3---the-developer-can-then-execute-the-tool-calls) and [multi-step ](/docs/multi-step-tool-use) tool use. This is a mode that can be toggled in the Chat API by providing `tools` and setting the `force_single_step` parameter.
 
 ## Single Step Tool Use
 
-Single step tool use is enabled by setting `force_single_step=True` and providing a list of tools through the Chat API. This forces the model to make just _one_ set of tool calls, after which it will provide a final answer. In single-step tool use, the model cannot make a sequence of tool calls and reason over them.  
+Single step tool use is enabled by setting `force_single_step=True` and providing a list of tools through the Chat API. This forces the model to make just _one_ set of tool calls, after which it will provide a final answer. In single-step tool use, the model cannot make a sequence of tool calls and reason over them.
 
 Note that "single _step_" doesn't mean "single _tool_." In single-step tool use the model _can_ still call multiple tools by calling them in parallel. Whet this happens, the model will output multiple tool calls in the `tool_results` part of the response.
 
 ## When Should I Use Single-step Tool Use?
 
-You should operate in single-step mode when you want the model to answer a question after one step. With a query like "Is there a reservation available at Johnny's Pizza or Alfredo's Pizza at 9PM," for example, the model would query the APIs for Johny's Pizza and Alfredo's Pizza, in parallel. 
+You should operate in single-step mode when you want the model to answer a question after one step. With a query like "Is there a reservation available at Johnny's Pizza or Alfredo's Pizza at 9PM," for example, the model would query the APIs for Johny's Pizza and Alfredo's Pizza, in parallel.
 
 ### Code example
 
@@ -199,7 +200,7 @@ print(response.text)
 
 
 # Final answer:
-# On the 29th of September 2023, there were 250 units sold, with a total sales amount of 10,000. 
+# On the 29th of September 2023, there were 250 units sold, with a total sales amount of 10,000.
 
 
 # The Electronics category contains three products:
@@ -213,13 +214,13 @@ In this step, the model cites which tool results were used to generate the final
 
 ## When Should I Use Multi-step Tool Use?
 
-For more complex queries, such as those that require multiple steps, it's probably better to operate in multi-step mode. You can do this by setting `enable_multistep=True` and providing a list of tools through the Chat API. In multi-step mode, the model can reason across steps and select multiple tools to answer a question completely. 
+For more complex queries, such as those that require multiple steps, it's probably better to operate in multi-step mode. You can do this by setting `enable_multistep=True` and providing a list of tools through the Chat API. In multi-step mode, the model can reason across steps and select multiple tools to answer a question completely.
 
 To illustrate, imagine you give the Chat API a query like "What was the weather where I was yesterday," along with a location tool (to return the user’s location given a timestamp) and a weather tool (to return the weather at a given location). Here's what happens:
 
 - First, the model will make a plan, which consists in first calling the location tool (step 1), and then calling the weather tool (step 2) based on the output of the location tool.
 - Then, the model receives the results of these tool calls and the underlying model's reasoning.
-- In a subsequent call, the model will determine that it still doesn’t have all the information required to answer, and select another tool. 
+- In a subsequent call, the model will determine that it still doesn’t have all the information required to answer, and select another tool.
 - Etc.
 
 In the next section, there's a code snippet demonstrating how to do this programmatically.
@@ -263,7 +264,7 @@ curl --location 'https://api.cohere.ai/v1/chat' \
 }'
 ```
 
-In the response below, the model selects a tool _and_ returns a message containing its reasoning. 
+In the response below, the model selects a tool _and_ returns a message containing its reasoning.
 
 ```bash
 {
@@ -380,7 +381,7 @@ curl --location 'https://api.cohere.ai/v1/chat' \
 }'
 ```
 
-And here's the response. As you can see, the model outputs another reasoning step and another tool call request. Again, make sure to include the model reasoning step in the next request via the `chat_history`.  
+And here's the response. As you can see, the model outputs another reasoning step and another tool call request. Again, make sure to include the model reasoning step in the next request via the `chat_history`.
 
 ```bash
 {
@@ -557,7 +558,7 @@ curl --location 'https://api.cohere.ai/v1/chat' \
 }'
 ```
 
-And in the final response, the model completes a sequence of tool calls and outputs the final message. 
+And in the final response, the model completes a sequence of tool calls and outputs the final message.
 
 ```bash
 {
