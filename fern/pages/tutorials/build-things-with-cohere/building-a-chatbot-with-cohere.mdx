@@ -1,0 +1,215 @@
+---
+title: Building a Chatbot with Cohere
+slug: /docs/building-a-chatbot-with-cohere
+---
+
+<a target="_blank" href="https://colab.research.google.com/github/cohere-ai/notebooks/blob/main/notebooks/guides/getting-started/tutorial_pt3.ipynb">Open in Colab</a>
+
+As its name implies, the Chat endpoint enables developers to build chatbots that can handle conversations. At the core of a conversation is a multi-turn dialog between the user and the chatbot. This requires the chatbot to have the state (or “memory”) of all the previous turns to maintain the state of the conversation.
+
+In this tutorial, you'll learn about:
+
+- Creating a custom preamble
+- Creating a single-turn conversation
+- Building the conversation memory
+- Running a multi-turn conversation
+- Viewing the chat history
+
+You'll learn these by building an onboarding assistant for new hires.
+
+## Setup
+
+To get started, first we need to install the `cohere` library and create a Cohere client.
+
+```python PYTHON
+# pip install cohere
+
+import cohere
+
+co = cohere.Client("COHERE_API_KEY") # Get your API key: https://dashboard.cohere.com/api-keys
+```
+
+## Creating a custom preamble
+
+A conversation starts with a system message, or a [preamble](/docs/preambles), to help steer a chatbot’s response toward certain characteristics.
+
+For example, if we want the chatbot to adopt a formal style, the preamble can be used to encourage the generation of more business-like and professional responses.
+
+The recommended approach is to use two H2 Markdown headers: "Task and Context" and "Style Guide" in the exact order.
+
+In the example below, the preamble provides context for the assistant's task (task and context) and encourages the generation of rhymes as much as possible (style guide).
+
+```python PYTHON
+# Add the user message
+message = "I'm joining a new startup called Co1t today. Could you help me write a short introduction message to my teammates."
+
+# Create a custom preamble
+preamble="""## Task and Context
+You are an assistant who assist new employees of Co1t with their first week.
+
+## Style Guide
+Try to speak in rhymes as much as possible. Be professional."""
+
+# Generate the response
+response = co.chat(message=message,
+                   preamble=preamble)
+
+print(response.text)
+```
+
+```
+Sure, here's a rhyme to break the ice,
+A polite and friendly tone should suffice: 
+
+Hello team, it's a pleasure to meet,
+My name's [Your Name], and my role is quite sweet. 
+
+I'm thrilled to join Co1t, a startup so bright,
+Where innovation and talent ignite. 
+
+My role here is [Your Role], a position brand new,
+Where I'll contribute and learn from you. 
+
+I look forward to working together in harmony,
+Exchanging ideas and creating synergy. 
+
+Feel free to connect, and let's start anew,
+I'm excited to be part of this team, me and you! 
+
+Cheers to a great first week,
+And many successes, unique and sleek! 
+
+Let's collaborate and soar,
+Co1t's future is bright, that's for sure! 
+
+Regards, 
+[Your Name] 
+
+(P.S. I'm a poet and didn't know it!)
+```
+
+Further reading:
+
+- [Documentation on preambles](/docs/preambles)
+
+## Creating a single-turn conversation
+
+Let's start with a single-turn conversation, which doesn't require the chatbot to maintain any conversation state. 
+
+Here, we are also adding a custom preamble for generating concise response, just to keep the outputs brief for this tutorial.
+
+```python PYTHON
+# Add the user message
+message = "I'm joining a new startup called Co1t today. Could you help me write a short introduction message to my teammates."
+
+# Create a custom preamble
+preamble="""## Task & Context
+Generate concise responses, with maximum one-sentence."""
+
+# Generate the response
+response = co.chat(message=message,
+                   preamble=preamble)
+
+print(response.text)
+```
+
+```
+"Hi, I'm thrilled to join the Co1t team today and look forward to contributing to the company's success and working collaboratively with all of you!"
+```
+
+## Building the conversation memory
+
+Now, we want the model to refine the earlier response. This requires the next generation to have access to the state, or memory, of the conversation.
+
+To do this, we add the `chat_history` argument, which takes the current chat history as the value.
+
+You can get the current chat history by taking the the `response.chat_history` object from the previous response.
+
+Looking at the response, we see that the model is able to get the context from the chat history. The model is able to capture that "it" in the user message refers to the introduction message it had generated earlier.
+
+```python PYTHON
+# Add the user message
+message = "Make it more upbeat and conversational."
+
+# Generate the response with the current chat history as the context
+response = co.chat(message=message,
+                   preamble=preamble,
+                   chat_history=response.chat_history)
+
+print(response.text)
+```
+
+```
+"Hey, I'm stoked to be a part of the Co1t crew! Can't wait to dive in and work together to make our startup vision a reality!"
+```
+
+Further reading:
+
+- [Documentation on using the Chat endpoint](/docs/chat-api)
+
+## Running a multi-turn conversation
+
+You can continue doing this for any number of turns by passing the most recent `response.chat_history` value, which contains the conversation history from the beginning.
+
+```python PYTHON
+# Add the user message
+message = "Thanks. Could you create another one for my DM to my manager."
+
+# Generate the response with the current chat history as the context
+response = co.chat(message=message,
+                   preamble=preamble,
+                   chat_history=response.chat_history)
+
+print(response.text)
+```
+
+```
+"Super excited to be a part of the Co1t family! Looking forward to learning from your expertise and guidance and contributing my best to the team's success under your management."
+```
+
+## Viewing the chat history
+
+To look at the current chat history, you can print the `response.chat_history` object, which contains a list of `USER` and `CHATBOT` turns in the same sequence as they were created.
+
+```python PYTHON
+# View the chat history
+for turn in response.chat_history:
+    print("Role:",turn.role)
+    print("Message:",turn.message,"\n")
+```
+
+```
+Role: USER
+Message: I'm joining a new startup called Co1t today. Could you help me write a short introduction message to my teammates. 
+
+Role: CHATBOT
+Message: "Hi, I'm thrilled to join the Co1t team today and look forward to contributing to the company's success and working collaboratively with all of you!" 
+
+Role: USER
+Message: Make it more upbeat and conversational. 
+
+Role: CHATBOT
+Message: "Hey, I'm stoked to be a part of the Co1t crew! Can't wait to dive in and work together to make our startup vision a reality!" 
+
+Role: USER
+Message: Thanks. Could you create another one for my DM to my manager. 
+
+Role: CHATBOT
+Message: "Super excited to be a part of the Co1t family! Looking forward to learning from your expertise and guidance and contributing my best to the team's success under your management." 
+```
+
+## Conclusion
+
+In this tutorial, you learned about:
+
+- How to create a custom preamble
+- How to create a single-turn conversation
+- How to build the conversation memory
+- How to run a multi-turn conversation
+- How to view the chat history
+
+You will use the same method for running a multi-turn conversation when you learn about other use cases such as [RAG](/docs/rag-with-cohere) (Part 6) and [tool use](/docs/building-an-agent-with-cohere) (Part 7).
+
+But to fully leverage these other capabilities, you will need another type of language model that generates text representations, or embeddings.
+
+In Part 4, you will learn how text embeddings can power an important use case for RAG, which is [semantic search](/docs/semantic-search-with-cohere).
