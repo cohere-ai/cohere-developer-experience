@@ -1445,6 +1445,444 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
+  /v2/chat:
+    post:
+      summary: Chat with the model
+      operationId: chatv2
+      x-fern-audiences:
+        - v2-beta
+      x-fern-sdk-group-name: v2
+      x-fern-sdk-method-name: chat
+      x-fern-streaming:
+        format: sse
+        stream-condition: $request.stream
+        response:
+          x-fern-sdk-group-name: v2
+          required:
+            - id
+            - finish_reason
+            - messages
+          properties:
+            id:
+              type: string
+              description: Unique identifier for the generated reply. Useful for submitting
+                feedback.
+            finish_reason:
+              $ref: "#/components/schemas/ChatFinishReason"
+            message:
+              $ref: "#/components/schemas/AssistantMessage"
+            usage:
+              $ref: "#/components/schemas/Usage"
+        response-stream:
+          x-fern-sdk-group-name: v2
+          description: StreamedChatResponse is returned in streaming mode (specified with
+            `stream=True` in the request).
+          oneOf:
+            - $ref: "#/components/schemas/ChatMessageStartEvent"
+            - $ref: "#/components/schemas/ChatContentStartEvent"
+            - $ref: "#/components/schemas/ChatContentDeltaEvent"
+            - $ref: "#/components/schemas/ChatContentEndEvent"
+            - $ref: "#/components/schemas/ChatToolPlanDeltaEvent"
+            - $ref: "#/components/schemas/ChatToolCallStartEvent"
+            - $ref: "#/components/schemas/ChatToolCallDeltaEvent"
+            - $ref: "#/components/schemas/ChatToolCallEndEvent"
+            - $ref: "#/components/schemas/ChatMessageEndEvent"
+          discriminator:
+            propertyName: type
+            mapping:
+              message-start: "#/components/schemas/ChatMessageStartEvent"
+              content-start: "#/components/schemas/ChatContentStartEvent"
+              content-delta: "#/components/schemas/ChatContentDeltaEvent"
+              content-end: "#/components/schemas/ChatContentEndEvent"
+              tool-plan-delta: "#/components/schemas/ChatToolPlanDeltaEvent"
+              tool-call-start: "#/components/schemas/ChatToolCallStartEvent"
+              tool-call-delta: "#/components/schemas/ChatToolCallDeltaEvent"
+              tool-call-end: "#/components/schemas/ChatToolCallEndEvent"
+              citation-start: "#/components/schemas/CitationStartEvent"
+              citation-end: "#/components/schemas/CitationEndEvent"
+              message-end: "#/components/schemas/ChatMessageEndEvent"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - messages
+                - model
+              properties:
+                model:
+                  type: string
+                  description: The model to use for the chat.
+                messages:
+                  $ref: "#/components/schemas/ChatMessages"
+                tools:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Tool-2"
+                tool_choice:
+                  type: string
+                  enum:
+                    - AUTO
+                    - NONE
+                    - ANY
+                citation_mode:
+                  type: string
+                  enum:
+                    - FAST
+                    - ACCURATE
+                truncation_mode:
+                  type: string
+                  enum:
+                    - OFF
+                    - AUTO
+                    - AUTO_PRESERVE_ORDER
+                response_format:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - json_object
+                      description: When set to JSON, the output will be parse-able valid JSON (or run
+                        out of context).
+                    schema:
+                      description: |
+                        A JSON schema object that the output will adhere to. Refer to https://json-schema.org/ for reference about schemas.
+                      type: object
+                max_tokens:
+                  type: integer
+                  description: The maximum number of tokens to generate.
+                stop_sequences:
+                  type: array
+                  items:
+                    type: string
+                  description: A list of strings that the model will stop generating at.
+                max_input_tokens:
+                  type: integer
+                  description: The maximum number of tokens to feed into the model.
+                temperature:
+                  type: number
+                  description: The temperature of the model.
+                  format: float
+                seed:
+                  type: integer
+                frequency_penalty:
+                  type: number
+                  description: The frequency penalty of the model.
+                  format: float
+                presence_penalty:
+                  type: number
+                  description: The presence penalty of the model.
+                  format: float
+                k:
+                  type: integer
+                p:
+                  type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/NonStreamedChatResponse-2"
+                  - $ref: "#/components/schemas/StreamedChatResponse-2"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "429":
+          $ref: "#/components/responses/RateLimit"
+        "498":
+          $ref: "#/components/responses/InvalidToken"
+        "499":
+          $ref: "#/components/responses/RequestCancelled"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+      x-readme:
+        samples-languages:
+          - python
+          - node
+        code-samples:
+          - language: node
+            name: Default
+            install: npm i cohere-ai
+            code: |
+              const { CohereClientV2 } = require('cohere-ai');
+
+              const cohere = new CohereClientV2({
+                token: '<<apiKey>>',
+              });
+
+              (async () => {
+                const response = await cohere.chat({
+                  model: 'command-r-plus',
+                  messages: [
+                    {
+                      role: 'user',
+                      content: 'hello world!',
+                    },
+                  ],
+                });
+
+                console.log(response);
+              })();
+          - language: node
+            name: Documents
+            install: npm i cohere-ai
+            code: >
+              const { CohereClientV2 } = require('cohere-ai');
+
+
+              const cohere = new CohereClientV2({
+                token: '<<apiKey>>',
+              });
+
+
+              (async () => {
+                const response = await cohere.chat({
+                  model: 'command-r-plus',
+                  messages: [
+                    {
+                      role: 'user',
+                      content: [
+                        { type: 'document', id: '1', document: { text: 'Cohere is the best!' } },
+                        { type: 'text', text: "Who's the best?" },
+                      ],
+                    },
+                  ],
+                });
+
+                console.log(response);
+              })();
+          - language: node
+            name: Streaming
+            install: npm i cohere-ai
+            code: |
+              const { CohereClientV2 } = require('cohere-ai');
+
+              const cohere = new CohereClientV2({
+                token: '<<apiKey>>',
+              });
+
+              (async () => {
+                const stream = await cohere.chatStream({
+                  model: 'command-r-plus',
+                  messages: [
+                    {
+                      role: 'user',
+                      content: 'hello world!',
+                    },
+                  ],
+                });
+
+                for await (const chatEvent of stream) {
+                  if (chatEvent.type === 'content-delta') {
+                    console.log(chatEvent.delta?.message);
+                  }
+                }
+              })();
+          - language: node
+            name: Tools
+            install: npm i cohere-ai
+            code: >
+              const { CohereClientV2 } = require('cohere-ai');
+
+
+              const cohere = new CohereClientV2({
+                token: '<<apiKey>>',
+              });
+
+
+              (async () => {
+                const response = await cohere.chat({
+                  model: 'command-r-plus',
+                  tools: [
+                    {
+                      type: 'function',
+                      function: {
+                        name: 'query_daily_sales_report',
+                        description:
+                          'Connects to a database to retrieve overall sales volumes and sales information for a given day.',
+                        parameters: {
+                          day: {
+                            description: 'Retrieves sales data for this day, formatted as YYYY-MM-DD.',
+                            type: 'str',
+                            required: true,
+                          },
+                        },
+                      },
+                    },
+                    {
+                      type: 'function',
+                      function: {
+                        name: 'query_product_catalog',
+                        description:
+                          'Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.',
+                        parameters: {
+                          category: {
+                            description: 'Retrieves product information data for all products in this category.',
+                            type: 'str',
+                            required: true,
+                          },
+                        },
+                      },
+                    },
+                  ],
+                  messages: [
+                    {
+                      role: 'user',
+                      content:
+                        "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
+                    },
+                  ],
+                });
+
+                console.log(response);
+              })();
+          - language: python
+            name: Sync
+            install: python -m pip install cohere --upgrade
+            code: |
+              import cohere
+
+              co = cohere.ClientV2("<<apiKey>>")
+
+              response = co.chat(
+                  model="command-r-plus",
+                  messages=[
+                      cohere.v2.ChatMessage2_User(
+                          content="hello world!"
+                      )
+                  ]
+              )
+
+              print(response)
+          - language: python
+            name: Async
+            install: python -m pip install cohere --upgrade
+            code: |
+              import cohere
+              import asyncio
+
+              co = cohere.AsyncClientV2("<<apiKey>>")
+
+
+              async def main():
+                  response = await co.chat(
+                      model="command-r-plus",
+                      messages=[
+                          cohere.v2.ChatMessage2_User(
+                              content="hello world!"
+                          )
+                      ]
+                  )
+
+                  print(response)
+
+              asyncio.run(main())
+          - language: python
+            name: Documents
+            install: python -m pip install cohere --upgrade
+            code: |
+              import cohere
+
+              co = cohere.ClientV2("<<apiKey>>")
+
+              response = co.chat(
+                  model="command-r-plus",
+                  messages=[
+                      cohere.v2.ChatMessage2_User(
+                          content=[
+                              cohere.v2.DocumentContent(
+                                  id=1,
+                                  document={'title': 'The best',
+                                            'text': 'Cohere is the best!'}
+                              ),
+                              cohere.v2.TextContent(text="Who's the best?"),
+                          ]
+                      )
+                  ]
+              )
+
+              print(response)
+          - language: python
+            name: Streaming
+            install: python -m pip install cohere --upgrade
+            code: |
+              import cohere
+
+              co = cohere.ClientV2("<<apiKey>>")
+
+              response = co.chat_stream(
+                  model="command-r-plus",
+                  messages=[
+                      cohere.v2.ChatMessage2_User(
+                          content="hello world!"
+                      )
+                  ]
+              )
+
+              for event in response:
+                  if event.event_type == "text-generation":
+                      print(event.text, end='')
+          - language: python
+            name: Tools
+            install: python -m pip install cohere --upgrade
+            code: >
+              import cohere
+
+
+              co = cohere.Client("<<apiKey>>")
+
+
+              response = co.chat(
+                  model="command-r-plus",
+                  tools=[
+                      cohere.v2.Tool2(type='function', function={
+                          "name": 'query_daily_sales_report',
+                                  "description": 'Connects to a database to retrieve overall sales volumes and sales information for a given day.',
+                                  "parameters": {
+                                      "day": {
+                                          "description": 'Retrieves sales data for this day, formatted as YYYY-MM-DD.',
+                                          "type": 'str',
+                                          "required": True,
+                                      },
+                                  }
+                      }),
+                      cohere.v2.Tool2(type='function', function={
+                          "name": 'query_product_catalog',
+                                  "description": 'Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.',
+                                  "parameters": {
+                                      "category": {
+                                          "description": 'Retrieves product information data for all products in this category.',
+                                          "type": 'str',
+                                          "required": True,
+                                      },
+                                  }
+                      })
+                  ],
+                  messages=[
+                      cohere.v2.ChatMessage2_User(
+                          content="Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
+                      )
+                  ]
+              )
+
+
+              print(response)
   /v1/generate:
     post:
       x-fern-audiences:
@@ -2221,8 +2659,8 @@ paths:
 
               # start an embed job
 
-              response = co.embed_jobs.create(
-                  dataset_id=ds.id, input_type="search_document", model="embed-english-v3.0"
+              job = co.embed_jobs.create(
+                  dataset_id="my-dataset-id", input_type="search_document", model="embed-english-v3.0"
               )
 
 
@@ -2247,8 +2685,8 @@ paths:
 
               async def main():
                   # start an embed job
-                  response = await co.embed_jobs.create(
-                      dataset_id=ds.id, input_type="search_document", model="embed-english-v3.0"
+                  job = await co.embed_jobs.create(
+                      dataset_id="my-dataset-id", input_type="search_document", model="embed-english-v3.0"
                   )
 
                   # poll the server until the job is complete
@@ -3996,7 +4434,7 @@ paths:
               co = cohere.Client("<<apiKey>>")
 
               # upload a dataset
-              response = co.datasets.create(
+              my_dataset = co.datasets.create(
                   name="prompt-completion-dataset",
                   data=open("./prompt-completion.jsonl", "rb"),
                   type="prompt-completion-finetune-input",
@@ -7381,6 +7819,7 @@ paths:
                   FinetunedModel,
                   Hyperparameters,
                   Settings,
+                  WandbConfig
               )
               import cohere
 
@@ -7392,6 +7831,11 @@ paths:
                   train_epoch=1,
                   learning_rate=0.01,
               )
+              wnb_config = WandbConfig(
+                  project="test-project",
+                  api_key="<<wandbApiKey>>",
+                  entity="test-entity",
+              )
               finetuned_model = co.finetuning.create_finetuned_model(
                   request=FinetunedModel(
                       name="test-finetuned-model",
@@ -7401,10 +7845,11 @@ paths:
                           ),
                           dataset_id="my-dataset-id",
                           hyperparameters=hp,
+                          wandb=wnb_config,
                       ),
                   )
               )
-              print(response)
+              print(finetuned_model)
           - language: python
             name: Async
             install: python -m pip install cohere --upgrade
@@ -7427,7 +7872,7 @@ paths:
                           name="test-finetuned-model",
                           settings=Settings(
                               base_model=BaseModel(
-                                  base_type=BaseType.BASE_TYPE_GENERATIVE,
+                                  base_type=BaseType.BASE_TYPE_CHAT,
                               ),
                               dataset_id="my-dataset-id",
                           ),
@@ -7659,6 +8104,10 @@ paths:
             name: Sync
             install: python -m pip install cohere --upgrade
             code: |
+              from cohere.finetuning import (
+                  BaseModel,
+                  Settings,
+              )
               import cohere
 
               co = cohere.Client("<<apiKey>>")
@@ -9291,9 +9740,9 @@ components:
       description: Citation information containing sources and the text cited.
       properties:
         start:
-          type: string
+          type: integer
         end:
-          type: string
+          type: integer
         text:
           type: string
         sources:
@@ -9365,7 +9814,13 @@ components:
         id:
           type: string
         document:
-          type: object
+          description: |
+            Relevant information that could be used by the model to generate a more accurate reply.
+            The contents of each document are generally short (under 300 words), and are passed in the form of a
+            dictionary of strings or a single string. If a single string is passed, it will be treated as the value for key "content".
+          oneOf:
+            - type: object
+            - type: string
     Content:
       x-fern-sdk-group-name: v2
       description: A Content block which contains information about the content type
@@ -9554,6 +10009,8 @@ components:
             - tool-call-delta
             - tool-call-end
             - tool-plan-delta
+            - citation-start
+            - citation-end
             - message-end
     ChatMessageStartEvent:
       x-fern-sdk-group-name: v2
@@ -9700,6 +10157,30 @@ components:
           properties:
             index:
               type: integer
+    CitationStartEvent:
+      description: A streamed event which signifies a citation has been created.
+      allOf:
+        - $ref: "#/components/schemas/ChatStreamEventType"
+        - type: object
+          properties:
+            index:
+              type: integer
+            delta:
+              type: object
+              properties:
+                message:
+                  type: object
+                  properties:
+                    citations:
+                      $ref: "#/components/schemas/Citation"
+    CitationEndEvent:
+      description: A streamed event which signifies a citation has finished streaming.
+      allOf:
+        - $ref: "#/components/schemas/ChatStreamEventType"
+        - type: object
+          properties:
+            index:
+              type: integer
     ChatMessageEndEvent:
       x-fern-sdk-group-name: v2
       description: A streamed event which signifies that the chat message has ended.
@@ -9741,6 +10222,8 @@ components:
           tool-call-start: "#/components/schemas/ChatToolCallStartEvent"
           tool-call-delta: "#/components/schemas/ChatToolCallDeltaEvent"
           tool-call-end: "#/components/schemas/ChatToolCallEndEvent"
+          citation-start: "#/components/schemas/CitationStartEvent"
+          citation-end: "#/components/schemas/CitationEndEvent"
           message-end: "#/components/schemas/ChatMessageEndEvent"
     SingleGeneration:
       type: object

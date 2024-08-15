@@ -3,7 +3,7 @@ import cohere
 co = cohere.Client("<<apiKey>>")
 
 # upload a dataset
-response = co.datasets.create(
+my_dataset = co.datasets.create(
     name="prompt-completion-dataset",
     data=open("./prompt-completion.jsonl", "rb"),
     type="prompt-completion-finetune-input",

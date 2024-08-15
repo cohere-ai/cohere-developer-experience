@@ -1,0 +1,143 @@
+---
+title: Text Classification
+description: "The document explains how to perform text classification using Cohere's classify endpoint, including setting up the SDK, preparing data, generating predictions, and fine-tuning the model for tasks like sentiment analysis."
+keywords: "text classification, Cohere, large language models, word embeddings"
+image: "../../assets/images/1cf1e77-cohere_meta_image.jpg"
+slug: /docs/text-classification-with-cohere
+---
+
+Among the most popular use cases for language embeddings is 'text classification,' in which different pieces of text -- blog posts, lyrics, poems, headlines, etc. -- are grouped based on their similarity, their sentiment, or some other property. 
+
+Here, we'll discuss how to perform simple text classification tasks with Cohere's `classify` endpoint, and provide links to more information on how to fine-tune this endpoint for more specialized work.
+
+## Few-Shot Classification with Cohere's `classify` Endpoint
+
+Generally, training a text classifier requires a tremendous amount of data. But with large language models, it's now possible to create so-called 'few shot' classification models able to perform well after seeing a far smaller number of samples. 
+
+In the next few sections, we'll create a sentiment analysis classifier to sort text into "positive," "negative," and "neutral" categories.
+
+### Setting up the SDK
+
+First, let's import the required tools and set up a Cohere client.
+
+```python PYTHON
+import cohere
+from cohere import ClassifyExample
+```
+
+```python PYTHON
+co = cohere.Client("COHERE_API_KEY") # Your Cohere API key
+```
+
+### Preparing the Data and Inputs
+
+With the `classify` endpoint, you can create a text classifier with as few as two examples per class, and each example **must** contain the text itself and the corresponding label (i.e. class). So, if you have two classes you need a minimum of four examples, if you have three classes you need a minimum of six examples, and so on.
+
+Here are examples, created as `ClassifyExample` objects:
+
+```python PYTHON
+examples = [ClassifyExample(text="I’m so proud of you", label="positive"), 
+            ClassifyExample(text="What a great time to be alive", label="positive"), 
+            ClassifyExample(text="That’s awesome work", label="positive"), 
+            ClassifyExample(text="The service was amazing", label="positive"), 
+            ClassifyExample(text="I love my family", label="positive"), 
+            ClassifyExample(text="They don't care about me", label="negative"), 
+            ClassifyExample(text="I hate this place", label="negative"), 
+            ClassifyExample(text="The most ridiculous thing I've ever heard", label="negative"), 
+            ClassifyExample(text="I am really frustrated", label="negative"), 
+            ClassifyExample(text="This is so unfair", label="negative"),
+            ClassifyExample(text="This made me think", label="neutral"), 
+            ClassifyExample(text="The good old days", label="neutral"), 
+            ClassifyExample(text="What's the difference", label="neutral"), 
+            ClassifyExample(text="You can't ignore this", label="neutral"), 
+            ClassifyExample(text="That's how I see it", label="neutral")]
+
+```
+
+Besides the examples, you'll also need the 'inputs,' which are the strings of text you want the classifier to sort. Here are the ones we'll be using:
+
+```python PYTHON
+inputs = ["Hello, world! What a beautiful day",
+          "It was a great time with great people",
+          "Great place to work",
+          "That was a wonderful evening",
+          "Maybe this is why",
+          "Let's start again",
+          "That's how I see it",
+          "These are all facts",
+          "This is the worst thing",
+          "I cannot stand this any longer",
+          "This is really annoying",
+          "I am just plain fed up"]
+```
+
+### Generate Predictions
+
+Setting up the model is quite straightforward with the `classify` endpoint. We'll use Cohere's `embed-english-v3.0` model, here's what that looks like:
+
+```python PYTHON
+def classify_text(inputs, examples):
+  
+    """
+    Classifies a list of input texts given the examples
+    Arguments:
+        model (str): identifier of the model
+        inputs (list[str]): a list of input texts to be classified
+        examples (list[Example]): a list of example texts and class labels
+    Returns:
+        classifications (list): each result contains the text, labels, and conf values
+    """
+    
+    # Classify text by calling the Classify endpoint
+    response = co.classify(
+        model='embed-english-v3.0',
+        inputs=inputs,
+        examples=examples)
+
+    classifications = response.classifications
+
+    return classifications
+
+# Classify the inputs
+predictions = classify_text(inputs, examples)
+
+print(predictions) 
+```
+
+Here’s a sample output returned (note that this output has been truncated to make it easier to read, you'll get much more in return if you run the code yourself):
+
+```
+[ClassifyResponseClassificationsItem(id='9df6628d-57b2-414c-837e-c8a22f00d3db',
+                                     input='hello, world! what a beautiful day',
+                                     prediction='positive',
+                                     predictions=['positive'],
+                                     confidence=0.40137812,
+                                     confidences=[0.40137812],
+                                     labels={'negative': ClassifyResponseClassificationsItemLabelsValue(confidence=0.23582731),
+                                             'neutral': ClassifyResponseClassificationsItemLabelsValue(confidence=0.36279458),
+                                             'positive': ClassifyResponseClassificationsItemLabelsValue(confidence=0.40137812)},
+                                     classification_type='single-label'),
+ ClassifyResponseClassificationsItem(id='ce2c3b0b-ce98-4905-9ef5-fc83c6848fc5',
+                                     input='it was a great time with great people',
+                                     prediction='positive',
+                                     predictions=['positive'],
+                                     confidence=0.49054274,
+                                     confidences=[0.49054274],
+                                     labels={'negative': ClassifyResponseClassificationsItemLabelsValue(confidence=0.19989403),
+                                             'neutral': ClassifyResponseClassificationsItemLabelsValue(confidence=0.30956325),
+                                             'positive': ClassifyResponseClassificationsItemLabelsValue(confidence=0.49054274)},
+                                     classification_type='single-label')
+ ....]
+```
+
+Most of this is pretty easy to understand, but there are a few things worth drawing attention to.
+
+Besides returning the predicted class in the `prediction` field, the endpoint also returns the `confidence` value of the prediction, which varies between 0 (unconfident) and 1 (completely confident). 
+
+Also, these confidence values are split among the classes; since we're using three, the confidence values for the "positive," "negative," and "neutral" classes must add up to a total of 1.
+
+Under the hood, the classifier selects the class with the highest confidence value as the “predicted class.” A high confidence value for the predicted class therefore indicates that the model is very confident of its prediction, and vice versa.
+
+#### What If I Need to Fine-Tune the `classify` endpoint?
+
+Cohere has [dedicated documentation](/docs/classify-fine-tuning) on fine-tuning the `classify` endpoint for bespoke tasks. You can also read this [blog post](https://cohere.com/blog/fine-tuning-for-classification), which works out a detailed example.

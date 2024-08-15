@@ -14,12 +14,14 @@ In an effort to make our language-model capabilities more widely available, we'v
 
 In this article, you learn how to use [Azure AI Studio](https://ai.azure.com/) to deploy both the Cohere Command models and the Cohere Embed models on Microsoft's Azure cloud computing platform.
 
-The following four models are available through Azure AI Studio with pay-as-you-go, token-based billing:
+The following six models are available through Azure AI Studio with pay-as-you-go, token-based billing:
 
 - Command R
 - Command R+
 - Embed v3 - English
 - Embed v3 - Multilingual
+- Cohere Rerank V3 (English)
+- Cohere Rerank V3 (multilingual)
 
 ## Prerequisites
 
@@ -30,10 +32,11 @@ Whether you're using Command or Embed, the initial set up is the same. You'll ne
 - An [Azure AI project](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-projects) in Azure AI Studio.
 - Azure role-based access controls (Azure RBAC) are used to grant access to operations in Azure AI Studio. To perform the required steps, your user account must be assigned the Azure AI Developer role on the resource group. For more information on permissions, see [Role-based access control in Azure AI Studio](https://learn.microsoft.com/en-us/azure/ai-studio/concepts/rbac-ai-studio).
 
-For Command- or Embed-based workflows, you'll also need to create a deployment and consume the model. Here are links for more information:
+For workflows based around Command, Embed, or Rerank, you'll also need to create a deployment and consume the model. Here are links for more information:
 
 - **Command:** [create a Command deployment](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-command#create-a-new-deployment) and then [consume the Command model](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-command#create-a-new-deployment).
 - **Embed:** [create an Embed deployment](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-embed#create-a-new-deployment) and [consume the Embed model](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-embed#consume-the-cohere-embed-models-as-a-service).
+- **Rerank**: [create a Rerank deployment](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-rerank) and [consume the Rerank model](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-rerank#consume-the-cohere-rerank-models-as-a-service).
 
 ## Text Generation
 
@@ -131,6 +134,65 @@ except urllib.error.HTTPError as error:
     # Print the headers - they include the requert ID and the timestamp, which are useful for debugging the failure
     print(error.info())
     print(error.read().decode("utf8", "ignore"))
+```
+
+## ReRank
+
+We currently exposes the `v1/rerank` endpoint for inference with both Rerank 3 - English and Rerank 3 - Multilingual. For more information on using the APIs, see the [reference](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-rerank#rerank-api-reference-for-cohere-rerank-models-deployed-as-a-service) section. 
+
+```python PYTHON
+import cohere
+
+co = cohere.Client(
+    base_url="https://<endpoint>.<region>.inference.ai.azure.com/v1",
+    api_key="<key>"
+)
+
+documents = [
+    {
+        "Title": "Incorrect Password",
+        "Content": "Hello, I have been trying to access my account for the past hour and it keeps saying my password is incorrect. Can you please help me?",
+    },
+    {
+        "Title": "Confirmation Email Missed",
+        "Content": "Hi, I recently purchased a product from your website but I never received a confirmation email. Can you please look into this for me?",
+    },
+    {
+        "Title": "Questions about Return Policy",
+        "Content": "Hello, I have a question about the return policy for this product. I purchased it a few weeks ago and it is defective.",
+    },
+    {
+        "Title": "Customer Support is Busy",
+        "Content": "Good morning, I have been trying to reach your customer support team for the past week but I keep getting a busy signal. Can you please help me?",
+    },
+    {
+        "Title": "Received Wrong Item",
+        "Content": "Hi, I have a question about my recent order. I received the wrong item and I need to return it.",
+    },
+    {
+        "Title": "Customer Service is Unavailable",
+        "Content": "Hello, I have been trying to reach your customer support team for the past hour but I keep getting a busy signal. Can you please help me?",
+    },
+    {
+        "Title": "Return Policy for Defective Product",
+        "Content": "Hi, I have a question about the return policy for this product. I purchased it a few weeks ago and it is defective.",
+    },
+    {
+        "Title": "Wrong Item Received",
+        "Content": "Good morning, I have a question about my recent order. I received the wrong item and I need to return it.",
+    },
+    {
+        "Title": "Return Defective Product",
+        "Content": "Hello, I have a question about the return policy for this product. I purchased it a few weeks ago and it is defective.",
+    },
+]
+
+response = co.rerank(
+    documents=documents,
+    query="What emails have been about returning items?",
+    rank_fields=["Title", "Content"],
+    top_n=5,
+)
 ```
 
 ## A Note on SDKs
