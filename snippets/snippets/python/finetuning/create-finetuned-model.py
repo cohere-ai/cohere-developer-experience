@@ -3,6 +3,7 @@ from cohere.finetuning import (
     FinetunedModel,
     Hyperparameters,
     Settings,
+    WandbConfig
 )
 import cohere
 
@@ -14,6 +15,11 @@ hp = Hyperparameters(
     train_epoch=1,
     learning_rate=0.01,
 )
+wnb_config = WandbConfig(
+    project="test-project",
+    api_key="<<wandbApiKey>>",
+    entity="test-entity",
+)
 finetuned_model = co.finetuning.create_finetuned_model(
     request=FinetunedModel(
         name="test-finetuned-model",
@@ -23,7 +29,8 @@ finetuned_model = co.finetuning.create_finetuned_model(
             ),
             dataset_id="my-dataset-id",
             hyperparameters=hp,
+            wandb=wnb_config,
         ),
     )
 )
-print(response)
+print(finetuned_model)
