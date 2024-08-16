@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -21,6 +25,11 @@ jobs:
       - name: Install Dependencies
         shell: bash
         run: pnpm install
+
+      - name: Run fern check
+        env:
+          FERN_TOKEN: ${{ secrets.FERN_TOKEN }}
+        run: pnpm run docs:check
 
       - name: Generate preview URL
         id: generate-docs
