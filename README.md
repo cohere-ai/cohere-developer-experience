@@ -2,7 +2,7 @@
 
 # Cohere Developer Experience
 
-At Cohere we aim to maximise developer productivity by meeting developers at their existing workflows: whether you want to use our model on our platform or on an external cloud platform, our aim is to provide the best experience available.
+At Cohere we aim to maximize developer productivity by meeting developers at their existing workflows: whether you want to use our model on our platform or on an external cloud platform, our aim is to provide the best experience available.
 
 This repository is a one-stop-shop for Cohere developer experience. Here you can find docs, snippets, api specs and more to help you develop on the Cohere platform, or on AWS, Azure, OCI, or cohere-toolkit.
 
