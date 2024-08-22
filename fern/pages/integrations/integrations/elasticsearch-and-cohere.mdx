@@ -135,6 +135,13 @@ client.inference.put(
 )
 ```
 
+Here's what you might see:
+
+```
+Enter Cohere API key:  ··········
+ObjectApiResponse({'model_id': 'cohere_embeddings', 'inference_id': 'cohere_embeddings', 'task_type': 'text_embedding', 'service': 'cohere', 'service_settings': {'similarity': 'cosine', 'dimensions': 1024, 'model_id': 'embed-english-v3.0', 'rate_limit': {'requests_per_minute': 10000}, 'embedding_type': 'byte'}, 'task_settings': {}})
+```
+
 ## Create the Index
 
 The mapping of the destination index – the index that contains the embeddings that the model will generate based on your input text – must be created. The destination index must have a field with the [`semantic_text`](https://www.google.com/url?q=https%3A%2F%2Fwww.elastic.co%2Fguide%2Fen%2Felasticsearch%2Freference%2Fcurrent%2Fsemantic-text.html) field type to index the output of the Cohere model.
@@ -164,13 +171,19 @@ client.indices.create(
 )
 ```
 
+You might see something like this:
+
+```
+ObjectApiResponse({'acknowledged': True, 'shards_acknowledged': True, 'index': 'cohere-wiki-embeddings'})
+```
+
 Let's note a few important parameters from that API call:
 
 - `semantic_text`: A field type automatically generates embeddings for text content using an inference endpoint.
 - `inference_id`: Specifies the ID of the inference endpoint to be used. In this example, the model ID is set to cohere_embeddings.
 - `copy_to`: Specifies the output field which contains inference results
 
-## Inselt Documents
+## Insert Documents
 
 Let's insert our example wiki dataset. You need a production Cohere account to complete this step, otherwise the documentation ingest will time out due to the API request rate limits.
 
@@ -195,6 +208,12 @@ for line in jsonl_data:
 helpers.bulk(client, documents)
 
 print("Done indexing documents into `cohere-wiki-embeddings` index!")
+```
+
+You should see this:
+
+```
+Done indexing documents into `cohere-wiki-embeddings` index!
 ```
 
 ## Semantic Search
