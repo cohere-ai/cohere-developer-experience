@@ -6062,14 +6062,12 @@ paths:
         - code-samples:
             - sdk: typescript
               name: Documents
-              code: >
+              code: |
                 const { CohereClientV2 } = require('cohere-ai');
-
 
                 const cohere = new CohereClientV2({
                   token: '<<apiKey>>',
                 });
-
 
                 (async () => {
                   const response = await cohere.chat({
@@ -6077,10 +6075,8 @@ paths:
                     messages: [
                       {
                         role: 'user',
-                        content: [
-                          { type: 'document', id: '1', document: { text: 'Cohere is the best!' } },
-                          { type: 'text', text: "Who's the best?" },
-                        ],
+                        content: [{ type: 'text', text: "Who's the best?" }],
+                        documents: [{ id: '1', text: 'Cohere is the best!' }],
                       },
                     ],
                   });
@@ -6089,26 +6085,25 @@ paths:
                 })();
             - sdk: python
               name: Documents
-              code: |
+              code: >
                 import cohere
 
+
                 co = cohere.ClientV2("<<apiKey>>")
+
 
                 response = co.chat(
                     model="command-r-plus",
                     messages=[
                         cohere.v2.ChatMessage2_User(
                             content=[
-                                cohere.v2.DocumentContent(
-                                    id=1,
-                                    document={'title': 'The best',
-                                              'text': 'Cohere is the best!'}
-                                ),
                                 cohere.v2.TextContent(text="Who's the best?"),
-                            ]
+                            ],
+                            documents=[{'id': '1', 'title': 'The best', 'text': 'Cohere is the best!'}]
                         )
                     ]
                 )
+
 
                 print(response)
         - code-samples:
@@ -15938,40 +15933,16 @@ components:
                   propertyName: type
                   mapping:
                     text: "#/components/schemas/TextContent"
-    DocumentContent:
-      x-fern-sdk-group-name: v2
-      type: object
-      description: Content block of the message that contains information about documents.
-      required:
-        - type
-        - document
-      properties:
-        type:
-          type: string
-          enum:
-            - text_document
-        id:
-          type: string
-        document:
-          description: |
-            Relevant information that could be used by the model to generate a more accurate reply.
-            The contents of each document are generally short (under 300 words), and are passed in the form of a
-            dictionary of strings or a single string. If a single string is passed, it will be treated as the value for key "content".
-          oneOf:
-            - type: object
-            - type: string
     Content:
       x-fern-sdk-group-name: v2
       description: A Content block which contains information about the content type
         and the content itself.
       oneOf:
         - $ref: "#/components/schemas/TextContent"
-        - $ref: "#/components/schemas/DocumentContent"
       discriminator:
         propertyName: type
         mapping:
           text: "#/components/schemas/TextContent"
-          document: "#/components/schemas/DocumentContent"
     UserMessage:
       x-fern-sdk-group-name: v2
       type: object
@@ -15993,6 +15964,14 @@ components:
             - type: array
               items:
                 $ref: "#/components/schemas/Content"
+        documents:
+          type: array
+          x-fern-audiences:
+            - public
+          minItems: 0
+          description: Documents seen by the model when generating the reply.
+          items:
+            $ref: "#/components/schemas/ChatDocument"
     ToolContent:
       x-fern-sdk-group-name: v2
       type: object
