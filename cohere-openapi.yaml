@@ -5872,6 +5872,8 @@ paths:
               citation-start: "#/components/schemas/CitationStartEvent"
               citation-end: "#/components/schemas/CitationEndEvent"
               message-end: "#/components/schemas/ChatMessageEndEvent"
+      description: |
+        Generates a message from the model in response to a provided conversation. To learn how to use the Chat API with Streaming and RAG follow our Text Generation guides.
       requestBody:
         content:
           application/json:
@@ -5883,7 +5885,11 @@ paths:
               properties:
                 model:
                   type: string
-                  description: The model to use for the chat.
+                  description: The name of a compatible [Cohere
+                    model](https://docs.cohere.com/docs/models) (such as
+                    command-r or command-r-plus) or the ID of a
+                    [fine-tuned](https://docs.cohere.com/docs/chat-fine-tuning)
+                    model.
                 messages:
                   $ref: "#/components/schemas/ChatMessages"
                 tools:
@@ -6032,9 +6038,10 @@ paths:
                 response = co.chat(
                     model="command-r-plus",
                     messages=[
-                        cohere.v2.ChatMessage2_User(
-                            content="hello world!"
-                        )
+                        {
+                            "role": "user",
+                            "content": "hello world!"
+                        }
                     ]
                 )
 
@@ -6097,12 +6104,11 @@ paths:
                 response = co.chat(
                     model="command-r-plus",
                     messages=[
-                        cohere.v2.ChatMessage2_User(
-                            content=[
-                                cohere.v2.TextContent(text="Who's the best?"),
-                            ],
-                            documents=[{'id': '1', 'title': 'The best', 'text': 'Cohere is the best!'}]
-                        )
+                        {
+                            "role": "user",
+                            "content": "Who's the best?",
+                            "documents": [{'id': '1', 'title': 'The best', 'text': 'Cohere is the best!'}]
+                        }
                     ]
                 )
 
@@ -6145,9 +6151,10 @@ paths:
                 response = co.chat_stream(
                     model="command-r-plus",
                     messages=[
-                        cohere.v2.ChatMessage2_User(
-                            content="hello world!"
-                        )
+                        {
+                            "role": "user",
+                            "content": "hello world!"
+                        }
                     ]
                 )
 
@@ -6248,9 +6255,10 @@ paths:
                         })
                     ],
                     messages=[
-                        cohere.v2.ChatMessage2_User(
-                            content="Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
-                        )
+                        {
+                            "role": "user",
+                            "content":"Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
+                        }
                     ]
                 )
 
@@ -16035,7 +16043,10 @@ components:
     ChatMessages:
       x-fern-sdk-group-name: v2
       type: array
-      description: A list of chat messages representing the list chat message turns.
+      description: |
+        A list of chat messages in chronological order, representing a conversation between the user and the model.
+
+        Messages can be from `User`, `Assistant`, `Tool` and `System` roles. Learn more about messages and roles in [the Chat API guide](https://docs.cohere.com/docs/chat-api).
       items:
         $ref: "#/components/schemas/ChatMessage-2"
     Tool-2:
