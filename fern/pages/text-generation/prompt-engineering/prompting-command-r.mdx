@@ -17,7 +17,7 @@ The easiest way to make sure your prompts will work well with Command R is to us
 
 ## Structured Prompts for RAG
 
-Before going into detail on the different components of the prompt and how they fit together, let’s start by looking at a fully rendered prompt. Let’s take an example of using Command R for a simple RAG use case where we are given a user query like: What’s the biggest penguin in the world?
+Before going into detail on the different components of the prompt and how they fit together, let’s start by looking at a fully rendered prompt. Let’s take an example of using Command R for a simple RAG use case where we are given a user query like: <span class="orange-text">What’s the biggest penguin in the world?</span>
 
 To solve this problem, we will use the model to perform the two steps of RAG:
 
@@ -26,63 +26,70 @@ To solve this problem, we will use the model to perform the two steps of RAG:
 
 ### Fully Rendered Default Tool-use Prompt
 
-Let’s start with retrieval, where the model will make calls to an internet_search tool to collect relevant documents needed to answer the user’s question. To enable that, we will create a rendered tool use prompt that will give the model access to two tools:
+Let’s start with retrieval, where the model will make calls to an <span class="quartz-text ">internet_search</span> tool to collect relevant documents needed to answer the user’s question. To enable that, we will create a rendered tool use prompt that will give the model access to two tools:
 
-- def internet_search(query: str)
-- def directly_answer()
+- <span class="quartz-text">def internet_search(query: str)</span>
+- <span class="quartz-text">def directly_answer()</span>
 
 Let's take a look at what this fully rendered prompt would look like using our default settings.
 
-Note that you could get the same result if you were using the HuggingFace Tokenizer’s apply_tool_use_template and setting the conversation and tools parameters.
+Note that you could get the same result if you were using the HuggingFace Tokenizer’s <span class="blue-text">apply_tool_use_template</span> and setting the <span class="orange-text">conversation</span> and <span class="quartz-text">tools</span> parameters.
 
 > tool_use_prompt =
 >
-> """\<BOS_TOKEN>\<|START_OF_TURN_TOKEN|>\<|SYSTEM_TOKEN|> \# Safety Preamble    
-> The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral.
+> """<span class="dark-blue-text ">\<BOS_TOKEN> </span><span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|> </span><span class="red-text"># Safety Preamble</span>    
+> <span class="red-text ">The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral.</span>
 >
-> \# System Preamble  
-> \## Basic Rules   
-> You are a powerful conversational AI trained by Cohere to help people. You are augmented by a number of tools, and your job is to use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see a specific instruction instructing you what kind of response to generate. When you answer the user's requests, you cite your sources in your answers, according to those instructions. 
+> <span class="dark-green-text"># System Preamble</span>    
+> <span class="green-text">## Basic Rules</span>     
+> <span class="green-text">You are a powerful conversational AI trained by Cohere to help people. You are augmented by a number of tools, and your job is to use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see a specific instruction instructing you what kind of response to generate. When you answer the user's requests, you cite your sources in your answers, according to those instructions. </span>
 >
-> \# User Preamble  
-> \## Task and Context   
-> You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.
+> <span class="dark-purple-text"># User Preamble</span>     
+> <span class="purple-text">## Task and Context</span>     
+> <span class="purple-text">You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.</span>
 >
-> \## Style Guide  
-> Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.
+> <span class="dark-sangria-text">## Style Guide</span>      
+> <span class="dark-sangria-text">Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.</span>
 >
-> \## Available Tools  
-> Here is a list of tools that you have available to you:  
-> ```python PYTHON
+> <span class="magenta-text">## Available Tools</span>    
+> <span class="magenta-text">Here is a list of tools that you have available to you:</span>
+>
+> <pre><span class="magenta-text">
+> \`\`\`python PYTHON
 > def internet_search(query: str) -> List[Dict]:
->      """Returns a list of relevant document snippets for a textual query retrieved from the internet
->      Args:
->          query (str): Query to search the internet with
->      """
->      pass
-> ```
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"""Returns a list of relevant document snippets for a textual query retrieved from the internet
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Args:
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;query (str): Query to search the internet with
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"""
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pass
+> \`\`\`
+> </span></pre>
 >
-> ```python PYTHON
+> <pre><span class="magenta-text">
+> \`\`\`python PYTHON
 > def directly_answer() -> List[Dict]:
->     """Calls a standard (un-augmented) AI chatbot to generate a response given the conversation history
->     """
->     pass
-> ```
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"""Calls a standard (un-augmented) AI chatbot to generate a response given the conversation history
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"""
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pass
+> \`\`\`
+> </span></pre>
 >
-> \<|END_OF_TURN_TOKEN|> \<|START_OF_TURN_TOKEN|>\<|USER_TOKEN|> What's the biggest penguin in the world?\<|END_OF_TURN_TOKEN|>   
-> \<|START_OF_TURN_TOKEN|>\<|SYSTEM_TOKEN|>    
-> Write 'Action:' followed by a json-formatted list of actions that you want to perform in order to produce a good response to the user's last input. You can use any of the supplied tools any number of times, but you should aim to execute the minimum number of necessary actions for the input. You should use the \`directly-answer\` tool if calling the other tools is unnecessary. The list of actions you want to call should be formatted as a list of json objects, for example:
+> <span class="brown-text ">\<|END_OF_TURN_TOKEN|> \<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|USER_TOKEN|></span>  
+> <span class="orange-text "> What's the biggest penguin in the world?</span><span class="brown-text ">\<|END_OF_TURN_TOKEN|> \<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|></span>       
+> <span class="magenta-text">Write 'Action:' followed by a json-formatted list of actions that you want to perform in order to produce a good response to the user's last input. You can use any of the supplied tools any number of times, but you should aim to execute the minimum number of necessary actions for the input. You should use the \`directly-answer\` tool if calling the other tools is unnecessary. The list of actions you want to call should be formatted as a list of json objects, for example:</span>
 >
-> ```json JSON
-> [
->     {
->         "tool_name": title of the tool in the specification,
->         "parameters": a dict of parameters to input into the tool as they are defined in the specs, or {} if it takes no parameters
->     }
-> ]
-> ```
+> <pre><span class="magenta-text">
+> \`\`\`json JSON
+> \[
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\{
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"tool_name": title of the tool in the specification,
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"parameters": a dict of parameters to input into the tool as they are defined in the specs, or {} if it takes no parameters
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\}
+> \]
+> \`\`\`
+> </span></pre>
 >
-> \<|END_OF_TURN_TOKEN|>"""
+> <span class="brown-text">\<|END_OF_TURN_TOKEN|></span>"""
 
 ### Structured Prompt Templates
 
@@ -90,52 +97,57 @@ The fully rendered prompt above contains a lot of information but it is actually
 
 > tool_prompt_template =
 >
-> """\<BOS_TOKEN> \<|START_OF_TURN_TOKEN|>  
-> \<|SYSTEM_TOKEN|> \# Safety Preamble   
-> \{SAFETY_PREAMBLE}
+> """<span class="dark-blue-text ">\<BOS_TOKEN> </span><span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">
+> \<|SYSTEM_TOKEN|> </span><span class="red-text"># Safety Preamble</span>      
+> <span class="red-text">\{SAFETY_PREAMBLE}</span>
 >
-> \# System Preamble  
-> \## Basic Rules   
-> \{BASIC_RULES}
+> <br />
 >
-> \# User Preamble  
-> \## Task and Context    
-> \{TASK_CONTEXT}
+> <span class="dark-green-text"># System Preamble</span>   
+>  
+> <span class="green-text">## Basic Rules</span>      
+> <span class="green-text">\{BASIC_RULES} </span>  
+> 
 >
-> \## Style Guide  
-> \{STYLE_GUIDE}
+> <span class="dark-purple-text"># User Preamble</span>      
 >
-> \## Available Tools    
-> \{TOOLS}
->   
-> \<|END_OF_TURN_TOKEN|>  \{CHAT_HISTORY} \<|START_OF_TURN_TOKEN|>   
-> \<|SYSTEM_TOKEN|> \{INSTRUCTIONS}\<|END_OF_TURN_TOKEN|>"""
+> <span class="purple-text">## Task and Context</span>     
+> <span class="purple-text">\{TASK_CONTEXT}</span>
+>
+> 
+> <span class="dark-sangria-text">## Style Guide</span>     
+> <span class="dark-sangria-text">\{STYLE_GUIDE}</span>
+>
+> 
+> <span class="magenta-text">## Available Tools</span>
+>
+> <span class="magenta-text">\{TOOLS}</span>      
+> <span class="brown-text ">\<|END_OF_TURN_TOKEN|></span> <span class="orange-text "> \{CHAT_HISTORY} </span><span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|></span> <span class="magenta-text">\{INSTRUCTIONS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span>"""
 
-We can see that the prompt is set up in a structured way where we have sections for things like the basic rules we want the model to follow, the task we want it to solve, and the style in which it should write its output in.
+We can see that the prompt is set up in a structured way where we have sections for things like the <span class="green-text ">basic rules</span> we want the model to follow, the <span class="purple-text">task</span> we want it to solve, and the <span class="magenta-text">style</span> in which it should write its output in.
 
 We will take a closer look at these sections later but first lets see how the template changes when we shift from tool use to the second stage of RAG: augmented generation.
 
 > augmented_gen_prompt_template =
 >
-> """\<BOS_TOKEN> \<|START_OF_TURN_TOKEN|>\<|SYSTEM_TOKEN|> \# Safety Preamble   
-> \{SAFETY_PREAMBLE}
+> """<span class="dark-blue-text ">\<BOS_TOKEN> </span><span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|> </span><span class="red-text"># Safety Preamble</span>       
+> <span class="red-text">\{SAFETY_PREAMBLE}</span>
 >
-> \# System Preamble   
-> \## Basic Rules  
-> \{BASIC_RULES} 
+> <span class="dark-green-text"># System Preamble</span>     
+> <span class="green-text">## Basic Rules</span>    
+> <span class="green-text">\{BASIC_RULES} </span>  
 >
-> \# User Preamble    
-> \## Task and Context    
-> \{TASK_CONTEXT}
+> <span class="dark-purple-text"># User Preamble</span>      
+> <span class="purple-text">## Task and Context</span>   
+> <span class="purple-text">\{TASK_CONTEXT}</span>  
 >
-> \## Style Guide    
-> \{STYLE_GUIDE}
+> <span class="dark-sangria-text">## Style Guide</span>      
+> <span class="dark-sangria-text">\{STYLE_GUIDE}</span>
 >
->  
 >
-> \<|END_OF_TURN_TOKEN|>  \{CHAT_HISTORY} \<|START_OF_TURN_TOKEN|> \<|SYSTEM_TOKEN|> \{TOOL_OUTPUTS}\<|START_OF_TURN_TOKEN|>\<|SYSTEM_TOKEN|> \{INSTRUCTIONS}\<|END_OF_TURN_TOKEN|>"""
+> <span class="brown-text">\<|END_OF_TURN_TOKEN|></span> <span class="orange-text"> \{CHAT_HISTORY} </span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="brown-text">\{TOOL_OUTPUTS} \<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span> <span class="magenta-text">\{INSTRUCTIONS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span>"""
 
-Here we can see that the overall structure of the template is very similar between tool use and augmented generation. There are, however, two spots that differ which are highlighted. The first is that we have removed the tool definitions which come after the style guide (you can see that there's no longer an ## Available Tools section), and the second is that we’ve added the TOOL_OUTPUTS retrieved from search after the chat history.
+Here we can see that the overall structure of the template is very similar between tool use and augmented generation. There are, however, two spots that differ which are highlighted. The first is that we have removed the tool definitions which come after the style guide (you can see that there's no longer an <span class="magenta-text">## Available Tools</span> section), and the second is that we’ve added the TOOL_OUTPUTS retrieved from search after the chat history.
 
 ## Formatting Chat History and Tool Outputs
 
@@ -143,30 +155,31 @@ For our augmented generation call we will need to render both our chat history a
 
 ### Chat History
 
-The rendered chat history is quite simple and the only thing to note is that each turn of the conversation should begin with a \<|START_OF_TURN_TOKEN|> followed by one of \<|USER_TOKEN|>, \<|CHATBOT_TOKEN|>, or \<|SYSTEM_TOKEN|> (depending on the role of the speaker), and finally \<|END_OF_TURN_TOKEN|>.
+The rendered chat history is quite simple and the only thing to note is that each turn of the conversation should begin with a <span class="brown-text ">\<|START_OF_TURN_TOKEN|></span> followed by one of <span class="dark-orange-text ">\<|USER_TOKEN|></span>, <span class="dark-orange-text ">\<|CHATBOT_TOKEN|></span>, or <span class="dark-orange-text ">\<|SYSTEM_TOKEN|> </span>(depending on the role of the speaker), and finally <span class="brown-text ">\<|END_OF_TURN_TOKEN|></span>.
 
-> rendered_chat_history =
+> <span class="orange-text ">rendered_chat_history</span> =
 >
-> """\<|END_OF_TURN_TOKEN|> \<|START_OF_TURN_TOKEN|>\<|USER_TOKEN|> What's the biggest penguin in the world? \<|END_OF_TURN_TOKEN|>"""
+> 
+> """<span class="brown-text ">\<|END_OF_TURN_TOKEN|></span> <span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="brown-text "><span class="dark-orange-text ">\<|USER_TOKEN|></span><span class="orange-text "> What's the biggest penguin in the world? </span>\<|END_OF_TURN_TOKEN|></span>"""
 
 ### Tool outputs
 
-The tool outputs should be wrapped in a \<|START_OF_TURN_TOKEN|>\<|SYSTEM_TOKEN|>\<results> \{TOOL_OUTPUTS}\<|END_OF_TURN_TOKEN|> and look something like:
+The tool outputs should be wrapped in a <span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text ">\<results> \{TOOL_OUTPUTS}</span><span class="brown-text ">\<|END_OF_TURN_TOKEN|></span> and look something like:
 
-> rendered_tool_outputs =
+> <span class="dark-red-text ">rendered_tool_outputs</span> =
 >
-> """\<|START_OF_TURN_TOKEN|>\<|SYSTEM_TOKEN|>  
-> \<results>  
-> Document: 0  
-> Tall penguins  
-> Emperor penguins are the tallest growing up to 122 cm in height.\*\*
+> """<span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span>  
+> <span class="dark-red-text">\<results></span>    
+> <span class="dark-red-text">Document: 0</span>     
+> <span class="dark-red-text">Tall penguins</span>     
+> <span class="dark-red-text">Emperor penguins are the tallest growing up to 122 cm in height.</span>\*\*   
 >
-> Document: 1  
-> Penguin habitats  
-> Emperor penguins only live in Antarctica.  
-> \</results\>\<|END_OF_TURN_TOKEN|>"""
+> <span class="dark-red-text">Document: 1</span>     
+> <span class="dark-red-text">Penguin habitats</span>     
+> <span class="dark-red-text">Emperor penguins only live in Antarctica.</span>     
+> <span class="dark-red-text">\</results></span><span class="brown-text ">\<|END_OF_TURN_TOKEN|></span>"""
 
-Each tool output should start with Document: \{n} and should be an ascending list of integers starting at 0. You can put all kinds of different things as a tool output. In our example, the tool outputs are simple key-value string-string pairs. In general keys should be relatively short descriptive strings, but values can have a lot of variety - e.g. markdown tables or json.
+Each tool output should start with <span class="dark-red-text ">Document: \{n}</span> and should be an ascending list of integers starting at 0. You can put all kinds of different things as a tool output. In our example, the tool outputs are simple key-value string-string pairs. In general keys should be relatively short descriptive strings, but values can have a lot of variety - e.g. markdown tables or json.
 
 ## Changing sections of the Prompt
 
@@ -178,84 +191,84 @@ Next let’s go into a bit more detail about the different components and sectio
 
 #### Special Tokens
 
-- `<BOS_TOKEN>`: This is a special token used by Command R models to signify the beginning of a prompt. When using raw_prompting, you should always start with this token.
-- `<|START_OF_TURN_TOKEN|>`: This special token is used at the beginning of something said by either the USER, SYSTEM, or CHATBOT.
-- `<|USER_TOKEN|>`: This should immediately follow `<START_OF_TURN_TOKEN>` and signifies that the following output is meant to be from the user such as a query.
-- `<|SYSTEM_TOKEN|>`: Same as the `USER` token but indicating some system instruction.
-- `<|CHATBOT_TOKEN|>`: same as `USER` and `SYSTEM` token but indicating a chatbot output.
-- `<|END_OF_TURN_TOKEN|>`: This will immediately follow the content of a `USER`, `CHATBOT`, or `SYSTEM` turn.
+- <span class="dark-blue-text ">`<BOS_TOKEN>`: This is a special token used by Command R models to signify the beginning of a prompt. When using raw_prompting, you should always start with this token.</span>
+- <span class="brown-text ">`<|START_OF_TURN_TOKEN|>`: This special token is used at the beginning of something said by either the USER, SYSTEM, or CHATBOT.</span>
+- <span class="dark-orange-text ">`<|USER_TOKEN|>`: This should immediately follow `<START_OF_TURN_TOKEN>` and signifies that the following output is meant to be from the user such as a query.</span>
+- <span class="dark-orange-text ">`<|SYSTEM_TOKEN|>`: Same as the `USER` token but indicating some system instruction.</span>
+- <span class="dark-orange-text ">`<|CHATBOT_TOKEN|>`: same as `USER` and `SYSTEM` token but indicating a chatbot output.</span>
+- <span class="brown-text ">`<|END_OF_TURN_TOKEN|>`: This will immediately follow the content of a `USER`, `CHATBOT`, or `SYSTEM` turn.</span>
 
 #### Preamble Sections
 
-> \# Safety Preamble: This will outline the safety instructions to the model to instruct it not to produce harmful outputs.   
+> <span class="dark-red-text "># Safety Preamble: This will outline the safety instructions to the model to instruct it not to produce harmful outputs.</span>
 >
-> \# System Preamble: System specified rules.    
-> \## Basic Rules: This outlines how the model should behave in general.
+> <span class="dark-green-text "># System Preamble: System specified rules.</span>     
+> <span class="green-text ">## Basic Rules: This outlines how the model should behave in general.</span>
 >
-> \# User Preamble: User specified rules.    
-> \## Task and Context: Here we outline the specific task it is that we want the model to solve and any additional required context.
+> <span class="dark-purple-text"># User Preamble: User specified rules.</span>      
+> <span class="purple-text">## Task and Context: Here we outline the specific task it is that we want the model to solve and any additional required context.</span>
 >
-> \## Style Guide: Here we tell the model what the output should look like for example ‘respond in full sentences’ or ‘respond like a pirate’.
+> <span class="dark-sangria-text">## Style Guide: Here we tell the model what the output should look like for example ‘respond in full sentences’ or ‘respond like a pirate’.</span>    
 >
-> \## Available Tools: If applicable, this will contain definitions of the tools available to the model to use.   
+> <span class="dark-magenta-text">## Available Tools: If applicable, this will contain definitions of the tools available to the model to use.</span>    
 >
-> \{CHAT_HISTORY}: This will contain the current dialogue so far and include user queries plus any responses from the model. 
+> <span class="orange-text">\{CHAT_HISTORY}: This will contain the current dialogue so far and include user queries plus any responses from the model. </span>     
 >
-> \{TOOL_OUTPUTS}: This is where we would add any rendered tool outputs, such as returned documents from a search. 
+> <span class="bloody-red-text">\{TOOL_OUTPUTS}: This is where we would add any rendered tool outputs, such as returned documents from a search.</span>      
 >
-> \{INSTRUCTIONS}: These are the specific instructions that the model should follow when producing its output. For example, we could tell the model that it should produce a tool function call in a particular format, or for augmented generation, we could tell the model to generate an answer along with citations. 
+> <span class="dark-pink-text">\{INSTRUCTIONS}: These are the specific instructions that the model should follow when producing its output. For example, we could tell the model that it should produce a tool function call in a particular format, or for augmented generation, we could tell the model to generate an answer along with citations.</span> 
 
 Now that we’ve looked at a high level of the structured prompt and what each of the sections mean, let's see how we can change the content of different sections to get the model to do different things.
 
 ### Changing the Output Format: Citation Style
 
-The default instructions for augmented generation (such as in the HuggingFace Tokenizer) uses the following INSTRUCTIONS:
+The default instructions for augmented generation (such as in the HuggingFace Tokenizer) uses the following <span class="dark-pink-text">INSTRUCTIONS</span>:
 
-> AUGMENTED_GENERATION_DEFAULT_INSTRUCTIONS =
+> <span class="dark-pink-text ">AUGMENTED_GENERATION_DEFAULT_INSTRUCTIONS</span> =
 >
-> "Carefully perform the following instructions, in order, starting each with a new line.  
-> Firstly, Decide which of the retrieved documents are relevant to the user's last input by writing 'Relevant Documents:' followed by comma-separated list of document numbers. If none are relevant, you should instead write 'None'.  
-> Secondly, Decide which of the retrieved documents contain facts that should be cited in a good answer to the user's last input by writing 'Cited Documents:' followed a comma-separated list of document numbers. If you dont want to cite any of them, you should instead write 'None'.  
-> Thirdly, Write 'Answer:' followed by a response to the user's last input in high quality natural english. Use the retrieved documents to help you. Do not insert any citations or grounding markup.  
-> Finally, Write 'Grounded answer:' followed by a response to the user's last input in high quality natural english. Use the symbols \<co: doc> and \</co: doc> to indicate when a fact comes from a document in the search result, e.g \<co: 0>my fact\</co: 0> for a fact from document 0."  
+> <span class="extra-green">"Carefully perform the following instructions, in order, starting each with a new line.    
+> Firstly, Decide which of the retrieved documents are relevant to the user's last input by writing 'Relevant Documents:' followed by comma-separated list of document numbers. If none are relevant, you should instead write 'None'.    
+> Secondly, Decide which of the retrieved documents contain facts that should be cited in a good answer to the user's last input by writing 'Cited Documents:' followed a comma-separated list of document numbers. If you dont want to cite any of them, you should instead write 'None'.     
+> Thirdly, Write 'Answer:' followed by a response to the user's last input in high quality natural english. Use the retrieved documents to help you. Do not insert any citations or grounding markup.     
+> Finally, Write 'Grounded answer:' followed by a response to the user's last input in high quality natural english. Use the symbols \<co: doc> and \</co: doc> to indicate when a fact comes from a document in the search result, e.g \<co: 0>my fact\</co: 0> for a fact from document 0."</span>
 
 This default instruction will tell the model to generate four things:
 
 1. A list of docs relevant to the query.
 2. A list of docs that will be cited in the answer.
 3. A plain text answer to the question
-4. A grounded answer which includes citations with the format `<co: 0>my fact</co: 0>`.
+4. A grounded answer which includes citations with the format <span class="grass-green-text">`<co: 0>my fact</co: 0>`</span>.
 
 This will lead the model to produce an output like:
 
-> Relevant Documents: 0,1  
-> Cited Documents: 0,1  
-> Answer: The Emperor Penguin is the tallest or biggest penguin in the world. It is a bird that lives only in Antarctica and grows to a height of around 122 centimetres.  
-> Grounded answer: The \<co: 0>Emperor Penguin\</co: 0> is the \<co: 0>tallest\</co: 0> or biggest penguin in the world. It is a bird that \<co: 1>lives only in Antarctica\</co: 1> and \<co: 0>grows to a height of around 122 centimetres.\</co: 0>  
+> <span class="extra-green">Relevant Documents: 0,1
+> Cited Documents: 0,1
+> Answer: The Emperor Penguin is the tallest or biggest penguin in the world. It is a bird that lives only in Antarctica and grows to a height of around 122 centimetres.
+> Grounded answer: The \<co: 0>Emperor Penguin\</co: 0> is the \<co: 0>tallest\</co: 0> or biggest penguin in the world. It is a bird that \<co: 1>lives only in Antarctica\</co: 1> and \<co: 0>grows to a height of around 122 centimetres.\</co: 0></span>
 
 We can easily change the output format of the model by modifying the instruction in our prompt. Let’s get rid of the relevant and cited doc outputs as well as the raw answer. For the remaining grounded answer, let’s change the citation format to be brackets.
 
-> MODIFIED_AUGMENTED_GENERATION_INSTRUCTIONS =  
+> <span class="dark-pink-text ">MODIFIED_AUGMENTED_GENERATION_INSTRUCTIONS</span> =    
 >
-> "Carefully perform the following instructions, in order, starting each with a new line.  
-> Write 'Grounded answer:' followed by a response to the user's last input in high quality natural english. Use the symbol [doc] to indicate when a fact comes from a document in the search result, e.g my fact [0] for a fact from document 0."  
+> <span class="extra-green">"Carefully perform the following instructions, in order, starting each with a new line.
+> Write 'Grounded answer:' followed by a response to the user's last input in high quality natural english. Use the symbol [doc] to indicate when a fact comes from a document in the search result, e.g my fact [0] for a fact from document 0."</span>
 
 This will have the model output something like this:
 
-> Grounded answer: The Emperor Penguin[0] is the tallest[0] or biggest penguin in the world. It is a bird that lives only in Antarctica[1] and grows to a height of around 122 centimetres.[0]
+> <span class="extra-green">Grounded answer: The Emperor Penguin[0] is the tallest[0] or biggest penguin in the world. It is a bird that lives only in Antarctica[1] and grows to a height of around 122 centimetres.[0]</span>
 
 ### Changing the Style
 
-In addition to changing the format of the output, we can also easily change the style by modifying the STYLE_GUIDE.
+In addition to changing the format of the output, we can also easily change the style by modifying the <span class="dark-sangria-text">STYLE_GUIDE</span>.
 
-> MODIFIED_STYLE_GUIDE =
+> <span class="dark-sangria-text ">MODIFIED_STYLE_GUIDE</span> =   
 >
-> """## Style Guide  
-> Answer in the style of David Attenborough."""
+> <span class="extra-green">“””## Style Guide
+> Answer in the style of David Attenborough.”””</span>
 
 Which will have the model instead produce this majestic response:
 
-> Grounded answer: And here, emerging from the icy waters, is the majestic emperor penguin, the largest species of its kind. Growing to an impressive height of 122 centimeters[0], these majestic birds rule the Antarctic[1] oceans. Their imposing stature and proud demeanor make them a sight to behold.
+> <span class="extra-green">Grounded answer: And here, emerging from the icy waters, is the majestic emperor penguin, the largest species of its kind. Growing to an impressive height of 122 centimeters[0], these majestic birds rule the Antarctic[1] oceans. Their imposing stature and proud demeanor make them a sight to behold.</span>
 
 Inspiring.
 
@@ -265,48 +278,53 @@ Grounded summarization is very similar to augmented generation; in both settings
 
 In grounded summarization, as the name implies, we instead want to create a summary of those documents. Additionally, unlike a set of search results, the order of the document chunks that the model receives actually matters.
 
-Starting from our augmented generation prompt, we can improve it a bit by changing the TASK_CONTEXT to better fit what we want the model to do.
+Starting from our augmented generation prompt, we can improve it a bit by changing the <span class="dark-purple-text">TASK_CONTEXT</span> to better fit what we want the model to do.
 
-> TASK_CONTEXT =  
+> <span class="dark-purple-text ">TASK_CONTEXT</span> =   
 >
-> "You will receive a series of text fragments from an article that are presented in chronological order. As the assistant, you must generate responses to user's requests based on the information given in the fragments. Ensure that your responses are accurate and truthful, and that you reference your sources where appropriate to answer the queries, regardless of their complexity."
+> <span class="extra-green">"You will receive a series of text fragments from an article that are presented in chronological order. As the assistant, you must generate responses to user's requests based on the information given in the fragments. Ensure that your responses are accurate and truthful, and that you reference your sources where appropriate to answer the queries, regardless of their complexity."</span>    
 >
-> CHAT_HISTORY =  
+> <span class="orange-text">CHAT_HISTORY</span> =    
 >
-> "\<|END_OF_TURN_TOKEN|> \<|START_OF_TURN_TOKEN|>\<|USER_TOKEN|> Summarize the documents in 20 words or less. \<|END_OF_TURN_TOKEN|>"
+> "<span class="brown-text">\<|END_OF_TURN_TOKEN|></span> <span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span> <span class="orange-text">Summarize the documents in 20 words or less.</span> <span class="brown-text">\<|END_OF_TURN_TOKEN|></span>"
 
 Let’s switch back to our original `STYLE_GUIDE` and see what the fully rendered prompt looks like:
 
-> \<BOS_TOKEN> \<|START_OF_TURN_TOKEN|>\<|SYSTEM_TOKEN|> \# Safety Preamble  
-> The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral.
+> <span class="dark-blue-text ">\<BOS_TOKEN></span> <span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|></span> <span class="red-text"># Safety Preamble</span>     
+> <span class="red-text">The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral.</span>
 >
-> \# System Preamble    
-> \## Basic Rules   
-> You are a powerful conversational AI trained by Cohere to help people. You are augmented by a number of tools, and your job is to use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see a specific instruction instructing you what kind of response to generate. When you answer the user's requests, you cite your sources in your answers, according to those instructions. 
+> <span class="dark-green-text"># System Preamble</span>     
+> <span class="green-text">## Basic Rules</span>     
+> <span class="green-text">You are a powerful conversational AI trained by Cohere to help people. You are augmented by a number of tools, and your job is to use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see a specific instruction instructing you what kind of response to generate. When you answer the user's requests, you cite your sources in your answers, according to those instructions. </span>
 >
-> \# User Preamble    
-> \## Task and Context  
-> You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.
+> <span class="dark-purple-text"># User Preamble</span>      
+> <span class="purple-text">## Task and Context</span>      
 >
-> \## Style Guide    
-> Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.
+> <span class="purple-text">You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.</span>
 >
-> \<|END_OF_TURN_TOKEN|> \<|START_OF_TURN_TOKEN|>\<|USER_TOKEN|> Summarize the documents in 20 words or less.\<|END_OF_TURN_TOKEN|> \<|START_OF_TURN_TOKEN|>\<|SYSTEM_TOKEN|>
+> <span class="dark-sangria-text">## Style Guide</span>     
+> <span class="dark-sangria-text">Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.</span>    
 >
-> \<results>    
-> Document: 0    
-> Tall penguins    
-> Emperor penguins are the tallest growing up to 122 cm in height.
+> <span class="brown-text ">\<|END_OF_TURN_TOKEN|> \<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|USER_TOKEN|></span><span class="orange-text "> Summarize the documents in 20 words or less.</span><span class="brown-text ">\<|END_OF_TURN_TOKEN|> \<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|></span>
 >
-> Document: 1  
-> Penguin habitats   
-> Emperor penguins only live in Antarctica.  
-> \</results>\<|END_OF_TURN_TOKEN|>\<|START_OF_TURN_TOKEN|>\<|SYSTEM_TOKEN|>Carefully perform the following instructions, in order, starting each with a new line.    
-> Write 'Grounded answer:' followed by a response to the user's last input in high quality natural english. Use the symbol [doc] to indicate when a fact comes from a document in the search result, e.g my fact[0] for a fact from document 0.\<|END_OF_TURN_TOKEN|>  
+> <span class="dark-red-text">\<results></span>      
+> <span class="dark-red-text">Document: 0</span>      
+> <span class="dark-red-text">Tall penguins</span>     
+> <span class="dark-red-text">Emperor penguins are the tallest growing up to 122 cm in height.</span>    
+>
+> <span class="dark-red-text">Document: 1</span>     
+> <span class="dark-red-text">Penguin habitats</span>     
+> <span class="dark-red-text">Emperor penguins only live in Antarctica.</span>    
+> <span class="dark-red-text">\</results></span><span class="brown-text ">\<|END_OF_TURN_TOKEN|></span><span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text ">\<|SYSTEM_TOKEN|></span>
+> <span class="dark-pink-text">     
+> Carefully perform the following instructions, in order, starting each with a new line.     
+> Write 'Grounded answer:' followed by a response to the user's last input in high quality natural english. Use the symbol [doc] to indicate when a fact comes from a document in the search result, e.g my fact[0] for a fact from document 0.    
+> </span>
+> <span class="brown-text ">\<|END_OF_TURN_TOKEN|></span>
 
 And this has the model output:
 
-> Grounded answer: Emperor penguins, the tallest species, grow up to 122 cm tall[0] and only live in Antarctica.[1].
+> <span class="extra-green">Grounded answer: Emperor penguins, the tallest species, grow up to 122 cm tall[0] and only live in Antarctica.[1].</span>
 
 ## Appendix
 

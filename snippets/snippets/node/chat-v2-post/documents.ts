@@ -10,10 +10,8 @@ const cohere = new CohereClientV2({
     messages: [
       {
         role: 'user',
-        content: [
-          { type: 'document', id: '1', document: { text: 'Cohere is the best!' } },
-          { type: 'text', text: "Who's the best?" },
-        ],
+        content: [{ type: 'text', text: "Who's the best?" }],
+        documents: [{ id: '1', text: 'Cohere is the best!' }],
       },
     ],
   });
