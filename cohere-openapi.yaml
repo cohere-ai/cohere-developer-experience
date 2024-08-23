@@ -6152,8 +6152,8 @@ paths:
                 )
 
                 for event in response:
-                    if event.event_type == "text-generation":
-                        print(event.text, end='')
+                    if event.type == "content-delta":
+                        print(event.delta.message.content.text, end='')
         - code-samples:
             - sdk: typescript
               name: Tools
@@ -15904,9 +15904,11 @@ components:
         tool_plan:
           type: string
         content:
-          type: array
-          items:
-            $ref: "#/components/schemas/TextContent"
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                $ref: "#/components/schemas/TextContent"
         citations:
           type: array
           items:
@@ -15967,8 +15969,6 @@ components:
                 $ref: "#/components/schemas/Content"
         documents:
           type: array
-          x-fern-audiences:
-            - public
           minItems: 0
           description: Documents seen by the model when generating the reply.
           items:
