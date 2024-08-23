@@ -5841,7 +5841,7 @@ paths:
             finish_reason:
               $ref: "#/components/schemas/ChatFinishReason"
             message:
-              $ref: "#/components/schemas/AssistantMessage"
+              $ref: "#/components/schemas/AssistantMessageResponse"
             usage:
               $ref: "#/components/schemas/Usage"
         response-stream:
@@ -16071,6 +16071,37 @@ components:
         - error
         - content_blocked
         - error_limit
+    AssistantMessageResponse:
+      x-fern-sdk-group-name: v2
+      type: object
+      description: A message from the assistant role can contain text and tool call
+        information.
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum:
+            - assistant
+        tool_calls:
+          type: array
+          items:
+            $ref: "#/components/schemas/ToolCall-2"
+        tool_plan:
+          type: string
+        content:
+          type: array
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/TextContent"
+            discriminator:
+              propertyName: type
+              mapping:
+                text: "#/components/schemas/TextContent"
+        citations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Citation"
     Usage:
       x-fern-sdk-group-name: v2
       type: object
@@ -16119,7 +16150,7 @@ components:
         finish_reason:
           $ref: "#/components/schemas/ChatFinishReason"
         message:
-          $ref: "#/components/schemas/AssistantMessage"
+          $ref: "#/components/schemas/AssistantMessageResponse"
         usage:
           $ref: "#/components/schemas/Usage"
     ChatStreamEventType:
