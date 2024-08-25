@@ -11,11 +11,35 @@ createdAt: "Thu Mar 14 2024 17:14:34 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Mon May 06 2024 19:22:34 GMT+0000 (Coordinated Universal Time)"
 ---
 
-Getting an LLM to do what you want and perform well on your task often requires some amount of prompt engineering. Depending on the complexity of the task and the strength of the model, this can be time consuming. Similarly, if you are trying to compare two models in a fair way, it is hard to know what differences in performance are due to actual superiority of a model vs an unoptimized prompt. At minimum, it is important to do simple things like making sure you are using the correct special tokens which can change from one family of model to the next but can have an important impact on performance. These tokens do things like indicate the beginning and end of prompts and distinguish between user and chatbot utterances.
+Effective prompt engineering is crucial to getting the desired performance from large language models (LLMs) like Command R/R+. This process can be time-consuming, especially for complex tasks or when comparing models. To ensure fair comparisons and optimize performance, it’s essential to use the correct special tokens, which may vary between models and significantly impact outcomes.
 
-The easiest way to make sure your prompts will work well with Command R is to use our [tokenizer on Hugging Face](https://huggingface.co/CohereForAI/c4ai-command-r-v01) if your use-case is covered by the baked-in defaults. In this doc we will go over the structure of our prompts and general best practices on how to tweak it in a way that will have it performing best on your tasks. This gives you the control over how the model behaves to tweak and experiment what fits your unique use case the best.
+Each task requires its own prompt template. This document outlines the structure and best practices for the following use cases:
+- Retrieval-Augmented Generation (RAG) with Command R/R+
+- Summarization with Command R/R+
+- Single-Step Tool Use with Command R/R+ (Function Calling)
+- Multi-Step Tool Use with Command R/R+ (Agents)
 
-## Structured Prompts for RAG
+The easiest way to make sure your prompts will work well with Command R/R+ is to use our [tokenizer on Hugging Face](https://huggingface.co/CohereForAI/c4ai-command-r-v01). Today, HuggingFace has prompt templates for:
+- RAG with Command R/R+
+- Single-Step Tool Use with Command R/R+ (Function Calling)
+
+We are working on adding prompt templates in HuggingFace for Multi-Step Tool Use with Command R/R+ (Agents).
+
+## High-Level Overview of Prompt Templates
+
+The prompt for Command R/R+ is composed of structured sections, each serving a specific purpose. Below is an overview of the main components. We’ve color coded the different sections of the prompt to make them easy to pick out and we will go over them in more detail later.
+
+### Augmented Generation Prompt Template (RAG and Summarization)
+
+In RAG, the workflow involves two steps:
+1. Retrieval: Retrieving the relevant snippets.
+2. Augmented Generation: Generating a response based on these snippets.
+
+Summarization is very similar to augmented generation: the model takes in some documents and its response (the summary) needs to be conditioned on those documents. 
+This way, RAG and Summarization follow a similar prompt template. It is the Augmented Generation prompt template and here’s what it looks like at a high level:
+
+
+-----
 
 Before going into detail on the different components of the prompt and how they fit together, let’s start by looking at a fully rendered prompt. Let’s take an example of using Command R for a simple RAG use case where we are given a user query like: <span class="orange-text">What’s the biggest penguin in the world?</span>
 
@@ -23,6 +47,8 @@ To solve this problem, we will use the model to perform the two steps of RAG:
 
 - 1/ Retrieval
 - 2/ Augmented Generation
+
+
 
 ### Fully Rendered Default Tool-use Prompt
 
