@@ -66,11 +66,64 @@ Single-step tool use (or “Function Calling”) allows Command R/R+ to interact
 
 You can learn more about single step tool use [in our documentation](https://docs.cohere.com/docs/tool-use). Let’s go over the prompt template for Tool Section, and for Response Generation.
 
+#### A) Tool Selection Prompt Template
+
+> singlestep_tool_selection_prompt_template =  
+> """<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span>  
+> <span class="red-text">\{SAFETY_PREAMBLE}</span>
+> <br />
+> <span class="dark-green-text"># System Preamble</span>  
+> <span class="green-text">## Basic Rules</span>  
+> <span class="green-text">\{BASIC_RULES}</span>
+> <br />
+> <span class="dark-purple-text"># User Preamble</span>  
+> <span class="purple-text">## Task and Context</span>   
+> <span class="purple-text">\{TASK_CONTEXT}</span>
+> <br />
+> <span class="dark-sangria-text">## Style Guide</span>  
+> <span class="dark-sangria-text">\{STYLE_GUIDE}</span>
+> <br />
+> <span class="peach-text">## Available Tools</span>  
+> <span class="peach-text">\{TOOLS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="orange-text">\{CHAT_HISTORY}</span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="lavender-text">\{INSTRUCTIONS_FOR_SINGLE_STEP_TOOL_USE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""
+
+The prompt template for Tool Selection is similar to the Augmented Generation prompt template. There are, however, two spots that differ which are highlighted. The first is that we have added the tool definitions which come after the style guide (you can see that there’s now an <span class="pink-text">## Available Tools</span> section), and the second is that we’ve removed the section with the retrieved snippets or text to summarize.
+
+
+#### B) Response Generation Template
+
+At this point, Command R/R+ has decided which tools to call and with what parameters (see previous section). Developers are expected to execute these tool calls, and to receive tool results in return. 
+
+In this Response Generation step, the goal is to generate the final model response, given the tool results. This is another case of… Augmented Generation!
+
+Therefore, the prompt template is very similar to the augmented generation prompt used for RAG and Summarization. The only difference is that we replace the RAG snippets and/or text to summarize with tool outputs (TOOL_OUTPUTS).
+
+> singlestep_augmented_generation_prompt_template =  
+> """<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span>  
+> <span class="red-text">\{SAFETY_PREAMBLE}</span>
+> <br />
+> <span class="dark-green-text"># System Preamble</span>  
+> <span class="green-text">## Basic Rules</span>  
+> <span class="green-text">\{BASIC_RULES}</span>
+> <br />
+> <span class="dark-purple-text"># User Preamble</span>  
+> <span class="purple-text">## Task and Context</span>   
+> <span class="purple-text">\{TASK_CONTEXT}</span>
+> <br />
+> <span class="dark-sangria-text">## Style Guide</span>  
+> <span class="dark-sangria-text">\{STYLE_GUIDE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="orange-text">\{CHAT_HISTORY}</span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="orange-text">\{TOOL_OUTPUTS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="lavender-text">\{INSTRUCTIONS_FOR_SINGLE_STEP_TOOL_USE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""
+
+
+### Multi step Tool Use with Command R/R+ (Agents)
+
+#### A) Prompt template for Step 1 of the agent
 
 
 
 
+#### B) Prompt template for subsequent steps of the agent
 
+
+## Detailed Prompt Templates
 
 
 
