@@ -32,11 +32,90 @@ The prompt for Command R/R+ is composed of structured sections, each serving a s
 ### Augmented Generation Prompt Template (RAG and Summarization)
 
 In RAG, the workflow involves two steps:
-1. Retrieval: Retrieving the relevant snippets.
-2. Augmented Generation: Generating a response based on these snippets.
+1. **Retrieval**: Retrieving the relevant snippets.
+2. **Augmented Generation**: Generating a response based on these snippets.
 
 Summarization is very similar to augmented generation: the model takes in some documents and its response (the summary) needs to be conditioned on those documents. 
+
 This way, RAG and Summarization follow a similar prompt template. It is the Augmented Generation prompt template and here’s what it looks like at a high level:
+
+> augmented_gen_prompt_template =
+>
+> """<span class="dark-blue-text">\<BOS_TOKEN> </span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|> </span><span class="red-text"># Safety Preamble</span> <span class="red-text">\{SAFETY_PREAMBLE}</span>
+>
+> <br />
+>
+> <span class="dark-green-text"># System Preamble</span>   
+>   
+> <span class="green-text">## Basic Rules</span>      
+> <span class="green-text">\{BASIC_RULES}</span>  
+>
+> <br />
+>
+> <span class="dark-purple-text"># User Preamble</span>      
+> <span class="purple-text">## Task and Context</span>     
+> <span class="purple-text">\{TASK_CONTEXT}</span>
+>
+> <br />
+>
+> <span class="dark-sangria-text">## Style Guide</span>     
+> <span class="dark-sangria-text">\{STYLE_GUIDE}</span>
+>
+> <br />
+>
+> <span class="brown-text">\<|END_OF_TURN_TOKEN|></span> 
+> <span class="orange-text">\{CHAT_HISTORY}</span> 
+> <span class="brown-text">\<|START_OF_TURN_TOKEN|></span>
+> <span class="dark-orange-text">\<|SYSTEM_TOKEN|></span> 
+> <span class="orange-text">\{RETRIEVED_SNIPPETS_FOR_RAG or TEXT_TO_SUMMARIZE}</span>
+> <span class="brown-text">\<|END_OF_TURN_TOKEN|></span>
+> <span class="brown-text">\<|START_OF_TURN_TOKEN|></span>
+> <span class="dark-orange-text">\<|SYSTEM_TOKEN|></span>
+> <span class="orange-text">\{INSTRUCTIONS}</span>
+> <span class="brown-text">\<|END_OF_TURN_TOKEN|></span>
+> <span class="brown-text">\<|START_OF_TURN_TOKEN|></span>
+> <span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""
+
+
+We can see that the prompt is set up in a structured way where we have sections for things like the <span class="green-text">basic rules</span> we want the model to follow, the <span class="purple-text">task</span> we want it to solve, and the <span class="pink-text">style</span> in which it should write its output in.
+
+
+### Single step Tool Use with Command R/R+ (Function Calling)
+
+Single-step tool use (or “Function Calling”) allows Command R/R+ to interact with external tools like APIs, databases, or search engines. Single-step tool use is made of two model inferences:
+1. **Tool Selection**: The model decides which tools to call and with what parameters. It’s then up to the developer to execute these tool calls and obtain tool results.
+2. **Response Generation**: The model generates the final response given the tool results.
+
+You can learn more about single step tool use [in our documentation](https://docs.cohere.com/docs/tool-use). Let’s go over the prompt template for Tool Section, and for Response Generation.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 -----
