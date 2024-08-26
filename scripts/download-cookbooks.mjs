@@ -56,6 +56,8 @@ const pages = [
   "/page/hello-world-meet-ai",
   "/page/topic-modeling-ai-papers",
   "/page/analyzing-hacker-news",
+  "/page/rag-mongodb-cohere",
+
 ];
 
 async function downloadCookbooks(pages) {
