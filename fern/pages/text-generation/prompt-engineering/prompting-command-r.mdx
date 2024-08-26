@@ -225,7 +225,44 @@ Starting from our augmented generation prompt, we can adapt it a bit by changing
 > <b><span class="purple-text">You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.</span></b>
 
 
+Similar to the previous section, we will use the simplest chat history: just one message from the user.
 
+> <b><span class="orange-text">CHAT_HISTORY</span> = "<span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="blue-text">\<|USER_TOKEN|></span><span class="orange-text">Summarize the documents in 20 words or less</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span>"</b>
+
+The text to summarize should be wrapped in <|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|>{TEXT_TO_SUMMARIZE}<|END_OF_TURN_TOKEN|> and look something like this: 
+
+> <b><span class="brown-text">TEXT_TO_SUMMARIZE =</span></b>  
+> <b>"""<span class="dark-red-text">\<results></span></b>  
+> <b><span class="dark-red-text">Document: 0</span></b>  
+> <b><span class="dark-red-text">title: Tall penguins</span></b>  
+> <b><span class="dark-red-text">snippet: Emperor penguins are the tallest growing up to 122 cm in height.<br /><br />Document: 1</span></b>  
+> <b><span class="dark-red-text">title: Penguin habitats</span></b>  
+> <b><span class="dark-red-text">snippet: Emperor penguins only live in Antarctica.</span></b>  
+> <b><span class="dark-red-text">\</results></span>"""</b>
+
+We recommend splitting the text to summarize into chunks of 100-250 words. Each chunk should start with <b><span class="dark-red-text">Document: \{n}</span></b> and should be an ascending list of integers starting at 0.
+
+Below is a detailed look at what the fully rendered prompt looks like for summarization.
+
+> <b>summarization_augmented_generation_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>    
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">You are a powerful conversational AI trained by Cohere to help people. You are augmented by a number of tools, and your job is to use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see a specific instruction instructing you what kind of response to generate. When you answer the user's requests, you cite your sources in your answers, according to those instructions.</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>  
+> <b><span class="purple-text">You will receive a series of text fragments from an article that are presented in chronological order. As the assistant, you must generate responses to user’s requests based on the information given in the fragments. Ensure that your responses are accurate and truthful, and that you reference your sources where appropriate to answer the queries, regardless of their complexity.</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span>Summarize the documents in 20 words or less<span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\<results></span></b>  
+> <b><span class="dark-red-text">Document: 0</span></b>  
+> <b><span class="dark-red-text">title: Tall penguins</span></b>  
+> <b><span class="dark-red-text">snippet: Emperor penguins are the tallest growing up to 122 cm in height.<br /><br />Document: 1</span></b>  
+> <b><span class="dark-red-text">title: Penguin habitats</span></b>  
+> <b><span class="dark-red-text">snippet: Emperor penguins only live in Antarctica.</span></b>  
+> <b><span class="dark-red-text">\</results></span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">Carefully perform the following instructions, in order, starting each with a new line.</span></b>  
+> <b><span class="dark-pink-text">Write 'Grounded answer:' followed by a response to the user’s last input in high quality natural english. Use square brackets to indicate a citation from the search results, e.g. "my fact [0]" for a fact from document 0.</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
+
+And this results in the model output:
+
+> <b><span class="green-text">Grounded answer: Emperor penguins [0,1] are the tallest penguins [0], growing up to 122 cm. [0] They are native to Antarctica. [1]</span></b>
 
 
 
