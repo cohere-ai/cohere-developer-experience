@@ -6161,6 +6161,92 @@ paths:
                 for event in response:
                     if event.type == "content-delta":
                         print(event.delta.message.content.text, end='')
+          response:
+            stream:
+              - type: message-start
+                id: 29f14a5a-11de-4cae-9800-25e4747408ea
+                delta:
+                  message:
+                    role: "assistant"
+                    content: []
+                    tool_plan: ""
+                    tool_calls: []
+                    citations: []
+              - type: content-start
+                index: 0
+                delta:
+                  message:
+                    content:
+                      type: "text"
+                      text: ""
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: "Hello"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: "!"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: " How"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: " can"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: " I"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: " help"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: " you"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: " today"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: "?"
+              - type: content-end
+                index: 0
+              - event_type: message-end
+                delta:
+                  finish_reason: COMPLETE
+                  usage:
+                    api_version:
+                      version: '2'
+                    billed_units:
+                      input_tokens: 3
+                      output_tokens: 9
+                    tokens:
+                      input_tokens: 69
+                      output_tokens: 9
         - code-samples:
             - sdk: typescript
               name: Tools
@@ -15812,6 +15898,57 @@ components:
           tool-calls-generation: "#/components/schemas/ChatToolCallsGenerationEvent"
           stream-end: "#/components/schemas/ChatStreamEndEvent"
           tool-calls-chunk: "#/components/schemas/ChatToolCallsChunkEvent"
+    TextContent:
+      x-fern-sdk-group-name: v2
+      type: object
+      description: Text content of the message.
+      required:
+        - type
+        - text
+      properties:
+        type:
+          type: string
+          enum:
+            - text
+        text:
+          type: string
+    Content:
+      x-fern-sdk-group-name: v2
+      description: A Content block which contains information about the content type
+        and the content itself.
+      oneOf:
+        - $ref: "#/components/schemas/TextContent"
+      discriminator:
+        propertyName: type
+        mapping:
+          text: "#/components/schemas/TextContent"
+    UserMessage:
+      x-fern-sdk-group-name: v2
+      type: object
+      description: A message from the user.
+      required:
+        - role
+        - content
+      properties:
+        role:
+          type: string
+          enum:
+            - user
+        content:
+          description: |
+            The content of the message. This can be a string or a list of content blocks.
+            If a string is provided, it will be treated as a text content block.
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                $ref: "#/components/schemas/Content"
+        documents:
+          type: array
+          minItems: 0
+          description: Documents seen by the model when generating the reply.
+          items:
+            $ref: "#/components/schemas/ChatDocument"
     ToolCall-2:
       x-fern-sdk-group-name: v2
       description: A array of tool calls to be made.
@@ -15830,20 +15967,6 @@ components:
               type: string
             arguments:
               type: string
-    TextContent:
-      x-fern-sdk-group-name: v2
-      type: object
-      description: Text content of the message.
-      required:
-        - type
-        - text
-      properties:
-        type:
-          type: string
-          enum:
-            - text
-        text:
-          type: string
     ToolSource:
       x-fern-sdk-group-name: v2
       type: object
@@ -15949,43 +16072,6 @@ components:
                   propertyName: type
                   mapping:
                     text: "#/components/schemas/TextContent"
-    Content:
-      x-fern-sdk-group-name: v2
-      description: A Content block which contains information about the content type
-        and the content itself.
-      oneOf:
-        - $ref: "#/components/schemas/TextContent"
-      discriminator:
-        propertyName: type
-        mapping:
-          text: "#/components/schemas/TextContent"
-    UserMessage:
-      x-fern-sdk-group-name: v2
-      type: object
-      description: A message from the user.
-      required:
-        - role
-        - content
-      properties:
-        role:
-          type: string
-          enum:
-            - user
-        content:
-          description: |
-            The content of the message. This can be a string or a list of content blocks.
-            If a string is provided, it will be treated as a text content block.
-          oneOf:
-            - type: string
-            - type: array
-              items:
-                $ref: "#/components/schemas/Content"
-        documents:
-          type: array
-          minItems: 0
-          description: Documents seen by the model when generating the reply.
-          items:
-            $ref: "#/components/schemas/ChatDocument"
     ToolContent:
       x-fern-sdk-group-name: v2
       type: object
@@ -16029,16 +16115,16 @@ components:
       x-fern-sdk-group-name: v2
       description: Represents a single message in the chat history from a given role.
       oneOf:
-        - $ref: "#/components/schemas/SystemMessage"
         - $ref: "#/components/schemas/UserMessage"
         - $ref: "#/components/schemas/AssistantMessage"
+        - $ref: "#/components/schemas/SystemMessage"
         - $ref: "#/components/schemas/ToolMessage-2"
       discriminator:
         propertyName: role
         mapping:
+          user: "#/components/schemas/UserMessage"
           assistant: "#/components/schemas/AssistantMessage"
           system: "#/components/schemas/SystemMessage"
-          user: "#/components/schemas/UserMessage"
           tool: "#/components/schemas/ToolMessage-2"
     ChatMessages:
       x-fern-sdk-group-name: v2
