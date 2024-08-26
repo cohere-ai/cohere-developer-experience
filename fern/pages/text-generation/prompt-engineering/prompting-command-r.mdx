@@ -69,8 +69,8 @@ You can learn more about single step tool use [in our documentation](https://doc
 > <b><span class="green-text">\{BASIC_RULES}</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
 > <b><span class="purple-text">## Task and Context</span></b>   
 > <b><span class="purple-text">\{TASK_CONTEXT}</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
-> <b><span class="dark-sangria-text">\{STYLE_GUIDE}</span><br /><br /><span class="light-yellow-text">## Available Tools</span></b>  
-> <b><span class="light-yellow-text">\{TOOLS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="orange-text">\{CHAT_HISTORY}</span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">\{INSTRUCTIONS_FOR_SINGLE_STEP_TOOL_USE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
+> <b><span class="dark-sangria-text">\{STYLE_GUIDE}</span><br /><br /><span class="magenta-text">## Available Tools</span></b>  
+> <b><span class="magenta-text">\{TOOLS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="orange-text">\{CHAT_HISTORY}</span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">\{INSTRUCTIONS_FOR_SINGLE_STEP_TOOL_USE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
 
 
 The prompt template for Tool Selection is similar to the Augmented Generation prompt template. There are, however, two spots that differ which are highlighted. The first is that we have added the tool definitions which come after the style guide (you can see that there’s now an <span class="magenta-text">## Available Tools</span> section), and the second is that we’ve removed the section with the retrieved snippets or text to summarize.
@@ -106,7 +106,16 @@ To understand the multistep tool use prompt, let’s look at the following promp
 
 #### A) Prompt template for Step 1 of the agent
 
-xxx??
+> <b>multistep_tooluse_step_1_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">\{SAFETY_PREAMBLE}</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>  
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">\{BASIC_RULES}</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>   
+> <b><span class="purple-text">\{TASK_CONTEXT}</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">\{STYLE_GUIDE}</span><br /><br /><span class="magenta-text">## Available Tools</span></b>  
+> <b><span class="magenta-text">\{TOOLS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="orange-text">\{CHAT_HISTORY}</span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">\{INSTRUCTIONS_FOR_MULTI_STEP_TOOL_USE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
+
 
 In this first step of the agent, the model generates an initial plan and suggests tool calls. Developers are expected to execute these tool calls, and to receive tool results in return.
 
@@ -119,12 +128,32 @@ This iterative process continues for as many steps as the model deems necessary.
 
 **Here is the template for Step 2 of the agent:**
 
-xxx??
+> <b>multistep_tooluse_step_2_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">\{SAFETY_PREAMBLE}</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>  
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">\{BASIC_RULES}</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>   
+> <b><span class="purple-text">\{TASK_CONTEXT}</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">\{STYLE_GUIDE}</span><br /><br /><span class="magenta-text">## Available Tools</span></b>  
+> <b><span class="magenta-text">\{TOOLS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="orange-text">\{CHAT_HISTORY}</span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">\{INSTRUCTIONS_FOR_MULTI_STEP_TOOL_USE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span><span class="dark-red-text">\{PLAN_AND_SUGGESTED_TOOL_CALLS_FOR_STEP_1}</span></span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\{TOOL_RESULTS_FROM_STEP_1}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
+
+
+
 
 **Here is the template for Step i of the agent:**
 
 ## Detailed Prompt Templates
 
+> <b>multistep_tooluse_step_2_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">\{SAFETY_PREAMBLE}</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>  
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">\{BASIC_RULES}</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>   
+> <b><span class="purple-text">\{TASK_CONTEXT}</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">\{STYLE_GUIDE}</span><br /><br /><span class="magenta-text">## Available Tools</span></b>  
+> <b><span class="magenta-text">\{TOOLS}<span class="brown-text"><|END_OF_TURN_TOKEN|></span><span class="orange-text">{CHAT_HISTORY}</span><span class="brown-text"><|START_OF_TURN_TOKEN|></span><span class="dark-orange-text"><|SYSTEM_TOKEN|></span><span class="dark-pink-text">{INSTRUCTIONS_FOR_MULTI_STEP_TOOL_USE}</span><span class="brown-text"><|END_OF_TURN_TOKEN|></span><span class="brown-text"><|START_OF_TURN_TOKEN|></span><span class="dark-orange-text"><|CHATBOT_TOKEN|></span><span class="dark-red-text">{PLAN_AND_SUGGESTED_TOOL_CALLS_FOR_STEP_1}</span><span class="brown-text"><|END_OF_TURN_TOKEN|></span><span class="brown-text"><|START_OF_TURN_TOKEN|></span><span class="dark-orange-text"><|SYSTEM_TOKEN|></span><span class="dark-red-text">{TOOL_RESULTS_FROM_STEP_1}</span><span class="brown-text"><|END_OF_TURN_TOKEN|></span><span class="brown-text"><|START_OF_TURN_TOKEN|></span><span class="dark-orange-text"><|CHATBOT_TOKEN|></span><span class="dark-red-text">{PLAN_AND_SUGGESTED_TOOL_CALLS_FOR_STEP_2}</span><span class="brown-text"><|END_OF_TURN_TOKEN|></span><span class="brown-text"><|START_OF_TURN_TOKEN|></span><span class="dark-orange-text"><|SYSTEM_TOKEN|></span><span class="dark-red-text">{TOOL_RESULTS_FROM_STEP_2}</span><span class="brown-text"><|END_OF_TURN_TOKEN|></span><span class="brown-text"><|START_OF_TURN_TOKEN|></span><span class="dark-orange-text"><|CHATBOT_TOKEN|></span><span class="dark-red-text">{PLAN_AND_SUGGESTED_TOOL_CALLS_FOR_STEP_3}</span><span class="brown-text"><|END_OF_TURN_TOKEN|></span><span class="brown-text"><|START_OF_TURN_TOKEN|></span><span class="dark-orange-text"><|SYSTEM_TOKEN|></span><span class="dark-red-text">{TOOL_RESULTS_FROM_STEP_3}</span><span class="brown-text"><|END_OF_TURN_TOKEN|></span>...etc...<span class="brown-text"><|START_OF_TURN_TOKEN|></span><span class="dark-orange-text"><|CHATBOT_TOKEN|></span><span class="dark-red-text">{PLAN_AND_SUGGESTED_TOOL_CALLS_FOR_STEP_i-1}</span><span class="brown-text"><|END_OF_TURN_TOKEN|></span><span class="brown-text"><|START_OF_TURN_TOKEN|></span><span class="dark-orange-text"><|SYSTEM_TOKEN|></span><span class="dark-red-text">{TOOL_RESULTS_FROM_STEP_i-1}</span><span class="brown-text"><|END_OF_TURN_TOKEN|></span><span class="brown-text"><|START_OF_TURN_TOKEN|></span><span class="dark-orange-text"><|CHATBOT_TOKEN|></span>"""</b>
 
 
 
