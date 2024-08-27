@@ -5910,7 +5910,7 @@ paths:
                     Defaults to `"accurate"`.
                     Dictates the approach taken to generating citations as part of the RAG flow by allowing the user to specify whether they want `"accurate"` results, `"fast"` results or no results.
                 response_format:
-                  $ref: "#/components/schemas/ResponseFormat"
+                  $ref: "#/components/schemas/ResponseFormat-2"
                 max_tokens:
                   type: integer
                   description: |
@@ -6029,7 +6029,7 @@ paths:
                   console.log(response);
                 })();
             - sdk: python
-              name: Sync
+              name: Default
               code: |
                 import cohere
 
@@ -16768,6 +16768,50 @@ components:
             parameters:
               type: object
               description: The parameters of the function as a JSON schema.
+    JSONResponseFormat-2:
+      x-fern-audiences:
+        - public
+      type: object
+      properties:
+        type:
+          $ref: "#/components/schemas/ResponseFormatType"
+        json_schema:
+          description: |
+            [BETA] A JSON schema object that the output will adhere to. There are some restrictions we have on the schema, refer to [our guide](/docs/structured-outputs-json#schema-constraints) for more information.
+            Example (required name and age object):
+            ```json
+            {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "age": {"type": "integer"}
+              },
+              "required": ["name", "age"]
+            }
+            ```
+
+            **Note**: This field must not be specified when the `type` is set to `"text"`.
+          type: object
+      required:
+        - type
+    ResponseFormat-2:
+      description: |
+        Configuration for forcing the model output to adhere to the specified format. Supported on [Command R](https://docs.cohere.com/docs/command-r), [Command R+](https://docs.cohere.com/docs/command-r-plus) and newer models.
+
+        The model can be forced into outputting JSON objects (with up to 5 levels of nesting) by setting `{ "type": "json_object" }`.
+
+        A [JSON Schema](https://json-schema.org/) can optionally be provided, to ensure a specific structure.
+
+        **Note**: When using  `{ "type": "json_object" }` your `message` should always explicitly instruct the model to generate a JSON (eg: _"Generate a JSON ..."_) . Otherwise the model may end up getting stuck generating an infinite stream of characters and eventually run out of context length.
+        **Limitation**: The parameter is not supported in RAG mode (when any of `connectors`, `documents`, `tools`, `tool_results` are provided).
+      oneOf:
+        - $ref: "#/components/schemas/TextResponseFormat"
+        - $ref: "#/components/schemas/JSONResponseFormat-2"
+      discriminator:
+        propertyName: type
+        mapping:
+          text: "#/components/schemas/TextResponseFormat"
+          json_object: "#/components/schemas/JSONResponseFormat-2"
     ChatFinishReason:
       x-fern-sdk-group-name: v2
       description: The reason a chat request has finished.
