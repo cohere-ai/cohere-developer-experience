@@ -29,9 +29,10 @@ response = co.chat(
         })
     ],
     messages=[
-        cohere.v2.ChatMessage2_User(
-            content="Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
-        )
+        {
+            "role": "user",
+            "content":"Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
+        }
     ]
 )
 
