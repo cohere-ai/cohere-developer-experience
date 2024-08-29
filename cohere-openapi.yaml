@@ -11467,7 +11467,7 @@ paths:
                 		&MyReader{Reader: strings.NewReader(`{"text": "The quick brown fox jumps over the lazy dog"}`), name: "test.jsonl"},
                 		&MyReader{Reader: strings.NewReader(""), name: "a.jsonl"},
                 		&cohere.DatasetsCreateRequest{
-                			Name: "prompt-completion-dataset",
+                			Name: "embed-dataset",
                 			Type: cohere.DatasetTypeEmbedResult,
                 		},
                 	)
@@ -11487,9 +11487,9 @@ paths:
 
                 # upload a dataset
                 my_dataset = co.datasets.create(
-                    name="prompt-completion-dataset",
-                    data=open("./prompt-completion.jsonl", "rb"),
-                    type="prompt-completion-finetune-input",
+                    name="chat-dataset",
+                    data=open("./chat.jsonl", "rb"),
+                    type="chat-finetune-input",
                 )
 
                 # wait for validation to complete
@@ -11509,9 +11509,9 @@ paths:
 
                     # upload a dataset
                     response = await co.datasets.create(
-                        name="prompt-completion-dataset",
-                        data=open("./prompt-completion.jsonl", "rb"),
-                        type="prompt-completion-finetune-input",
+                        name="chat-dataset",
+                        data=open("./chat.jsonl", "rb"),
+                        type="chat-finetune-input",
                     )
 
                     # wait for validation to complete
@@ -11542,7 +11542,7 @@ paths:
                     public static void main(String[] args) {
                         Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-                        DatasetsCreateResponse response = cohere.datasets().create(null, Optional.empty(), DatasetsCreateRequest.builder().name("prompt-completion-dataset").type(DatasetType.PROMPT_COMPLETION_FINETUNE_INPUT).build());
+                        DatasetsCreateResponse response = cohere.datasets().create(null, Optional.empty(), DatasetsCreateRequest.builder().name("chat-dataset").type(DatasetType.CHAT_FINETUNE_INPUT).build());
 
                         System.out.println(response);
                     }
@@ -14355,14 +14355,14 @@ paths:
               example:
                 finetuned_models:
                   - id: fee37446-7fc7-42f9-a026-c6ba2fcc422d
-                    name: prompt-completion-ft
+                    name: chat-ft
                     creator_id: 7a317d97-4d05-427d-9396-f31b9fb92c55
                     organization_id: 6bdca3d5-3eae-4de0-ac34-786d8063b7ee
                     settings:
                       base_model:
                         name: medium
                         version: 14.2.0
-                        base_type: BASE_TYPE_GENERATIVE
+                        base_type: BASE_TYPE_CHAT
                         strategy: STRATEGY_TFEW
                       dataset_id: my-dataset-d701tr
                       hyperparameters:
@@ -14614,7 +14614,7 @@ paths:
               name: api-test
               settings:
                 base_model:
-                  base_type: BASE_TYPE_GENERATIVE
+                  base_type: BASE_TYPE_CHAT
                 dataset_id: my-dataset-id
         required: true
       parameters:
@@ -14636,7 +14636,7 @@ paths:
                     public static void main(String[] args) {
                         Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-                        CreateFinetunedModelResponse response = cohere.finetuning().createFinetunedModel(FinetunedModel.builder().name("test-finetuned-model").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_GENERATIVE).build()).datasetId("my-dataset-id").build()).build());
+                        CreateFinetunedModelResponse response = cohere.finetuning().createFinetunedModel(FinetunedModel.builder().name("test-finetuned-model").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_CHAT).build()).datasetId("my-dataset-id").build()).build());
 
                         System.out.println(response);
                     }
@@ -14782,7 +14782,7 @@ paths:
                       "name": "test-finetuned-model",
                       "settings": {
                         "base_model": {
-                          "base_type": "BASE_TYPE_GENERATIVE",
+                          "base_type": "BASE_TYPE_CHAT",
                         },
                         "dataset_id": "test-dataset-id"
                       }
@@ -14928,7 +14928,7 @@ paths:
                     public static void main(String[] args) {
                         Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-                        UpdateFinetunedModelResponse response = cohere.finetuning().updateFinetunedModel("test-id", FinetuningUpdateFinetunedModelRequest.builder().name("new name").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_GENERATIVE).build()).datasetId("my-dataset-id").build()).build());
+                        UpdateFinetunedModelResponse response = cohere.finetuning().updateFinetunedModel("test-id", FinetuningUpdateFinetunedModelRequest.builder().name("new name").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_CHAT).build()).datasetId("my-dataset-id").build()).build());
 
                         System.out.println(response);
                     }
@@ -15044,14 +15044,14 @@ paths:
               example:
                 finetuned_model:
                   id: fee37446-7fc7-42f9-a026-c6ba2fcc422d
-                  name: prompt-completion-ft
+                  name: chat-ft
                   creator_id: 7a317d97-4d05-427d-9396-f31b9fb92c55
                   organization_id: 6bdca3d5-3eae-4de0-ac34-786d8063b7ee
                   settings:
                     base_model:
                       name: medium
                       version: 14.2.0
-                      base_type: BASE_TYPE_GENERATIVE
+                      base_type: BASE_TYPE_CHAT
                       strategy: STRATEGY_TFEW
                     dataset_id: my-dataset-d701tr
                     hyperparameters:
