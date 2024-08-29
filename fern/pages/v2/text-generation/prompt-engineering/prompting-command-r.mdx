@@ -1,0 +1,978 @@
+---
+title: "Prompting Command R and R+"
+slug: "docs/prompting-command-r"
+
+hidden: true
+description: "This document provides detailed examples and guidelines on the prompt structure to usse with Command R/R+ across various tasks, including Retrieval-Augmented Generation (RAG), summarization, single-step and multi-step tool use, with comprehensive."
+image: "../../../assets/images/b2b492c-cohere_meta_image.jpg"
+keywords: "prompt engineering, large language model prompting"
+
+createdAt: "Thu Mar 14 2024 17:14:34 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Mon May 06 2024 19:22:34 GMT+0000 (Coordinated Universal Time)"
+---
+
+Effective prompt engineering is crucial to getting the desired performance from large language models (LLMs) like Command R/R+. This process can be time-consuming, especially for complex tasks or when comparing models. To ensure fair comparisons and optimize performance, it's essential to use the correct special tokens, which may vary between models and significantly impact outcomes.
+
+Each task requires its own prompt template. This document outlines the structure and best practices for the following use cases:
+- Retrieval-Augmented Generation (RAG) with Command R/R+
+- Summarization with Command R/R+
+- Single-Step Tool Use with Command R/R+ (Function Calling)
+- Multi-Step Tool Use with Command R/R+ (Agents)
+
+The easiest way to make sure your prompts will work well with Command R/R+ is to use our [tokenizer on Hugging Face](https://huggingface.co/CohereForAI/c4ai-command-r-v01). Today, HuggingFace has prompt templates for Retrieval-Augmented Generation (RAG) and Single-Step Tool Use with Command R/R+ (Function Calling). We are working on adding prompt templates in HuggingFace for Multi-Step Tool Use with Command R/R+ (Agents).
+
+## High-Level Overview of Prompt Templates
+
+The prompt for Command R/R+ is composed of structured sections, each serving a specific purpose. Below is an overview of the main components. We've color coded the different sections of the prompt to make them easy to pick out and we will go over them in more detail later.
+
+### Augmented Generation Prompt Template (RAG and Summarization)
+
+In RAG, the workflow involves two steps:
+1. **Retrieval**: Retrieving the relevant snippets.
+2. **Augmented Generation**: Generating a response based on these snippets.
+
+Summarization is very similar to augmented generation: the model takes in some documents and its response (the summary) needs to be conditioned on those documents. 
+
+This way, RAG and Summarization follow a similar prompt template. It is the Augmented Generation prompt template and here's what it looks like at a high level:
+
+
+> <b>augmented_gen_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">\{SAFETY_PREAMBLE}</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>    
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">\{BASIC_RULES}</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>   
+> <b><span class="purple-text">\{TASK_CONTEXT}</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">\{STYLE_GUIDE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="orange-text">\{CHAT_HISTORY}</span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="orange-text">\{RETRIEVED_SNIPPETS_FOR_RAG or TEXT_TO_SUMMARIZE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">\{INSTRUCTIONS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
+
+
+
+
+We can see that the prompt is set up in a structured way where we have sections for things like the <span class="green-text">basic rules</span> we want the model to follow, the <span class="purple-text">task</span> we want it to solve, and the <span class="magenta-text">style</span> in which it should write its output in.
+
+
+### Single step Tool Use with Command R/R+ (Function Calling)
+
+Single-step tool use (or "Function Calling") allows Command R/R+ to interact with external tools like APIs, databases, or search engines. Single-step tool use is made of two model inferences:
+1. **Tool Selection**: The model decides which tools to call and with what parameters. It's then up to the developer to execute these tool calls and obtain tool results.
+2. **Response Generation**: The model generates the final response given the tool results.
+
+You can learn more about single step tool use [in our documentation](https://docs.cohere.com/docs/tool-use). Let's go over the prompt template for Tool Section, and for Response Generation.
+
+#### A) Tool Selection Prompt Template 
+
+> <b>singlestep_tool_selection_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">\{SAFETY_PREAMBLE}</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>  
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">\{BASIC_RULES}</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>   
+> <b><span class="purple-text">\{TASK_CONTEXT}</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">\{STYLE_GUIDE}</span><br /><br /><span class="magenta-text">## Available Tools</span></b>  
+> <b><span class="magenta-text">\{TOOLS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="orange-text">\{CHAT_HISTORY}</span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">\{INSTRUCTIONS_FOR_SINGLE_STEP_TOOL_USE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
+
+
+The prompt template for Tool Selection is similar to the Augmented Generation prompt template. There are, however, two spots that differ which are highlighted. The first is that we have added the tool definitions which come after the style guide (you can see that there's now an <span class="magenta-text">## Available Tools</span> section), and the second is that we've removed the section with the retrieved snippets or text to summarize.
+
+
+#### B) Response Generation Template
+
+At this point, Command R/R+ has decided which tools to call and with what parameters (see previous section). Developers are expected to execute these tool calls, and to receive tool results in return. 
+
+In this Response Generation step, the goal is to generate the final model response, given the tool results. This is another case of… Augmented Generation!
+
+Therefore, the prompt template is very similar to the augmented generation prompt used for RAG and Summarization. The only difference is that we replace the RAG snippets and/or text to summarize with tool outputs (TOOL_OUTPUTS).
+
+> <b>singlestep_augmented_generation_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">\{SAFETY_PREAMBLE}</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>  
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">\{BASIC_RULES}</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>   
+> <b><span class="purple-text">\{TASK_CONTEXT}</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">\{STYLE_GUIDE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="orange-text">\{CHAT_HISTORY}</span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\{TOOL_OUTPUTS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">\{INSTRUCTIONS_FOR_SINGLE_STEP_TOOL_USE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
+
+
+
+### Multi step Tool Use with Command R/R+ (Agents)
+
+Multi-step tool use is suited for building agents that can plan and execute a sequence of actions using multiple tools. Unlike single-step tool use, the model can perform several inference cycles, iterating through Action → Observation → Reflection until it decides on a final response. For more details, refer to our [documentation on multi-step tool use](https://docs.cohere.com/docs/multi-step-tool-use). 
+
+To understand the multistep tool use prompt, let's look at the following prompts
+- The prompt template for step 1 of the agent
+- The prompt template for step 2 of the agent
+- The prompt template at step i of the agent
+
+
+#### A) Prompt template for Step 1 of the agent
+
+> <b>multistep_tooluse_step_1_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">\{SAFETY_PREAMBLE}</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>  
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">\{BASIC_RULES}</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>   
+> <b><span class="purple-text">\{TASK_CONTEXT}</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">\{STYLE_GUIDE}</span><br /><br /><span class="magenta-text">## Available Tools</span></b>  
+> <b><span class="magenta-text">\{TOOLS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="orange-text">\{CHAT_HISTORY}</span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">\{INSTRUCTIONS_FOR_MULTI_STEP_TOOL_USE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
+
+
+In this first step of the agent, the model generates an initial plan and suggests tool calls. Developers are expected to execute these tool calls, and to receive tool results in return.
+
+
+
+#### B) Prompt template for subsequent steps of the agent
+
+As the process continues to step 2 (or any subsequent step), the model evaluates the tool results from the previous step, self-reflects and updates its plan. It may choose to call additional tools or decide that it has gathered enough information to provide a final response.
+
+This iterative process continues for as many steps as the model deems necessary. 
+
+**Here is the template for Step 2 of the agent:**
+
+> <b>multistep_tooluse_step_2_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">\{SAFETY_PREAMBLE}</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>  
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">\{BASIC_RULES}</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>   
+> <b><span class="purple-text">\{TASK_CONTEXT}</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">\{STYLE_GUIDE}</span><br /><br /><span class="magenta-text">## Available Tools</span></b>  
+> <b><span class="magenta-text">\{TOOLS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="orange-text">\{CHAT_HISTORY}</span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">\{INSTRUCTIONS_FOR_MULTI_STEP_TOOL_USE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span><span class="dark-red-text">\{PLAN_AND_SUGGESTED_TOOL_CALLS_FOR_STEP_1}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\{TOOL_RESULTS_FROM_STEP_1}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
+
+
+
+
+**Here is the template for Step i of the agent:**
+
+
+> <b>multistep_tooluse_step_i_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">\{SAFETY_PREAMBLE}</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>  
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">\{BASIC_RULES}</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>   
+> <b><span class="purple-text">\{TASK_CONTEXT}</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">\{STYLE_GUIDE}</span><br /><br /><span class="magenta-text">## Available Tools</span></b>  
+> <b><span class="magenta-text">\{TOOLS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="orange-text">\{CHAT_HISTORY}</span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">\{INSTRUCTIONS_FOR_MULTI_STEP_TOOL_USE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span><span class="dark-red-text">\{PLAN_AND_SUGGESTED_TOOL_CALLS_FOR_STEP_1}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\{TOOL_RESULTS_FROM_STEP_1}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span><span class="dark-red-text">\{PLAN_AND_SUGGESTED_TOOL_CALLS_FOR_STEP_2}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\{TOOL_RESULTS_FROM_STEP_2}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span><span class="dark-red-text">\{PLAN_AND_SUGGESTED_TOOL_CALLS_FOR_STEP_3}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\{TOOL_RESULTS_FROM_STEP_3}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span>...etc...<span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span><span class="dark-red-text">\{PLAN_AND_SUGGESTED_TOOL_CALLS_FOR_STEP_i-1}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\{TOOL_RESULTS_FROM_STEP_i-1}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
+
+
+
+## Detailed Prompt Templates
+
+Now that we have a high-level understanding of prompt templates, let's dive into the detailed prompts for each task. 
+
+### Augmented Generation: RAG with Command R/R+
+
+Retrieval Augmented Generation (RAG) involves two main steps: 
+- Retrieval: retrieve the relevant snippets
+- Augmented Generation: generate a response based on these snippets. 
+
+Below is a detailed look at the fully rendered prompt for Augmented Generation. You can achieve the same result using the Hugging Face Tokenizer's **apply_grounded_generation_template()** function.
+
+The chat history in this example, is the simplest it can be: the user question only.
+
+> <b><span class="orange-text">CHAT_HISTORY</span> = "<span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span><span class="orange-text">Where do the tallest penguins live?</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span>"</b>
+
+The retrieved snippets for RAG should be wrapped in <b><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="orange-text">\{RETRIEVED_SNIPPETS_FOR_RAG}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span></b> and look something like this: 
+
+
+> <b><span class="brown-text">RETRIEVED_SNIPPETS_FOR_RAG =</span></b>  
+> <b>"""<span class="dark-red-text">\<results></span></b>  
+> <b><span class="dark-red-text">Document: 0</span></b>  
+> <b><span class="dark-red-text">title: Tall penguins</span></b>  
+> <b><span class="dark-red-text">snippet: Emperor penguins are the tallest growing up to 122 cm in height.<br /><br />Document: 1</span></b>  
+> <b><span class="dark-red-text">title: Penguin habitats</span></b>  
+> <b><span class="dark-red-text">snippet: Emperor penguins only live in Antarctica.</span></b>  
+> <b><span class="dark-red-text">\</results></span>"""</b>  
+
+Each chunk should start with <b><span class="dark-red-text">Document: \{n}</span></b> and should be an ascending list of integers starting at 0.
+
+Below is a detailed look at the fully rendered prompt for Augmented Generation.
+
+> <b>RAG_augmented_generation_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>    
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">You are a powerful conversational AI trained by Cohere to help people. You are augmented by a number of tools, and your job is to use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see a specific instruction instructing you what kind of response to generate. When you answer the user's requests, you cite your sources in your answers, according to those instructions.</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>  
+> <b><span class="purple-text">You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span><span class="orange-text">Where do the tallest penguins live?</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\<results></span></b>  
+> <b><span class="dark-red-text">Document: 0</span></b>  
+> <b><span class="dark-red-text">title: Tall penguins</span></b>  
+> <b><span class="dark-red-text">snippet: Emperor penguins are the tallest growing up to 122 cm in height.<br /><br />Document: 1</span></b>  
+> <b><span class="dark-red-text">title: Penguin habitats</span></b>  
+> <b><span class="dark-red-text">snippet: Emperor penguins only live in Antarctica.</span></b>  
+> <b><span class="dark-red-text">\</results></span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">Carefully perform the following instructions, in order, starting each with a new line.</span></b>  
+> <b><span class="dark-pink-text">Write 'Grounded answer:' followed by a response to the user's last input in high quality natural english. Use square brackets to indicate a citation from the search results, e.g. "my fact [0]" for a fact from document 0.</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
+
+
+And this results in the model output:
+
+> <b><span class="green-text">Grounded answer: The tallest penguins are Emperor penguins [0], which grow up to 122 cm in height. [0] They live only in Antarctica. [1]</span></b>
+
+
+### Augmented Generation: Summarization with Command R/R+
+
+Summarization is very similar to RAG. The key differences are: 
+- We want to create a summary of the provided documents
+- Unlike the chunks retrieved in RAG, the order of the chunks the model receives actually matters for summarization.
+
+
+Starting from our augmented generation prompt, we can adapt it a bit by changing the <b><span class="purple-text">\{TASK_CONTEXT}</span></b> to better fit the summarization task. 
+
+
+> <b><span class="purple-text">TASK_CONTEXT =</span></b>
+> <b><span class="purple-text">You will receive a series of text fragments from an article that are presented in chronological order. As the assistant, you must generate responses to user’s requests based on the information given in the fragments. Ensure that your responses are accurate and truthful, and that you reference your sources where appropriate to answer the queries, regardless of their complexity.</span></b>
+
+
+Similar to the previous section, we will use the simplest chat history: just one message from the user.
+
+> <b><span class="orange-text">CHAT_HISTORY</span> = "<span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span><span class="orange-text">Summarize the documents in 20 words or less</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span>"</b>
+
+The text to summarize should be wrapped in <b><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\{TEXT_TO_SUMMARIZE}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span></b> and look something like this:
+
+> <b><span class="dark-red-text">TEXT_TO_SUMMARIZE =</span></b>  
+> <b>"""<span class="dark-red-text">\<results></span></b>  
+> <b><span class="dark-red-text">Document: 0</span></b>  
+> <b><span class="dark-red-text">title: Tall penguins</span></b>  
+> <b><span class="dark-red-text">snippet: Emperor penguins are the tallest growing up to 122 cm in height.<br /><br />Document: 1</span></b>  
+> <b><span class="dark-red-text">title: Penguin habitats</span></b>  
+> <b><span class="dark-red-text">snippet: Emperor penguins only live in Antarctica.</span></b>  
+> <b><span class="dark-red-text">\</results></span>"""</b>
+
+We recommend splitting the text to summarize into chunks of 100-250 words. Each chunk should start with <b><span class="dark-red-text">Document: \{n}</span></b> and should be an ascending list of integers starting at 0.
+
+Below is a detailed look at what the fully rendered prompt looks like for summarization.
+
+
+
+> <b>summarization_augmented_generation_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>    
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">You are a powerful conversational AI trained by Cohere to help people. You are augmented by a number of tools, and your job is to use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see a specific instruction instructing you what kind of response to generate. When you answer the user's requests, you cite your sources in your answers, according to those instructions.</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>  
+> <b><span class="purple-text">You will receive a series of text fragments from an article that are presented in chronological order. As the assistant, you must generate responses to user's requests based on the information given in the fragments. Ensure that your responses are accurate and truthful, and that you reference your sources where appropriate to answer the queries, regardless of their complexity.</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span><span class="orange-text">Summarize the documents in 20 words or less</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\<results></span></b>  
+> <b><span class="dark-red-text">Document: 0</span></b>  
+> <b><span class="dark-red-text">title: Tall penguins</span></b>  
+> <b><span class="dark-red-text">snippet: Emperor penguins are the tallest growing up to 122 cm in height.<br /><br />Document: 1</span></b>  
+> <b><span class="dark-red-text">title: Penguin habitats</span></b>  
+> <b><span class="dark-red-text">snippet: Emperor penguins only live in Antarctica.</span></b>  
+> <b><span class="dark-red-text">\</results></span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">Carefully perform the following instructions, in order, starting each with a new line.</span></b>  
+> <b><span class="dark-pink-text">Write 'Grounded answer:' followed by a response to the user's last input in high quality natural english. Use square brackets to indicate a citation from the search results, e.g. "my fact [0]" for a fact from document 0.</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
+
+And this results in the model output:
+
+> <b><span class="green-text">Grounded answer: Emperor penguins [0,1] are the tallest penguins [0], growing up to 122 cm. [0] They are native to Antarctica. [1]</span></b>
+
+
+
+## Single step Tool Use with Command R/R+ (Function Calling)
+
+
+### A) Tool Selection Prompt Template
+
+
+
+Let's equip the model with two tools: an <b><span class="magenta-text">internet_search</span></b> tool to find information online, and a <b><span class="magenta-text">directly_answer</span></b> tool to answer once the model has enough information. To enable that, we will create a rendered tool use prompt that will give the model access to two tools:
+- <b><span class="magenta-text">def internet_search(query: str)</span></b> 
+- <b><span class="magenta-text">def directly_answer()</span></b> 
+
+
+We use the simplest chat history: just one message from the user.
+
+> <b><span class="orange-text">CHAT_HISTORY</span> =</b>  
+> <b>"<span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span><span class="orange-text">What's the biggest penguin in the world?</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span>"</b>
+
+Let's take a look at what this fully rendered prompt looks like.
+
+
+Note that you could get the same result if you were using the HuggingFace Tokenizer's **apply_tool_use_template()** and setting the conversation and tools parameters.
+
+
+> <b>singlestep_tool_selection_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>    
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">You are a powerful conversational AI trained by Cohere to help people. You are augmented by a number of tools, and your job is to use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see a specific instruction instructing you what kind of response to generate. When you answer the user's requests, you cite your sources in your answers, according to those instructions.</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>  
+> <b><span class="purple-text">You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.</span><br /><br /><span class="magenta-text">## Available Tools</span></b>  
+> <b><span class="magenta-text">Here is a list of tools that you have available to you:<br /><br />\```python</span></b>  
+> <b><span class="magenta-text">def internet_search(query: str) -> List[Dict]:</span></b>  
+> <b><span class="magenta-text">    """Returns a list of relevant document snippets for a textual query retrieved from the internet</span><br /><br /><span class="magenta-text">    Args:</span></b>  
+> <b><span class="magenta-text">        query (str): Query to search the internet with</span></b>  
+> <b><span class="magenta-text">    """</span></b>  
+> <b><span class="magenta-text">    pass</span></b>  
+> <b><span class="magenta-text">\```<br /><br />\```python</span></b>  
+> <b><span class="magenta-text">def directly_answer() -> List[Dict]:</span></b>  
+> <b><span class="magenta-text">    """Calls a standard (un-augmented) AI chatbot to generate a response given the conversation history</span></b>  
+> <b><span class="magenta-text">    """</span></b>  
+> <b><span class="magenta-text">    pass</span></b>  
+> <b><span class="magenta-text">\```</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span><span class="orange-text">What's the biggest penguin in the world?</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">Write ‘Action:’ followed by a json-formatted list of actions that you want to perform in order to produce a good response to the user's last input. You can use any of the supplied tools any number of times, but you should aim to execute the minimum number of necessary actions for the input. You should use the \`directly-answer` tool if calling the other tools is unnecessary. The list of actions you want to call should be formatted as a list of json objects, for example:</span></b>  
+> <b><span class="magenta-text">\```json</span></b>  
+> <b><span class="magenta-text">[</span></b>  
+> <b><span class="magenta-text">    \{</span></b>  
+> <b><span class="magenta-text">        “tool_name”: title of the tool in the specification,</span></b>  
+> <b><span class="magenta-text">        “parameters”: a dict of parameters to input into the tool as they are defined in the specs, or  if it takes no parameters</span></b>  
+> <b><span class="magenta-text">    \}</span></b>  
+> <b><span class="magenta-text">]\```</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
+
+
+And this results in the model output:
+
+
+> <b><span class="green-text">Action: \```json</span></b>  
+> <b><span class="green-text">[</span></b>  
+> <b><span class="green-text">    \{</span></b>  
+> <b><span class="green-text">        "tool_name": "internet_search",</span></b>  
+> <b><span class="green-text">        "parameters": \{</span></b>  
+> <b><span class="green-text">            "query": "biggest penguin in the world"</span></b>  
+> <b><span class="green-text">        \}</span></b>  
+> <b><span class="green-text">    \}</span></b>  
+> <b><span class="green-text">]</span></b>  
+> <b><span class="green-text">\```</span></b>
+
+
+### B) Response Generation Template
+
+The prompt is an Augmented Generation prompt. The goal is to generate the final model response, given the tool results. Let's take a look at it. 
+
+The chat history now includes the message from the user, but also tool calls predicted by the model during the Tool Selection step.
+
+> <b><span class="orange-text">CHAT_HISTORY</span> =</b>  
+> <b>"""<span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span><span class="orange-text">What's the biggest penguin in the world?</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span><span class="dark-red-text">Action: \```json</span></b>  
+> <b><span class="dark-red-text">[</span></b>  
+> <b><span class="dark-red-text">    \{</span></b>  
+> <b><span class="dark-red-text">        "tool_name": "internet_search",</span></b>  
+> <b><span class="dark-red-text">        "parameters": \{</span></b>  
+> <b><span class="dark-red-text">            "query": "biggest penguin in the world"</span></b>  
+> <b><span class="dark-red-text">        \}</span></b>  
+> <b><span class="dark-red-text">    \}</span></b>  
+> <b><span class="dark-red-text">]\```</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span>"""</b>
+
+
+
+Besides, the tool outputs should be wrapped in a <b><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\{TOOL_OUTPUTS}</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span></b> and look something like this: 
+
+> <b><span class="dark-red-text">TOOL_OUTPUTS =</span></b>  
+> <b>"""<span class="dark-red-text">\<results></span></b>  
+> <b><span class="dark-red-text">Document: 0</span></b>  
+> <b><span class="dark-red-text">URL: https\:\/\/www\.guinnessworldrecords.com/world-records/84903-largest-species-of-penguin</span></b>  
+> <b><span class="dark-red-text">Title: Largest species of penguin ever</span></b>  
+> <b><span class="dark-red-text">Text: A lack of complete skeletons of extinct giant penguins found to date makes it difficult for height to be determined with any degree of certainty.</span><br /><br /><span class="dark-red-text">Prior to the recent discovery and description of K. fordycei, the largest species of penguin known to science was the colossus penguin (Palaeeudyptes klekowskii), which is estimated to have weighed as much as 115 kg (253 lb 8 oz), and stood up to 2 m (6 ft 6 in) tall. It lived in Antarctica's Seymour Island approximately 37 million years ago, during the Late Eocene, and is represented by the most complete fossil remains ever found for a penguin species in Antarctica.</span><span class="dark-red-text"><br /><br />Document: 1</span></b>  
+> <b><span class="dark-red-text">URL: https\:\/\/en.wikipedia.org/wiki/Emperor_penguin</span></b>  
+> <b><span class="dark-red-text">Title: Emperor penguin - Wikipedia</span></b>  
+> <b><span class="dark-red-text">Text: The emperor penguin (Aptenodytes forsteri) is the tallest and heaviest of all living penguin species and is endemic to Antarctica. The male and female are similar in plumage and size, reaching 100 cm (39 in) in length and weighing from 22 to 45 kg (49 to 99 lb). Feathers of the head and back are black and sharply delineated from the white belly, pale-yellow breast and bright-yellow ear patches.</span><br /><br /><span class="dark-red-text">Like all species of penguin, the emperor is flightless, with a streamlined body, and wings stiffened and flattened into flippers for a marine habitat. Its diet consists primarily of fish, but also includes crustaceans, such as krill, and cephalopods, such as squid.</span></b>  
+> <b><span class="dark-red-text">\</results></span>"""</b>
+
+Each tool output should start with <b><span class="dark-red-text">Document: \{n}</span></b> and should be an ascending list of integers starting at 0. You can put all kinds of different things as a tool output. In our example, the tool outputs are simple key-value string-string pairs. In general keys should be relatively short descriptive strings, but values can have a lot of variety - e.g. markdown tables or json.
+
+Let's take a look at what this fully rendered prompt looks like.
+
+
+> <b>singlestep_augmented_generation_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>    
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">You are a powerful conversational AI trained by Cohere to help people. You are augmented by a number of tools, and your job is to use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see a specific instruction instructing you what kind of response to generate. When you answer the user's requests, you cite your sources in your answers, according to those instructions.</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>  
+> <b><span class="purple-text">You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span><span class="orange-text">What's the biggest penguin in the world?</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span><span class="orange-text">What's the biggest penguin in the world?</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span><span class="dark-red-text">Action: \```json</span></b>  
+> <b><span class="dark-red-text">[</span></b>  
+> <b><span class="dark-red-text">    \{</span></b>  
+> <b><span class="dark-red-text">        "tool_name": "internet_search",</span></b>  
+> <b><span class="dark-red-text">        "parameters": \{</span></b>  
+> <b><span class="dark-red-text">            "query": "biggest penguin in the world"</span></b>  
+> <b><span class="dark-red-text">        \}</span></b>  
+> <b><span class="dark-red-text">    \}</span></b>  
+> <b><span class="dark-red-text">]\```</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\<results></span></b>  
+> <b><span class="dark-red-text">Document: 0</span></b>  
+> <b><span class="dark-red-text">URL: https\:\/\/www\.guinnessworldrecords.com/world-records/84903-largest-species-of-penguin</span></b>  
+> <b><span class="dark-red-text">Title: Largest species of penguin ever</span></b>  
+> <b><span class="dark-red-text">Text: A lack of complete skeletons of extinct giant penguins found to date makes it difficult for height to be determined with any degree of certainty.</span><br /><br /><span class="dark-red-text">Prior to the recent discovery and description of K. fordycei, the largest species of penguin known to science was the colossus penguin (Palaeeudyptes klekowskii), which is estimated to have weighed as much as 115 kg (253 lb 8 oz), and stood up to 2 m (6 ft 6 in) tall. It lived in Antarctica's Seymour Island approximately 37 million years ago, during the Late Eocene, and is represented by the most complete fossil remains ever found for a penguin species in Antarctica.</span><span class="dark-red-text"><br /><br />Document: 1</span></b>  
+> <b><span class="dark-red-text">URL: https\:\/\/en.wikipedia.org/wiki/Emperor_penguin</span></b>  
+> <b><span class="dark-red-text">Title: Emperor penguin - Wikipedia</span></b>  
+> <b><span class="dark-red-text">Text: The emperor penguin (Aptenodytes forsteri) is the tallest and heaviest of all living penguin species and is endemic to Antarctica. The male and female are similar in plumage and size, reaching 100 cm (39 in) in length and weighing from 22 to 45 kg (49 to 99 lb). Feathers of the head and back are black and sharply delineated from the white belly, pale-yellow breast and bright-yellow ear patches.</span><br /><br /><span class="dark-red-text">Like all species of penguin, the emperor is flightless, with a streamlined body, and wings stiffened and flattened into flippers for a marine habitat. Its diet consists primarily of fish, but also includes crustaceans, such as krill, and cephalopods, such as squid.</span></b>  
+> <b><span class="dark-red-text">\</results></span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">Carefully perform the following instructions, in order, starting each with a new line.</span></b>  
+> <b><span class="dark-pink-text">Write ‘Grounded answer:’ followed by a response to the user’s last input in high quality natural english. Use square brackets to indicate a citation from the search results, e.g. "my fact [0]" for a fact from document 0.</span></b>  
+> <b><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>  
+
+
+
+And this results in the model output:
+
+> <b><span class="green-text">Grounded answer: The largest living species of penguin is the emperor penguin [1] (Aptenodytes forsteri) [1], which is endemic to Antarctica. [1] Male and female emperor penguins are similar in size [1], reaching up to 100 cm (39 inches) in length [1] and weighing between 22 and 45 kg (49 to 99 lb) [1].</span><br /><br /><span class="green-text">However, the now-extinct colossus penguin [0] (Palaeeudyptes klekowskii) [0] is thought to have been much larger [0], weighing up to 115 kg (253 lb 8 oz) [0] and standing up to 2 metres (6 ft 6 in) tall. [0]</span></b>
+
+
+## Multihop Tool Use with Command R/R+ (Agents)
+
+
+
+### A) Prompt template for Step 1 of the agent
+
+
+Let’s equip the model with three tools: a <b><span class="magenta-text">web_search tool</span></b> to find information online, a <b><span class="magenta-text">python_interpreter</span></b> tool to write and execute python code, and a <b><span class="magenta-text">directly_answer tool</span></b> to answer once the model has enough information. To enable that, we will create a rendered tool use prompt that will give the model access to three tools:
+- <b><span class="magenta-text">def web_search(query: str)</span></b> 
+- <b><span class="magenta-text">python_interpreter(code: str)</span></b> 
+- <b><span class="magenta-text">def directly_answer()</span></b> 
+
+We use the simplest chat history: just one message from the user.
+
+> <b><span class="orange-text">CHAT_HISTORY</span> =</b>  
+> <b>"<span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span><span class="orange-text">What's the age and citizenship of the artists who had the top 3 most streamed songs on Spotify in 2023? You have access to a dataset with information about Spotify songs from the past 10 years, located at ./spotify_dataset.csv.</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span>"</b>
+
+Note that this user message can only be answered with an agent that can plan and then take multiple sequential steps of action.
+
+Let’s take a look at what this fully rendered prompt looks like.
+
+
+> <b>multistep_tooluse_step_1_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>    
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">You are a powerful language agent trained by Cohere to help people. You are capable of complex reasoning and augmented with a number of tools. Your job is to plan and reason about how you will use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see an instruction informing you what kind of response to generate. You will construct a plan and then perform a number of reasoning and action steps to solve the problem. When you have determined the answer to the user's request, you will cite your sources in your answers, according the instructions</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>  
+> <b><span class="purple-text">You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user’s needs as best you can, which will be wide-ranging.</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.</span><br /><br /><span class="magenta-text">## Available Tools</span></b>  
+> <b><span class="magenta-text">Here is a list of tools that you have available to you:<br /><br />\```python</span></b>  
+> <b><span class="magenta-text">def web_search(query: str) -> List[Dict]:</span></b>  
+> <b><span class="magenta-text">    """Returns a list of relevant document snippets for a textual query retrieved from the internet</span><br /><br /><span class="magenta-text">    Args:</span></b>  
+> <b><span class="magenta-text">        query (str): Query to search the internet with</span></b>  
+> <b><span class="magenta-text">    """</span></b>  
+> <b><span class="magenta-text">    pass</span></b>  
+> <b><span class="magenta-text">\```<br /><br />\```python</span></b>  
+> <b><span class="magenta-text">def python_interpreter(query: str) -> List[Dict]:</span></b>  
+> <b><span class="magenta-text">    """Executes python code and returns the result. The code runs in a static sandbox without internet access and without interactive mode, so print output or save output to a file.</span><br /><br /><span class="magenta-text">    Args:</span></b>  
+> <b><span class="magenta-text">        code (str): Python code to execute</span></b>  
+> <b><span class="magenta-text">    """</span></b>  
+> <b><span class="magenta-text">    pass</span></b>  
+> <b><span class="magenta-text">\```<br /><br />\```python</span></b>  
+> <b><span class="magenta-text">def directly_answer() -> List[Dict]:</span></b>  
+> <b><span class="magenta-text">    """Calls a standard (un-augmented) AI chatbot to generate a response given the conversation history</span></b>  
+> <b><span class="magenta-text">    """</span></b>  
+> <b><span class="magenta-text">    pass</span></b>  
+> <b><span class="magenta-text">\```</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span><span class="orange-text">What's the age and citizenship of the artists who had the top 3 most streamed songs on Spotify in 2023? You have access to a dataset with information about Spotify songs from the past 10 years, located at ./spotify_dataset.csv.</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">Carefully perform the following instructions, in order, starting each with a new line.</span></b>  
+> <b><span class="dark-pink-text">Firstly, You may need to use complex and advanced reasoning to complete your task and answer the question. Think about how you can use the provided tools to answer the question and come up with a high level plan you will execute.</span></b>  
+> <b><span class="dark-pink-text">Write 'Plan:' followed by an initial high level plan of how you will solve the problem including the tools and steps required.</span></b>  
+> <b><span class="dark-pink-text">Secondly, Carry out your plan by repeatedly using actions, reasoning over the results, and re-evaluating your plan. Perform Action, Observation, Reflection steps with the following format. Write 'Action:' followed by a json formatted action containing the "tool_name" and "parameters"</span></b>  
+> <b><span class="dark-pink-text">Next you will analyze the 'Observation:', this is the result of the action.</span></b>  
+> <b><span class="dark-pink-text">After that you should always think about what to do next. Write 'Reflection:' followed by what you've figured out so far, any changes you need to make to your plan, and what you will do next including if you know the answer to the question.</span></b>  
+> <b><span class="dark-pink-text">... (this Action/Observation/Reflection can repeat N times)</span></b>  
+> <b><span class="dark-pink-text">Finally, Write 'Grounded answer:' followed by a response to the user’s last input in high quality natural english. Use square brackets to indicate a citation from the search results, e.g. "my fact [0]" for a fact from document 0.</span></b>  
+> <b><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
+
+
+And this results in the model output:
+
+> <b><span class="green-text">Plan: I will write and execute Python code to find the top 3 most streamed songs on Spotify in 2023 and then find the age and citizenship of the artists of those songs.</span></b>  
+> <b><span class="green-text">Action: \```json</span></b>  
+> <b><span class="green-text">[</span></b>  
+> <b><span class="green-text">    \{</span></b>  
+> <b><span class="green-text">        "tool_name": "python_interpreter",</span></b>  
+> <b><span class="green-text">        "parameters": \{</span></b>  
+> <b><span class="green-text">            "code": "import pandas as pd\r\n\r\ndf = pd.read_csv(\"spotify_dataset.csv\")\r\n\r\n# Inspect the dataset\r\nprint(df.info())\r\nprint(df.head())"</span></b>  
+> <b><span class="green-text">        \}</span></b>  
+> <b><span class="green-text">    \}</span></b>  
+> <b><span class="green-text">]</span></b>  
+> <b><span class="green-text">\```</span></b>
+
+This helps us understand the plan of the agent. Besides, we see that for the first step, the model recommends calling the <b><span class="magenta-text">python_interpreter</span></b> with some code written by the model.
+
+
+### B) Prompt template for Step 2 of the agent
+
+
+> <b>multistep_tooluse_step_2_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>    
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">You are a powerful language agent trained by Cohere to help people. You are capable of complex reasoning and augmented with a number of tools. Your job is to plan and reason about how you will use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see an instruction informing you what kind of response to generate. You will construct a plan and then perform a number of reasoning and action steps to solve the problem. When you have determined the answer to the user's request, you will cite your sources in your answers, according the instructions</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>  
+> <b><span class="purple-text">You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user’s needs as best you can, which will be wide-ranging.</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.</span><br /><br /><span class="magenta-text">## Available Tools</span></b>  
+> <b><span class="magenta-text">Here is a list of tools that you have available to you:<br /><br />\```python</span></b>  
+> <b><span class="magenta-text">def web_search(query: str) -> List[Dict]:</span></b>  
+> <b><span class="magenta-text">    """Returns a list of relevant document snippets for a textual query retrieved from the internet</span><br /><br /><span class="magenta-text">    Args:</span></b>  
+> <b><span class="magenta-text">        query (str): Query to search the internet with</span></b>  
+> <b><span class="magenta-text">    """</span></b>  
+> <b><span class="magenta-text">    pass</span></b>  
+> <b><span class="magenta-text">\```<br /><br />\```python</span></b>  
+> <b><span class="magenta-text">def python_interpreter(query: str) -> List[Dict]:</span></b>  
+> <b><span class="magenta-text">    """Executes python code and returns the result. The code runs in a static sandbox without internet access and without interactive mode, so print output or save output to a file.</span><br /><br /><span class="magenta-text">    Args:</span></b>  
+> <b><span class="magenta-text">        code (str): Python code to execute</span></b>  
+> <b><span class="magenta-text">    """</span></b>  
+> <b><span class="magenta-text">    pass</span></b>  
+> <b><span class="magenta-text">\```<br /><br />\```python</span></b>  
+> <b><span class="magenta-text">def directly_answer() -> List[Dict]:</span></b>  
+> <b><span class="magenta-text">    """Calls a standard (un-augmented) AI chatbot to generate a response given the conversation history</span></b>  
+> <b><span class="magenta-text">    """</span></b>  
+> <b><span class="magenta-text">    pass</span></b>  
+> <b><span class="magenta-text">\```</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span><span class="orange-text">What's the age and citizenship of the artists who had the top 3 most streamed songs on Spotify in 2023? You have access to a dataset with information about Spotify songs from the past 10 years, located at ./spotify_dataset.csv.</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">Carefully perform the following instructions, in order, starting each with a new line.</span></b>  
+> <b><span class="dark-pink-text">Firstly, You may need to use complex and advanced reasoning to complete your task and answer the question. Think about how you can use the provided tools to answer the question and come up with a high level plan you will execute.</span></b>  
+> <b><span class="dark-pink-text">Write 'Plan:' followed by an initial high level plan of how you will solve the problem including the tools and steps required.</span></b>  
+> <b><span class="dark-pink-text">Secondly, Carry out your plan by repeatedly using actions, reasoning over the results, and re-evaluating your plan. Perform Action, Observation, Reflection steps with the following format. Write 'Action:' followed by a json formatted action containing the "tool_name" and "parameters"</span></b>  
+> <b><span class="dark-pink-text">Next you will analyze the 'Observation:', this is the result of the action.</span></b>  
+> <b><span class="dark-pink-text">After that you should always think about what to do next. Write 'Reflection:' followed by what you've figured out so far, any changes you need to make to your plan, and what you will do next including if you know the answer to the question.</span></b>  
+> <b><span class="dark-pink-text">... (this Action/Observation/Reflection can repeat N times)</span></b>  
+> <b><span class="dark-pink-text">Finally, Write 'Grounded answer:' followed by a response to the user’s last input in high quality natural english. Use square brackets to indicate a citation from the search results, e.g. "my fact [0]" for a fact from document 0.</span></b>  
+> <b><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span><span class="orange-text">Plan: I will write and execute Python code to find the top 3 most streamed songs on Spotify in 2023 and then find the age and citizenship of the artists of those songs.</span></b>  
+> <b><span class="orange-text">Action: \```json</span></b>  
+> <b><span class="orange-text">[</span></b>  
+> <b><span class="orange-text">    \{</span></b>  
+> <b><span class="orange-text">        "tool_name": "python_interpreter",</span></b>  
+> <b><span class="orange-text">        "parameters": \{</span></b>  
+> <b><span class="orange-text">            "code": "import pandas as pd\r\n\r\ndf = pd.read_csv(\"spotify_dataset.csv\")\r\n\r\n# Inspect the dataset\r\nprint(df.info())\r\nprint(df.head())"</span></b>  
+> <b><span class="orange-text">        \}</span></b>  
+> <b><span class="orange-text">    \}</span></b>  
+> <b><span class="orange-text">]</span></b>  
+> <b><span class="orange-text">\```</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\<results></span></b>
+> <b><span class="dark-red-text">Document: 0</span></b>  
+> <b><span class="dark-red-text">tool_name: python_interpreter</span></b>  
+> <b><span class="dark-red-text">console_output: … the python console output describing the dataset  …</span></b>  
+> <b><span class="dark-red-text">\</results></span>"""<span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>
+
+
+And this results in the model output:
+
+> <b><span class="green-text">Reflection: The dataset contains the following columns: track_name, artist(s)_name, release_date, streams.</span></b>  
+> <b><span class="green-text">I will now write and execute Python code to find the top 3 most streamed songs on Spotify in 2023 and the age and citizenship of the artists.</span></b>  
+> <b><span class="green-text">Action: \```json</span></b>  
+> <b><span class="green-text">[</span></b>  
+> <b><span class="green-text">    \{</span></b>  
+> <b><span class="green-text">        "tool_name": "python_interpreter",</span></b>  
+> <b><span class="green-text">        "parameters": \{</span></b>  
+> <b><span class="green-text">            "code": "import pandas as pd\r\n\r\ndf = pd.read_csv(\"spotify_dataset.csv\")\r\n\r\n# Filter the data for 2023\r\ndf_2023 = df[df[\"released_year\"] == 2023]\r\n\r\n# Find the top 3 most streamed songs\r\ntop_3_songs = df_2023.sort_values(\"streams\", ascending=False).head(3)\r\n\r\n# Get the artists\r\nartists = top_3_songs[\"artist(s)_name\"].values\r\n\r\n# Get the age and citizenship of the artists\r\nprint(f\"The top 3 most streamed songs on Spotify in 2023 were by the following artists:\\n\{artists}\")"</span></b>  
+> <b><span class="green-text">        \}</span></b>  
+> <b><span class="green-text">    \}</span></b>  
+> <b><span class="green-text">]</span></b>  
+> <b><span class="green-text">\```</span></b>
+
+This helps us understand the agent's reflection and updated plan. Besides, we see that for the second step, the model recommends calling the <b><span class="magenta-text">python_interpreter</span></b> again with some code written by the model.
+
+
+### C) Prompt template for Step 3 of the agent
+
+
+
+> <b>multistep_tooluse_step_3_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>    
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">You are a powerful language agent trained by Cohere to help people. You are capable of complex reasoning and augmented with a number of tools. Your job is to plan and reason about how you will use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see an instruction informing you what kind of response to generate. You will construct a plan and then perform a number of reasoning and action steps to solve the problem. When you have determined the answer to the user's request, you will cite your sources in your answers, according the instructions</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>  
+> <b><span class="purple-text">You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user’s needs as best you can, which will be wide-ranging.</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.</span><br /><br /><span class="magenta-text">## Available Tools</span></b>  
+> <b><span class="magenta-text">Here is a list of tools that you have available to you:<br /><br />\```python</span></b>  
+> <b><span class="magenta-text">def web_search(query: str) -> List[Dict]:</span></b>  
+> <b><span class="magenta-text">    """Returns a list of relevant document snippets for a textual query retrieved from the internet</span><br /><br /><span class="magenta-text">    Args:</span></b>  
+> <b><span class="magenta-text">        query (str): Query to search the internet with</span></b>  
+> <b><span class="magenta-text">    """</span></b>  
+> <b><span class="magenta-text">    pass</span></b>  
+> <b><span class="magenta-text">\```<br /><br />\```python</span></b>  
+> <b><span class="magenta-text">def python_interpreter(query: str) -> List[Dict]:</span></b>  
+> <b><span class="magenta-text">    """Executes python code and returns the result. The code runs in a static sandbox without internet access and without interactive mode, so print output or save output to a file.</span><br /><br /><span class="magenta-text">    Args:</span></b>  
+> <b><span class="magenta-text">        code (str): Python code to execute</span></b>  
+> <b><span class="magenta-text">    """</span></b>  
+> <b><span class="magenta-text">    pass</span></b>  
+> <b><span class="magenta-text">\```<br /><br />\```python</span></b>  
+> <b><span class="magenta-text">def directly_answer() -> List[Dict]:</span></b>  
+> <b><span class="magenta-text">    """Calls a standard (un-augmented) AI chatbot to generate a response given the conversation history</span></b>  
+> <b><span class="magenta-text">    """</span></b>  
+> <b><span class="magenta-text">    pass</span></b>  
+> <b><span class="magenta-text">\```</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span><span class="orange-text">What's the age and citizenship of the artists who had the top 3 most streamed songs on Spotify in 2023? You have access to a dataset with information about Spotify songs from the past 10 years, located at ./spotify_dataset.csv.</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">Carefully perform the following instructions, in order, starting each with a new line.</span></b>  
+> <b><span class="dark-pink-text">Firstly, You may need to use complex and advanced reasoning to complete your task and answer the question. Think about how you can use the provided tools to answer the question and come up with a high level plan you will execute.</span></b>  
+> <b><span class="dark-pink-text">Write 'Plan:' followed by an initial high level plan of how you will solve the problem including the tools and steps required.</span></b>  
+> <b><span class="dark-pink-text">Secondly, Carry out your plan by repeatedly using actions, reasoning over the results, and re-evaluating your plan. Perform Action, Observation, Reflection steps with the following format. Write 'Action:' followed by a json formatted action containing the "tool_name" and "parameters"</span></b>  
+> <b><span class="dark-pink-text">Next you will analyze the 'Observation:', this is the result of the action.</span></b>  
+> <b><span class="dark-pink-text">After that you should always think about what to do next. Write 'Reflection:' followed by what you've figured out so far, any changes you need to make to your plan, and what you will do next including if you know the answer to the question.</span></b>  
+> <b><span class="dark-pink-text">... (this Action/Observation/Reflection can repeat N times)</span></b>  
+> <b><span class="dark-pink-text">Finally, Write 'Grounded answer:' followed by a response to the user’s last input in high quality natural english. Use square brackets to indicate a citation from the search results, e.g. "my fact [0]" for a fact from document 0.</span></b>  
+> <b><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span><span class="orange-text">Plan: I will write and execute Python code to find the top 3 most streamed songs on Spotify in 2023 and then find the age and citizenship of the artists of those songs.</span></b>  
+> <b><span class="orange-text">Action: \```json</span></b>  
+> <b><span class="orange-text">[</span></b>  
+> <b><span class="orange-text">    \{</span></b>  
+> <b><span class="orange-text">        "tool_name": "python_interpreter",</span></b>  
+> <b><span class="orange-text">        "parameters": \{</span></b>  
+> <b><span class="orange-text">            "code": "import pandas as pd\r\n\r\ndf = pd.read_csv(\"spotify_dataset.csv\")\r\n\r\n# Inspect the dataset\r\nprint(df.info())\r\nprint(df.head())"</span></b>  
+> <b><span class="orange-text">        \}</span></b>  
+> <b><span class="orange-text">    \}</span></b>  
+> <b><span class="orange-text">]</span></b>  
+> <b><span class="orange-text">\```</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\<results></span></b>
+> <b><span class="dark-red-text">Document: 0</span></b>  
+> <b><span class="dark-red-text">tool_name: python_interpreter</span></b>  
+> <b><span class="dark-red-text">console_output: … the python console output describing the dataset  …</span></b>  
+> <b><span class="dark-red-text">\</results></span>"""<span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span><span class="orange-text">Reflection: The dataset contains the following columns: track_name, artist(s)_name, release_date, streams.</span></b>  
+> <b><span class="orange-text">I will now write and execute Python code to find the top 3 most streamed songs on Spotify in 2023 and the age and citizenship of the artists.</span></b>  
+> <b><span class="orange-text">Action: \```json</span></b>  
+> <b><span class="orange-text">[</span></b>  
+> <b><span class="orange-text">    \{</span></b>  
+> <b><span class="orange-text">        "tool_name": "python_interpreter",</span></b>  
+> <b><span class="orange-text">        "parameters": \{</span></b>  
+> <b><span class="orange-text">            "code": "import pandas as pd\r\n\r\ndf = pd.read_csv(\"spotify_dataset.csv\")\r\n\r\n# Filter the data for 2023\r\ndf_2023 = df[df[\"released_year\"] == 2023]\r\n\r\n# Find the top 3 most streamed songs\r\ntop_3_songs = df_2023.sort_values(\"streams\", ascending=False).head(3)\r\n\r\n# Get the artists\r\nartists = top_3_songs[\"artist(s)_name\"].values\r\n\r\n# Get the age and citizenship of the artists\r\nprint(f\"The top 3 most streamed songs on Spotify in 2023 were by the following artists:\\n\{artists}\")"</span></b>  
+> <b><span class="orange-text">        \}</span></b>  
+> <b><span class="orange-text">    \}</span></b>  
+> <b><span class="orange-text">]</span></b>  
+> <b><span class="orange-text">\```</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\<results></span></b>
+> <b><span class="dark-red-text">Document: 1</span></b>  
+> <b><span class="dark-red-text">tool_name: python_interpreter</span></b>  
+> <b><span class="dark-red-text">console_output: … the python console output showing the top 3 most streamed songs on Spotify in 2023 and their artists  …</span></b>  
+> <b><span class="dark-red-text">\</results></span>"""<span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>  
+
+And this results in the model output:
+
+
+> <b><span class="green-text">Reflection: The top 3 most streamed songs on Spotify in 2023 were by the following artists: Miley Cyrus, Eslabon Armado, Peso Pluma, Shakira, Bizarrap</span></b>  
+> <b><span class="green-text">I will now search the internet for the age and citizenship of these artists.</span></b>  
+> <b><span class="green-text">Action: \```json</span></b>  
+> <b><span class="green-text">[</span></b>  
+> <b><span class="green-text">    \{</span></b>  
+> <b><span class="green-text">        "tool_name": "web_search",</span></b>  
+> <b><span class="green-text">        "parameters": \{</span></b>  
+> <b><span class="green-text">            "query": "Miley Cyrus age"</span></b>  
+> <b><span class="green-text">        \}</span></b>  
+> <b><span class="green-text">    \},</span></b>  
+> <b><span class="green-text">    \{</span></b>  
+> <b><span class="green-text">        "tool_name": "web_search",</span></b>  
+> <b><span class="green-text">        "parameters": \{</span></b>  
+> <b><span class="green-text">            "query": "Eslabon Armado, Peso Pluma age"</span></b>  
+> <b><span class="green-text">        \}</span></b>  
+> <b><span class="green-text">    \},</span></b>  
+> <b><span class="green-text">    \{</span></b>  
+> <b><span class="green-text">        "tool_name": "web_search",</span></b>  
+> <b><span class="green-text">        "parameters": \{</span></b>  
+> <b><span class="green-text">            "query": "Shakira, Bizarrap age"</span></b>  
+> <b><span class="green-text">        \}</span></b>  
+> <b><span class="green-text">    \},</span></b>  
+> <b><span class="green-text">    \{</span></b>  
+> <b><span class="green-text">        "tool_name": "web_search",</span></b>  
+> <b><span class="green-text">        "parameters": \{</span></b>  
+> <b><span class="green-text">            "query": "Miley Cyrus citizenship"</span></b>  
+> <b><span class="green-text">        \}</span></b>  
+> <b><span class="green-text">    \},</span></b>  
+> <b><span class="green-text">    \{</span></b>  
+> <b><span class="green-text">        "tool_name": "web_search",</span></b>  
+> <b><span class="green-text">        "parameters": \{</span></b>  
+> <b><span class="green-text">            "query": "Eslabon Armado, Peso Pluma citizenship"</span></b>  
+> <b><span class="green-text">        \}</span></b>  
+> <b><span class="green-text">    \},</span></b>  
+> <b><span class="green-text">    \{</span></b>  
+> <b><span class="green-text">        "tool_name": "web_search",</span></b>  
+> <b><span class="green-text">        "parameters": \{</span></b>  
+> <b><span class="green-text">            "query": "Miley Cyrus age"</span></b>  
+> <b><span class="green-text">        \}</span></b>  
+> <b><span class="green-text">    \},</span></b>  
+> <b><span class="green-text">    \{</span></b>  
+> <b><span class="green-text">        "tool_name": "web_search",</span></b>  
+> <b><span class="green-text">        "parameters": \{</span></b>  
+> <b><span class="green-text">            "query": "Shakira, Bizarrap citizenship"</span></b>  
+> <b><span class="green-text">        \}</span></b>  
+> <b><span class="green-text">    \}</span></b>  
+> <b><span class="green-text">]</span></b>  
+> <b><span class="green-text">\```</span></b>
+
+
+
+This helps us understand the agent's reflection and updated plan. Besides, we see that for the second step, the model recommends making many parallel queries to the <b><span class="magenta-text">web_search</span></b> tool, using the search queries predicted by the model.
+
+
+
+
+
+### D) Prompt template for Step 4 of the agent
+
+
+> <b>multistep_tooluse_step_4_prompt_template =</b>  
+> <b>"""<span class="dark-blue-text">\<BOS_TOKEN></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="red-text"># Safety Preamble</span></b>  
+> <b><span class="red-text">The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral</span><br /><br /><span class="dark-green-text"># System Preamble</span></b>    
+> <b><span class="green-text">## Basic Rules</span></b>  
+> <b><span class="green-text">You are a powerful language agent trained by Cohere to help people. You are capable of complex reasoning and augmented with a number of tools. Your job is to plan and reason about how you will use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see an instruction informing you what kind of response to generate. You will construct a plan and then perform a number of reasoning and action steps to solve the problem. When you have determined the answer to the user's request, you will cite your sources in your answers, according the instructions</span><br /><br /><span class="dark-purple-text"># User Preamble</span></b>  
+> <b><span class="purple-text">## Task and Context</span></b>  
+> <b><span class="purple-text">You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user’s needs as best you can, which will be wide-ranging.</span><br /><br /><span class="dark-sangria-text">## Style Guide</span></b>  
+> <b><span class="dark-sangria-text">Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.</span><br /><br /><span class="magenta-text">## Available Tools</span></b>  
+> <b><span class="magenta-text">Here is a list of tools that you have available to you:<br /><br />\```python</span></b>  
+> <b><span class="magenta-text">def web_search(query: str) -> List[Dict]:</span></b>  
+> <b><span class="magenta-text">    """Returns a list of relevant document snippets for a textual query retrieved from the internet</span><br /><br /><span class="magenta-text">    Args:</span></b>  
+> <b><span class="magenta-text">        query (str): Query to search the internet with</span></b>  
+> <b><span class="magenta-text">    """</span></b>  
+> <b><span class="magenta-text">    pass</span></b>  
+> <b><span class="magenta-text">\```<br /><br />\```python</span></b>  
+> <b><span class="magenta-text">def python_interpreter(query: str) -> List[Dict]:</span></b>  
+> <b><span class="magenta-text">    """Executes python code and returns the result. The code runs in a static sandbox without internet access and without interactive mode, so print output or save output to a file.</span><br /><br /><span class="magenta-text">    Args:</span></b>  
+> <b><span class="magenta-text">        code (str): Python code to execute</span></b>  
+> <b><span class="magenta-text">    """</span></b>  
+> <b><span class="magenta-text">    pass</span></b>  
+> <b><span class="magenta-text">\```<br /><br />\```python</span></b>  
+> <b><span class="magenta-text">def directly_answer() -> List[Dict]:</span></b>  
+> <b><span class="magenta-text">    """Calls a standard (un-augmented) AI chatbot to generate a response given the conversation history</span></b>  
+> <b><span class="magenta-text">    """</span></b>  
+> <b><span class="magenta-text">    pass</span></b>  
+> <b><span class="magenta-text">\```</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|USER_TOKEN|></span><span class="orange-text">What's the age and citizenship of the artists who had the top 3 most streamed songs on Spotify in 2023? You have access to a dataset with information about Spotify songs from the past 10 years, located at ./spotify_dataset.csv.</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-pink-text">Carefully perform the following instructions, in order, starting each with a new line.</span></b>  
+> <b><span class="dark-pink-text">Firstly, You may need to use complex and advanced reasoning to complete your task and answer the question. Think about how you can use the provided tools to answer the question and come up with a high level plan you will execute.</span></b>  
+> <b><span class="dark-pink-text">Write 'Plan:' followed by an initial high level plan of how you will solve the problem including the tools and steps required.</span></b>  
+> <b><span class="dark-pink-text">Secondly, Carry out your plan by repeatedly using actions, reasoning over the results, and re-evaluating your plan. Perform Action, Observation, Reflection steps with the following format. Write 'Action:' followed by a json formatted action containing the "tool_name" and "parameters"</span></b>  
+> <b><span class="dark-pink-text">Next you will analyze the 'Observation:', this is the result of the action.</span></b>  
+> <b><span class="dark-pink-text">After that you should always think about what to do next. Write 'Reflection:' followed by what you've figured out so far, any changes you need to make to your plan, and what you will do next including if you know the answer to the question.</span></b>  
+> <b><span class="dark-pink-text">... (this Action/Observation/Reflection can repeat N times)</span></b>  
+> <b><span class="dark-pink-text">Finally, Write 'Grounded answer:' followed by a response to the user’s last input in high quality natural english. Use square brackets to indicate a citation from the search results, e.g. "my fact [0]" for a fact from document 0.</span></b>  
+> <b><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span><span class="orange-text">Plan: I will write and execute Python code to find the top 3 most streamed songs on Spotify in 2023 and then find the age and citizenship of the artists of those songs.</span></b>  
+> <b><span class="orange-text">Action: \```json</span></b>  
+> <b><span class="orange-text">[</span></b>  
+> <b><span class="orange-text">    \{</span></b>  
+> <b><span class="orange-text">        "tool_name": "python_interpreter",</span></b>  
+> <b><span class="orange-text">        "parameters": \{</span></b>  
+> <b><span class="orange-text">            "code": "import pandas as pd\r\n\r\ndf = pd.read_csv(\"spotify_dataset.csv\")\r\n\r\n# Inspect the dataset\r\nprint(df.info())\r\nprint(df.head())"</span></b>  
+> <b><span class="orange-text">        \}</span></b>  
+> <b><span class="orange-text">    \}</span></b>  
+> <b><span class="orange-text">]</span></b>  
+> <b><span class="orange-text">\```</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\<results></span></b>
+> <b><span class="dark-red-text">Document: 0</span></b>  
+> <b><span class="dark-red-text">tool_name: python_interpreter</span></b>  
+> <b><span class="dark-red-text">console_output: … the python console output describing the dataset  …</span></b>  
+> <b><span class="dark-red-text">\</results></span>"""<span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span><span class="orange-text">Reflection: The dataset contains the following columns: track_name, artist(s)_name, release_date, streams.</span></b>  
+> <b><span class="orange-text">I will now write and execute Python code to find the top 3 most streamed songs on Spotify in 2023 and the age and citizenship of the artists.</span></b>  
+> <b><span class="orange-text">Action: \```json</span></b>  
+> <b><span class="orange-text">[</span></b>  
+> <b><span class="orange-text">    \{</span></b>  
+> <b><span class="orange-text">        "tool_name": "python_interpreter",</span></b>  
+> <b><span class="orange-text">        "parameters": \{</span></b>  
+> <b><span class="orange-text">            "code": "import pandas as pd\r\n\r\ndf = pd.read_csv(\"spotify_dataset.csv\")\r\n\r\n# Filter the data for 2023\r\ndf_2023 = df[df[\"released_year\"] == 2023]\r\n\r\n# Find the top 3 most streamed songs\r\ntop_3_songs = df_2023.sort_values(\"streams\", ascending=False).head(3)\r\n\r\n# Get the artists\r\nartists = top_3_songs[\"artist(s)_name\"].values\r\n\r\n# Get the age and citizenship of the artists\r\nprint(f\"The top 3 most streamed songs on Spotify in 2023 were by the following artists:\\n\{artists}\")"</span></b>  
+> <b><span class="orange-text">        \}</span></b>  
+> <b><span class="orange-text">    \}</span></b>  
+> <b><span class="orange-text">]</span></b>  
+> <b><span class="orange-text">\```</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\<results></span></b>
+> <b><span class="dark-red-text">Document: 1</span></b>  
+> <b><span class="dark-red-text">tool_name: python_interpreter</span></b>  
+> <b><span class="dark-red-text">console_output: … the python console output showing the top 3 most streamed songs on Spotify in 2023 and their artists  …</span></b>  
+> <b><span class="dark-red-text">\</results></span>"""<span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span><span class="orange-text">Reflection: The top 3 most streamed songs on Spotify in 2023 were by the following artists: Miley Cyrus, Eslabon Armado, Peso Pluma, Shakira, Bizarrap</span></b>  
+> <b><span class="orange-text">I will now search the internet for the age and citizenship of these artists.</span></b>  
+> <b><span class="orange-text">Action: \```json</span></b>  
+> <b><span class="orange-text">[</span></b>  
+> <b><span class="orange-text">    \{</span></b>  
+> <b><span class="orange-text">        "tool_name": "web_search",</span></b>  
+> <b><span class="orange-text">        "parameters": \{</span></b>  
+> <b><span class="orange-text">            "query": "Miley Cyrus age"</span></b>  
+> <b><span class="orange-text">        \}</span></b>  
+> <b><span class="orange-text">    \},</span></b>  
+> <b><span class="orange-text">    \{</span></b>  
+> <b><span class="orange-text">        "tool_name": "web_search",</span></b>  
+> <b><span class="orange-text">        "parameters": \{</span></b>  
+> <b><span class="orange-text">            "query": "Eslabon Armado, Peso Pluma age"</span></b>  
+> <b><span class="orange-text">        \}</span></b>  
+> <b><span class="orange-text">    \},</span></b>  
+> <b><span class="orange-text">    \{</span></b>  
+> <b><span class="orange-text">        "tool_name": "web_search",</span></b>  
+> <b><span class="orange-text">        "parameters": \{</span></b>  
+> <b><span class="orange-text">            "query": "Shakira, Bizarrap age"</span></b>  
+> <b><span class="orange-text">        \}</span></b>  
+> <b><span class="orange-text">    \},</span></b>  
+> <b><span class="orange-text">    \{</span></b>  
+> <b><span class="orange-text">        "tool_name": "web_search",</span></b>  
+> <b><span class="orange-text">        "parameters": \{</span></b>  
+> <b><span class="orange-text">            "query": "Miley Cyrus citizenship"</span></b>  
+> <b><span class="orange-text">        \}</span></b>  
+> <b><span class="orange-text">    \},</span></b>  
+> <b><span class="orange-text">    \{</span></b>  
+> <b><span class="orange-text">        "tool_name": "web_search",</span></b>  
+> <b><span class="orange-text">        "parameters": \{</span></b>  
+> <b><span class="orange-text">            "query": "Eslabon Armado, Peso Pluma citizenship"</span></b>  
+> <b><span class="orange-text">        \}</span></b>  
+> <b><span class="orange-text">    \},</span></b>  
+> <b><span class="orange-text">    \{</span></b>  
+> <b><span class="orange-text">        "tool_name": "web_search",</span></b>  
+> <b><span class="orange-text">        "parameters": \{</span></b>  
+> <b><span class="orange-text">            "query": "Miley Cyrus age"</span></b>  
+> <b><span class="orange-text">        \}</span></b>  
+> <b><span class="orange-text">    \},</span></b>  
+> <b><span class="orange-text">    \{</span></b>  
+> <b><span class="orange-text">        "tool_name": "web_search",</span></b>  
+> <b><span class="orange-text">        "parameters": \{</span></b>  
+> <b><span class="orange-text">            "query": "Shakira, Bizarrap citizenship"</span></b>  
+> <b><span class="orange-text">        \}</span></b>  
+> <b><span class="orange-text">    \}</span></b>  
+> <b><span class="orange-text">]</span></b>  
+> <b><span class="orange-text">\```</span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text">\<results></span></b>
+> <b><span class="dark-red-text">Document: 2</span></b>  
+> <b><span class="dark-red-text">tool_name: web_search</span></b>  
+> <b><span class="dark-red-text">content: … some web search results  …</span><br /><br /><span class="dark-red-text">Document: 3</span></b>  
+> <b><span class="dark-red-text">tool_name: web_search</span></b>  
+> <b><span class="dark-red-text">content: … some web search results  …</span><br /><br /><span class="dark-red-text">Document: 4</span></b>  
+> <b><span class="dark-red-text">tool_name: web_search</span></b>  
+> <b><span class="dark-red-text">content: … some web search results  …</span></b>  
+> <b><span class="dark-red-text">\</results></span><span class="brown-text">\<|END_OF_TURN_TOKEN|></span><span class="brown-text">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|CHATBOT_TOKEN|></span>"""</b>  
+
+
+And this results in the model output:
+
+> <b><span class="green-text">Grounded answer: The top 3 most streamed songs on Spotify in 2023 were by the following artists:</span></b>  
+> <b><span class="green-text">1. Miley Cyrus [1] - born on November 23, 1992 [1,3,4], she is currently 30 years old. She is an American [3,4] singer, songwriter, actress and producer [4] born in Tennessee [3,4]</span></b>  
+> <b><span class="green-text">2. Eslabon Armado, Peso Pluma [1] - I couldn't find information about their age or citizenship</span></b>  
+> <b><span class="green-text">3. Shakira, Bizarrap [1] - Shakira is a 45-year-old [2,4] Colombian [4] singer-songwriter and Bizarrap is an Argentine [2] record producer, songwriter and DJ born on August 28, 1998 [4], making him 24 years old.</span></b>  
+
+The model deemed it had enough information to answer the user question.
+
+Note: Above is an example for an agent that took 4 steps to answer the user question. You can extrapolate this prompt template for every subsequent step of the agent.
+
+
+
+
+## Spotlight on some interesting parts of the prompt, to understand them better
+
+### Formatting Chat History
+
+The rendered chat history is quite simple and the only thing to note is that each turn of the conversation should begin with a <b><span class="brown-text ">\<|START_OF_TURN_TOKEN|></span></b> followed by one of <b><span class="dark-orange-text ">\<|USER_TOKEN|></span></b>, <b><span class="dark-orange-text ">\<|CHATBOT_TOKEN|></span></b>, or <b><span class="dark-orange-text ">\<|SYSTEM_TOKEN|></span></b> (depending on the role of the speaker), and finally <b><span class="brown-text ">\<|END_OF_TURN_TOKEN|></span></b>.
+
+> <b><span class="orange-text ">rendered_chat_history</span> =</b> 
+> <b>"""<span class="brown-text ">\<|END_OF_TURN_TOKEN|></span> <span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="brown-text "><span class="dark-orange-text ">\<|USER_TOKEN|></span><span class="orange-text "> What's the biggest penguin in the world? </span>\<|END_OF_TURN_TOKEN|></span>"""</b> 
+
+### Formatting Tool Outputs
+
+The tool outputs should be wrapped in a <b><span class="brown-text ">\<|START_OF_TURN_TOKEN|></span><span class="dark-orange-text">\<|SYSTEM_TOKEN|></span><span class="dark-red-text ">\<results> \{TOOL_OUTPUTS}</span><span class="brown-text ">\<|END_OF_TURN_TOKEN|></span></b> and look something like:
+
+> <b><span class="dark-red-text ">TOOL_OUTPUTS</span> =</b> 
+> <b>"""<span class="dark-red-text">\<results></span></b>     
+> <b><span class="dark-red-text">Document: 0</span></b>      
+> <b><span class="dark-red-text">Tall penguins</span></b>      
+> <b><span class="dark-red-text">Emperor penguins are the tallest growing up to 122 cm in height.</span><br /><br /><span class="dark-red-text">Document: 1</span></b>      
+> <b><span class="dark-red-text">Penguin habitats</span></b>      
+> <b><span class="dark-red-text">Emperor penguins only live in Antarctica.</span></b>      
+> <b><span class="dark-red-text">\</results></span></b> """
+
+Each tool output should start with <span class="dark-red-text ">Document: \{n}</span> and should be an ascending list of integers starting at 0. You can put all kinds of different things as a tool output. In our example, the tool outputs are simple key-value string-string pairs. In general keys should be relatively short descriptive strings, but values can have a lot of variety - e.g. markdown tables or json.
+
+
+### Special Tokens
+
+- <b><span class="dark-blue-text ">\<BOS_TOKEN>: This is a special token used by Command R models to signify the beginning of a prompt. When using raw_prompting, you should always start with this token.</span></b>
+- <b><span class="brown-text ">\<|START_OF_TURN_TOKEN|>: This special token is used at the beginning of something said by either the USER, SYSTEM, or CHATBOT.</span></b>
+- <b><span class="dark-orange-text ">\<|USER_TOKEN|>: This should immediately follow `<START_OF_TURN_TOKEN>` and signifies that the following output is meant to be from the user such as a query.</span></b>
+- <b><span class="dark-orange-text ">\<|SYSTEM_TOKEN|>: Same as the `USER` token but indicating some system instruction.</span></b>
+- <b><span class="dark-orange-text ">\<|CHATBOT_TOKEN|>: same as `USER` and `SYSTEM` token but indicating a chatbot output.</span></b>
+- <b><span class="brown-text ">\<|END_OF_TURN_TOKEN|>: This will immediately follow the content of a `USER`, `CHATBOT`, or `SYSTEM` turn.</span></b>
+
+### Preamble Sections
+
+> <b><span class="dark-red-text "># Safety Preamble: This will outline the safety instructions to the model to instruct it not to produce harmful outputs.</span></b>
+
+> <b><span class="dark-green-text "># System Preamble: System specified rules.</span></b>     
+> <b><span class="green-text ">## Basic Rules: This outlines how the model should behave in general.</span></b>  
+
+> <b><span class="dark-purple-text"># User Preamble: User specified rules.</span></b>  
+
+> <b><span class="purple-text">## Task and Context: Here we outline the specific task it is that we want the model to solve and any additional required context.</span></b>  
+
+> <b><span class="dark-sangria-text">## Style Guide: Here we tell the model what the output should look like for example ‘respond in full sentences’ or ‘respond like a pirate’.</span></b>  
+
+> <b><span class="dark-magenta-text">## Available Tools: If applicable, this will contain definitions of the tools available to the model to use.</span></b>  
+
+> <b><span class="orange-text">\{CHAT_HISTORY}: This will contain the current dialogue so far and include user queries plus any responses from the model. </span></b>  
+
+> <b><span class="bloody-red-text">\{TOOL_OUTPUTS}: This is where we would add any rendered tool outputs, such as returned documents from a search.</span></b>  
+
+> <b><span class="dark-pink-text">\{INSTRUCTIONS}: These are the specific instructions that the model should follow when producing its output. For example, we could tell the model that it should produce a tool function call in a particular format, or for augmented generation, we could tell the model to generate an answer along with citations.</span></b>  
+
+Now that we’ve looked at a high level of the structured prompt and what each of the sections mean, let's see how we can change the content of different sections to get the model to do different things.
+
+### Changing the Output Format: Citation Style
+
+The default instructions for augmented generation (such as in the HuggingFace Tokenizer) uses the following <span class="dark-pink-text">INSTRUCTIONS</span>:
+
+> <b><span class="dark-pink-text ">AUGMENTED_GENERATION_DEFAULT_INSTRUCTIONS</span> =</b>  
+> <b>"""<span class="extra-green">Carefully perform the following instructions, in order, starting each with a new line.    
+> Firstly, Decide which of the retrieved documents are relevant to the user's last input by writing 'Relevant Documents:' followed by comma-separated list of document numbers. If none are relevant, you should instead write 'None'.    
+> Secondly, Decide which of the retrieved documents contain facts that should be cited in a good answer to the user's last input by writing 'Cited Documents:' followed a comma-separated list of document numbers. If you dont want to cite any of them, you should instead write 'None'.     
+> Thirdly, Write 'Answer:' followed by a response to the user's last input in high quality natural english. Use the retrieved documents to help you. Do not insert any citations or grounding markup.     
+> Finally, Write 'Grounded answer:' followed by a response to the user's last input in high quality natural english. Use the symbols \<co: doc> and \</co: doc> to indicate when a fact comes from a document in the search result, e.g \<co: 0>my fact\</co: 0> for a fact from document 0.</span>"""</b>
+
+This default instruction will tell the model to generate four things:
+
+1. A list of docs relevant to the query.
+2. A list of docs that will be cited in the answer.
+3. A plain text answer to the question
+4. A grounded answer which includes citations with the format <span class="grass-green-text">`<co: 0>my fact</co: 0>`</span>.
+
+This will lead the model to produce an output like:
+
+> <b><span class="extra-green">Relevant Documents: 0,1
+> Cited Documents: 0,1
+> Answer: The Emperor Penguin is the tallest or biggest penguin in the world. It is a bird that lives only in Antarctica and grows to a height of around 122 centimetres.
+> Grounded answer: The \<co: 0>Emperor Penguin\</co: 0> is the \<co: 0>tallest\</co: 0> or biggest penguin in the world. It is a bird that \<co: 1>lives only in Antarctica\</co: 1> and \<co: 0>grows to a height of around 122 centimetres.\</co: 0></span></b>
+
+We can easily change the output format of the model by modifying the instruction in our prompt. Let’s get rid of the relevant and cited doc outputs as well as the raw answer. For the remaining grounded answer, let’s change the citation format to be brackets.
+
+> <b><span class="dark-pink-text ">MODIFIED_AUGMENTED_GENERATION_INSTRUCTIONS</span> =</b>     
+> <b>"""<span class="extra-green">Carefully perform the following instructions, in order, starting each with a new line.
+> Write 'Grounded answer:' followed by a response to the user's last input in high quality natural english. Use the symbol [doc] to indicate when a fact comes from a document in the search result, e.g my fact [0] for a fact from document 0.</span>"""</b>
+
+This will have the model output something like this:
+
+> <b><span class="extra-green">Grounded answer: The Emperor Penguin[0] is the tallest[0] or biggest penguin in the world. It is a bird that lives only in Antarctica[1] and grows to a height of around 122 centimetres.[0]</span></b>
+
+
+
+### Changing the Style
+
+In addition to changing the format of the output, we can also easily change the style by modifying the <b><span class="dark-sangria-text">STYLE_GUIDE</span></b>.
+
+> <b><span class="dark-sangria-text ">MODIFIED_STYLE_GUIDE</span> =</b>   
+>
+> <b><span class="extra-green">“””## Style Guide
+> Answer in the style of David Attenborough.”””</span></b>
+
+Which will have the model instead produce this majestic response:
+
+> <b><span class="extra-green">Grounded answer: And here, emerging from the icy waters, is the majestic emperor penguin, the largest species of its kind. Growing to an impressive height of 122 centimeters[0], these majestic birds rule the Antarctic[1] oceans. Their imposing stature and proud demeanor make them a sight to behold.</span></b>
+
+Inspiring.
+
+
+## Appendix
+
+```python PYTHON
+documents = [
+   { "title": "Tall penguins",
+      "text": "Emperor penguins are the tallest growing up to 122 cm in height." },
+   { "title": "Penguin habitats",
+      "text": "Emperor penguins only live in Antarctica."}
+]
+
+
+def render_docs(docs: list[dict]) -> str:
+ """Render a list of doc dicts to a single formatted string."""
+ doc_str_list = ["<results>"]
+ for doc_idx, doc in enumerate(docs):
+   if doc_idx > 0:
+     doc_str_list.append("")
+   doc_str_list.extend([f'Document: {doc_idx}', doc['title'], doc['text']])
+ doc_str_list.append("</results>")
+ return "\n".join(doc_str_list)
+
+
+rendered_docs = render_docs(documents)
+```
+
+```python PYTHON
+conversation = [
+   {"role": "user", "content": "Whats the biggest penguin in the world?"}
+   {"role": "system", "content": rendered_docs}
+]
+
+
+def render_chat_history(_conversation: list[dict]) -> str:
+ chat_hist_str = ""
+ for turn in _conversation:
+   chat_hist_str += "<|START_OF_TURN_TOKEN|>"
+   if turn['role'] == 'user':
+     chat_hist_str += "<|USER_TOKEN|>"
+   elif turn['role'] == 'assistant':
+     chat_hist_str += "<|CHATBOT_TOKEN|>"
+   else: # role == system
+     chat_hist_str += "<|SYSTEM_TOKEN|>"
+   chat_hist_str += turn['content']
+ chat_hist_str += "<|END_OF_TURN_TOKEN|>"
+ return chat_hist_str
+
+
+rendered_chat_history = render_chat_history(conversation)
+```

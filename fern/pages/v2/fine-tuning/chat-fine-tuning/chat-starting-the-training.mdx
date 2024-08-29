@@ -1,6 +1,6 @@
 ---
 title: "Starting the Chat Fine-Tuning"
-slug: "docs/chat-starting-the-training"
+slug: "v2/docs/chat-starting-the-training"
 
 hidden: false
 description: "This document provides a guide on how to train a fine-tuning model for Chat using both the Web UI and the Python SDK, including steps for data upload, data requirements, training, and calling the model with `co.chat()`."
@@ -112,7 +112,7 @@ In addition to using the [Web UI](/docs/fine-tuning-with-the-web-ui) for fine-tu
 
 ## Prepare your Dataset
 
-Creating a fine-tuned model that can be used with the `co.Chat` API requires good examples of data. 
+Creating a fine-tuned model that can be used with the `co.chat` API requires good examples of data. 
 
 Your data has to be in a `.jsonl` file, where each `json` object is a conversation with the following structure:
 
@@ -145,7 +145,7 @@ Using the `co.finetuning.create_finetuned_model()` method of the Cohere client, 
 ```python PYTHON
 import cohere
 
-co = cohere.Client('Your API key')
+co = cohere.ClientV2('Your API key')
 
 # Single train file upload
 chat_dataset = co.datasets.create(name="chat-dataset",
@@ -231,7 +231,7 @@ my_finetune = co.finetuning.create_finetuned_model(
 
 ## Calling your Chat Model with co.chat()
 
-Once your model completes training, you can call it via [co.chat()](/docs/chat-api) and pass your custom model's `model_id`.
+Once your model completes training, you can call it via [co.chat()](/v2/docs/chat-api) and pass your custom model's `model_id`.
 
 Please note, the `model_id` is the `id` returned by the finetuned object with the `"-ft"` suffix.
 
@@ -244,15 +244,15 @@ Here's a Python script to make this clearer:
 ```python PYTHON
 import cohere
 
-co = cohere.Client('Your API key')
+co = cohere.ClientV2('Your API key')
 # get the finetuned model object
 ft = co.finetuning.get_finetuned_model(my_finetune.finetuned_model.id)
 
 response = co.chat(
-  message="Hi there",
   model=ft.finetuned_model.id+"-ft",
-  # optional (to specify a preamble)
-  preamble="You are a chatbot trained to answer to my every question. Answer every question with full sentences.",
+  # Required - user message. Optional (to specify a preamble/system message)
+  messages=[{"role": "system", "content": "You are a chatbot trained to answer to my every question. Answer every question with full sentences."},
+            {"role": "user", "content": "Hi there"}],
   # optional
   return_prompt=True
 )
@@ -261,18 +261,19 @@ response = co.chat(
 print(response.text)
 ```
 
-After your first message with the model, an `id` field will be returned which you can pass as the `conversation_id` to continue the conversation from that point onwards, like so:
+After your first message with the model, you can build the `messages` list with the previous messages to continue the conversation from that point onwards, like so:
 
 ```python PYTHON
 # Continuing the above conversation with `response.id`.
 response_2 = co.chat(
-  message="How are you?",
   model=ft.finetuned_model.id+"-ft",
   # optional (to specify a preamble)
-  preamble_override="You are a chatbot trained to answer to my every question. Answer every question with full sentences",
+  messages=[{"role": "system", "content": "You are a chatbot trained to answer to my every question. Answer every question with full sentences."},
+            {"role": "user", "content": "Hi there"},
+            {"role": "assistant", "content": response.message.content[0].text},
+            {"role": "user", "content": "How are you?"}],
   # optional
   return_prompt=True,
-  conversation_id=response.chat_history,
 )
 ```
 

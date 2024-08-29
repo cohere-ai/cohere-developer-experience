@@ -1,0 +1,145 @@
+---
+title: "Using the Chat API"
+slug: "v2/docs/chat-api"
+
+hidden: false 
+description: "The document explains how to use the Chat API endpoint with Cohere LLMs to generate text responses in a conversational interface, including examples in Python, Java, and TypeScript. It also covers response structure, multi-turn conversations, and using `messages` to save chat history."
+image: "../../assets/images/4a5325a-cohere_meta_image.jpg"  
+keywords: "Cohere, text generation, LLMs, generative AI"
+
+createdAt: "Thu Feb 29 2024 18:05:29 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Tue Jun 18 2024 07:20:15 GMT+0000 (Coordinated Universal Time)"
+---
+The Chat API endpoint is used to generate text with Cohere LLMs. This endpoint facilitates a conversational interface, allowing users to send messages to the model and receive text responses.
+
+<CodeBlocks>
+```python PYTHON
+import cohere
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
+
+res = co.chat(
+    model="command-r-plus",
+    messages=[{"role": "user", "content": "Write a title for a blog post about API design. Only output the title text."}]
+)
+
+print(res.message.content[0].text) # "The Ultimate Guide to API Design: Best Practices for Building Robust and Scalable APIs"
+```
+```java JAVA
+public class ChatPost {
+  public static void main(String[] args) {
+    Cohere cohere = Cohere.builder().token("<YOUR API KEY>").build();
+
+    NonStreamedChatResponse response = cohere.chat(
+      ChatRequest.builder()
+      	.model("command-r-plus")
+      	.message("Write a title for a blog post about API design. Only output the title text.")
+    )
+
+    System.out.println(response); // "The Art of API Design: Crafting Elegant and Powerful Interfaces"
+  }
+}
+```
+```typescript TYPESCRIPT
+const { CohereClient } = require('cohere-ai');
+
+const cohere = new CohereClient({
+  token: '<YOUR API KEY>',
+});
+
+(async () => {
+  const response = await cohere.chat({
+    message: 'Write a title for a blog post about API design. Only output the title text.',
+  });
+
+  console.log(response.text)
+})();
+```
+</CodeBlocks>
+
+## Response Structure
+
+Below is a sample response from the Chat API
+
+```json JSON
+{
+  "id": "d656d46d-206b-4cc9-9baa-46ef8931cd18",
+  "finish_reason": "COMPLETE",
+  "prompt": null,
+  "message": {
+    "tool_calls": null,
+    "tool_plan": null,
+    "content": [
+      {
+        "text": "The Ultimate Guide to API Design: Best Practices for Building Robust and Scalable APIs",
+        "type": "text"
+      }
+    ],
+    "citations": null,
+    "role": "assistant"
+  },
+  "usage": null,
+  "meta": {
+    "api_version": {
+      "version": "2",
+      "is_experimental": true
+    },
+    "warnings": [
+      "You are using an experimental version, for more information please refer to https://docs.cohere.com/versioning-reference"
+    ],
+    "billed_units": {
+      "input_tokens": 17,
+      "output_tokens": 16
+    },
+    "tokens": {
+      "input_tokens": 215,
+      "output_tokens": 16
+    }
+  }
+}
+```
+
+Every response contains the following fields:
+
+- `message` the generated message from the model.
+- `id` the ID corresponding to this response.
+- `finish_reason` can be one of the following:
+  - `COMPLETE` the model successfully finished generating the message
+  - `MAX_TOKENS` the model's context limit was reached before the generation could be completed
+- `meta` contains information with token counts, billing etc.
+
+## Preamble
+A preamble can be optionally provided in the request. A preamble is a system message that is provided to a model at the beginning of a conversation which dictates how the model should behave throughout.
+
+```python PYTHON
+preamble = """## Task and Context
+You respond concisely, in about 5 words or less"""
+
+res = co.chat(
+    model="command-r-plus",
+    messages=[{"role": "system", "content": preamble},
+              {"role": "user", "content": "Write a title for a blog post about API design. Only output the title text."}] # "Designing Perfect APIs"
+)
+
+print(res.message.content[0].text)
+```
+
+
+## Multi-Turn Conversations
+
+The user message in the Chat request can be sent together in the `messages` list to provide the model with conversational context:
+
+```python PYTHON
+system_message = """## Task and Context
+You respond concisely, in about 5 words or less"""
+
+res = co.chat(
+    model="command-r-plus",
+    messages=[{"role": "system", "content": system_message},
+              {"role": "user", "content": "Write a title for a blog post about API design. Only output the title text."},
+              {"role": "assistant", "content": "Designing Perfect APIs"},
+              {"role": "user", "content": "Another one about generative AI."}]
+)
+
+print(res.message.content[0].text) # "AI: The Generative Age"
+```
+
