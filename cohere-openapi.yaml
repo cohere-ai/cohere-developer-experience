@@ -5501,15 +5501,17 @@ paths:
                     - public
                   description: |
                     Text input for the model to respond to.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 model:
                   type: string
                   x-fern-audiences:
                     - public
                   description: |
-                    Defaults to `command-r-plus`.
+                    Defaults to `command-r-plus-08-2024`.
 
                     The name of a compatible [Cohere model](https://docs.cohere.com/docs/models) or the ID of a [fine-tuned](https://docs.cohere.com/docs/chat-fine-tuning) model.
+
                     Compatible Deployments: Cohere Platform, Private Deployments
                 stream:
                   description: |
@@ -5518,6 +5520,7 @@ paths:
                     When `true`, the response will be a JSON stream of events. The final event will contain the complete response, and will have an `event_type` of `"stream-end"`.
 
                     Streaming is beneficial for user interfaces that render the contents of the response piece by piece, as it gets generated.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   type: boolean
                   x-fern-audiences:
@@ -5527,6 +5530,7 @@ paths:
                     When specified, the default Cohere preamble will be replaced with the provided one. Preambles are a part of the prompt used to adjust the model's overall behavior and conversation style, and use the `SYSTEM` role.
 
                     The `SYSTEM` role is also used for the contents of the optional `chat_history=` parameter. When used with the `chat_history=` parameter it adds content throughout a conversation. Conversely, when used with the `preamble=` parameter it adds content at the start of the conversation only.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   type: string
                   x-fern-audiences:
@@ -5544,6 +5548,7 @@ paths:
                     Each item represents a single message in the chat history, excluding the current user turn. It has two properties: `role` and `message`. The `role` identifies the sender (`CHATBOT`, `SYSTEM`, or `USER`), while the `message` contains the text content.
 
                     The chat_history parameter should not be used for `SYSTEM` messages in most cases. Instead, to add a `SYSTEM` role message at the beginning of a conversation, the `preamble` parameter should be used.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 conversation_id:
                   type: string
@@ -5553,6 +5558,7 @@ paths:
                     An alternative to `chat_history`.
 
                     Providing a `conversation_id` creates or resumes a persisted conversation with the specified ID. The ID can be any non empty string.
+
                     Compatible Deployments: Cohere Platform
                 prompt_truncation:
                   type: string
@@ -5572,7 +5578,10 @@ paths:
                     With `prompt_truncation` set to "AUTO_PRESERVE_ORDER", some elements from `chat_history` and `documents` will be dropped in an attempt to construct a prompt that fits within the model's context length limit. During this process the order of the documents and chat history will be preserved as they are inputted into the API.
 
                     With `prompt_truncation` set to "OFF", no elements will be dropped. If the sum of the inputs exceeds the model's context length limit, a `TooManyTokens` error will be returned.
-                    Compatible Deployments: Cohere Platform Only AUTO_PRESERVE_ORDER: Azure, AWS Sagemaker/Bedrock, Private Deployments
+
+                    Compatible Deployments: 
+                     - AUTO: Cohere Platform Only
+                     - AUTO_PRESERVE_ORDER: Azure, AWS Sagemaker/Bedrock, Private Deployments
                 connectors:
                   type: array
                   x-fern-audiences:
@@ -5584,6 +5593,7 @@ paths:
                     Accepts `{"id": "web-search"}`, and/or the `"id"` for a custom [connector](https://docs.cohere.com/docs/connectors), if you've [created](https://docs.cohere.com/docs/creating-and-deploying-a-connector) one.
 
                     When specified, the model's reply will be enriched with information found by querying each of the connectors (RAG).
+
                     Compatible Deployments: Cohere Platform
                 search_queries_only:
                   type: boolean
@@ -5593,16 +5603,19 @@ paths:
                     Defaults to `false`.
 
                     When `true`, the response will only contain a list of generated search queries, but no search will take place, and no reply from the model to the user's `message` will be generated.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 documents:
                   description: |
                     A list of relevant documents that the model can cite to generate a more accurate reply. Each document is a string-string dictionary.
 
                     Example:
-                    `[
+                    ```
+                    [
                       { "title": "Tall penguins", "text": "Emperor penguins are the tallest." },
                       { "title": "Penguin habitats", "text": "Emperor penguins only live in Antarctica." },
-                    ]`
+                    ]
+                    ```
 
                     Keys and values from each document will be serialized to a string and passed to the model. The resulting generation will include citations that reference some of these documents.
 
@@ -5613,6 +5626,7 @@ paths:
                     An `_excludes` field (array of strings) can be optionally supplied to omit some key-value pairs from being shown to the model. The omitted fields will still show up in the citation object. The "_excludes" field will not be passed to the model.
 
                     See ['Document Mode'](https://docs.cohere.com/docs/retrieval-augmented-generation-rag#document-mode) in the guide for more information.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   type: array
                   x-fern-audiences:
@@ -5627,6 +5641,7 @@ paths:
                     Defaults to `"accurate"`.
 
                     Dictates the approach taken to generating citations as part of the RAG flow by allowing the user to specify whether they want `"accurate"` results, `"fast"` results or no results.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   enum:
                     - fast
@@ -5645,6 +5660,7 @@ paths:
                     A non-negative float that tunes the degree of randomness in generation. Lower temperatures mean less random generations, and higher temperatures mean more random generations.
 
                     Randomness can be further maximized by increasing the  value of the `p` parameter.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 max_tokens:
                   type: integer
@@ -5652,6 +5668,7 @@ paths:
                     - public
                   description: |
                     The maximum number of tokens the model will generate as part of the response. Note: Setting a low value may result in incomplete generations.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   writeOnly: true
                 max_input_tokens:
@@ -5662,6 +5679,7 @@ paths:
                     The maximum number of input tokens to send to the model. If not specified, `max_input_tokens` is the model's context length limit minus a small buffer.
 
                     Input will be truncated according to the `prompt_truncation` parameter.
+
                     Compatible Deployments: Cohere Platform
                   writeOnly: true
                 k:
@@ -5671,6 +5689,7 @@ paths:
                   description: |
                     Ensures only the top `k` most likely tokens are considered for generation at each step.
                     Defaults to `0`, min value of `0`, max value of `500`.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   writeOnly: true
                   default: 0
@@ -5683,6 +5702,7 @@ paths:
                   description: |
                     Ensures that only the most likely tokens, with total probability mass of `p`, are considered for generation at each step. If both `k` and `p` are enabled, `p` acts after `k`.
                     Defaults to `0.75`. min value of `0.01`, max value of `0.99`.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   writeOnly: true
                   default: 0.75
@@ -5699,6 +5719,7 @@ paths:
                     deterministically, such that repeated requests with the same
                     seed and parameters should return the same result. However,
                     determinism cannot be totally guaranteed.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 stop_sequences:
                   x-fern-audiences:
@@ -5709,6 +5730,7 @@ paths:
                     type: string
                   description: |
                     A list of up to 5 strings that the model will use to stop generation. If the model generates a string that matches any of the strings in the list, it will stop generating tokens and return the generated text up to that point not including the stop sequence.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 frequency_penalty:
                   type: number
@@ -5718,6 +5740,7 @@ paths:
                     Defaults to `0.0`, min value of `0.0`, max value of `1.0`.
 
                     Used to reduce repetitiveness of generated tokens. The higher the value, the stronger a penalty is applied to previously present tokens, proportional to how many times they have already appeared in the prompt or prior generation.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   writeOnly: true
                 presence_penalty:
@@ -5728,6 +5751,7 @@ paths:
                     Defaults to `0.0`, min value of `0.0`, max value of `1.0`.
 
                     Used to reduce repetitiveness of generated tokens. Similar to `frequency_penalty`, except that this penalty is applied equally to all tokens that have already appeared, regardless of their exact frequencies.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   writeOnly: true
                 tools:
@@ -5737,6 +5761,7 @@ paths:
                     A list of available tools (functions) that the model may suggest invoking before producing a text response.
 
                     When `tools` is passed (without `tool_results`), the `text` field in the response will be `""` and the `tool_calls` field in the response will be populated with a list of tool calls that need to be made. If no calls need to be made, the `tool_calls` array will be empty.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   type: array
                   items:
@@ -5767,6 +5792,7 @@ paths:
                     ]
                     ```
                     **Note**: Chat calls with `tool_results` should not be included in the Chat history to avoid duplication of the message text.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   type: array
                   minItems: 0
@@ -5781,6 +5807,23 @@ paths:
                   x-fern-audiences:
                     - public
                   $ref: "#/components/schemas/ResponseFormat"
+                safety_mode:
+                  x-fern-audiences:
+                    - public
+                  x-fern-availability: beta
+                  enum:
+                    - CONTEXTUAL
+                    - STRICT
+                    - NONE
+                  description: |
+                    Used to select the [safety instruction](/docs/safety-modes) inserted into the prompt. Defaults to `CONTEXTUAL`.
+                    When `NONE` is specified, the safety instruction will be omitted.
+
+                    Safety modes are not yet configurable in combination with `tools`, `tool_results` and `documents` parameters.
+
+                    **Note**: This parameter is only compatible with models [Command R 08-2024](/docs/command-r#august-2024-release), [Command R+ 08-2024](/docs/command-r-plus#august-2024-release) and newer.
+
+                    Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
       responses:
         "200":
           description: OK
@@ -5839,7 +5882,7 @@ paths:
             finish_reason:
               $ref: "#/components/schemas/ChatFinishReason"
             message:
-              $ref: "#/components/schemas/AssistantMessage"
+              $ref: "#/components/schemas/AssistantMessageResponse"
             usage:
               $ref: "#/components/schemas/Usage"
         response-stream:
@@ -5870,6 +5913,8 @@ paths:
               citation-start: "#/components/schemas/CitationStartEvent"
               citation-end: "#/components/schemas/CitationEndEvent"
               message-end: "#/components/schemas/ChatMessageEndEvent"
+      description: |
+        Generates a message from the model in response to a provided conversation. To learn how to use the Chat API with Streaming and RAG follow our Text Generation guides.
       requestBody:
         content:
           application/json:
@@ -5881,7 +5926,11 @@ paths:
               properties:
                 model:
                   type: string
-                  description: The model to use for the chat.
+                  description: The name of a compatible [Cohere
+                    model](https://docs.cohere.com/docs/models) (such as
+                    command-r or command-r-plus) or the ID of a
+                    [fine-tuned](https://docs.cohere.com/docs/chat-fine-tuning)
+                    model.
                 messages:
                   $ref: "#/components/schemas/ChatMessages"
                 tools:
@@ -5902,7 +5951,7 @@ paths:
                     Defaults to `"accurate"`.
                     Dictates the approach taken to generating citations as part of the RAG flow by allowing the user to specify whether they want `"accurate"` results, `"fast"` results or no results.
                 response_format:
-                  $ref: "#/components/schemas/ResponseFormat"
+                  $ref: "#/components/schemas/ResponseFormat-2"
                 max_tokens:
                   type: integer
                   description: |
@@ -6021,7 +6070,7 @@ paths:
                   console.log(response);
                 })();
             - sdk: python
-              name: Sync
+              name: Default
               code: |
                 import cohere
 
@@ -6030,9 +6079,10 @@ paths:
                 response = co.chat(
                     model="command-r-plus",
                     messages=[
-                        cohere.v2.ChatMessage2_User(
-                            content="hello world!"
-                        )
+                        {
+                            "role": "user",
+                            "content": "hello world!"
+                        }
                     ]
                 )
 
@@ -6059,6 +6109,88 @@ paths:
                     print(response)
 
                 asyncio.run(main())
+          request:
+            model: "command-r"
+            messages:
+              - role: "user"
+                content: "Tell me about LLMs"
+            stream: false
+          response:
+            body:
+              id: c14c80c3-18eb-4519-9460-6c92edd8cfb4
+              message:
+                role: "assistant"
+                content:
+                  - type: "text"
+                    text: "LLMs stand for Large Language Models, which are a type of neural network
+                      model specialized in processing and generating human
+                      language. They are designed to understand and respond to
+                      natural language input and have become increasingly
+                      popular and valuable in recent years.
+
+
+                      LLMs are trained on vast amounts of text data, enabling
+                      them to learn patterns, grammar, and semantic meanings
+                      present in the language. These models can then be used for
+                      various natural language processing tasks, such as text
+                      generation, summarization, question answering, machine
+                      translation, sentiment analysis, and even some aspects of
+                      natural language understanding.
+
+
+                      Some well-known examples of LLMs include:
+
+
+                      1. GPT-3 (Generative Pre-trained Transformer 3) — An
+                      open-source LLM developed by OpenAI, capable of generating
+                      human-like text and performing various language tasks.
+
+
+                      2. BERT (Bidirectional Encoder Representations from
+                      Transformers) — A Google-developed LLM that is
+                      particularly good at understanding contextual
+                      relationships in text, and is widely used for natural
+                      language understanding tasks like sentiment analysis and
+                      named entity recognition.
+
+
+                      3. T5 (Text-to-Text Transfer Transformer) — Also from
+                      Google, T5 is a flexible LLM that frames all language
+                      tasks as text-to-text problems, where the model learns to
+                      generate output text based on input text prompts.
+
+
+                      4. RoBERTa (Robustly Optimized BERT Approach) — A variant
+                      of BERT that uses additional training techniques to
+                      improve performance.
+
+
+                      5. DeBERTa (Decoding-enhanced BERT with disentangled
+                      attention) — Another variant of BERT that introduces a new
+                      attention mechanism.
+
+
+                      LLMs have become increasingly powerful and larger in
+                      scale, improving the accuracy and sophistication of
+                      language tasks. They are also being used as a foundation
+                      for developing various applications, including chatbots,
+                      content recommendation systems, language translation
+                      services, and more.\ 
+
+
+                      The future of LLMs holds the potential for even more
+                      sophisticated language technologies, with ongoing research
+                      and development focused on enhancing their capabilities,
+                      improving efficiency, and exploring their applications in
+                      various domains."
+              finish_reason: complete
+              usage:
+                billed_units:
+                  input_tokens: 5
+                  output_tokens: 418
+                tokens:
+                  input_tokens: 71
+                  output_tokens: 418
         - code-samples:
             - sdk: typescript
               name: Documents
@@ -6095,17 +6227,479 @@ paths:
                 response = co.chat(
                     model="command-r-plus",
                     messages=[
-                        cohere.v2.ChatMessage2_User(
-                            content=[
-                                cohere.v2.TextContent(text="Who's the best?"),
-                            ],
-                            documents=[{'id': '1', 'title': 'The best', 'text': 'Cohere is the best!'}]
-                        )
+                        {
+                            "role": "user",
+                            "content": "Who's the best?",
+                            "documents": [{'id': '1', 'title': 'The best', 'text': 'Cohere is the best!'}]
+                        }
                     ]
                 )
 
 
                 print(response)
+          request:
+            model: "command-r"
+            messages:
+              - role: "user"
+                content: "Who is more popular: Nsync or Backstreet Boys?"
+                documents:
+                  - title: "CSPC: Backstreet Boys Popularity Analysis - ChartMasters"
+                    snippet: >-
+                      ↓ Skip to Main Content
+
+
+                      Music industry – One step closer to being accurate
+
+
+                      CSPC: Backstreet Boys Popularity Analysis
+
+
+                      Hernán Lopez Posted on February 9, 2017 Posted in CSPC 72
+                      Comments Tagged with Backstreet Boys, Boy band
+
+
+                      At one point, Backstreet Boys defined success: massive
+                      albums sales across the globe, great singles sales, plenty
+                      of chart topping releases, hugely hyped tours and
+                      tremendous media coverage.
+
+
+                      It is true that they benefited from extraordinarily good
+                      market conditions in all markets. After all, the all-time
+                      record year for the music business, as far as revenues in
+                      billion dollars are concerned, was actually 1999. That is,
+                      back when this five men group was at its peak.
+                  - title: "CSPC: NSYNC Popularity Analysis - ChartMasters"
+                    snippet: >-
+                      ↓ Skip to Main Content
+
+
+                      Music industry – One step closer to being accurate
+
+
+                      CSPC: NSYNC Popularity Analysis
+
+
+                      MJD Posted on February 9, 2018 Posted in CSPC 27 Comments
+                      Tagged with Boy band, N'Sync
+
+
+                      At the turn of the millennium three teen acts were huge in
+                      the US, the Backstreet Boys, Britney Spears and NSYNC. The
+                      latter is the only one we haven’t study so far. It took 15
+                      years and Adele to break their record of 2,4 million units
+                      sold of No Strings Attached in its first week alone.
+
+
+                      It wasn’t a fluke, as the second fastest selling album of
+                      the Soundscan era prior 2015, was also theirs since
+                      Celebrity debuted with 1,88 million units sold.
+                  - title: "CSPC: Backstreet Boys Popularity Analysis - ChartMasters"
+                    snippet: >-
+                      1997, 1998, 2000 and 2001 also rank amongst some of the
+                      very best years.
+
+                      Yet the way many music consumers – especially teenagers
+                      and young women’s – embraced their output deserves its own
+                      chapter. If Jonas Brothers and more recently One Direction
+                      reached a great level of popularity during the past
+                      decade, the type of success achieved by Backstreet Boys is
+                      in a completely different level as they really dominated
+                      the business for a few years all over the world, including
+                      in some countries that were traditionally hard to
+                      penetrate for Western artists.
+
+
+                      We will try to analyze the extent of that hegemony with
+                      this new article with final results which will more than
+                      surprise many readers.
+                  - title: "CSPC: NSYNC Popularity Analysis - ChartMasters"
+                    snippet: >-
+                      Was the teen group led by Justin Timberlake really that
+                      big? Was it only in the US where they found success? Or
+                      were they a global phenomenon?
+
+                      As usual, I’ll be using the Commensurate Sales to
+                      Popularity Concept in order to relevantly gauge their
+                      results. This concept will not only bring you sales
+                      information for all NSYNC‘s albums, physical and download
+                      singles, as well as audio and video streaming, but it will
+                      also determine their true popularity. If you are not yet
+                      familiar with the CSPC method, the next page explains it
+                      with a short video. I fully recommend watching the video
+                      before getting into the sales figures.
+            stream: false
+          response:
+            body:
+              id: c14c80c3-18eb-4519-9460-6c92edd8cfb4
+              message:
+                role: "assistant"
+                content:
+                  - type: "text"
+                    text: >-
+                      Both NSync and Backstreet Boys were extremely popular at
+                      the turn of the millennium. Backstreet Boys had massive
+                      album sales across the globe, great singles sales, plenty
+                      of chart-topping releases, hyped tours, and tremendous
+                      media coverage. NSync also had huge sales, with their
+                      album No Strings Attached selling 2.4 million units in its
+                      first week. They also had the second fastest-selling album
+                      of the Soundscan era before 2015, with Celebrity debuting
+                      at 1.88 million units sold.
+
+
+                      While it is difficult to say for sure which of the two
+                      bands was more popular, Backstreet Boys did have success
+                      in some countries that were traditionally hard to
+                      penetrate for Western artists.
+                citations:
+                  - start: 36
+                    end: 84
+                    text: extremely popular at the turn of the millennium.
+                    sources:
+                      - type: document
+                        id: doc_1
+                        document:
+                          snippet: >-
+                            ↓ Skip to Main Content
+
+
+                            Music industry – One step closer to being accurate
+
+
+                            CSPC: NSYNC Popularity Analysis
+
+
+                            MJD Posted on February 9, 2018 Posted in CSPC 27
+                            Comments Tagged with Boy band, N'Sync
+
+
+                            At the turn of the millennium three teen acts were
+                            huge in the US, the Backstreet Boys, Britney Spears
+                            and NSYNC. The latter is the only one we haven’t
+                            study so far. It took 15 years and Adele to break
+                            their record of 2,4 million units sold of No Strings
+                            Attached in its first week alone.
+
+
+                            It wasn’t a fluke, as the second fastest selling
+                            album of the Soundscan era prior 2015, was also
+                            theirs since Celebrity debuted with 1,88 million
+                            units sold.
+                          title: "CSPC: NSYNC Popularity Analysis - ChartMasters"
+                  - start: 105
+                    end: 141
+                    text: massive album sales across the globe
+                    sources:
+                      - type: document
+                        id: doc_0
+                        document:
+                          snippet: >-
+                            ↓ Skip to Main Content
+
+
+                            Music industry – One step closer to being accurate
+
+
+                            CSPC: Backstreet Boys Popularity Analysis
+
+
+                            Hernán Lopez Posted on February 9, 2017 Posted in
+                            CSPC 72 Comments Tagged with Backstreet Boys, Boy
+                            band
+
+
+                            At one point, Backstreet Boys defined success:
+                            massive albums sales across the globe, great singles
+                            sales, plenty of chart topping releases, hugely
+                            hyped tours and tremendous media coverage.
+
+
+                            It is true that they benefited from extraordinarily
+                            good market conditions in all markets. After all,
+                            the all-time record year for the music business, as
+                            far as revenues in billion dollars are concerned,
+                            was actually 1999. That is, back when this five men
+                            group was at its peak.
+                          title: "CSPC: Backstreet Boys Popularity Analysis - ChartMasters"
+                  - start: 143
+                    end: 162
+                    text: great singles sales
+                    sources:
+                      - type: document
+                        id: doc_0
+                        document:
+                          snippet: >-
+                            ↓ Skip to Main Content
+
+
+                            Music industry – One step closer to being accurate
+
+
+                            CSPC: Backstreet Boys Popularity Analysis
+
+
+                            Hernán Lopez Posted on February 9, 2017 Posted in
+                            CSPC 72 Comments Tagged with Backstreet Boys, Boy
+                            band
+
+
+                            At one point, Backstreet Boys defined success:
+                            massive albums sales across the globe, great singles
+                            sales, plenty of chart topping releases, hugely
+                            hyped tours and tremendous media coverage.
+
+
+                            It is true that they benefited from extraordinarily
+                            good market conditions in all markets. After all,
+                            the all-time record year for the music business, as
+                            far as revenues in billion dollars are concerned,
+                            was actually 1999. That is, back when this five men
+                            group was at its peak.
+                          title: "CSPC: Backstreet Boys Popularity Analysis - ChartMasters"
+                  - start: 164
+                    end: 196
+                    text: plenty of chart-topping releases
+                    sources:
+                      - type: document
+                        id: doc_0
+                        document:
+                          snippet: >-
+                            ↓ Skip to Main Content
+
+
+                            Music industry – One step closer to being accurate
+
+
+                            CSPC: Backstreet Boys Popularity Analysis
+
+
+                            Hernán Lopez Posted on February 9, 2017 Posted in
+                            CSPC 72 Comments Tagged with Backstreet Boys, Boy
+                            band
+
+
+                            At one point, Backstreet Boys defined success:
+                            massive albums sales across the globe, great singles
+                            sales, plenty of chart topping releases, hugely
+                            hyped tours and tremendous media coverage.
+
+
+                            It is true that they benefited from extraordinarily
+                            good market conditions in all markets. After all,
+                            the all-time record year for the music business, as
+                            far as revenues in billion dollars are concerned,
+                            was actually 1999. That is, back when this five men
+                            group was at its peak.
+                          title: "CSPC: Backstreet Boys Popularity Analysis - ChartMasters"
+                  - start: 198
+                    end: 209
+                    text: hyped tours
+                    sources:
+                      - type: document
+                        id: doc_0
+                        document:
+                          snippet: >-
+                            ↓ Skip to Main Content
+
+
+                            Music industry – One step closer to being accurate
+
+
+                            CSPC: Backstreet Boys Popularity Analysis
+
+
+                            Hernán Lopez Posted on February 9, 2017 Posted in
+                            CSPC 72 Comments Tagged with Backstreet Boys, Boy
+                            band
+
+
+                            At one point, Backstreet Boys defined success:
+                            massive albums sales across the globe, great singles
+                            sales, plenty of chart topping releases, hugely
+                            hyped tours and tremendous media coverage.
+
+
+                            It is true that they benefited from extraordinarily
+                            good market conditions in all markets. After all,
+                            the all-time record year for the music business, as
+                            far as revenues in billion dollars are concerned,
+                            was actually 1999. That is, back when this five men
+                            group was at its peak.
+                          title: "CSPC: Backstreet Boys Popularity Analysis - ChartMasters"
+                  - start: 215
+                    end: 241
+                    text: tremendous media coverage.
+                    sources:
+                      - type: document
+                        id: doc_0
+                        document:
+                          snippet: >-
+                            ↓ Skip to Main Content
+
+
+                            Music industry – One step closer to being accurate
+
+
+                            CSPC: Backstreet Boys Popularity Analysis
+
+
+                            Hernán Lopez Posted on February 9, 2017 Posted in
+                            CSPC 72 Comments Tagged with Backstreet Boys, Boy
+                            band
+
+
+                            At one point, Backstreet Boys defined success:
+                            massive albums sales across the globe, great singles
+                            sales, plenty of chart topping releases, hugely
+                            hyped tours and tremendous media coverage.
+
+
+                            It is true that they benefited from extraordinarily
+                            good market conditions in all markets. After all,
+                            the all-time record year for the music business, as
+                            far as revenues in billion dollars are concerned,
+                            was actually 1999. That is, back when this five men
+                            group was at its peak.
+                          title: "CSPC: Backstreet Boys Popularity Analysis - ChartMasters"
+                  - start: 280
+                    end: 350
+                    text: album No Strings Attached selling 2.4 million units in its first week.
+                    sources:
+                      - type: document
+                        id: doc_1
+                        document:
+                          snippet: >-
+                            ↓ Skip to Main Content
+
+
+                            Music industry – One step closer to being accurate
+
+
+                            CSPC: NSYNC Popularity Analysis
+
+
+                            MJD Posted on February 9, 2018 Posted in CSPC 27
+                            Comments Tagged with Boy band, N'Sync
+
+
+                            At the turn of the millennium three teen acts were
+                            huge in the US, the Backstreet Boys, Britney Spears
+                            and NSYNC. The latter is the only one we haven’t
+                            study so far. It took 15 years and Adele to break
+                            their record of 2,4 million units sold of No Strings
+                            Attached in its first week alone.
+
+
+                            It wasn’t a fluke, as the second fastest selling
+                            album of the Soundscan era prior 2015, was also
+                            theirs since Celebrity debuted with 1,88 million
+                            units sold.
+                          title: "CSPC: NSYNC Popularity Analysis - ChartMasters"
+                  - start: 369
+                    end: 430
+                    text: second fastest-selling album of the Soundscan era before 2015
+                    sources:
+                      - type: document
+                        id: doc_1
+                        document:
+                          snippet: >-
+                            ↓ Skip to Main Content
+
+
+                            Music industry – One step closer to being accurate
+
+
+                            CSPC: NSYNC Popularity Analysis
+
+
+                            MJD Posted on February 9, 2018 Posted in CSPC 27
+                            Comments Tagged with Boy band, N'Sync
+
+
+                            At the turn of the millennium three teen acts were
+                            huge in the US, the Backstreet Boys, Britney Spears
+                            and NSYNC. The latter is the only one we haven’t
+                            study so far. It took 15 years and Adele to break
+                            their record of 2,4 million units sold of No Strings
+                            Attached in its first week alone.
+
+
+                            It wasn’t a fluke, as the second fastest selling
+                            album of the Soundscan era prior 2015, was also
+                            theirs since Celebrity debuted with 1,88 million
+                            units sold.
+                          title: "CSPC: NSYNC Popularity Analysis - ChartMasters"
+                  - start: 437
+                    end: 483
+                    text: Celebrity debuting at 1.88 million units sold.
+                    sources:
+                      - type: document
+                        id: doc_1
+                        document:
+                          snippet: >-
+                            ↓ Skip to Main Content
+
+
+                            Music industry – One step closer to being accurate
+
+
+                            CSPC: NSYNC Popularity Analysis
+
+
+                            MJD Posted on February 9, 2018 Posted in CSPC 27
+                            Comments Tagged with Boy band, N'Sync
+
+
+                            At the turn of the millennium three teen acts were
+                            huge in the US, the Backstreet Boys, Britney Spears
+                            and NSYNC. The latter is the only one we haven’t
+                            study so far. It took 15 years and Adele to break
+                            their record of 2,4 million units sold of No Strings
+                            Attached in its first week alone.
+
+
+                            It wasn’t a fluke, as the second fastest selling
+                            album of the Soundscan era prior 2015, was also
+                            theirs since Celebrity debuted with 1,88 million
+                            units sold.
+                          title: "CSPC: NSYNC Popularity Analysis - ChartMasters"
+                  - start: 589
+                    end: 677
+                    text: success in some countries that were traditionally hard to penetrate for
+                      Western artists.
+                    sources:
+                      - type: document
+                        id: doc_2
+                        document:
+                          snippet: >-
+                            1997, 1998, 2000 and 2001 also rank amongst some of
+                            the very best years.
+
+                            Yet the way many music consumers – especially
+                            teenagers and young women’s – embraced their output
+                            deserves its own chapter. If Jonas Brothers and more
+                            recently One Direction reached a great level of
+                            popularity during the past decade, the type of
+                            success achieved by Backstreet Boys is in a
+                            completely different level as they really dominated
+                            the business for a few years all over the world,
+                            including in some countries that were traditionally
+                            hard to penetrate for Western artists.
+
+
+                            We will try to analyze the extent of that hegemony
+                            with this new article with final results which will
+                            more than surprise many readers.
+                          title: "CSPC: Backstreet Boys Popularity Analysis - ChartMasters"
+              finish_reason: complete
+              usage:
+                billed_units:
+                  input_tokens: 682
+                  output_tokens: 143
+                tokens:
+                  input_tokens: 1380
+                  output_tokens: 434
         - code-samples:
             - sdk: typescript
               name: Streaming
@@ -6143,15 +6737,108 @@ paths:
                 response = co.chat_stream(
                     model="command-r-plus",
                     messages=[
-                        cohere.v2.ChatMessage2_User(
-                            content="hello world!"
-                        )
+                        {
+                            "role": "user",
+                            "content": "hello world!"
+                        }
                     ]
                 )
 
                 for event in response:
-                    if event.event_type == "text-generation":
-                        print(event.text, end='')
+                    if event.type == "content-delta":
+                        print(event.delta.message.content.text, end='')
+          request:
+            model: "command-r"
+            messages:
+              - role: "user"
+                content: "Hello!"
+            stream: true
+          response:
+            stream:
+              - type: message-start
+                id: 29f14a5a-11de-4cae-9800-25e4747408ea
+                delta:
+                  message:
+                    role: "assistant"
+                    content: []
+                    tool_plan: ""
+                    tool_calls: []
+                    citations: []
+              - type: content-start
+                index: 0
+                delta:
+                  message:
+                    content:
+                      type: "text"
+                      text: ""
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: "Hello"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: "!"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: " How"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: " can"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: " I"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: " help"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: " you"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: " today"
+              - type: content-delta
+                index: 0
+                delta:
+                  message:
+                    content:
+                      text: "?"
+              - type: content-end
+                index: 0
+              - event_type: message-end
+                delta:
+                  finish_reason: complete
+                  usage:
+                    api_version:
+                      version: '2'
+                    billed_units:
+                      input_tokens: 3
+                      output_tokens: 9
+                    tokens:
+                      input_tokens: 69
+                      output_tokens: 9
         - code-samples:
             - sdk: typescript
               name: Tools
@@ -6246,14 +6933,76 @@ paths:
                         })
                     ],
                     messages=[
-                        cohere.v2.ChatMessage2_User(
-                            content="Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
-                        )
+                        {
+                            "role": "user",
+                            "content":"Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
+                        }
                     ]
                 )
 
 
                 print(response)
+          request:
+            model: "command-r"
+            messages:
+              - role: "user"
+                content: "Tell me about LLMs"
+            tools:
+              - type: function
+                function:
+                  name: query_daily_sales_report
+                  description: Connects to a database to retrieve overall sales volumes and sales
+                    information for a given day.
+                  parameters:
+                    type: object
+                    properties:
+                      day:
+                        description: Retrieves sales data for this day, formatted as YYYY-MM-DD.
+                        type: str
+                    required:
+                      - day
+              - type: function
+                function:
+                  name: query_product_catalog
+                  description: Connects to a a product catalog with information about all the
+                    products being sold, including categories, prices, and stock
+                    levels.
+                  parameters:
+                    type: object
+                    properties:
+                      category:
+                        description: Retrieves product information data for all products in this
+                          category.
+                        type: str
+                    required:
+                      - category
+            stream: false
+          response:
+            body:
+              id: 9e5f00aa-bf1e-481a-abe3-0eceac18c3ec
+              message:
+                role: "assistant"
+                tool_plan: "I will first find the sales summary for 29th September 2023. Then, I
+                  wil"
+            find the details of the products in the 'Electronics' category." tool_calls:
+              - id: query_daily_sales_report_hgxxmkby3wta
+                type: function
+                function:
+                  name: query_daily_sales_report
+                  arguments: "{\"day\": \"2023-09-29\"}"
+              - id: query_product_catalog_rpg0z5h8yyz2
+                type: function
+                function:
+                  name: query_product_catalog
+                  arguments: "{\"category\": \"Electronics\"}"
+            finish_reason: "tool_call"
+            usage:
+              billed_units:
+                input_tokens: 127
+                output_tokens: 69
+              tokens:
+                input_tokens: 1032
+                output_tokens: 124
   /v1/generate:
     post:
       x-fern-audiences:
@@ -6550,10 +7299,9 @@ paths:
         "504":
           $ref: "#/components/responses/GatewayTimeout"
       description: |
-        > 🚧 Warning
-        > 
-        > This API is marked as "Legacy" and is no longer maintained. Follow the [migration guide](/docs/migrating-from-cogenerate-to-cochat) to start using the Chat API.
-
+        <Warning>
+        This API is marked as "Legacy" and is no longer maintained. Follow the [migration guide](/docs/migrating-from-cogenerate-to-cochat) to start using the Chat API.
+        </Warning>
         Generates realistic text conditioned on a given input.
       requestBody:
         content:
@@ -10760,7 +11508,7 @@ paths:
                 		&MyReader{Reader: strings.NewReader(`{"text": "The quick brown fox jumps over the lazy dog"}`), name: "test.jsonl"},
                 		&MyReader{Reader: strings.NewReader(""), name: "a.jsonl"},
                 		&cohere.DatasetsCreateRequest{
-                			Name: "prompt-completion-dataset",
+                			Name: "embed-dataset",
                 			Type: cohere.DatasetTypeEmbedResult,
                 		},
                 	)
@@ -10780,9 +11528,9 @@ paths:
 
                 # upload a dataset
                 my_dataset = co.datasets.create(
-                    name="prompt-completion-dataset",
-                    data=open("./prompt-completion.jsonl", "rb"),
-                    type="prompt-completion-finetune-input",
+                    name="chat-dataset",
+                    data=open("./chat.jsonl", "rb"),
+                    type="chat-finetune-input",
                 )
 
                 # wait for validation to complete
@@ -10802,9 +11550,9 @@ paths:
 
                     # upload a dataset
                     response = await co.datasets.create(
-                        name="prompt-completion-dataset",
-                        data=open("./prompt-completion.jsonl", "rb"),
-                        type="prompt-completion-finetune-input",
+                        name="chat-dataset",
+                        data=open("./chat.jsonl", "rb"),
+                        type="chat-finetune-input",
                     )
 
                     # wait for validation to complete
@@ -10835,7 +11583,7 @@ paths:
                     public static void main(String[] args) {
                         Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-                        DatasetsCreateResponse response = cohere.datasets().create(null, Optional.empty(), DatasetsCreateRequest.builder().name("prompt-completion-dataset").type(DatasetType.PROMPT_COMPLETION_FINETUNE_INPUT).build());
+                        DatasetsCreateResponse response = cohere.datasets().create(null, Optional.empty(), DatasetsCreateRequest.builder().name("chat-dataset").type(DatasetType.CHAT_FINETUNE_INPUT).build());
 
                         System.out.println(response);
                     }
@@ -11822,10 +12570,9 @@ paths:
         "504":
           $ref: "#/components/responses/GatewayTimeout"
       description: |
-        > 🚧 Warning
-        > 
-        > This API is marked as "Legacy" and is no longer maintained. Follow the [migration guide](/docs/migrating-from-cogenerate-to-cochat) to start using the Chat API.
-
+        <Warning>
+        This API is marked as "Legacy" and is no longer maintained. Follow the [migration guide](/docs/migrating-from-cogenerate-to-cochat) to start using the Chat API.
+        </Warning>
         Generates a summary in English for a given text.
       requestBody:
         content:
@@ -13649,14 +14396,14 @@ paths:
               example:
                 finetuned_models:
                   - id: fee37446-7fc7-42f9-a026-c6ba2fcc422d
-                    name: prompt-completion-ft
+                    name: chat-ft
                     creator_id: 7a317d97-4d05-427d-9396-f31b9fb92c55
                     organization_id: 6bdca3d5-3eae-4de0-ac34-786d8063b7ee
                     settings:
                       base_model:
                         name: medium
                         version: 14.2.0
-                        base_type: BASE_TYPE_GENERATIVE
+                        base_type: BASE_TYPE_CHAT
                         strategy: STRATEGY_TFEW
                       dataset_id: my-dataset-d701tr
                       hyperparameters:
@@ -13908,7 +14655,7 @@ paths:
               name: api-test
               settings:
                 base_model:
-                  base_type: BASE_TYPE_GENERATIVE
+                  base_type: BASE_TYPE_CHAT
                 dataset_id: my-dataset-id
         required: true
       parameters:
@@ -13930,7 +14677,7 @@ paths:
                     public static void main(String[] args) {
                         Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-                        CreateFinetunedModelResponse response = cohere.finetuning().createFinetunedModel(FinetunedModel.builder().name("test-finetuned-model").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_GENERATIVE).build()).datasetId("my-dataset-id").build()).build());
+                        CreateFinetunedModelResponse response = cohere.finetuning().createFinetunedModel(FinetunedModel.builder().name("test-finetuned-model").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_CHAT).build()).datasetId("my-dataset-id").build()).build());
 
                         System.out.println(response);
                     }
@@ -13960,7 +14707,7 @@ paths:
                 			Settings: &finetuning.Settings{
                 				DatasetId: "my-dataset-id",
                 				BaseModel: &finetuning.BaseModel{
-                					BaseType: finetuning.BaseTypeBaseTypeGenerative,
+                					BaseType: finetuning.BaseTypeBaseTypeChat,
                 				},
                 			},
                 		},
@@ -13987,7 +14734,7 @@ paths:
                     name: 'test-finetuned-model',
                     settings: {
                       base_model: {
-                        base_type: Cohere.Finetuning.BaseType.BaseTypeGenerative,
+                        base_type: Cohere.Finetuning.BaseType.BaseTypeChat,
                       },
                       dataset_id: 'test-dataset-id',
                     },
@@ -14076,7 +14823,7 @@ paths:
                       "name": "test-finetuned-model",
                       "settings": {
                         "base_model": {
-                          "base_type": "BASE_TYPE_GENERATIVE",
+                          "base_type": "BASE_TYPE_CHAT",
                         },
                         "dataset_id": "test-dataset-id"
                       }
@@ -14222,7 +14969,7 @@ paths:
                     public static void main(String[] args) {
                         Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-                        UpdateFinetunedModelResponse response = cohere.finetuning().updateFinetunedModel("test-id", FinetuningUpdateFinetunedModelRequest.builder().name("new name").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_GENERATIVE).build()).datasetId("my-dataset-id").build()).build());
+                        UpdateFinetunedModelResponse response = cohere.finetuning().updateFinetunedModel("test-id", FinetuningUpdateFinetunedModelRequest.builder().name("new name").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_CHAT).build()).datasetId("my-dataset-id").build()).build());
 
                         System.out.println(response);
                     }
@@ -14338,14 +15085,14 @@ paths:
               example:
                 finetuned_model:
                   id: fee37446-7fc7-42f9-a026-c6ba2fcc422d
-                  name: prompt-completion-ft
+                  name: chat-ft
                   creator_id: 7a317d97-4d05-427d-9396-f31b9fb92c55
                   organization_id: 6bdca3d5-3eae-4de0-ac34-786d8063b7ee
                   settings:
                     base_model:
                       name: medium
                       version: 14.2.0
-                      base_type: BASE_TYPE_GENERATIVE
+                      base_type: BASE_TYPE_CHAT
                       strategy: STRATEGY_TFEW
                     dataset_id: my-dataset-d701tr
                     hyperparameters:
@@ -15281,8 +16028,9 @@ components:
         type:
           $ref: "#/components/schemas/ResponseFormatType"
         schema:
+          x-fern-availability: beta
           description: |
-            [BETA] A JSON schema object that the output will adhere to. There are some restrictions we have on the schema, refer to [our guide](/docs/structured-outputs-json#schema-constraints) for more information.
+            A JSON schema object that the output will adhere to. There are some restrictions we have on the schema, refer to [our guide](/docs/structured-outputs-json#schema-constraints) for more information.
             Example (required name and age object):
             ```json
             {
@@ -15301,7 +16049,7 @@ components:
         - type
     ResponseFormat:
       description: |
-        Configuration for forcing the model output to adhere to the specified format. Supported on [Command R](https://docs.cohere.com/docs/command-r), [Command R+](https://docs.cohere.com/docs/command-r-plus) and newer models.
+        Configuration for forcing the model output to adhere to the specified format. Supported on [Command R 03-2024](https://docs.cohere.com/docs/command-r), [Command R+ 04-2024](https://docs.cohere.com/docs/command-r-plus) and newer models.
 
         The model can be forced into outputting JSON objects (with up to 5 levels of nesting) by setting `{ "type": "json_object" }`.
 
@@ -15803,6 +16551,57 @@ components:
           tool-calls-generation: "#/components/schemas/ChatToolCallsGenerationEvent"
           stream-end: "#/components/schemas/ChatStreamEndEvent"
           tool-calls-chunk: "#/components/schemas/ChatToolCallsChunkEvent"
+    TextContent:
+      x-fern-sdk-group-name: v2
+      type: object
+      description: Text content of the message.
+      required:
+        - type
+        - text
+      properties:
+        type:
+          type: string
+          enum:
+            - text
+        text:
+          type: string
+    Content:
+      x-fern-sdk-group-name: v2
+      description: A Content block which contains information about the content type
+        and the content itself.
+      oneOf:
+        - $ref: "#/components/schemas/TextContent"
+      discriminator:
+        propertyName: type
+        mapping:
+          text: "#/components/schemas/TextContent"
+    UserMessage:
+      x-fern-sdk-group-name: v2
+      type: object
+      description: A message from the user.
+      required:
+        - role
+        - content
+      properties:
+        role:
+          type: string
+          enum:
+            - user
+        content:
+          description: |
+            The content of the message. This can be a string or a list of content blocks.
+            If a string is provided, it will be treated as a text content block.
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                $ref: "#/components/schemas/Content"
+        documents:
+          type: array
+          minItems: 0
+          description: Documents seen by the model when generating the reply.
+          items:
+            $ref: "#/components/schemas/ChatDocument"
     ToolCall-2:
       x-fern-sdk-group-name: v2
       description: A array of tool calls to be made.
@@ -15821,20 +16620,6 @@ components:
               type: string
             arguments:
               type: string
-    TextContent:
-      x-fern-sdk-group-name: v2
-      type: object
-      description: Text content of the message.
-      required:
-        - type
-        - text
-      properties:
-        type:
-          type: string
-          enum:
-            - text
-        text:
-          type: string
     ToolSource:
       x-fern-sdk-group-name: v2
       type: object
@@ -15903,9 +16688,16 @@ components:
         tool_plan:
           type: string
         content:
-          type: array
-          items:
-            $ref: "#/components/schemas/TextContent"
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                oneOf:
+                  - $ref: "#/components/schemas/TextContent"
+                discriminator:
+                  propertyName: type
+                  mapping:
+                    text: "#/components/schemas/TextContent"
         citations:
           type: array
           items:
@@ -15933,45 +16725,6 @@ components:
                   propertyName: type
                   mapping:
                     text: "#/components/schemas/TextContent"
-    Content:
-      x-fern-sdk-group-name: v2
-      description: A Content block which contains information about the content type
-        and the content itself.
-      oneOf:
-        - $ref: "#/components/schemas/TextContent"
-      discriminator:
-        propertyName: type
-        mapping:
-          text: "#/components/schemas/TextContent"
-    UserMessage:
-      x-fern-sdk-group-name: v2
-      type: object
-      description: A message from the user.
-      required:
-        - role
-        - content
-      properties:
-        role:
-          type: string
-          enum:
-            - user
-        content:
-          description: |
-            The content of the message. This can be a string or a list of content blocks.
-            If a string is provided, it will be treated as a text content block.
-          oneOf:
-            - type: string
-            - type: array
-              items:
-                $ref: "#/components/schemas/Content"
-        documents:
-          type: array
-          x-fern-audiences:
-            - public
-          minItems: 0
-          description: Documents seen by the model when generating the reply.
-          items:
-            $ref: "#/components/schemas/ChatDocument"
     ToolContent:
       x-fern-sdk-group-name: v2
       type: object
@@ -16015,21 +16768,24 @@ components:
       x-fern-sdk-group-name: v2
       description: Represents a single message in the chat history from a given role.
       oneOf:
-        - $ref: "#/components/schemas/SystemMessage"
         - $ref: "#/components/schemas/UserMessage"
         - $ref: "#/components/schemas/AssistantMessage"
+        - $ref: "#/components/schemas/SystemMessage"
         - $ref: "#/components/schemas/ToolMessage-2"
       discriminator:
         propertyName: role
         mapping:
+          user: "#/components/schemas/UserMessage"
           assistant: "#/components/schemas/AssistantMessage"
           system: "#/components/schemas/SystemMessage"
-          user: "#/components/schemas/UserMessage"
           tool: "#/components/schemas/ToolMessage-2"
     ChatMessages:
       x-fern-sdk-group-name: v2
       type: array
-      description: A list of chat messages representing the list chat message turns.
+      description: |
+        A list of chat messages in chronological order, representing a conversation between the user and the model.
+
+        Messages can be from `User`, `Assistant`, `Tool` and `System` roles. Learn more about messages and roles in [the Chat API guide](https://docs.cohere.com/docs/chat-api).
       items:
         $ref: "#/components/schemas/ChatMessage-2"
     Tool-2:
@@ -16053,6 +16809,50 @@ components:
             parameters:
               type: object
               description: The parameters of the function as a JSON schema.
+    JSONResponseFormat-2:
+      x-fern-audiences:
+        - public
+      type: object
+      properties:
+        type:
+          $ref: "#/components/schemas/ResponseFormatType"
+        json_schema:
+          description: |
+            [BETA] A JSON schema object that the output will adhere to. There are some restrictions we have on the schema, refer to [our guide](/docs/structured-outputs-json#schema-constraints) for more information.
+            Example (required name and age object):
+            ```json
+            {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "age": {"type": "integer"}
+              },
+              "required": ["name", "age"]
+            }
+            ```
+
+            **Note**: This field must not be specified when the `type` is set to `"text"`.
+          type: object
+      required:
+        - type
+    ResponseFormat-2:
+      description: |
+        Configuration for forcing the model output to adhere to the specified format. Supported on [Command R](https://docs.cohere.com/docs/command-r), [Command R+](https://docs.cohere.com/docs/command-r-plus) and newer models.
+
+        The model can be forced into outputting JSON objects (with up to 5 levels of nesting) by setting `{ "type": "json_object" }`.
+
+        A [JSON Schema](https://json-schema.org/) can optionally be provided, to ensure a specific structure.
+
+        **Note**: When using  `{ "type": "json_object" }` your `message` should always explicitly instruct the model to generate a JSON (eg: _"Generate a JSON ..."_) . Otherwise the model may end up getting stuck generating an infinite stream of characters and eventually run out of context length.
+        **Limitation**: The parameter is not supported in RAG mode (when any of `connectors`, `documents`, `tools`, `tool_results` are provided).
+      oneOf:
+        - $ref: "#/components/schemas/TextResponseFormat"
+        - $ref: "#/components/schemas/JSONResponseFormat-2"
+      discriminator:
+        propertyName: type
+        mapping:
+          text: "#/components/schemas/TextResponseFormat"
+          json_object: "#/components/schemas/JSONResponseFormat-2"
     ChatFinishReason:
       x-fern-sdk-group-name: v2
       description: The reason a chat request has finished.
@@ -16065,6 +16865,37 @@ components:
         - error
         - content_blocked
         - error_limit
+    AssistantMessageResponse:
+      x-fern-sdk-group-name: v2
+      type: object
+      description: A message from the assistant role can contain text and tool call
+        information.
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum:
+            - assistant
+        tool_calls:
+          type: array
+          items:
+            $ref: "#/components/schemas/ToolCall-2"
+        tool_plan:
+          type: string
+        content:
+          type: array
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/TextContent"
+            discriminator:
+              propertyName: type
+              mapping:
+                text: "#/components/schemas/TextContent"
+        citations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Citation"
     Usage:
       x-fern-sdk-group-name: v2
       type: object
@@ -16113,7 +16944,7 @@ components:
         finish_reason:
           $ref: "#/components/schemas/ChatFinishReason"
         message:
-          $ref: "#/components/schemas/AssistantMessage"
+          $ref: "#/components/schemas/AssistantMessageResponse"
         usage:
           $ref: "#/components/schemas/Usage"
     ChatStreamEventType:
