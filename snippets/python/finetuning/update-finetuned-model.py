@@ -1,3 +1,7 @@
+from cohere.finetuning import (
+    BaseModel,
+    Settings,
+)
 import cohere
 
 co = cohere.Client("<<apiKey>>")

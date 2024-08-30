@@ -26,4 +26,4 @@ finetuned_model = co.finetuning.create_finetuned_model(
         ),
     )
 )
-print(response)
+print(finetuned_model)
