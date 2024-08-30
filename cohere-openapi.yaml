@@ -5501,15 +5501,17 @@ paths:
                     - public
                   description: |
                     Text input for the model to respond to.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 model:
                   type: string
                   x-fern-audiences:
                     - public
                   description: |
-                    Defaults to `command-r-plus`.
+                    Defaults to `command-r-plus-08-2024`.
 
                     The name of a compatible [Cohere model](https://docs.cohere.com/docs/models) or the ID of a [fine-tuned](https://docs.cohere.com/docs/chat-fine-tuning) model.
+
                     Compatible Deployments: Cohere Platform, Private Deployments
                 stream:
                   description: |
@@ -5518,6 +5520,7 @@ paths:
                     When `true`, the response will be a JSON stream of events. The final event will contain the complete response, and will have an `event_type` of `"stream-end"`.
 
                     Streaming is beneficial for user interfaces that render the contents of the response piece by piece, as it gets generated.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   type: boolean
                   x-fern-audiences:
@@ -5527,6 +5530,7 @@ paths:
                     When specified, the default Cohere preamble will be replaced with the provided one. Preambles are a part of the prompt used to adjust the model's overall behavior and conversation style, and use the `SYSTEM` role.
 
                     The `SYSTEM` role is also used for the contents of the optional `chat_history=` parameter. When used with the `chat_history=` parameter it adds content throughout a conversation. Conversely, when used with the `preamble=` parameter it adds content at the start of the conversation only.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   type: string
                   x-fern-audiences:
@@ -5544,6 +5548,7 @@ paths:
                     Each item represents a single message in the chat history, excluding the current user turn. It has two properties: `role` and `message`. The `role` identifies the sender (`CHATBOT`, `SYSTEM`, or `USER`), while the `message` contains the text content.
 
                     The chat_history parameter should not be used for `SYSTEM` messages in most cases. Instead, to add a `SYSTEM` role message at the beginning of a conversation, the `preamble` parameter should be used.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 conversation_id:
                   type: string
@@ -5553,6 +5558,7 @@ paths:
                     An alternative to `chat_history`.
 
                     Providing a `conversation_id` creates or resumes a persisted conversation with the specified ID. The ID can be any non empty string.
+
                     Compatible Deployments: Cohere Platform
                 prompt_truncation:
                   type: string
@@ -5572,7 +5578,10 @@ paths:
                     With `prompt_truncation` set to "AUTO_PRESERVE_ORDER", some elements from `chat_history` and `documents` will be dropped in an attempt to construct a prompt that fits within the model's context length limit. During this process the order of the documents and chat history will be preserved as they are inputted into the API.
 
                     With `prompt_truncation` set to "OFF", no elements will be dropped. If the sum of the inputs exceeds the model's context length limit, a `TooManyTokens` error will be returned.
-                    Compatible Deployments: Cohere Platform Only AUTO_PRESERVE_ORDER: Azure, AWS Sagemaker/Bedrock, Private Deployments
+
+                    Compatible Deployments: 
+                     - AUTO: Cohere Platform Only
+                     - AUTO_PRESERVE_ORDER: Azure, AWS Sagemaker/Bedrock, Private Deployments
                 connectors:
                   type: array
                   x-fern-audiences:
@@ -5584,6 +5593,7 @@ paths:
                     Accepts `{"id": "web-search"}`, and/or the `"id"` for a custom [connector](https://docs.cohere.com/docs/connectors), if you've [created](https://docs.cohere.com/docs/creating-and-deploying-a-connector) one.
 
                     When specified, the model's reply will be enriched with information found by querying each of the connectors (RAG).
+
                     Compatible Deployments: Cohere Platform
                 search_queries_only:
                   type: boolean
@@ -5593,6 +5603,7 @@ paths:
                     Defaults to `false`.
 
                     When `true`, the response will only contain a list of generated search queries, but no search will take place, and no reply from the model to the user's `message` will be generated.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 documents:
                   description: |
@@ -5615,6 +5626,7 @@ paths:
                     An `_excludes` field (array of strings) can be optionally supplied to omit some key-value pairs from being shown to the model. The omitted fields will still show up in the citation object. The "_excludes" field will not be passed to the model.
 
                     See ['Document Mode'](https://docs.cohere.com/docs/retrieval-augmented-generation-rag#document-mode) in the guide for more information.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   type: array
                   x-fern-audiences:
@@ -5629,6 +5641,7 @@ paths:
                     Defaults to `"accurate"`.
 
                     Dictates the approach taken to generating citations as part of the RAG flow by allowing the user to specify whether they want `"accurate"` results, `"fast"` results or no results.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   enum:
                     - fast
@@ -5647,6 +5660,7 @@ paths:
                     A non-negative float that tunes the degree of randomness in generation. Lower temperatures mean less random generations, and higher temperatures mean more random generations.
 
                     Randomness can be further maximized by increasing the  value of the `p` parameter.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 max_tokens:
                   type: integer
@@ -5654,6 +5668,7 @@ paths:
                     - public
                   description: |
                     The maximum number of tokens the model will generate as part of the response. Note: Setting a low value may result in incomplete generations.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   writeOnly: true
                 max_input_tokens:
@@ -5664,6 +5679,7 @@ paths:
                     The maximum number of input tokens to send to the model. If not specified, `max_input_tokens` is the model's context length limit minus a small buffer.
 
                     Input will be truncated according to the `prompt_truncation` parameter.
+
                     Compatible Deployments: Cohere Platform
                   writeOnly: true
                 k:
@@ -5673,6 +5689,7 @@ paths:
                   description: |
                     Ensures only the top `k` most likely tokens are considered for generation at each step.
                     Defaults to `0`, min value of `0`, max value of `500`.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   writeOnly: true
                   default: 0
@@ -5685,6 +5702,7 @@ paths:
                   description: |
                     Ensures that only the most likely tokens, with total probability mass of `p`, are considered for generation at each step. If both `k` and `p` are enabled, `p` acts after `k`.
                     Defaults to `0.75`. min value of `0.01`, max value of `0.99`.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   writeOnly: true
                   default: 0.75
@@ -5701,6 +5719,7 @@ paths:
                     deterministically, such that repeated requests with the same
                     seed and parameters should return the same result. However,
                     determinism cannot be totally guaranteed.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 stop_sequences:
                   x-fern-audiences:
@@ -5711,6 +5730,7 @@ paths:
                     type: string
                   description: |
                     A list of up to 5 strings that the model will use to stop generation. If the model generates a string that matches any of the strings in the list, it will stop generating tokens and return the generated text up to that point not including the stop sequence.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 frequency_penalty:
                   type: number
@@ -5720,6 +5740,7 @@ paths:
                     Defaults to `0.0`, min value of `0.0`, max value of `1.0`.
 
                     Used to reduce repetitiveness of generated tokens. The higher the value, the stronger a penalty is applied to previously present tokens, proportional to how many times they have already appeared in the prompt or prior generation.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   writeOnly: true
                 presence_penalty:
@@ -5730,6 +5751,7 @@ paths:
                     Defaults to `0.0`, min value of `0.0`, max value of `1.0`.
 
                     Used to reduce repetitiveness of generated tokens. Similar to `frequency_penalty`, except that this penalty is applied equally to all tokens that have already appeared, regardless of their exact frequencies.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   writeOnly: true
                 tools:
@@ -5739,6 +5761,7 @@ paths:
                     A list of available tools (functions) that the model may suggest invoking before producing a text response.
 
                     When `tools` is passed (without `tool_results`), the `text` field in the response will be `""` and the `tool_calls` field in the response will be populated with a list of tool calls that need to be made. If no calls need to be made, the `tool_calls` array will be empty.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   type: array
                   items:
@@ -5769,6 +5792,7 @@ paths:
                     ]
                     ```
                     **Note**: Chat calls with `tool_results` should not be included in the Chat history to avoid duplication of the message text.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   type: array
                   minItems: 0
@@ -5783,6 +5807,23 @@ paths:
                   x-fern-audiences:
                     - public
                   $ref: "#/components/schemas/ResponseFormat"
+                safety_mode:
+                  x-fern-audiences:
+                    - public
+                  x-fern-availability: beta
+                  enum:
+                    - CONTEXTUAL
+                    - STRICT
+                    - NONE
+                  description: |
+                    Used to select the [safety instruction](/docs/safety-modes) inserted into the prompt. Defaults to `CONTEXTUAL`.
+                    When `NONE` is specified, the safety instruction will be omitted.
+
+                    Safety modes are not yet configurable in combination with `tools`, `tool_results` and `documents` parameters.
+
+                    **Note**: This parameter is only compatible with models [Command R 08-2024](/docs/command-r#august-2024-release), [Command R+ 08-2024](/docs/command-r-plus#august-2024-release) and newer.
+
+                    Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
       responses:
         "200":
           description: OK
@@ -11467,7 +11508,7 @@ paths:
                 		&MyReader{Reader: strings.NewReader(`{"text": "The quick brown fox jumps over the lazy dog"}`), name: "test.jsonl"},
                 		&MyReader{Reader: strings.NewReader(""), name: "a.jsonl"},
                 		&cohere.DatasetsCreateRequest{
-                			Name: "prompt-completion-dataset",
+                			Name: "embed-dataset",
                 			Type: cohere.DatasetTypeEmbedResult,
                 		},
                 	)
@@ -11487,9 +11528,9 @@ paths:
 
                 # upload a dataset
                 my_dataset = co.datasets.create(
-                    name="prompt-completion-dataset",
-                    data=open("./prompt-completion.jsonl", "rb"),
-                    type="prompt-completion-finetune-input",
+                    name="chat-dataset",
+                    data=open("./chat.jsonl", "rb"),
+                    type="chat-finetune-input",
                 )
 
                 # wait for validation to complete
@@ -11509,9 +11550,9 @@ paths:
 
                     # upload a dataset
                     response = await co.datasets.create(
-                        name="prompt-completion-dataset",
-                        data=open("./prompt-completion.jsonl", "rb"),
-                        type="prompt-completion-finetune-input",
+                        name="chat-dataset",
+                        data=open("./chat.jsonl", "rb"),
+                        type="chat-finetune-input",
                     )
 
                     # wait for validation to complete
@@ -11542,7 +11583,7 @@ paths:
                     public static void main(String[] args) {
                         Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-                        DatasetsCreateResponse response = cohere.datasets().create(null, Optional.empty(), DatasetsCreateRequest.builder().name("prompt-completion-dataset").type(DatasetType.PROMPT_COMPLETION_FINETUNE_INPUT).build());
+                        DatasetsCreateResponse response = cohere.datasets().create(null, Optional.empty(), DatasetsCreateRequest.builder().name("chat-dataset").type(DatasetType.CHAT_FINETUNE_INPUT).build());
 
                         System.out.println(response);
                     }
@@ -14355,14 +14396,14 @@ paths:
               example:
                 finetuned_models:
                   - id: fee37446-7fc7-42f9-a026-c6ba2fcc422d
-                    name: prompt-completion-ft
+                    name: chat-ft
                     creator_id: 7a317d97-4d05-427d-9396-f31b9fb92c55
                     organization_id: 6bdca3d5-3eae-4de0-ac34-786d8063b7ee
                     settings:
                       base_model:
                         name: medium
                         version: 14.2.0
-                        base_type: BASE_TYPE_GENERATIVE
+                        base_type: BASE_TYPE_CHAT
                         strategy: STRATEGY_TFEW
                       dataset_id: my-dataset-d701tr
                       hyperparameters:
@@ -14614,7 +14655,7 @@ paths:
               name: api-test
               settings:
                 base_model:
-                  base_type: BASE_TYPE_GENERATIVE
+                  base_type: BASE_TYPE_CHAT
                 dataset_id: my-dataset-id
         required: true
       parameters:
@@ -14636,7 +14677,7 @@ paths:
                     public static void main(String[] args) {
                         Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-                        CreateFinetunedModelResponse response = cohere.finetuning().createFinetunedModel(FinetunedModel.builder().name("test-finetuned-model").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_GENERATIVE).build()).datasetId("my-dataset-id").build()).build());
+                        CreateFinetunedModelResponse response = cohere.finetuning().createFinetunedModel(FinetunedModel.builder().name("test-finetuned-model").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_CHAT).build()).datasetId("my-dataset-id").build()).build());
 
                         System.out.println(response);
                     }
@@ -14666,7 +14707,7 @@ paths:
                 			Settings: &finetuning.Settings{
                 				DatasetId: "my-dataset-id",
                 				BaseModel: &finetuning.BaseModel{
-                					BaseType: finetuning.BaseTypeBaseTypeGenerative,
+                					BaseType: finetuning.BaseTypeBaseTypeChat,
                 				},
                 			},
                 		},
@@ -14693,7 +14734,7 @@ paths:
                     name: 'test-finetuned-model',
                     settings: {
                       base_model: {
-                        base_type: Cohere.Finetuning.BaseType.BaseTypeGenerative,
+                        base_type: Cohere.Finetuning.BaseType.BaseTypeChat,
                       },
                       dataset_id: 'test-dataset-id',
                     },
@@ -14782,7 +14823,7 @@ paths:
                       "name": "test-finetuned-model",
                       "settings": {
                         "base_model": {
-                          "base_type": "BASE_TYPE_GENERATIVE",
+                          "base_type": "BASE_TYPE_CHAT",
                         },
                         "dataset_id": "test-dataset-id"
                       }
@@ -14928,7 +14969,7 @@ paths:
                     public static void main(String[] args) {
                         Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-                        UpdateFinetunedModelResponse response = cohere.finetuning().updateFinetunedModel("test-id", FinetuningUpdateFinetunedModelRequest.builder().name("new name").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_GENERATIVE).build()).datasetId("my-dataset-id").build()).build());
+                        UpdateFinetunedModelResponse response = cohere.finetuning().updateFinetunedModel("test-id", FinetuningUpdateFinetunedModelRequest.builder().name("new name").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_CHAT).build()).datasetId("my-dataset-id").build()).build());
 
                         System.out.println(response);
                     }
@@ -15044,14 +15085,14 @@ paths:
               example:
                 finetuned_model:
                   id: fee37446-7fc7-42f9-a026-c6ba2fcc422d
-                  name: prompt-completion-ft
+                  name: chat-ft
                   creator_id: 7a317d97-4d05-427d-9396-f31b9fb92c55
                   organization_id: 6bdca3d5-3eae-4de0-ac34-786d8063b7ee
                   settings:
                     base_model:
                       name: medium
                       version: 14.2.0
-                      base_type: BASE_TYPE_GENERATIVE
+                      base_type: BASE_TYPE_CHAT
                       strategy: STRATEGY_TFEW
                     dataset_id: my-dataset-d701tr
                     hyperparameters:
@@ -16008,7 +16049,7 @@ components:
         - type
     ResponseFormat:
       description: |
-        Configuration for forcing the model output to adhere to the specified format. Supported on [Command R](https://docs.cohere.com/docs/command-r), [Command R+](https://docs.cohere.com/docs/command-r-plus) and newer models.
+        Configuration for forcing the model output to adhere to the specified format. Supported on [Command R 03-2024](https://docs.cohere.com/docs/command-r), [Command R+ 04-2024](https://docs.cohere.com/docs/command-r-plus) and newer models.
 
         The model can be forced into outputting JSON objects (with up to 5 levels of nesting) by setting `{ "type": "json_object" }`.
 
