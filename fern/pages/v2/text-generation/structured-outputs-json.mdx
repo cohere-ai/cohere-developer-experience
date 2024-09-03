@@ -12,7 +12,7 @@ createdAt: "Thu Jun 06 2024 05:37:56 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Tue Jun 11 2024 02:43:00 GMT+0000 (Coordinated Universal Time)"
 ---
 
-Cohere models such as [Command R](/docs/command-r) and [Command R+](/docs/command-r-plus) are great at producing structured outputs in formats such as JSON.
+Cohere models such as [Command R](https://docs.cohere.com/docs/command-r) and [Command R+](https://docs.cohere.com/docs/command-r-plus) are great at producing structured outputs in formats such as JSON.
 
 ## Why generate JSON Objects using an LLM?
 
@@ -22,24 +22,34 @@ JSON is a lightweight format that is easy for humans to read and write and is al
 
 When making an API request, you can specify the `response_format` parameter to indicate that you want the response in a JSON object format.
 
-```python PYTHON
+```python
 import cohere
-co = cohere.Client(api_key="YOUR API KEY")
+co = cohere.ClientV2(api_key="YOUR API KEY")
 
 res = co.chat(
   model="command-r-plus",
-  message="Generate a JSON describing a person, with the fields 'name' and 'age'",
+  messages=[{'role': 'user', 'content': "Generate a JSON describing a person, with the fields 'name' and 'age'"}],
   response_format={ "type": "json_object" }
 )
 
-print(res.text)
+print(res.message.content[0].text)
+```
+By setting the `response_format` type to `"json_object"` in the Chat API, the output of the model is guaranteed to be a valid JSON object.
+
+```
+# Example response
+
+{
+  "name": "Emma Johnson",
+  "age": 32
+}
+
 ```
 
-By setting the `response_format` type to `"json_object"` in the Chat API, the output of the model is guaranteed to be a valid JSON object. 
 
-<Note title="Important">
-When using  `{ "type": "json_object" }` your `message` should always explicitly instruct the model to generate a JSON (eg: _"Generate a JSON ..."_) . Otherwise the model may end up getting stuck generating an infinite stream of characters and eventually run out of context length.
-</Note>
+> 📘 Important
+> 
+> When using  `{ "type": "json_object" }` your `message` should always explicitly instruct the model to generate a JSON (eg: _"Generate a JSON ..."_) . Otherwise the model may end up getting stuck generating an infinite stream of characters and eventually run out of context length.
 
 ## Specifying a schema (beta)
 
@@ -47,7 +57,7 @@ The `response_format` parameter also allows you to define a schema for the gener
 
 For example, let's say you want the LLM to generate a JSON object with specific keys for a book, such as "title," "author," and "publication_year." Your API request might look like this:
 
-```python PYTHON
+```python
 import cohere
 co = cohere.ClientV2(api_key="YOUR API KEY")
 
@@ -84,9 +94,20 @@ In this schema, we defined three keys ("title," "author," "publication_year") an
 
 ```
 
-<Note title="Important">
-Specifying a `schema` adds even more latency, proportional to the complexity of the schema. This parameter is in **beta**, and will continue seeing performance improvements.
-</Note>
+> 📘 Important
+> 
+> Specifying a `schema` adds even more latency, proportional to the complexity of the schema. This parameter is in **beta**, and will continue seeing performance improvements.
+
+### Generating nested objects
+
+By setting `response_format={ "type": "json_object" }`the model can be configured to output objects with up to 5 levels of nesting. When a `schema` is specified, there are no limitations on the levels of nesting. 
+
+### Schema constraints
+
+When constructing a `schema` keep the following constraints in mind:
+
+- The `type` in the top level schema must be `object`
+- Every object in the schema must have at least one `required` field specified
 
 ### Unsupported schema features
 
@@ -95,7 +116,7 @@ We do not support the entirety of the [JSON Schema specification](https://json-s
 - [Schema Composition](https://json-schema.org/understanding-json-schema/reference/combining#schema-composition) (`anyOf`, `allOf`, `oneOf` and `not`)
 - [Numeric Ranges](https://json-schema.org/understanding-json-schema/reference/numeric#range) (`maximum` and  `minimum`)
 - [Array Length Ranges](https://json-schema.org/understanding-json-schema/reference/array#length) (`minItems` and `maxItems`) 
-- String limitations: 
+- String limitations:
   - [String Length](https://json-schema.org/understanding-json-schema/reference/string#length) (`maxLength` and `minLength`)
   - The following are not supported in [Regular Expressions](https://json-schema.org/understanding-json-schema/reference/string#regexp)
     - `^`
