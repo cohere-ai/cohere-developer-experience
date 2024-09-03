@@ -9,7 +9,7 @@ const cohere = new CohereClient({
     name: 'test-finetuned-model',
     settings: {
       base_model: {
-        base_type: Cohere.Finetuning.BaseType.BaseTypeChat,
+        base_type: Cohere.Finetuning.BaseType.BaseTypeGenerative,
       },
       dataset_id: 'test-dataset-id',
     },
