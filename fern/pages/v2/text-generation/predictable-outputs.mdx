@@ -1,6 +1,6 @@
 ---
 title: "Predictable Outputs"
-slug: "docs/predictable-outputs"
+slug: "v2/docs/predictable-outputs"
 
 hidden: false 
 description: "This document explains how parameters like 'temperature', 'top-p', and 'top-k' impact the predictability and randomness of a model's generated output. It also discusses different strategies for picking output tokens, such as greedy decoding, top-k sampling, and top-p sampling."
@@ -22,14 +22,19 @@ The easiest way to force the model into reproducible behavior is by providing a 
 
 ```python PYTHON
 import cohere
-co = cohere.Client(api_key="YOUR API KEY")
 
-res = co.chat(model="command-r", message="say a random word", seed=45)
-print(res.text) # Sure! How about "onomatopoeia"?
+co = cohere.ClientV2(api_key="YOUR API KEY")
+
+res = co.chat(model="command-r",
+              messages=[{"role": "user", "content": "say a random word"}],
+              seed=45)
+print(res.message.content[0].text) # Sure! How about "onomatopoeia"?
 
 # making another request with the same seed results in the same generated text
-res = co.chat(model="command-r", message="say a random word", seed=45)
-print(res.text) # Sure! How about "onomatopoeia"?
+res = co.chat(model="command-r",
+              messages=[{"role": "user", "content": "say a random word"}],
+              seed=45)
+print(res.message.content[0].text) # Sure! How about "onomatopoeia"?
 ```
 
 ## Temperature

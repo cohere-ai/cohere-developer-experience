@@ -1,6 +1,6 @@
 ---
 title: "Advanced Prompt Engineering Techniques"
-slug: "docs/advanced-prompt-engineering-techniques"
+slug: "v2/docs/advanced-prompt-engineering-techniques"
 
 hidden: false
 description: "This page describes advanced ways of controlling prompt engineering."
@@ -17,7 +17,7 @@ As we develop these techniques, we will work through an example where our aim is
 Q: On the issue of whether David is fast, the fact that David set a high school track record.
 Is there hearsay?
 A: No
-  
+
 Q: On the issue of whether Rebecca was ill, the fact that Rebecca told Ronald that she was unwell.
 Is there hearsay?
 A: Yes
@@ -29,14 +29,14 @@ Before we apply any specific prompting techniques, we can see that simply prompt
 [prompt]
 On the issue of Albert's wellbeing after the accident, Angela testified
 that he gave a thumbs up when asked how he was feeling. Is there hearsay?
-  
+
 [completion]
 No, there is no hearsay. Hearsay is a statement that is repeated by someone
 other than the person who originally made the statement. Angela's testimony
 is not hearsay because she is testifying about her own personal knowledge of
 the event; she saw Albert give a thumbs up sign. This is considered direct evidence
 and would likely be admissible in court. 
-  
+
 The thumbs up sign can be interpreted as a current state of well-being and
 could hold some weight in refuting concerns about Albert's health after the
 accident. However, the defense could argue that a thumbs up sign is not a
@@ -49,17 +49,20 @@ of Angela's firsthand account, the statement itself isn't hearsay.
 Using the Chat API, we could do the following:
 
 ```python PYTHON
+import cohere
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
+
 example = '''On the issue of Albert's wellbeing after the accident, Angela testified that he
 gave a thumbs up when asked how he was feeling.'''
 message = f'''{example} Is there hearsay?'''
 
 response = co.chat(
-  message=message,
-  model='command-r',
-  temperature=0.3,
+    messages=[{'role': 'user', 'content': message}],
+    model='command-r',
+    temperature=0.3,
 )
 
-print(response.text)
+print(response.message.content[0].text)
 ```
 
 The answer returned with this method is unfortunately wrong. The correct answer is "Yes" (non-verbal hearsay). Without a definition of the task or other additional context the model can sometimes make an incorrect assertion and then attempt to reconcile what has already been generated.
@@ -74,10 +77,10 @@ The obvious thing missing in the prompt above is concise and unambiguous instruc
 [prompt]
 Hearsay is an out-of-court statement introduced to prove the truth of the matter
 asserted. Answer the following question regarding hearsay with either Yes or No.
-  
+
 On the issue of Albert's wellbeing after the accident, Angela testified that he
 gave a thumbs up when asked how he was feeling. Is there hearsay?
-  
+
 [completion]
 Yes.
 
@@ -96,35 +99,35 @@ To improve the above question, we can include several positive and negative exam
 ```
 [prompt]
 Hearsay is an out-of-court statement introduced to prove the truth of the matter asserted.
-  
+
 Q: On the issue of whether David is fast, the fact that David set a high school track record.
 Is there hearsay?
 A: No
-  
+
 Q: On the issue of whether Rebecca was ill, the fact that Rebecca told Ronald that she was unwell.
 Is there hearsay?
 A: Yes
-  
+
 Q: To prove that Tim was a soccer fan, the fact that Tim told Jimmy that "Real Madrid was the best
 soccer team in the world." Is there hearsay?
 A: No
-  
+
 Q: When asked by the attorney on cross-examination, Alice testified that she had "never seen the
 plaintiff before, and had no idea who she was." Is there hearsay?
 A: No
-  
+
 Q: On the issue of whether Martin punched James, the fact that Martin smiled and nodded when asked
 if he did so by an officer on the scene. Is there hearsay?
 A: Yes
-  
+
 On the issue of Albert's wellbeing after the accident, Angela testified that he gave a thumbs up
 when asked how he was feeling. Is there hearsay?
 A:
-  
+
 [completion]
 Yes, Angela's testimony about Albert's non-verbal conduct is hearsay, as it's an out-of-court
 statement (Albert's thumbs up) being used to prove the truth of the matter asserted (that Albert was feeling well). 
-  
+
 Hearsay is defined as an out-of-court statement made by someone other than the witness testifying,
 and it's offered to prove the truth of the content of the statement. In this scenario, Albert's
 gesture is being used as evidence of his wellbeing, making it hearsay under the legal
@@ -145,26 +148,26 @@ There are several different ways to incorporate CoT prompting into a task. With 
 ```
 [prompt]
 Hearsay is an out-of-court statement introduced to prove the truth of the matter asserted.
-  
+
 Q: On the issue of Albert's wellbeing after the accident, Angela testified that he gave a
 thumbs up when asked how he was feeling. Is there hearsay?
 A: Work through the problem step by step first and then answer the question.
-  
+
 [completion]
 Yes, let's work through this scenario step by step to identify if there's hearsay involved.
-  
+
 1. Angela's Testimony: According to Angela's testimony, Albert gave a "thumbs up" when asked
 about his well-being. This statement was made by Angela in court, which means it's in-court testimony.
-  
+
 2. Nature of the Statement: Angela's statement about Albert's "thumbs up" gesture is being
 used to imply that Albert is doing well or feeling good after the accident.
-  
+
 3. Out-of-Court Statement: The actual statement being discussed here - "I'm feeling good" - was
 allegedly made by Albert out of court. This is a classic example of an out-of-court statement.
-  
+
 4. Purpose of the Statement: Angela's testimony, including the reference to Albert's gesture,
   is being used to prove Albert's subjective state of well-being.
-  
+
 Therefore, yes, there is hearsay in Angela's testimony. The statement made by Albert, describing
 his feelings, is hearsay because it's an out-of-court assertion being used to prove the truth
 of the matter - in this case, that Albert was feeling well after the accident.
@@ -176,40 +179,40 @@ This answer is quite satisfying not only because we get the correct answer, but 
 ```
 [prompt]
 Hearsay is an out-of-court statement introduced to prove the truth of the matter asserted.
-  
+
 Q: On the issue of whether David is fast, the fact that David set a high school track record.
 Is there hearsay?
 Reasoning: The statement is non-assertive conduct.
 A: No
-  
+
 Q: On the issue of whether Rebecca was ill, the fact that Rebecca told Ronald that she was
 unwell. Is there hearsay?
 Reasoning: The statement is standard hearsay.
 A: Yes
-  
+
 Q: To prove that Tim was a soccer fan, the fact that Tim told Jimmy that "Real Madrid was
 the best soccer team in the world." Is there hearsay?
 Reasoning: The statement is not introduced to prove truth.
 A: No
-  
+
 Q: When asked by the attorney on cross-examination, Alice testified that she had "never seen
 the plaintiff before, and had no idea who she was." Is there hearsay?
 Reasoning: The statement was made in-court.
 A: No
-  
+
 Q: On the issue of whether Martin punched James, the fact that Martin smiled and nodded when
 asked if he did so by an officer on the scene. Is there hearsay?
 Reasoning: The statement is non-verbal hearsay.
 A: Yes
-  
+
 Q: On the issue of Albert's wellbeing after the accident, Angela testified that he gave a
 thumbs up when asked how he was feeling. Is there hearsay?
-  
+
 [completion]
 Yes. Angela's testimony about Albert's non-verbal conduct, i.e., giving a "thumbs up," falls
 under the definition of hearsay, as it is an out-of-court statement (Albert's gesture) used
 to prove the truth of the matter asserted (that Albert was doing well after the accident). 
-  
+
 Hearsay is typically defined as an out-of-court statement offered in court for the truth of
 the matter asserted. Non-verbal conduct, such as gestures or nods, can indeed constitute
 hearsay if they are intended to assert a fact. In this scenario, Albert's thumbs up is
@@ -225,49 +228,49 @@ Hearsay is an out-of-court statement introduced to prove the truth of the matter
 Given a statement, respond with a JSON object that has two keys: `reasoning` and `answer`.
 The first key's value should contain the reasoning used to arrive at the answer.
 The second key's value should contain either "Yes" or "No".
-  
+
 Q: On the issue of whether David is fast, the fact that David set a high school track record.
 Is there hearsay?
 {
   "reasoning": "The statement is non-assertive conduct."
   "answer": "No"
 }
-  
+
 Q: On the issue of whether Rebecca was ill, the fact that Rebecca told Ronald that she was
 unwell. Is there hearsay?
 {
   "reasoning": "The statement is standard hearsay."
   "answer": "Yes"
 }
-  
+
 Q: To prove that Tim was a soccer fan, the fact that Tim told Jimmy that "Real Madrid was
 the best soccer team in the world." Is there hearsay?
 {
   "reasoning": "The statement is not introduced to prove truth."
   "answer": "No"
 }
-  
+
 Q: When asked by the attorney on cross-examination, Alice testified that she had "never seen
 the plaintiff before, and had no idea who she was." Is there hearsay?
 {
   "reasoning": "The statement was made in-court."
   "answer": "No"
 }
-  
+
 Q: On the issue of whether Martin punched James, the fact that Martin smiled and nodded
 when asked if he did so by an officer on the scene. Is there hearsay?
 {
   "reasoning": "The statement is non-verbal hearsay."
   "answer": "Yes"
 }
-  
+
 Q: On the issue of Albert's wellbeing after the accident, Angela testified that he gave
 a thumbs up when asked how he was feeling. Is there hearsay?
 {
   "reasoning": "<the reasoning used to arrive at the above answer>",
   "answer": "<Yes if there was hearsay, No if there was not>"
 }
-  
+
 [completion]
 {
   "reasoning": "The statement is a non-verbal assertion, which also counts as hearsay.",
@@ -287,33 +290,33 @@ For example, instead of asking the model to "work through the problem step by st
 ```
 [prompt 1]
 Hearsay is an out-of-court statement introduced to prove the truth of the matter asserted.
-  
+
 In determining whether a piece of evidence meets the definition of hearsay, lawyers ask three
 questions:
-  
+
 1. Was there a statement?
 2. Was it made outside of court?
 3. Is it being introduced to prove the truth of the matter asserted?
-  
+
 Apply this reasoning to the following question.
-  
+
 Q: On the issue of Albert's wellbeing after the accident, Angela testified that he gave a
 thumbs up when asked how he was feeling.
-  
+
 [completion]
 Yes, this is hearsay, based on the definition you provided.
-  
+
 1. There was a statement: Angela testified that Albert gave a thumbs up. This would constitute
 a gesture as a form of statement, indicating Albert's state of being. 
-  
+
 2. It was made outside of court: According to the scenario, Angela's observation of Albert's
 gesture occurred outside the courtroom, making it an out-of-court statement. 
-  
+
 3. It's being introduced to prove the truth of the matter asserted: Angela's testimony,
 including the thumbs-up gesture, is being used as evidence of Albert's well-being after the
 accident. The gesture is being used literally for its assertional value, suggesting that Albert
 is doing well, or at least, that he is feeling fine. 
-  
+
 Therefore, Angela's testimony regarding Albert's gesture fits the definition of hearsay and
 would be treated as such in a legal setting.
 
@@ -324,13 +327,13 @@ The issue was analyzed correctly in the above completion, but we are seeking a c
 ```
 [prompt 2]
 Given the question below and the accompanying analysis, answer with only "Yes" or "No".
-  
+
 ## question
 {question}
-  
+
 ## analysis
 {completion_from_prompt_1}
-  
+
 [completion]
 Yes
 

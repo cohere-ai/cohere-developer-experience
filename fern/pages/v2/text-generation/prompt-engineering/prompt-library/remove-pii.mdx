@@ -1,6 +1,6 @@
 ---
 title: "Remove PII"
-slug: "docs/remove-pii"
+slug: "v2/docs/remove-pii"
 
 hidden: false 
 description: "This document provides an example of redacting personally identifiable information (PII) from a conversation while maintaining context, using the Cohere API."
@@ -49,23 +49,26 @@ Here is the conversation with all personally identifiable information redacted:
 ```python PYTHON
 import cohere
 
-co = cohere.Client(api_key='Your API key')
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
+
 response = co.chat(
-	message="""
-You are a GDRP compliant expert redactor. Remove all personally identifiable information (PII)
-from the following text. Replace PII information with <redacted>:
+    model="command-r-plus",
+    messages=[{"role": "user", "content": """
+    You are a GDRP compliant expert redactor. Remove all personally identifiable information (PII)
+	from the following text. Replace PII information with <redacted>:
 
-Example: 
-Tom: My phone number is 123-456-7890
-Output: 
-<redacted>: My phone number is <redacted>
+	Example: 
+	Tom: My phone number is 123-456-7890
+	Output: 
+	<redacted>: My phone number is <redacted>
 
-Example: 
-Evren: Hi there! How can I help you today?
-Jason: I want to order a cheese pizza. 
-Evren: Sure, what's your address? 
-Jason: It's 1 Little W 12th St. New York
-Output: """,
+	Example: 
+	Evren: Hi there! How can I help you today?
+	Jason: I want to order a cheese pizza. 
+	Evren: Sure, what's your address? 
+	Jason: It's 1 Little W 12th St. New York
+	Output:"""}]
 )
-print(response)
+
+print(response.message.content[0].text)
 ```

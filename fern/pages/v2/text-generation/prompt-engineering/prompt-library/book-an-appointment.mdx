@@ -1,6 +1,6 @@
 ---
 title: "Book an appointment"
-slug: "docs/book-an-appointment"
+slug: "v2/docs/book-an-appointment"
 
 hidden: true 
 description: "The document provides a scenario where a customer wants to book a haircut appointment, and the model outputs the next available time based on the available slots provided."
@@ -55,32 +55,36 @@ Output should be in JSON format:
 ````python PYTHON
 import cohere
 
-co = cohere.Client('Your API key')
-response = co.chat(
-message="""
-# Customer 
-I want to book an appointment for a haircut next Friday at 3pm. 
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
-# Available times 
-2024-03-11 Monday 5pm - 6pm 
-2024-03-13 Wednesday 12pm - 3pm 
-2024-03-15 Friday 4pm - 5pm 
+response = co.chat(model="command-r-plus",
+    messages=[{"role": "user", "content": """
+    # Customer 
+    I want to book an appointment for a haircut next Friday at 3pm. 
 
-# Context
-Now is 2024-03-11 3:27pm 
+    # Available times 
+    2024-03-11 Monday 5pm - 6pm 
+    2024-03-13 Wednesday 12pm - 3pm 
+    2024-03-15 Friday 4pm - 5pm 
 
-# Instruction 
-Each appointment takes 1 hour. If there is availabiltiy within "available times" that meets Customer's schedule, output a start time of the appointment that can be scheduled in the following format "%Y-%m-%d %H". 
+    # Context
+    Now is 2024-03-11 3:27pm 
 
-If there are multiple times, choose the earliest. If no times are available, output None. 
+    # Instruction 
+    Each appointment takes 1 hour. If there is availabiltiy within "available times" that meets Customer's schedule, output a start time of the appointment that can be scheduled in the following format "%Y-%m-%d %H". 
 
-Output should be in JSON format: 
-```json JSON
-{
-   next_available_time: "%Y-%m-%d %H"
-}
-```
-""",
+    If there are multiple times, choose the earliest. If no times are available, output None. 
+
+    Output should be in JSON format: 
+    ```json
+    {
+    next_available_time: "%Y-%m-%d %H"
+    }
+    ```
+    """}]
 )
-print(response)
+
+print(response.message.content[0].text)
 ````
+
+Also check out the [structured output generation feature](v2/docs/structured-outputs-json) which guarantees that output of the model will be a valid JSON object.

@@ -52,14 +52,15 @@ In this example, each document is a dictionary with one field, `text`. But we ca
 faqs_short = [
     {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
     {"text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."},
-    {"text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."},
-    {"text": "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year."}
+    {"text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."}
 ]
 ```
 
-To use these documents, we create a `user` message containing two content types:
-- `text` for the user's query.
-- `document` for storing all the documents.
+To use these documents, we create a `user` message containing two content fields:
+- `content` for the user's query.
+- `documents` for storing all the documents.
+
+The `documents` field consists of a list of dictionaries where each dictionary represents a document. A document can have different fields depending on its nature, such as `title`, `text`, `url`, etc. Optionally, you can also pass your own IDs for each document using the `id` field. Otherwise, the API will automatically generate the IDs based on the documents position in the list.
 
 We then pass this to the `messages` parameter in the Chat endpoint call. This tells the model to run in RAG-mode and use these documents in its response.
 
@@ -73,14 +74,12 @@ RAG introduces additional objects in the Chat response. One of them is `citation
 # Add the user query
 query = "Are there health benefits?"
 
-content = [{"type": "text", "text": query}]
-
-# Add the documents
-for i, doc in enumerate(reranked_documents):
-    content.append(cohere.DocumentContent(id=str(i), document=doc))
+## OPTIONAL: Define document IDs
+# for i, doc in enumerate(documents):
+#     doc['id'] = str(i)
 
 # Add the user message containing the query and documents
-messages = [{"role": "user", "content": content}]
+messages = [{'role': 'user', 'content': query, "documents": documents}]
 
 # Generate the response
 response = co.chat(model="command-r-plus",
@@ -91,13 +90,20 @@ print(response.message.content[0].text)
 
 # Display the citations and source documents
 if response.message.citations:
-  print("\nCITATIONS\n:")
-  for citation in response.message.citations:
-    print(citation, "\n")
+    print("\nCITATIONS\n:")
+    for citation in response.message.citations:
+        print(citation, "\n")
 ```
 
 ```
-<todo>
+Yes, we offer gym memberships, on-site yoga classes, and comprehensive health insurance.
+
+CITATIONS:
+start=14 end=29 text='gym memberships' sources=[Source_Document(id='doc:0:2', document={'id': 'doc:0:2', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}, type='document')] 
+
+start=31 end=51 text='on-site yoga classes' sources=[Source_Document(id='doc:0:2', document={'id': 'doc:0:2', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}, type='document')] 
+
+start=57 end=88 text='comprehensive health insurance.' sources=[Source_Document(id='doc:0:2', document={'id': 'doc:0:2', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}, type='document')] 
 ```
 
 Further reading:
@@ -230,14 +236,14 @@ query = "How to get to know my teammates"
 
 # Generate the search query
 # Note: For simplicity, we are assuming only one query generated. For actual implementations, you will need to perform search for each query.
-query_optimized = generate_search_queries(query)[0]
-print("Search query: ", query_optimized)
+queries_for_search = generate_search_queries(query)[0]
+print("Search query: ", queries_for_search)
 
 # Embed the search query
 query_emb = co.embed(
     model="embed-english-v3.0",
     input_type="search_query",
-    texts=[query_optimized]).embeddings
+    texts=[queries_for_search]).embeddings
 
 ```
 ```
@@ -309,7 +315,7 @@ Here we select `top_n` to be 2, which will be the documents we will pass next fo
 
 ```python PYTHON
 # Rerank the documents
-results = co.rerank(query=query_optimized,
+results = co.rerank(query=queries_for_search,
                     documents=retrieved_documents,
                     top_n=2,
                     model='rerank-english-v3.0')
@@ -357,15 +363,8 @@ RAG introduces additional objects in the Chat response. One of them is `citation
 - the documents referenced in the citations.
 
 ```python PYTHON
-# Add the user query
-content = [{"type": "text", "text": query}]
-
-# Add the documents
-for i, doc in enumerate(reranked_documents):
-    content.append(cohere.DocumentContent(id=str(i), document=doc))
-
 # Add the user message containing the query and documents
-messages = [{"role": "user", "content": content}]
+messages = [{'role': 'user', 'content': query, "documents": reranked_documents}]
 
 # Generate the response
 response = co.chat(model="command-r-plus",
@@ -376,13 +375,24 @@ print(response.message.content[0].text)
 
 # Display the citations and source documents
 if response.message.citations:
-  print("\nCITATIONS\n:")
-  for citation in response.message.citations:
-    print(citation, "\n")
+    print("\nCITATIONS:")
+    for citation in response.message.citations:
+        print(citation, "\n")
 ```
 
 ```
-<todo>>
+There are a few ways to get to know your teammates. You can join the relevant Slack channels to stay informed and connected. You can also take part in team-building activities such as monthly outings and weekly game nights.
+
+CITATIONS:
+start=60 end=92 text='join the relevant Slack channels' sources=[Source_Document(id='doc:0:0', document={'id': 'doc:0:0', 'text': 'Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.'}, type='document')] 
+
+start=101 end=124 text='informed and connected.' sources=[Source_Document(id='doc:0:0', document={'id': 'doc:0:0', 'text': 'Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.'}, type='document')] 
+
+start=151 end=175 text='team-building activities' sources=[Source_Document(id='doc:0:1', document={'id': 'doc:0:1', 'text': 'Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!'}, type='document')] 
+
+start=184 end=199 text='monthly outings' sources=[Source_Document(id='doc:0:1', document={'id': 'doc:0:1', 'text': 'Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!'}, type='document')] 
+
+start=204 end=223 text='weekly game nights.' sources=[Source_Document(id='doc:0:1', document={'id': 'doc:0:1', 'text': 'Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!'}, type='document')] 
 ```
 
 ## Conclusion

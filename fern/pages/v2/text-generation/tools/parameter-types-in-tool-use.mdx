@@ -1,0 +1,210 @@
+---
+title: "Parameter Types in Tool Use"
+slug: "docs/parameter-types-in-tool-use"
+
+hidden: false
+
+description: "This page describes Cohere's tool use parameters and how to work with them."
+image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, AI tool use"
+
+createdAt: "Wed Apr 24 2024 17:31:36 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Wed Apr 24 2024 18:37:19 GMT+0000 (Coordinated Universal Time)"
+---
+Cohere's tool use feature is available in the chat endpoint via the API and all of our SDKs (Python, Typescript, Java, Go). The functionality relies on Python type notation to define parameters. Parameters are the inputs that a tool or function needs to operate. With this approach there is flexibility to use any Python type as a definition for these parameters. This includes basic types like integers, floats, and strings, as well as more complex types such as lists, dictionaries, and dataclasses.
+
+Additionally, the default value for optional parameters can be provided, which will be used if no value is specified when the function is called. It is also possible to define enumerations (enums) to specify a set of valid values for a parameter, restricting the input to a predefined list of options.
+
+Below are some examples that illustrate how to define parameters using Python types, defaults, and enums.
+
+## Example - JSON Schema Type Conversion
+
+<br />
+
+| JSON Schema type                   | Python type                                                    |
+| :--------------------------------- | :------------------------------------------------------------- |
+| string                             | str                                                            |
+| number (float type)                | float                                                          |
+| number (integer type)              | int                                                            |
+| boolean                            | bool                                                           |
+| object                             | Dict                                                           |
+| object (with specific types)       | Dict[str, int]                                                 |
+| array                              | List                                                           |
+| array (with specific types)        | List[str]                                                      |
+| array (nested with specific types) | List\[List[str]]                                               |
+| n/a                                | Custom Python classes such as a dataclass (see examples below) |
+
+<br />
+
+## Example – Simple types
+
+```python PYTHON
+tools = [
+    {
+        "name": "query_daily_sales_report",
+        "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+        "parameter_definitions": {
+            "day": {
+                "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
+                "type": "str", 
+                "required": True
+            }
+        }
+    }
+]
+
+message = "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
+
+response = co.chat(
+    message=message,
+    tools=tools
+)
+```
+
+<br />
+
+## Example – Arrays
+
+### With specific element types
+
+```python PYTHON
+tools = [
+   {
+       "name": "query_daily_sales_report",
+       "description": "Connects to a database to retrieve overall sales volumes and sales information for numerous days.",
+       "parameter_definitions": {
+           "days": {
+               "description": "Retrieves sales data for these days, formatted as YYYY-MM-DD.",
+               "type": "List[str]", # or "List[float]", "List[List[str]]" etc
+               "required": True
+           }
+       }
+   },
+ }
+]
+```
+
+### Without specific element types
+
+```python PYTHON
+tools = [
+    {
+        "name": "query_daily_sales_report",
+        "description": "Connects to a database to retrieve overall sales volumes and sales information for numerous days.",
+        "parameter_definitions": {
+            "days": {
+                "description": "Retrieves sales data for these days, formatted as YYYY-MM-DD.",
+                "type": "List",
+                "required": True
+            }
+        }
+    }
+]
+```
+
+<br />
+
+## Example – Enumerated values (enums)
+
+To make sure a tool only accepts certain values you can list those values in the parameter's description. For example, you can say "Possible enum values: customer, supplier."
+
+```python PYTHON
+tools = [
+    {
+        "name": "fetch_contacts",
+        "description": "Fetch a contact by type",
+        "parameter_definitions": {
+            "contact_type": {
+                "description": "The type of contact to fetch. Possible enum values: customer, supplier.",
+                "type": "str",
+                "required": True
+            }
+        }
+    }
+]
+```
+
+<br />
+
+## Example - Defaults
+
+To ensure a tool is called with a default value it's recommended to specify the default on the tool's implementation and use required: False whenever possible. When this is not possible you can specify the default in the parameter's description (with required: True). For example:
+
+```python PYTHON
+tools = [
+    {
+        "name": "fetch_contacts",
+        "description": "Fetch a contact by type",
+        "parameter_definitions": {
+            "contact_type": {
+                "description": "The type of contact to fetch. The default value is: customer.",
+                "type": "str",
+                "required": True
+            }
+        }
+    }
+]
+```
+
+<br />
+
+## Example – Dictionaries
+
+We recommend using individual parameters whenever possible. However, when that's not possible, to make sure a tool is called with a specific array or dictionary structure you can specify the keys in the parameter's description. For example:
+
+```python PYTHON
+tools = [
+    {
+        "name": "plot_daily_sales_volume",
+        "description": "Produce a graph from daily sales volume data.",
+        "parameter_definitions": {
+            "sales_data": {
+                "description": "Produces a graph from sales volume data. The key is the day,formatted as YYYY-MM-DD, and the value is the number of sales",
+                "type": "Dict[str, int]",
+                "required": True
+            }
+        }
+    }
+]
+
+```
+
+<br />
+
+## Example - Python objects (including dataclass)
+
+It's possible to call a tool that accepts custom Python objects, for example a data class.
+
+```python PYTHON
+from dataclasses import dataclass
+
+
+@dataclass
+class InventoryItem:
+    name: str
+    category: str  # one of ["fruit", "stationery", "diary"]
+    is_food: bool
+
+
+tools = [
+    {
+        "name": "find_stock",
+        "description": "Find how many items are in stock.",
+        "parameter_definitions": {
+            "item": {
+                "description": """An InventoryItem object that represents an item. The definition of InventoryItem looks like the following:
+@dataclass
+class InventoryItem:
+    name: str
+    category: str  # one of ["fruit", "stationery", "diary"]
+    is_food: bool
+""",
+                "type": "InventoryItem",
+                "required": True
+            }
+        }
+    }
+]
+```
+
+<br />

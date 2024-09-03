@@ -1,6 +1,6 @@
 ---
 title: "Add a Docstring to your code"
-slug: "docs/add-a-docstring-to-your-code"
+slug: "v2/docs/add-a-docstring-to-your-code"
 
 hidden: false 
 description: "This document provides an example of adding a docstring to a Python function using the Cohere API."
@@ -14,7 +14,7 @@ This is useful if you need to automatically generate documentation strings for c
 
 **Prompt**
 
-````txt
+````
 You are a Python expert. For the given Python function, add mypy typing and a docstring.
 Return the Python function only. 
 
@@ -46,15 +46,19 @@ def add(a: int, b: int) -> int:
 ````python PYTHON
 import cohere
 
-co = cohere.Client(api_key='Your API key')
-response = co.chat(
-	message="""You are a Python expert. For the given Python function, add mypy typing and a docstring. Return the Python function only.
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
-```py
-def add(a,b): 
-	return a + b 
-```
-""",
+response = co.chat(
+    model="command-r-plus",
+    messages=[{"role": "user", "content": """
+    You are a Python expert. For the given Python function, add mypy typing and a docstring. Return the Python function only.
+    ```py
+    def add(a,b): 
+        return a + b 
+    ```
+    """}]
 )
-print(response)
+
+print(response.message.content[0].text)
+
 ````

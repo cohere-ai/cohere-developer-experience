@@ -1,6 +1,6 @@
 ---
 title: "Create a markdown table from raw data"
-slug: "docs/create-a-markdown-table-from-raw-data"
+slug: "v2/docs/create-a-markdown-table-from-raw-data"
 
 hidden: false 
 description: "The document provides a prompt to format CSV data into a markdown table and includes the output table as well as an API request using the Cohere platform."
@@ -41,19 +41,22 @@ Emily Davis,37,Product Manager
 ````python PYTHON
 import cohere
 
-co = cohere.Client(api_key='Your API key')
-response = co.chat(
-	message="""
-You are an expert in data formatting. For the following csv data, output it as a markdown table.
-Output the table only. 
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
-```
-name,age,occupation
-Jane Smith,25,Data Scientist
-Bob Johnson,42,Software Developer
-Emily Davis,37,Product Manager
-```
-""",
-)
-print(response)
+response = co.chat(
+    model="command-r-plus",
+    messages=[{"role": "user", "content": """
+    You are an expert in data formatting. For the following csv data, output it as a markdown table.
+    Output the table only. 
+
+    ```
+    name,age,occupation
+    Jane Smith,25,Data Scientist
+    Bob Johnson,42,Software Developer
+    Emily Davis,37,Product Manager
+    ```
+    """}]
+    )
+
+print(response.message.content[0].text)
 ````

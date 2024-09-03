@@ -1,6 +1,6 @@
 ---
 title: "Multilingual interpreter"
-slug: "docs/multilingual-interpreter"
+slug: "v2/docs/multilingual-interpreter"
 
 hidden: false 
 description: "This document provides a prompt to interpret a customer's issue into multiple languages using an API."
@@ -55,14 +55,16 @@ Arabic: يواجه العميل مشكلة
 **API Request**
 ```python PYTHON
 import cohere
-co = cohere.Client(api_key='Your API key')
+
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
 response = co.chat(
-	message="""
-Interpret the text below into into French, Spanish, Italian, German, Brazilian Portuguese, Japanese, Korean, Simplified Chinese, and Arabic: 
-
-The customer is having a problem with a printer that is not connecting to the computer. He tried restarting both the computer and the printer. 
-""",
+    model="command-r-plus",
+    messages=[{"role": "user", "content": """
+    Interpret the text below into into French, Spanish, Italian, German, Brazilian Portuguese, Japanese, Korean, Simplified Chinese, and Arabic: 
+    The customer is having a problem with a printer that is not connecting to the computer. He tried restarting both the computer and the printer.
+    """}]
 )
-print(response)
+
+print(response.message.content[0].text)
 ```
