@@ -4,9 +4,9 @@ co = cohere.Client("<<apiKey>>")
 
 # upload a dataset
 my_dataset = co.datasets.create(
-    name="chat-dataset",
-    data=open("./chat.jsonl", "rb"),
-    type="chat-finetune-input",
+    name="prompt-completion-dataset",
+    data=open("./prompt-completion.jsonl", "rb"),
+    type="prompt-completion-finetune-input",
 )
 
 # wait for validation to complete

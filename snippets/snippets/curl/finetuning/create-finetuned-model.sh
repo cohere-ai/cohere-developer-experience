@@ -7,7 +7,7 @@ curl --request POST \
       "name": "test-finetuned-model",
       "settings": {
         "base_model": {
-          "base_type": "BASE_TYPE_CHAT",
+          "base_type": "BASE_TYPE_GENERATIVE",
         },
         "dataset_id": "test-dataset-id"
       }
