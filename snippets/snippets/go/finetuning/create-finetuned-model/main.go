@@ -18,7 +18,7 @@ func main() {
 			Settings: &finetuning.Settings{
 				DatasetId: "my-dataset-id",
 				BaseModel: &finetuning.BaseModel{
-					BaseType: finetuning.BaseTypeBaseTypeGenerative,
+					BaseType: finetuning.BaseTypeBaseTypeChat,
 				},
 			},
 		},
