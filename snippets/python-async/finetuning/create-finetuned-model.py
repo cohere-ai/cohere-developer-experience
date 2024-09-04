@@ -16,7 +16,7 @@ async def main():
             name="test-finetuned-model",
             settings=Settings(
                 base_model=BaseModel(
-                    base_type=BaseType.BASE_TYPE_GENERATIVE,
+                    base_type=BaseType.BASE_TYPE_CHAT,
                 ),
                 dataset_id="my-dataset-id",
             ),

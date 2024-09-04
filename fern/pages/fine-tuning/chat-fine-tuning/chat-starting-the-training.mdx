@@ -195,24 +195,42 @@ To train a custom model, please see the example below for parameters to pass to 
   - `early_stopping_threshold` (float) How much the loss must improve to prevent early stopping. Must be between 0.001 and 0.1. Defaults to **0.001**.
   - `early_stopping_patience` (int) Stops training if the loss metric does not improve beyond the value of `early_stopping_threshold` after this many rounds of evaluation. Must be between 0 and 10. Defaults to **10**.
 
+You can optionally publish the training metrics and hyper parameter values to your [Weights and Biases](https://wandb.ai) account using the `wandb` parameter. This is currently only supported for chat type finetunes. 
+
+- `wandb` (cohere.finetuning.WandbConfig) - The Weights & Biases configuration.
+  - `project` (string) The Weights and Biases project to be used during training. This parameter is mandatory.
+  - `api_key` (string) The Weights and Biases API key to be used during training. This parameter is mandatory and will always be stored encrypted and auto-deleted after the finetune creation is complete.
+  - `entity` (string) The Weights and Biases API entity to be used during training. When not specified, it will assume the default entity for that API key.
+
+When the configuration is valid, the Run ID will correspond to the finetune ID, and Run display name will be the name of the finetune specified during creation. When specifying a invalid Weights and Biases configuration, finetune creation will proceed but nothing will be logged to your Weights and Biases.
+
+Once a finetune has been created with a specified Weights and Biases configuration, you may view the finetune run via the Weights and Biases dashboard. It will be available via the following URL: `https://wandb.ai/<your-entity>/<your-project>/runs/<finetune-id>`.
+
 ## Example
 
 ```python PYTHON
 import cohere
-from cohere.finetuning import Hyperparameters, Settings, BaseModel
+from cohere.finetuning import Hyperparameters, Settings, BaseModel, WandbConfig
 
 co = cohere.Client('Your API key')
 
 chat_dataset = co.datasets.create(name="chat-dataset",
                                   data=open("path/to/train.jsonl", "rb"),
                                   type="chat-finetune-input")
-# optional (define custom  hyperparameters)
+# optional (define custom hyperparameters)
 hp = Hyperparameters(
   early_stopping_patience=10,
   early_stopping_threshold=0.001,
   train_batch_size=16,
   train_epochs=1,
   learning_rate=0.01,
+)
+
+# optional (define wandb configuration)
+wnb_config = WandbConfig(
+    project="test-project",
+    api_key="<<wandbApiKey>>",
+    entity="test-entity",
 )
 
 my_finetune = co.finetuning.create_finetuned_model(
@@ -223,7 +241,8 @@ my_finetune = co.finetuning.create_finetuned_model(
         base_type="BASE_TYPE_CHAT",
       ),
       dataset_id=my-chat_dataset.id,
-      hyperparameters=hp
+      hyperparameters=hp,
+      wandb=wnb_config,
     ),
   ),
 )

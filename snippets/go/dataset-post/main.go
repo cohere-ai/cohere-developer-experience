@@ -27,7 +27,7 @@ func main() {
 		&MyReader{Reader: strings.NewReader(`{"text": "The quick brown fox jumps over the lazy dog"}`), name: "test.jsonl"},
 		&MyReader{Reader: strings.NewReader(""), name: "a.jsonl"},
 		&cohere.DatasetsCreateRequest{
-			Name: "prompt-completion-dataset",
+			Name: "embed-dataset",
 			Type: cohere.DatasetTypeEmbedResult,
 		},
 	)
