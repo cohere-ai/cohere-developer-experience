@@ -2,52 +2,172 @@ const fs = require("fs");
 const path = require("path");
 const matter = require("gray-matter");
 
-const mdxDir = path.join(__dirname, "../../fern/pages");
-const filePattern = /\.mdx$/;
+// Counters
+let totalFilesChecked = 0;
+let totalFilesValid = 0;
+let totalFilesInvalid = 0;
+let totalFilesUpdated = 0;
 
-console.log("Checking MDX files...", mdxDir);
+// List of folders to exclude (relative to mdxDir)
+const excludedFolders = ["-ARCHIVE-", "api-reference", "llm-university"];
 
-function checkDescription(filePath) {
-  const fileContent = fs.readFileSync(filePath, "utf8");
-  const { data } = matter(fileContent);
+function shouldExcludeFolder(dirPath) {
+  return excludedFolders.some((excludedFolder) => {
+    return path.relative(mdxDir, dirPath).startsWith(excludedFolder);
+  });
+}
 
-  if (!data.description) {
+async function shouldExcludeFile(filePath) {
+  try {
+    const fileContent = await fs.readFile(filePath, "utf8");
+    const { data } = matter(fileContent);
+    return data.hidden === true;
+  } catch (error) {
+    console.error(`Error reading file "${filePath}":`, error);
+    return false; // In case of error, don't exclude the file
+  }
+}
+
+async function generateMetaDescription(content) {
+  const apiKey = process.env.COHERE_TOKEN;
+  const prompt = `Write a short meta description for the following article content: "${content}". The description should be between 15-25 words and only one sentence. Write only description. Do not include any URLs or code snippets.`;
+
+  try {
+    const response = await fetch("https://stg.api.cohere.com/v1/chat", {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        accept: "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify({
+        message: prompt,
+        model: "command-r-plus",
+        temperature: 1,
+        stream: false,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Cohere API request failed");
+    }
+
+    const data = await response.json();
+
+    return data.text;
+  } catch (error) {
+    console.error("Error generating meta description:", error.message);
+    return null;
+  }
+}
+
+async function updateDescription(data, content, filePath) {
+  const updatedData = { ...data };
+  let updated = false;
+
+  updatedData.description = await generateMetaDescription(content);
+  updated = true;
+
+  if (updated) {
+    console.log(`Updating description in "${filePath}".`);
+    const updatedContent = matter.stringify(content, updatedData);
+    await fs.writeFile(filePath, updatedContent, "utf8");
+    totalFilesUpdated++;
+  }
+  return updated;
+}
+let numOfChecks = 0;
+
+async function checkDescription(filePath) {
+  totalFilesChecked++;
+  numOfChecks++;
+  const fileContent = await fs.readFile(filePath, "utf8");
+  const { data, content } = matter(fileContent);
+  if (numOfChecks > 5) {
     console.error(
-      `Error: The file "${filePath}" does not have a description in the frontmatter.`
+      `Limit of generations reached for file: : ${filePath} 
+      Description needs to be updated manually.
+      Update the description in the frontmatter of the file.
+      Maximum character limit is 160 and minimum is 50.`
     );
+    numOfChecks = 0;
     return false;
+  }
+  if (!data.description) {
+    totalFilesInvalid++;
+    // file doesn't have description
+    await updateDescription(data, content, filePath);
+    // recursively check the updated file
+    return checkDescription(filePath);
   }
   if (data.description.length < 50) {
-    console.error(
-      `Error: The description in "${filePath}" is too short. It should be at least 50 characters long.`
-    );
-    return false;
+    totalFilesInvalid++;
+    // file description is too short
+    await updateDescription(data, content, filePath);
+    // recursively check the updated file
+    return checkDescription(filePath);
   }
   if (data.description.length > 160) {
-    console.error(
-      `Error: The description in "${filePath}" is too long. It should be at most 160 characters long.`
-    );
-    return false;
+    totalFilesInvalid++;
+    // file description is too long
+    await updateDescription(data, content, filePath);
+    // recursively check the updated file
+    return checkDescription(filePath);
+  } else {
+    totalFilesValid++;
   }
+  numOfChecks = 0;
   return true;
 }
 
-function checkMDXFiles() {
+async function checkMDXFiles(dirPath) {
   let allFilesValid = true;
+  const files = await fs.readdir(dirPath);
 
-  fs.readdirSync(mdxDir).forEach((file) => {
-    const fullPath = path.join(mdxDir, file);
-    if (filePattern.test(file) && fs.lstatSync(fullPath).isFile()) {
-      const isValid = checkDescription(fullPath);
+  for (const file of files) {
+    const fullPath = path.join(dirPath, file);
+    const stat = await fs.lstat(fullPath);
+
+    if (stat.isDirectory()) {
+      if (shouldExcludeFolder(fullPath)) {
+        console.log(`Skipping excluded directory: ${fullPath}`);
+        continue; // Skip this directory
+      }
+      // Recursively check subdirectories
+      const isValid = await checkMDXFiles(fullPath);
+      if (!isValid) {
+        allFilesValid = false;
+      }
+    } else if (filePattern.test(file)) {
+      // Skip files with hidden: true
+      if (await shouldExcludeFile(fullPath)) {
+        console.log(`Skipping excluded file: ${fullPath}`);
+        continue; // Skip this file
+      }
+      // Check .mdx files
+      const isValid = await checkDescription(fullPath);
       if (!isValid) {
         allFilesValid = false;
       }
     }
-  });
-
-  if (!allFilesValid) {
-    process.exit(1);
   }
+
+  return allFilesValid;
 }
 
-checkMDXFiles();
+(async () => {
+  const allFilesValid = await checkMDXFiles(mdxDir);
+
+  // Summary report
+  console.log(`\nSummary Report:`);
+  console.log(`Total files checked: ${totalFilesChecked}`);
+  console.log(`Total valid files: ${totalFilesValid}`);
+  console.log(`Total invalid files: ${totalFilesInvalid}`);
+  console.log(`Total files updated: ${totalFilesUpdated}`);
+
+  if (!allFilesValid) {
+    process.exit(1); // Fail if any file is invalid
+  } else {
+    console.log("All files have a valid description in the frontmatter.");
+  }
+})();
