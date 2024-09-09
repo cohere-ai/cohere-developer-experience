@@ -1,5 +1,5 @@
 ---
-title: "Trains and deploys a fine-tuned model."
+title: "Training and deploying a fine-tuned model."
 slug: "docs/classify-starting-the-training"
 
 hidden: false
@@ -97,16 +97,20 @@ Here are some example code snippets for you to use.
 
 ```python PYTHON
 # create dataset
-single_label_dataset = co.datasets.create(name="single-label-dataset",
-                                          data=open("path/to/train.csv, "rb"),
-                                          type="single-label-finetune-input",
-                                          parse_info=ParseInfo(delimiter=",")) # parse_info is optional
-print(single_label_dataset.await_validation())
+single_label_dataset = co.datasets.create(
+    name="single-label-dataset",
+    data=open("single_label_dataset.jsonl", "rb"),
+    type="single-label-classification-finetune-input",
+)
+
+print(co.wait(single_label_dataset).dataset.validation_status)
                                               
 # start the fine-tune job using this dataset
-finetune = co.finetuning.create_finetuned_model(
+from cohere.finetuning.finetuning import BaseModel, FinetunedModel, Settings
+
+single_label_finetune = co.finetuning.create_finetuned_model(
   request=FinetunedModel(
-    name="single-label-ft",
+    name="single-label-finetune",
     settings=Settings(
       base_model=BaseModel(
         base_type="BASE_TYPE_CLASSIFICATION",
@@ -116,33 +120,37 @@ finetune = co.finetuning.create_finetuned_model(
   ),
 )
 
-print(f"fine-tune ID: {finetune.id}, fine-tune status: {finetune.status}")
+print(f"fine-tune ID: {single_label_finetune.finetuned_model.id}, fine-tune status: {single_label_finetune.finetuned_model.status}")
 ```
 
 ### Starting a Multi-label Fine-tune
 
 ```python PYTHON
 # create dataset
-multi_label_dataset = co.create_dataset(name="multi-label-dataset",
-                                        data=open("path/to/train.jsonl", "rb"),
-                                        dataset_type="multi-label-finetune-input")
-  
-print(multi_label_dataset.await_validation())
+multi_label_dataset = co.datasets.create(
+    name="multi-label-dataset",
+    data=open("multi_label_dataset.jsonl", "rb"),
+    type="multi-label-classification-finetune-input",
+)
+
+print(co.wait(multi_label_dataset).dataset.validation_status)
                                               
 # start the fine-tune job using this dataset
-finetune = co.finetuning.create_finetuned_model(
+from cohere.finetuning.finetuning import BaseModel, FinetunedModel, Settings
+
+multi_label_finetune = co.finetuning.create_finetuned_model(
   request=FinetunedModel(
-    name="single-label-ft",
+    name="multi-label-finetune",
     settings=Settings(
       base_model=BaseModel(
         base_type="BASE_TYPE_CLASSIFICATION",
       ),
-      dataset_id=single_label_dataset.id,
+      dataset_id=multi_label_dataset.id,
     ),
   ),
 )
 
-print(f"fine-tune ID: {finetune.id}, fine-tune status: {finetune.status}")
+print(f"fine-tune ID: {multi_label_finetune.finetuned_model.id}, fine-tune status: {multi_label_finetune.finetuned_model.status}")
 ```
 
 ### Calling a fine-tune
@@ -151,15 +159,14 @@ print(f"fine-tune ID: {finetune.id}, fine-tune status: {finetune.status}")
 import cohere
 
 co = cohere.Client('Your API key')
-# get the custom model object
-ft = co.finetuning.get_finetuned_model(finetune.finetuned_model.id)
+# get the custom model object (replace with your finetune name e.g. multi_label_finetune)
+model_id = single_label_finetune.finetuned_model.id
 
-response = client.classify(
+response = co.classify(
     inputs=["classify this!"],
-    model=ft.id+"-ft",
+    model=model_id+"-ft",
 )
 
-# Printing the model's response.
 print(response)
 ```
 
