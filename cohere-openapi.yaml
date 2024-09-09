@@ -5952,6 +5952,20 @@ paths:
                     Dictates the approach taken to generating citations as part of the RAG flow by allowing the user to specify whether they want `"accurate"` results, `"fast"` results or no results.
                 response_format:
                   $ref: "#/components/schemas/ResponseFormat-2"
+                safety_mode:
+                  enum:
+                    - CONTEXTUAL
+                    - STRICT
+                    - NONE
+                  description: |
+                    Used to select the [safety instruction](/docs/safety-modes) inserted into the prompt. Defaults to `CONTEXTUAL`.
+                    When `NONE` is specified, the safety instruction will be omitted.
+
+                    Safety modes are not yet configurable in combination with `tools`, `tool_results` and `documents` parameters.
+
+                    **Note**: This parameter is only compatible with models [Command R 08-2024](/docs/command-r#august-2024-release), [Command R+ 08-2024](/docs/command-r-plus#august-2024-release) and newer.
+
+                    Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 max_tokens:
                   type: integer
                   description: |
@@ -6755,90 +6769,116 @@ paths:
             stream: true
           response:
             stream:
-              - type: message-start
-                id: 29f14a5a-11de-4cae-9800-25e4747408ea
-                delta:
-                  message:
-                    role: "assistant"
-                    content: []
-                    tool_plan: ""
-                    tool_calls: []
-                    citations: []
-              - type: content-start
-                index: 0
-                delta:
-                  message:
-                    content:
-                      type: "text"
-                      text: ""
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: "Hello"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: "!"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: " How"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: " can"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: " I"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: " help"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: " you"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: " today"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: "?"
-              - type: content-end
-                index: 0
-              - event_type: message-end
-                delta:
-                  finish_reason: complete
-                  usage:
-                    api_version:
-                      version: '2'
-                    billed_units:
-                      input_tokens: 3
-                      output_tokens: 9
-                    tokens:
-                      input_tokens: 69
-                      output_tokens: 9
+              - event: stream-start
+                data:
+                  type: message-start
+                  id: 29f14a5a-11de-4cae-9800-25e4747408ea
+                  delta:
+                    message:
+                      role: "assistant"
+                      # content: []
+                      # tool_plan: ""
+                      # tool_calls: []
+                      # citations: []
+              - event: text-generation
+                data:
+                  type: content-start
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        type: "text"
+                        text: ""
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: "Hello"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: "!"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: " How"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: " can"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: " I"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: " help"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: " you"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: " today"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: "?"
+              - event: text-generation
+                data:
+                  type: content-end
+                  index: 0
+              - event: stream-end
+                data:
+                  type: message-end
+                  delta:
+                    finish_reason: complete
+                    usage:
+                      # api_version:
+                      #   version: '2'
+                      billed_units:
+                        input_tokens: 3
+                        output_tokens: 9
+                      tokens:
+                        input_tokens: 69
+                        output_tokens: 9
         - code-samples:
             - sdk: typescript
               name: Tools
@@ -6983,26 +7023,27 @@ paths:
               message:
                 role: "assistant"
                 tool_plan: "I will first find the sales summary for 29th September 2023. Then, I
-                  wil"
-            find the details of the products in the 'Electronics' category." tool_calls:
-              - id: query_daily_sales_report_hgxxmkby3wta
-                type: function
-                function:
-                  name: query_daily_sales_report
-                  arguments: "{\"day\": \"2023-09-29\"}"
-              - id: query_product_catalog_rpg0z5h8yyz2
-                type: function
-                function:
-                  name: query_product_catalog
-                  arguments: "{\"category\": \"Electronics\"}"
-            finish_reason: "tool_call"
-            usage:
-              billed_units:
-                input_tokens: 127
-                output_tokens: 69
-              tokens:
-                input_tokens: 1032
-                output_tokens: 124
+                  will find the details of the products in the 'Electronics'
+                  category."
+                tool_calls:
+                  - id: query_daily_sales_report_hgxxmkby3wta
+                    type: function
+                    function:
+                      name: query_daily_sales_report
+                      arguments: "{\"day\": \"2023-09-29\"}"
+                  - id: query_product_catalog_rpg0z5h8yyz2
+                    type: function
+                    function:
+                      name: query_product_catalog
+                      arguments: "{\"category\": \"Electronics\"}"
+              finish_reason: "tool_call"
+              usage:
+                billed_units:
+                  input_tokens: 127
+                  output_tokens: 69
+                tokens:
+                  input_tokens: 1032
+                  output_tokens: 124
   /v1/generate:
     post:
       x-fern-audiences:
@@ -14786,7 +14827,6 @@ paths:
               code: |
                 from cohere.finetuning import (
                     BaseModel,
-                    BaseType,
                     FinetunedModel,
                     Settings,
                 )
@@ -14802,7 +14842,7 @@ paths:
                             name="test-finetuned-model",
                             settings=Settings(
                                 base_model=BaseModel(
-                                    base_type=BaseType.BASE_TYPE_CHAT,
+                                    base_type="BASE_TYPE_CHAT",
                                 ),
                                 dataset_id="my-dataset-id",
                             ),
@@ -16725,21 +16765,6 @@ components:
                   propertyName: type
                   mapping:
                     text: "#/components/schemas/TextContent"
-    ToolContent:
-      x-fern-sdk-group-name: v2
-      type: object
-      description: Tool content result object
-      required:
-        - type
-        - output
-      properties:
-        type:
-          type: string
-          enum:
-            - tool_result_object
-        output:
-          type: object
-          additionalProperties: true
     ToolMessage-2:
       x-fern-sdk-group-name: v2
       type: object
@@ -16755,15 +16780,14 @@ components:
             - tool
         tool_call_id:
           type: string
+          description: The id of the associated tool call that has provided the given
+            content
         tool_content:
           type: array
+          description: A list of outputs from a tool. The content should formatted as a
+            JSON object string
           items:
-            oneOf:
-              - $ref: "#/components/schemas/ToolContent"
-            discriminator:
-              propertyName: type
-              mapping:
-                tool_result_object: "#/components/schemas/ToolContent"
+            type: string
     ChatMessage-2:
       x-fern-sdk-group-name: v2
       description: Represents a single message in the chat history from a given role.
@@ -21074,7 +21098,7 @@ components:
         The possible types of fine-tuned models.
 
          - BASE_TYPE_UNSPECIFIED: Unspecified model.
-         - BASE_TYPE_GENERATIVE: Generative model.
+         - BASE_TYPE_GENERATIVE: Deprecated: Generative model.
          - BASE_TYPE_CLASSIFICATION: Classification model.
          - BASE_TYPE_RERANK: Rerank model.
          - BASE_TYPE_CHAT: Chat model.
@@ -21092,7 +21116,7 @@ components:
         The possible strategy used to serve a fine-tuned models.
 
          - STRATEGY_UNSPECIFIED: Unspecified strategy.
-         - STRATEGY_VANILLA: Serve the fine-tuned model on a dedicated GPU.
+         - STRATEGY_VANILLA: Deprecated: Serve the fine-tuned model on a dedicated GPU.
          - STRATEGY_TFEW: Serve the fine-tuned model on a shared GPU.
       x-fern-sdk-group-name:
         - finetuning
@@ -21188,7 +21212,7 @@ components:
           readOnly: true
         wandb:
           $ref: "#/components/schemas/WandbConfig"
-          description: The Weights & Biases configuration.
+          description: The Weights & Biases configuration (Chat fine-tuning only).
       description: The configuration used for fine-tuning.
       required:
         - base_model
