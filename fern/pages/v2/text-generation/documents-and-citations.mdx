@@ -27,33 +27,36 @@ documents=[
     {"title": "What are animals?", "snippet": "Animals are different from plants."}
     ]
 
-# Append the user message to user content
-content = [{'type': 'text', 'text': "Where do the tallest penguins live?"}]
-
-# Append the documents to user content
-for i, doc in enumerate(documents):
-    content.append({'type': 'document', 'id': str(i), 'document': doc})
+messages = [{'role': 'user', 'content': "Where do the tallest penguins live?", "documents": documents}]
 
 response = co.chat(
-    model="command-r-plus",
-    messages=[({'role': 'user', 'content': content})])
+    model="command-r-plus-08-2024",
+    messages=messages)
 ```
 
 Here's an example reply:
 
 ```
 # response.message.content
-[TextContent(text='The tallest penguins are Emperor penguins, and they only live in Antarctica.', type='text')]
+[AssistantMessageResponseContentItem_Text(text='The tallest penguins are the Emperor penguins. They only live in Antarctica.', type='text')]
 
 # response.message.citations
-[Citation(start=4, 
-          end=41, 
-          text='tallest penguins are Emperor penguins', 
-          sources=[Source_Document(id='0', document={'id': '0', 'snippet': 'Emperor penguins are the tallest.', 'title': 'Tall penguins'}, type='document')]), 
-Citation(start=52, 
+[Citation(start=29, 
+          end=46, 
+          text='Emperor penguins.', 
+          sources=[Source_Document(id='doc:0:0', 
+                                   document={'id': 'doc:0:0', 
+                                             'snippet': 'Emperor penguins are the tallest.', 
+                                             'title': 'Tall penguins'}, 
+                                   type='document')]), 
+ Citation(start=65, 
           end=76, 
-          text='only live in Antarctica.', 
-          sources=[Source_Document(id='1', document={'id': '1', 'snippet': 'Emperor penguins only live in Antarctica.', 'title': 'Penguin habitats'}, type='document')])]
+          text='Antarctica.', 
+          sources=[Source_Document(id='doc:0:1', 
+                                   document={'id': 'doc:0:1', 
+                                             'snippet': 'Emperor penguins only live in Antarctica.', 
+                                             'title': 'Penguin habitats'}, 
+                                   type='document')])]
 ```
 
 Observe that the payload includes a list of documents with a “snippet” field containing the information we want the model to use. The recommended length for the snippet of each document is relatively short, 300 words or less. We recommend using field names similar to the ones we’ve included in this example (i.e. “title” and “snippet” ), but RAG is quite flexible with respect to how you structure the documents. You can give the fields any names you want, and can pass in other fields as well, such as a “date” field. All field names and field values are passed to the model.
