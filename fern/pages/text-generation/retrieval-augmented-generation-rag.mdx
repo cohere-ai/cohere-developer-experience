@@ -72,7 +72,9 @@ In this section, we will use the three step RAG workflow to finally settle the s
 
 #### Step 1: Generating search queries
 
-Calling the [Chat API](/reference/chat) with the `search_queries_only` parameter set to `True` will return a list of **search queries**. In the example below, we ask the model to suggest some search queries that would be useful when answering the question.
+First, we need to turn a user message into an optimal set of search queries to use for retrieval.
+
+For this, we can leverage the [tool use](docs/tool-use) feature. The tool will generate one or more search queries based on the user message.
 
 **Request**
 
@@ -80,23 +82,36 @@ Calling the [Chat API](/reference/chat) with the `search_queries_only` parameter
 import cohere
 co = cohere.Client(api_key="<YOUR API KEY>")
 
-co.chat(
-  model="command-r-plus",
-  message="Who is more popular: Nsync or Backstreet Boys?",
-  search_queries_only=True
+query_gen_tool = [
+   {
+       "name": "search",
+       "description": "Returns a list of relevant document snippets for a textual query retrieved from the search system",
+       "parameter_definitions": {
+           "queries": {
+               "description": "a list of queries to search with.",
+               "type": "List[str]",
+               "required": True
+           }
+       }
+   }
+]
+response_search_query_gen = co.chat(
+    message="Who is more popular: Nsync or Backstreet Boys?",
+    tools=query_gen_tool,
+    force_single_step=True
 )
+
+search_queries = response_search_query_gen.tool_calls
+
+print(search_queries)
 ```
 
 **Response**
 
-```json JSON
-{
-  "is_search_required": true,
-  "search_queries": [
-    {"text": "Nsync popularity", "generation_id": "b560dd68-743e-4c32-98a2-a9b7e3e96861"},
-    {"text": "Backstreet Boys popularity", "generation_id": "b560dd68-743e-4c32-98a2-a9b7e3e96861"}
-  ]
-}
+```json
+[ToolCall(name='search',
+          parameters={'queries': ['Nsync popularity',
+                                  'Backstreet Boys popularity']})]
 ```
 
 Indeed, to generate a factually accurate answer to the question `"Who is more popular: Nsync or Backstreet Boys?"`, looking up `Nsync popularity` and `Backstreet Boys popularity` first would be helpful.
