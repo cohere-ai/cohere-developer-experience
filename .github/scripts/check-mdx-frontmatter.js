@@ -72,7 +72,7 @@ async function updateDescription(data, content, filePath) {
   if (updated) {
     console.log(`Updating description in "${filePath}".`);
     const updatedContent = matter.stringify(content, updatedData);
-    await fs.writeFile(filePath, updatedContent, "utf8");
+    // await fs.writeFile(filePath, updatedContent, "utf8");
     totalFilesUpdated++;
   }
   return updated;
