@@ -34,11 +34,11 @@ co_v2 = cohere.ClientV2(api_key="<YOUR API KEY>")
 ## Messages
 
 - Message structure: 
-   - v1: uses separate `preamble` and `message` parameters.
-   - v2: uses a `messages` list with role-based dictionaries (`system`, `user`, `assistant`, or `tool`).
+   - v1: uses a combination of `preamble`, `message`, and `chat_history` parameters.
+   - v2: uses a single `messages` parameter with a list of role-based dictionaries (`system`, `user`, `assistant`, or `tool`).
 
 - Chat history:
-   - v1: manages chat history internally and uses a `chat_history` parameter.
+   - v1: manages chat history internally via the `chat_history` parameter.
    - v2: manual management of the conversation in the `messages` list.
 
 ### v1
@@ -74,9 +74,7 @@ message='Make it shorter' tool_calls=None role='USER'
 message='"Excited to join Co1t today as a [Your Role] and looking forward to collaborating with the team."' tool_calls=None role='CHATBOT' 
 ```
 
-
 ### v2
-
 
 ```python PYTHON
 preamble = """## Task and Context
@@ -115,7 +113,6 @@ for message in messages:
 {'role': 'assistant', 'content': '"Excited to join Co1t, ready to dive in and make an impact!"'} 
 ```  
 
-
 ## Response content
 
 - Response content:
@@ -123,7 +120,6 @@ for message in messages:
     - v2: `message.content[0].text`
 
 ### v1
-
 
 ```python PYTHON
 res = co_v1.chat(model="command-r-plus",
@@ -136,7 +132,6 @@ The answer is 4.
 ```
 
 ### v2
-
 
 ```python PYTHON
 res = co_v2.chat(model="command-r-plus",
@@ -160,7 +155,6 @@ The answer is 4.
 
 ### v1
 
-
 ```python PYTHON
 message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
 
@@ -174,8 +168,8 @@ for chunk in res:
 ```
 "Hi, I'm [your name] and I'm thrilled to join the Co1t team today as a [your role], eager to contribute my skills and ideas to help drive innovation and success for our startup!"
 ```
-### v2
 
+### v2
 
 ```python PYTHON
 message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
@@ -191,6 +185,7 @@ for chunk in res:
 ```
 "Hi everyone, I'm thrilled to join the Co1t team today and look forward to contributing my skills and ideas to drive innovation and success!"
 ```
+
 # RAG
 
 ## Documents
@@ -198,7 +193,6 @@ for chunk in res:
 - Document handling
    - v1: uses separate `documents` parameter
    - v2: integrates `documents` as a field in the `user` role in `messages`
-
 
 ```python PYTHON
 # Define the documents
@@ -209,7 +203,6 @@ documents = [
 ```
 
 ### v1
-
 
 ```python PYTHON
 message = "Are there fitness-related benefits?"
@@ -225,7 +218,6 @@ Yes, we offer gym memberships and on-site yoga classes as part of our health and
 ```
 
 ### v2
-
 
 ```python PYTHON
 message = "Are there fitness-related benefits?"
@@ -248,7 +240,6 @@ Yes, we offer gym memberships and on-site yoga classes as part of our health and
    - v2: No direct equivalent, alternative approaches available
 
 ### v1
-
 
 ```python PYTHON
 res = co_v1.chat(model="command-r-plus",
@@ -314,7 +305,6 @@ print(res_v2.message.citations)
 
 ### v1
 
-
 ```python PYTHON
 message = "Are there fitness-related benefits?"
 
@@ -339,7 +329,6 @@ Yes, we offer health and wellness benefits, including gym memberships and on-sit
 ```
 
 ### v2
-
 
 ```python PYTHON
 message = "Are there fitness-related benefits?"
@@ -380,7 +369,6 @@ v2 format adheres more strictly to JSON Schema standards.
 
 ### v1
 
-
 ```python PYTHON
 def get_weather(location):
     return {"temperature": "20C"}
@@ -403,7 +391,6 @@ tools_v1 = [
 ```
 
 ### v2
-
 
 ```python PYTHON
 def get_weather(location):
@@ -444,7 +431,6 @@ tools_v2 = [
 
 ### v1
 
-
 ```python PYTHON
 message = "What's the weather in Toronto?"
 
@@ -459,7 +445,6 @@ print(res_v1.tool_calls)
 ```
 
 ### v2
-
 
 ```python PYTHON
 messages = [{'role': 'user', 'content': "What's the weather in Toronto?"}]
@@ -493,7 +478,6 @@ if res_v2.message.tool_calls:
 
 ### v1
 
-
 ```python PYTHON
 tool_content_v1 = []
 if res_v1.tool_calls:
@@ -509,7 +493,6 @@ print(tool_content_v1)
 ```
 
 ### v2
-
 
 ```python PYTHON
 tool_content_v2 = []
@@ -536,7 +519,6 @@ print(tool_content_v2)
 
 ### v1
 
-
 ```python PYTHON
 res_v1 = co_v1.chat(
     model="command-r-plus",
@@ -553,7 +535,6 @@ It's 20°C in Toronto.
 ```
 
 ### v2
-
 
 ```python PYTHON
 res_v2 = co_v2.chat(
@@ -579,7 +560,6 @@ It's 20°C in Toronto.
 
 ### v1
 
-
 ```python PYTHON
 print(res_v1.citations)
 print(res_v1.documents)
@@ -591,7 +571,6 @@ print(res_v1.documents)
 ```
 
 ### v2
-
 
 ```python PYTHON
 print(res_v2.message.citations)
@@ -620,7 +599,6 @@ print(res_v2.message.citations)
 
 ### v1
 
-
 ```python PYTHON
 res_v1 = co_v1.chat_stream(
     message="",
@@ -642,7 +620,6 @@ It's currently 20°C in Toronto.
 ```
 
 ### v2
-
 
 ```python PYTHON
 res_v2 = co_v2.chat_stream(
@@ -679,4 +656,3 @@ The following v1 features are not supported in v2:
     - `force_single_step` parameter (all tool calls are now multi-step by default)
     - `tool_results` parameter (replaced by `tool` role in `messages`)
     - `citation_quality` (replaced by `citation_mode` with the same functionality)
-
