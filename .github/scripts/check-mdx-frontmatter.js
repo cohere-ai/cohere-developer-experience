@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const matter = require("gray-matter");
 
+const mdxDir = path.join(__dirname, "../../fern/pages");
 // Counters
 let totalFilesChecked = 0;
 let totalFilesValid = 0;
