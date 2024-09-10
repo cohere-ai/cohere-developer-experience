@@ -1,0 +1,163 @@
+---
+title: "Parameter Types in Tool Use"
+slug: "v2/docs/parameter-types-in-tool-use"
+
+hidden: false
+
+description: "This page describes Cohere's tool use parameters and how to work with them."
+image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, AI tool use"
+
+createdAt: "Wed Apr 24 2024 17:31:36 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Wed Apr 24 2024 18:37:19 GMT+0000 (Coordinated Universal Time)"
+---
+Cohere's tool use feature is available in the chat endpoint via the API and all of our SDKs (Python, Typescript, Java, Go). The functionality relies on JSON Schema type notation to define parameters. Parameters are the inputs that a tool or function needs to operate. With this approach there is flexibility to use any JSON Schema type as a definition for these parameters. This includes basic types like integers, numbers, and strings, as well as more complex types such as arrays and objects.
+
+Additionally, the default value for optional parameters can be provided, which will be used if no value is specified when the function is called. It is also possible to define enumerations (enums) to specify a set of valid values for a parameter, restricting the input to a predefined list of options.
+
+Below are some examples that illustrate how to define parameters using JSON Schema types, defaults, and enums.
+
+## Example – Simple types
+
+```python PYTHON
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "query_daily_sales_report",
+            "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "day": {
+                        "type": "string",
+                        "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD."
+                    }
+                },
+                "required": ["day"]
+            }
+        }
+    }
+]
+
+message = "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
+
+res = co.chat(model="command-r-plus",
+              messages=[{"role": "user", "content": message}],
+              tools=tools)
+
+```
+
+<br />
+
+## Example – Arrays
+
+### With specific element types
+
+```python PYTHON
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "query_daily_sales_report",
+            "description": "Connects to a database to retrieve overall sales volumes and sales information for numerous days.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "days": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Retrieves sales data formatted as YYYY-MM-DD."
+                    }
+                },
+                "required": ["days"]
+            }
+        }
+    }
+]
+```
+
+### Without specific element types
+
+```python PYTHON
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "query_daily_sales_report",
+            "description": "Connects to a database to retrieve overall sales volumes and sales information for numerous days.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "days": {
+                        "type": "array",
+                        "description": "Retrieves sales data for these days, formatted as YYYY-MM-DD."
+                    }
+                },
+                "required": ["days"]
+            }
+        }
+    }
+]
+```
+
+<br />
+
+## Example – Enumerated values (enums)
+
+To make sure a tool only accepts certain values you can list those values in the parameter's description. For example, you can say "Possible enum values: customer, supplier."
+
+```python PYTHON
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "fetch_contacts",
+            "description": "Fetch a contact by type",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "contact_type": {
+                        "type": "string",
+                        "description": "The type of contact to fetch. Possible enum values: customer, supplier.",
+                    }
+                },
+                "required": ["contact_type"]
+            }
+        }
+    }
+]
+```
+
+<br />
+
+## Example - Defaults
+
+To ensure a tool is called with a default value it's recommended to specify the default on the tool's implementation and use required: False whenever possible. When this is not possible you can specify the default in the parameter's description (with required: True). For example:
+
+```python PYTHON
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "fetch_contacts",
+            "description": "Fetch a contact by type",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "contact_type": {
+                        "type": "string",
+                        "description": "The type of contact to fetch. The default value is: supplier.",
+                    }
+                },
+                "required": ["contact_type"]
+            }
+        }
+    }
+]
+
+```
+
+
+
+<br />
