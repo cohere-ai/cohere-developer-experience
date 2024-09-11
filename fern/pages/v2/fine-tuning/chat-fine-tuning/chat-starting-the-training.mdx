@@ -92,11 +92,11 @@ If you are happy with how the samples look, click on 'Continue' at the bottom of
 
 ### Pricing
 
-This page gives an estimated cost of your finetune. Please see our [latest pricing](https://cohere.com/pricing) for more information.
+This page gives an estimated cost of your fine-tuning job. Please see our [latest pricing](https://cohere.com/pricing) for more information.
 
 <img src='../../../../assets/images/b8ddffe-guide-chat-pricing.png' />
 
-Click next to finalize your fine-tune.
+Click next to finalize your fine-tuning job.
 
 ### Start Training
 
@@ -108,7 +108,7 @@ As the training proceeds you'll receive updates with various accuracy and loss m
 
 ## Using the Python SDK
 
-In addition to using the [Web UI](/docs/fine-tuning-with-the-web-ui) for fine-tuning models, customers can also kick off fine-tuning jobs programmatically using the [Cohere Python SDK](https://pypi.org/project/cohere/). This can be useful for fine-tunes that happen on a regular cadence, such as nightly jobs on newly-acquired data.
+In addition to using the [Web UI](/docs/fine-tuning-with-the-web-ui) for fine-tuning models, customers can also kick off fine-tuning jobs programmatically using the [Cohere Python SDK](https://pypi.org/project/cohere/). This can be useful for fine-tuning jobs that happen on a regular cadence, such as nightly jobs on newly-acquired data.
 
 ## Prepare your Dataset
 
@@ -215,7 +215,7 @@ hp = Hyperparameters(
   learning_rate=0.01,
 )
 
-my_finetune = co.finetuning.create_finetuned_model(
+create_response = co.finetuning.create_finetuned_model(
   request=FinetunedModel(
     name="customer-service-chat-model",
     settings=Settings(
@@ -231,9 +231,9 @@ my_finetune = co.finetuning.create_finetuned_model(
 
 ## Calling your Chat Model with co.chat()
 
-Once your model completes training, you can call it via [co.chat()](/v2/docs/chat-api) and pass your custom model's `model_id`.
+Once your model completes training, you can call it via [co.chat()](/v2/docs/chat-api) and pass your your custom model's `model_id`.
 
-Please note, the `model_id` is the `id` returned by the finetuned object with the `"-ft"` suffix.
+Please note, the `model_id` is the `id` returned by the fine-tuned model object with the `"-ft"` suffix.
 
 `co.chat()` uses no preamble by default for fine-tuned models. You can specify a preamble using the `preamble` parameter. Note that for the `model` parameter, you must pass the finetune's id with `"-ft"` appended to the end.
 
@@ -245,11 +245,11 @@ Here's a Python script to make this clearer:
 import cohere
 
 co = cohere.ClientV2('Your API key')
-# get the finetuned model object
-ft = co.finetuning.get_finetuned_model(my_finetune.finetuned_model.id)
+# get the fine-tuned model object
+get_response = co.finetuning.get_finetuned_model(create_response.finetuned_model.id)
 
 response = co.chat(
-  model=ft.finetuned_model.id+"-ft",
+  model=get_response.finetuned_model.id+"-ft",
   # Required - user message. Optional (to specify a preamble/system message)
   messages=[{"role": "system", "content": "You are a chatbot trained to answer to my every question. Answer every question with full sentences."},
             {"role": "user", "content": "Hi there"}],
@@ -266,7 +266,7 @@ After your first message with the model, you can build the `messages` list with 
 ```python PYTHON
 # Continuing the above conversation with `response.id`.
 response_2 = co.chat(
-  model=ft.finetuned_model.id+"-ft",
+  model=get_response.finetuned_model.id+"-ft",
   # optional (to specify a preamble)
   messages=[{"role": "system", "content": "You are a chatbot trained to answer to my every question. Answer every question with full sentences."},
             {"role": "user", "content": "Hi there"},
