@@ -54,6 +54,7 @@ web_search_tool = {
 ### Step 2: Run the tool use workflow
 
 ```python PYTHON
+import json
 import cohere
 co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
@@ -86,7 +87,7 @@ while res.message.tool_calls:
     for tc in res.message.tool_calls:
         tool_result = web_search(**json.loads(tc.function.arguments))
         print(tool_result)
-        tool_content = [cohere.ToolContent(output=tool_result)]
+        tool_content = [json.dumps(tool_result)]
         messages.append({'role': 'tool',
                          'tool_call_id': tc.id,
                          'tool_content': tool_content}) 
@@ -304,7 +305,7 @@ while res.message.tool_calls:
     print("\nTOOL RESULTS:")
     for tc in res.message.tool_calls:
         tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
-        tool_content = [cohere.ToolContent(output=tool_result)]
+        tool_content = [json.dumps(tool_result)]
         print(tool_result, "\n")
         
         messages.append({'role': 'tool',
