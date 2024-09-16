@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 const matter = require("gray-matter");
 
@@ -139,7 +139,7 @@ async function checkMDXFiles(dirPath) {
       if (!isValid) {
         allFilesValid = false;
       }
-    } else if (filePattern.test(file)) {
+    } else if (path.extname(file) === ".mdx") {
       // Skip files with hidden: true
       if (await shouldExcludeFile(fullPath)) {
         console.log(`Skipping excluded file: ${fullPath}`);
