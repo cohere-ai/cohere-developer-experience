@@ -15891,6 +15891,7 @@ components:
           type: object
           additionalProperties: true
     ChatMessage:
+      title: Chat Message
       description: |
         Represents a single message in the chat history, excluding the current user turn. It has two properties: `role` and `message`. The `role` identifies the sender (`CHATBOT`, `SYSTEM`, or `USER`), while the `message` contains the text content.
 
@@ -15916,6 +15917,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ToolCall"
+    SystemChatMessage:
+      allOf:
+        - $ref: "#/components/schemas/ChatMessage"
+        - type: object
+      title: System Message
+    UserChatMessage:
+      allOf:
+        - $ref: "#/components/schemas/ChatMessage"
+        - type: object
+      title: User Message
     ToolResult:
       type: object
       required:
@@ -15950,8 +15961,8 @@ components:
         propertyName: role
         mapping:
           CHATBOT: "#/components/schemas/ChatMessage"
-          SYSTEM: "#/components/schemas/ChatMessage"
-          USER: "#/components/schemas/ChatMessage"
+          SYSTEM: "#/components/schemas/SystemChatMessage"
+          USER: "#/components/schemas/UserChatMessage"
           TOOL: "#/components/schemas/ToolMessage"
     ChatConnector:
       description: |
