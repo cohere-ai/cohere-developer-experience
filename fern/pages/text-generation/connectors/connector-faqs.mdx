@@ -1,70 +1,13 @@
 ---
-title: "Connector FAQs"
-slug: "docs/connector-faqs"
-
+title: Connector FAQs
+slug: docs/connector-faqs
 hidden: false
-description: "This document provides solutions to common issues encountered while implementing connectors for Cohere's language models, including deduplicating results, improving document relevance, handling multiple connectors efficiently, boosting response quality, speeding up the connector, and dealing with binary files and caching."
-image: "../../../assets/images/83e0eb6-cohere_meta_image.jpg"  
-keywords: "Cohere connectors, retrieval augmented generation"
-
-createdAt: "Wed Dec 06 2023 20:08:46 GMT+0000 (Coordinated Universal Time)"
-updatedAt: "Fri Mar 15 2024 04:38:53 GMT+0000 (Coordinated Universal Time)"
+description: >-
+  Troubleshoot and optimize your connector with tips on deduplication,
+  relevance, speed, and more.
+image: ../../../assets/images/83e0eb6-cohere_meta_image.jpg
+keywords: 'Cohere connectors, retrieval augmented generation'
+createdAt: 'Wed Dec 06 2023 20:08:46 GMT+0000 (Coordinated Universal Time)'
+updatedAt: 'Fri Mar 15 2024 04:38:53 GMT+0000 (Coordinated Universal Time)'
 ---
-Here, we'll address some common issues that users have encountered while implementing connectors, along with some solutions. This information should help you get started using connectors to customize your application of Cohere's language models.
-
-#### How can I stop the connector from returning duplicates?
-
-If you're finding a lot of duplicates in the results returned by your model, try deduplicating either the datastore or the retrieved response in the connector. Either can improve the quality of your results.
-
-#### Why don't the documents returned from a connector seem intuitively correct or reasonable?
-
-There are a couple of reasons you might be getting results that seem unintuitive or vaguely "off" somehow. Here a few things you can try to resolve this problem:
-
-- Ensure your connector only returns relevant fields; IDs and other extraneous data, for example, can take up the model context and negatively affect results. If you need the fields later for front-end applications, consider using the `excludes` [field for your connector](/reference/create-connector).
-- Ensure the documents returned from the connector follow the [document field recommendations](/docs/creating-and-deploying-a-connector#Document%20Structure%20Recommendations). 
-- Check what type of search implementation is used for the data store and see if another search implementation may work better.
-- Check the query the model generated to search over your data store, which is available in the `search_queries` field of its response. It's possible something problematic is happening in this step, and it's a good place to check for leads.
-- Check that the field `prompt_truncation` is set to `AUTO`.
-- Consider a different search implementation, or reduce the store only to include documents relevant to a particular subject. If the data store contains a large volume of information the model can struggle to find the right answer, and thinning out its contents can help.
-
-#### Do I need multiple connectors per data source if each connector won’t get much traffic?
-
-You don’t need multiple connectors if none of them is getting much traffic. If you have multiple `Elasticsearch` indices, for example, you can nest them behind a single Elasticsearch connector and handle any routing with query parameters.
-
-In this case, each route would be treated as a separate connector being served by one unified "connector interface", allowing more efficient use of your infrastructure.
-
-#### The connector accesses documents which are all individual sentences, how can I boost the quality of grounded responses?
-
-If you're working with many single-sentence documents don’t pre-chunk them into tiny pieces, because too much information is lost this way.
-
-#### How can I speed up the connector or stop it from timing out?
-
-Should you find yourself facing connector latency issues, there are a few things you can try:
-
-- If your connector is retrieving documents through independent requests, ensure that all requests are being made in parallel with something like async.io or multithreading.
-- Ensure your underlying data source is responding in a reasonable amount of time by looking at query statistics in the data source or by profiling the connector.
-- If you’re hosting your connector on something like AWS Lambda or Cloud Run, be aware of issues that can arise from [cold start times](https://docs.aws.amazon.com/lambda/latest/operatorguide/execution-environments.html).
-
-#### How can I stop the connector from returning too many or too few documents, or returning completely irrelevant documents?
-
-If your connector is returning vast numbers of trivial documents, it may be that the underlying search API is matching on "stopwords". These are low-information words like "the" or "and" which are routinely removed before natural language tasks, and you can modify the search query to get rid of them with a library like NLTK. Here's an example:
-
-- ```python PYTHON
-  from nltk.corpus import stopwords	  
-  stop_words = set(stopwords.words("english"))  
-  query = [word for word in query if word.lower() not in stop_words]
-  ```
-
-#### The connector is returning API binary files, and has to parse them into structured pdf, csv, doc, etc. formats. How can I deal with that?
-
-If you're running into problems with binary files, consider using a service like [Unstructured](https://unstructured.io/) to parse the binary into structured data.
-
-#### What do I do if the connector is timing out or needs to do repeated computation for the same API call?
-
-Try adding a caching layer on top of the connector to increase the query's average performance.
-
-#### What do I do if the connector cannot be reached, or is otherwise having network issues?
-
-Check that the connector is hosted under a public address (not hiding behind firewall rules), is hosted under a permitted port (80 or 443), and does not have query parameters.
-
-If you have questions or problems not covered here, reach out to us on [Discord](https://discord.com/invite/co-mmunity)
+This document provides solutions to common issues encountered while implementing connectors for Cohere's language models, including deduplicating results, improving document relevance, handling multiple connectors efficiently, boosting response quality, speeding up the connector, and dealing with binary files and caching.

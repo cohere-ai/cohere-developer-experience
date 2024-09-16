@@ -1,105 +1,13 @@
 ---
-title: "Preparing the Classify Fine-tuning data"
-slug: "docs/classify-preparing-the-data"
-
+title: Preparing the Classify Fine-tuning data
+slug: docs/classify-preparing-the-data
 hidden: false
-description: "This document provides guidelines on preparing data for fine-tuning models for classification, including requirements for single-label and multi-label datasets, cleaning the dataset, and creating evaluation datasets using the Python SDK."
-image: "../../../assets/images/033184f-cohere_meta_image.jpg"  
-keywords: "classification models, fine-tuning, fine-tuning language models"
-
-createdAt: "Wed Nov 15 2023 22:21:51 GMT+0000 (Coordinated Universal Time)"
-updatedAt: "Wed Apr 03 2024 15:23:42 GMT+0000 (Coordinated Universal Time)"
+description: >-
+  Learn how to prepare data for fine-tuning classification models with Python,
+  including single/multi-label requirements and cleaning methods.
+image: ../../../assets/images/033184f-cohere_meta_image.jpg
+keywords: 'classification models, fine-tuning, fine-tuning language models'
+createdAt: 'Wed Nov 15 2023 22:21:51 GMT+0000 (Coordinated Universal Time)'
+updatedAt: 'Wed Apr 03 2024 15:23:42 GMT+0000 (Coordinated Universal Time)'
 ---
-In this section, we will walk through how you can prepare your data for fine-tuning models for Classification.
-
-For classification fine-tuning jobs we can choose between two types of datasets:
-
-1. Single-label data
-2. Multi-label data
-
-To be able to start a fine-tuning job, you need at least **40** examples. Each label needs to have at least **5** examples and there should be at least **2** unique labels.
-
-### Single-label Data
-
-Single-label data consists of a text and a label. Here's an example:
-
-- **text**: This movie offers that rare combination of entertainment and education
-- **label**: positive
-
-Please notice that both text and label are required fields. When it comes to single-label data, you have the option to save your information in either a `.jsonl` or `.csv` format.
-
-```json JSONL
-{"text":"This movie offers that rare combination of entertainment and education", "label":"positive"}
-{"text":"Boring movie that is not as good as the book", "label":"negative"}
-{"text":"We had a great time watching it!", "label":"positive"}
-```
-
-```txt CSV
-text,label
-This movie offers that rare combination of entertainment and education,positive
-Boring movie that is not as good as the book,negative
-We had a great time watching it!,positive
-```
-
-### Multi-label Data
-
-Multi-label data differs from single-label data in the following ways:
-
-- We only accept `jsonl` format
-- An example might have more than one label
-- An example might also have 0 labels
-
-```json JSONL
-{"text":"About 99% of the mass of the human body is made up of six elements: oxygen, carbon, hydrogen, nitrogen, calcium, and phosphorus.", "label":["biology", "physics"]}
-{"text":"The square root of a number is defined as the value, which gives the number when it is multiplied by itself", "label":["mathematics"]}
-{"text":"Hello world!", "label":[]}
-```
-
-### Clean your Dataset
-
-To achieve optimal results, we suggest cleaning your dataset _before_ beginning the fine-tuning process. Here are some things you might want to fix:
-
-- Make sure that your dataset does not contain duplicate examples.
-- Make sure that your examples are utf-8 encoded
-
-If some of your examples don't pass our validation checks, we'll filter them out so that your fine-tuning job can start without interruption. As long as you have a sufficient number of valid training examples, you're good to go.
-
-### Evaluation Datasets
-
-Evaluation data is utilized to calculate metrics that depict the performance of your fine-tuned model. You have the option of generating a validation dataset yourself, or you can opt instead to allow us to divide your training file into separate train and evaluation datasets on our end.
-
-### Create a Dataset with the Python SDK
-
-If you intend to fine-tune through our UI you can skip to the next chapter. Otherwise continue reading to learn how to create datasets for fine-tuning via our [Python SDK](/docs/fine-tuning-with-the-python-sdk). Before you start, we recommend that you read about the [dataset](/docs/datasets) API. Below you will find some code samples on how create datasets via the SDK:
-
-```python PYTHON
-import cohere
-
-# instantiate the Cohere client
-co = cohere.Client("YOUR_API_KEY")  
-
-
-## single-label dataset
-single_label_dataset = co.datasets.create(name="single-label-dataset",
-                                         data=open("path/to/train.csv", "rb"),
-                                         type="single-label-classification-finetune-input")
-
-print(co.wait(single_label_dataset))
-
-## multi-label dataset
-
-multi_label_dataset = co.datasets.create(name="multi-label-dataset",
-                                        data=open("path/to/train.jsonl", "rb"),
-                                        type="multi-label-classification-finetune-input")
-
-print(co.wait(multi_label_dataset))
-
-## add an evaluation dataset
-
-multi_label_dataset_with_eval = co.datasets.create(name="multi-label-dataset-with-eval",
-                                                  data=open("path/to/train.jsonl", "rb"),
-                                                  eval_data=open("path/to/eval.jsonl", "rb"),
-                                                  type="multi-label-classification-finetune-input")
-
-print(co.wait(multi_label_dataset_with_eval))
-```
+This document provides guidelines on preparing data for fine-tuning models for classification, including requirements for single-label and multi-label datasets, cleaning the dataset, and creating evaluation datasets using the Python SDK.
