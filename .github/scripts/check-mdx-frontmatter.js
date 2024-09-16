@@ -111,7 +111,7 @@ async function checkDescription(filePath) {
   if (data.description.length > 160) {
     totalFilesInvalid++;
     // file description is too long
-    await updateDescription(data, content, filePath);
+    await updateDescription(data, data.description, filePath);
     // recursively check the updated file
     return checkDescription(filePath);
   } else {
