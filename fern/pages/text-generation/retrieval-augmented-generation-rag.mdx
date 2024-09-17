@@ -72,6 +72,8 @@ In this section, we will use the three step RAG workflow to finally settle the s
 
 #### Step 1: Generating search queries
 
+##### Option 1: Using the `search_queries_only` parameter
+
 Calling the [Chat API](/reference/chat) with the `search_queries_only` parameter set to `True` will return a list of **search queries**. In the example below, we ask the model to suggest some search queries that would be useful when answering the question.
 
 **Request**
@@ -81,7 +83,7 @@ import cohere
 co = cohere.Client(api_key="<YOUR API KEY>")
 
 co.chat(
-  model="command-r-plus",
+  model="command-r-08-2024",
   message="Who is more popular: Nsync or Backstreet Boys?",
   search_queries_only=True
 )
@@ -100,6 +102,50 @@ co.chat(
 ```
 
 Indeed, to generate a factually accurate answer to the question `"Who is more popular: Nsync or Backstreet Boys?"`, looking up `Nsync popularity` and `Backstreet Boys popularity` first would be helpful.
+
+##### Option 2: Using a tool use approach
+
+If you are looking for greater control over how search queries are generated, you can use the tool use approach to generate search queries.
+
+Here, we build a tool that takes a user query and returns a list of relevant document snippets for that query. The tool can generate one or multiple search queries depending on the user query.
+
+```python PYTHON
+    
+query_gen_tool = [
+{
+    "name": "internet_search",
+    "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+    "parameter_definitions": {
+        "queries": {
+            "description": "a list of queries to search the internet with.",
+            "type": "List[str]",
+            "required": True
+        }
+    }
+}
+]
+
+instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
+    
+response = co.chat(
+    preamble=instructions,
+    model="command-r-08-2024",
+    message=message,
+    force_single_step=True,
+    tools=query_gen_tool,
+)
+
+search_queries = []
+
+if response.tool_calls:
+    search_queries = response.tool_calls[0].parameters["queries"]
+
+print(search_queries)
+```
+```
+# Sample response
+['popularity of NSync', 'popularity of Backstreet Boys']
+```
 
 #### Step 2: Fetching relevant documents
 
