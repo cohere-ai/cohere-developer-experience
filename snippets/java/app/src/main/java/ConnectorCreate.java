@@ -5,7 +5,7 @@ import com.cohere.api.types.CreateConnectorResponse;
 
 public class ConnectorCreate {
     public static void main(String[] args) {
-        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+        Cohere cohere = Cohere.builder().token(System.getenv("CO_API_KEY")).clientName("snippet").build();
 
         CreateConnectorResponse response = cohere.connectors().create(CreateConnectorRequest.builder()
                 .name("Example connector")

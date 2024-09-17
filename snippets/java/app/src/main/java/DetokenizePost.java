@@ -7,7 +7,7 @@ import java.util.List;
 
 public class DetokenizePost {
     public static void main(String[] args) {
-        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+        Cohere cohere = Cohere.builder().token(System.getenv("CO_API_KEY")).clientName("snippet").build();
 
         DetokenizeResponse response = cohere.detokenize(
                 DetokenizeRequest.builder().model("command").tokens(List.of(8466, 5169, 2594, 8, 2792, 43)).build()
