@@ -1,13 +1,56 @@
 ---
-title: Errors
-slug: reference/errors
+title: "Errors"
+slug: "reference/errors"
+
 hidden: false
-description: >-
-  Understand Cohere's use of HTTP response codes, with examples, to handle API
-  request outcomes effectively.
-image: ../../assets/images/72cf813-meta_docs_image_cohere.jpg
-keywords: 'RAG, retrieval, augmented, generation, LLM, connectors, connector, langchain'
-createdAt: 'Tue Sep 06 2022 17:39:07 GMT+0000 (Coordinated Universal Time)'
-updatedAt: 'Fri Mar 15 2024 04:29:33 GMT+0000 (Coordinated Universal Time)'
+description: "This document explains how Cohere uses HTTP response codes to indicate the success or failure of an API request, with codes in the 2xx range indicating success, 4xx range indicating errors due to provided information, and 5xx range indicating server errors. It also provides code examples for error handling in different programming languages."
+image: "../../assets/images/72cf813-meta_docs_image_cohere.jpg"  
+keywords: "RAG, retrieval, augmented, generation, LLM, connectors, connector, langchain"
+
+createdAt: "Tue Sep 06 2022 17:39:07 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Fri Mar 15 2024 04:29:33 GMT+0000 (Coordinated Universal Time)"
 ---
-This document explains how Cohere uses HTTP response codes to indicate the success or failure of an API request, with codes in the 2xx range indicating success, 4xx range indicating errors due to provided information, and 5xx range indicating server errors. It also provides code examples for error handling in different programming languages.
+Cohere uses conventional HTTP response codes to indicate the success or failure of an API request. In general:
+
+- Codes in the **2xx** range indicate success.
+- Codes in the **4xx** range indicate an error that failed given the information provided (e.g., a required parameter was omitted, a charge failed, etc.).
+- Codes in the **5xx** range indicate an error with Cohere's servers (these are rare).
+
+With a non-2xx response code, the response will be an error object in the following shape:
+
+```
+{
+    "message": string
+}
+```
+
+Here are code examples for how error handling might look in our SDKs:
+
+<CodeBlocks>
+```python PYTHON
+ try:
+  response = co.generate(
+      model='invalid-model',
+      prompt='sample prompt')
+  except cohere.CohereError as e:
+      print(e.message)
+      print(e.http_status)
+      print(e.headers)
+```
+```javascript JAVASCRIPT
+(async () => {
+  const response = await cohere.generate({model: 'invalid-model'});
+
+  if (response.statusCode !== 200) {
+      console.log(response.body.message);
+  }
+})();
+```
+```go GO
+_, err := co.Generate(generateOptions)
+if err != nil {
+  fmt.Println(err)
+  return
+}
+```
+</CodeBlocks>
