@@ -1,13 +1,9 @@
 name: preview-docs
 
 on:
-  pull_request_target:
+  pull_request:
     branches:
       - main
-
-concurrency: 
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
 
 jobs:
   run:
@@ -16,6 +12,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        # with:
+        #   ref: "${{ github.event.pull_request.merge_commit_sha }}"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -24,7 +22,7 @@ jobs:
 
       - name: Install Dependencies
         shell: bash
-        run: pnpm install
+        run: pnpm install        
 
       - name: Run fern check
         env:
