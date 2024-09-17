@@ -121,51 +121,54 @@ In this section, we will use the three step RAG workflow to finally settle the s
 
 First, the model needs to generate an optimal set of search queries to use for retrieval. 
 
-There are different possible approaches to this. In this example, we'll take a [tool use](v2/docs/tool-use) approach.
+There are different possible approaches to do this. In this example, we'll take a [tool use](v2/docs/tool-use) approach.
 
 Here, we build a tool that takes a user query and returns a list of relevant document snippets for that query. The tool can generate one or multiple search queries depending on the user query.
 
 ```python PYTHON
-def generate_search_queries(message):
-    
-    tools = [{
+message = "Who is more popular: Nsync or Backstreet Boys?"
+
+query_gen_tool = [
+    {
         "type": "function",
         "function": {
-            "name": "document_search",
-            "description" : "Searches for textual documents based on a user query.",
+            "name": "internet_search",
+            "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
             "parameters": {
-            "type": "object",
-            "properties": {
-                "query": {"type": "string", "description": "The search query"}
-            },
-            "required": ["query"]    
+                "type": "object",
+                "properties": {
+                    "queries": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "a list of queries to search the internet with."
+                    }
+                },
+                "required": ["queries"]
             }
         }
-    }]
-        
-    response = co.chat(
-        model="command-r-plus-08-2024",
-        messages=[{"role": "user", "content": message}],
-        tools=tools
-    )
+    }
+]
+
+instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
     
-    search_queries = []
+response = co.chat(
+    model="command-r-08-2024",
+    messages=[
+        {"role": "system", "content": instructions},
+        {"role": "user", "content": message}],
+    tools=query_gen_tool,
+)
+
+search_queries = []
+
+if response.message.tool_calls:
+    search_queries = json.loads(response.message.tool_calls[0].function.arguments)["queries"]
     
-    if response.message.tool_calls:
-        res = response.message
-        documents = []
-        for tc in res.tool_calls:
-            query = json.loads(tc.function.arguments)["query"]
-            search_queries.append(query)
-        
-    return search_queries
+print(search_queries)
 ```
 
 Now, given the query, the following search queries are generated.
 
-```python PYTHON
-generate_search_queries("Who is more popular: Nsync or Backstreet Boys?")
-```
 ```
 # Sample response
 ['popularity of NSync', 'popularity of Backstreet Boys']
