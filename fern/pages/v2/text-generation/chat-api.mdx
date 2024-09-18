@@ -12,6 +12,8 @@ updatedAt: "Tue Jun 18 2024 07:20:15 GMT+0000 (Coordinated Universal Time)"
 ---
 The Chat API endpoint is used to generate text with Cohere LLMs. This endpoint facilitates a conversational interface, allowing users to send messages to the model and receive text responses.
 
+Every message comes with a `content` field and an associated `role`, which indicates who that message is sent from. Roles can be `user`, `assistant`, `system` and `tool`.
+
 <CodeBlocks>
 ```python PYTHON
 import cohere
@@ -111,8 +113,7 @@ Every response contains the following fields:
 A preamble can be optionally provided in the request. A preamble is a system message that is provided to a model at the beginning of a conversation which dictates how the model should behave throughout.
 
 ```python PYTHON
-preamble = """## Task and Context
-You respond concisely, in about 5 words or less"""
+preamble = "You respond concisely, in about 5 words or less"
 
 res = co.chat(
     model="command-r-plus-08-2024",
@@ -126,11 +127,10 @@ print(res.message.content[0].text)
 
 ## Multi-Turn Conversations
 
-The user message in the Chat request can be sent together in the `messages` list to provide the model with conversational context:
+A single Chat request can encapsulate multiple turns of a conversation, where each message in the `messages` list appears in the order it was sent. Sending multiple messages can give the model context for generating a response.
 
 ```python PYTHON
-system_message = """## Task and Context
-You respond concisely, in about 5 words or less"""
+preamble = "You respond concisely, in about 5 words or less"
 
 res = co.chat(
     model="command-r-plus-08-2024",
