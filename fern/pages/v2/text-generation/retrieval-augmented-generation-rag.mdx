@@ -116,7 +116,7 @@ First, the model needs to generate an optimal set of search queries to use for r
 
 There are different possible approaches to do this. In this example, we'll take a [tool use](v2/docs/tool-use) approach.
 
-Here, we build a tool that takes a user query and returns a list of relevant document snippets for that query. The tool can generate one or multiple search queries depending on the user query.
+Here, we build a tool that takes a user query and returns a list of relevant document snippets for that query. The tool can generate zero, one or multiple search queries depending on the user query.
 
 We recommend using the v1 API for this functionality in order to leverage the `force_single_step` feature.
 
@@ -158,14 +158,23 @@ if response.tool_calls:
 
 print(search_queries)
 ```
-
-Now, given the query, the following search queries are generated.
-
 ```
 # Sample response
 ['popularity of NSync', 'popularity of Backstreet Boys']
 ```
 Indeed, to generate a factually accurate answer to the question "Who is more popular: Nsync or Backstreet Boys?", looking up `popularity of NSync` and `popularity of Backstreet Boys` first would be helpful.
+
+You can then customize the preamble and/or the tool definition to generate queries that are more relevant to your use case.
+
+For example, you can customize the preamble to encourage a longer list of search queries to be generated.
+
+```python PYTHON
+instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
+```
+```
+# Sample response
+['NSync popularity', 'Backstreet Boys popularity', 'NSync vs Backstreet Boys popularity comparison', 'Which boy band is more popular NSync or Backstreet Boys', 'NSync and Backstreet Boys fan base size comparison', 'Who has sold more albums NSync or Backstreet Boys', 'NSync and Backstreet Boys chart performance comparison']
+```
 
 #### Step 2: Fetching relevant documents
 
