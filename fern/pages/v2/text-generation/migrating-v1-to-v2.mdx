@@ -113,9 +113,8 @@ for message in messages:
 
 ## Response content
 
-- Response content:
-    - v1: `text`
-    - v2: `message.content[0].text`
+- v1: Accessed via `text`
+- v2: Accessed via `message.content[0].text`
 
 ### v1
 
@@ -188,9 +187,8 @@ for chunk in res:
 
 ## Documents
 
-- Document handling
-   - v1: uses separate `documents` parameter
-   - v2: integrates `documents` as a field in the `user` role in `messages`
+- v1: uses separate `documents` parameter
+- v2: integrates `documents` as a field in the `user` role in `messages`
 
 ```python PYTHON
 # Define the documents
@@ -233,23 +231,160 @@ Yes, we offer gym memberships and on-site yoga classes as part of our health and
 
 ## Search query generation
 
-- Search query generation:
-   - v1: Uses `search_queries_only` parameter
-   - v2: No direct equivalent, alternative approaches available
+- v1: Uses `search_queries_only` parameter
+- v2: Supported via tools.
 
 ### v1
 
+Uses the `search_queries_only` parameter to generate search queries.
+
 ```python PYTHON
-res = co_v1.chat(model="command-r-plus-08-2024",
+res_v1 = co_v1.chat(model="command-r-plus",
               message="Google and Apple revenue 2023",
               search_queries_only=True)
+
+print(res_v1.search_queries)
+```
+```
+[ChatSearchQuery(text='Google revenue 2023', generation_id='dc0a5490-48bf-4be0-8689-67ddf292be2e'), ChatSearchQuery(text='Apple revenue 2023', generation_id='dc0a5490-48bf-4be0-8689-67ddf292be2e')]
 ```
 
 ### v2
 
-The `search_queries_only` parameter is not supported in v2.
+Search query generation is supported via tools. We recommend using the v1 API for this functionality in order to leverage the `force_single_step` feature.
 
-There are different possible approaches as alternatives. See the [RAG documentation](v2/docs/retrieval-augmented-generation-rag) for an example with a tool use approach.
+```python PYTHON
+# Define the query generation tool
+query_gen_tool = [
+{
+    "name": "internet_search",
+    "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+    "parameter_definitions": {
+        "queries": {
+            "description": "a list of queries to search the internet with.",
+            "type": "List[str]",
+            "required": True
+        }
+    }
+}]
+
+# Define a preamble to optimize search query generation
+instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
+
+# Generate search queries (if any)
+search_queries = []
+
+response = co_v1.chat(
+    preamble=instructions,
+    model="command-r-08-2024",
+    message="Google and Apple revenue 2023",
+    force_single_step=True,
+    tools=query_gen_tool,
+)
+
+if response.tool_calls:
+    search_queries = response.tool_calls[0].parameters["queries"]
+
+print(search_queries)
+```
+```
+['Google revenue 2023', 'Apple revenue 2023']
+```
+## Web search
+
+- v1: Uses the `connectors` parameter with a web-search connector
+- v2: Supported via tools.
+
+### v1
+Uses the web search connector to search the internet for information relevant to the user's query.
+
+```python PYTHON
+res_v1 = co_v1.chat(
+	message="who won euro 2024",
+	connectors=[{"id": "web-search"}],
+)
+
+print(res_v1.text)
+```
+```
+Spain won the UEFA Euro 2024, defeating England 2-1 in the final.
+```
+### v2
+Web search functionality is supported via tools. We recommend using the v1 API for this functionality in order to leverage the `force_single_step` feature.
+
+
+```python PYTHON
+# Any search engine can be used. This example uses the Tavily API.
+from tavily import TavilyClient
+tavily_client = TavilyClient(api_key='TAVILY_API_KEY')
+
+# Create a web search function
+def web_search(queries: list[str]) -> list[dict]:
+    
+    documents = []
+    
+    for query in queries:
+        response = tavily_client.search(query, max_results=2)
+    
+        results = [{'title': r['title'], 'content': r['content'], 'url': r['url']} for r in response['results']]    
+
+        for idx, result in enumerate(results):
+            document = {'id': str(idx), 'data': result}
+            documents.append(document)
+    
+    return {"documents" : documents}
+
+# Define the web search tool
+web_search_tool = [
+    {
+        "name": "web_search",
+        "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+        "parameter_definitions": {
+            "queries": {
+                "description": "a list of queries to search the internet with.",
+                "type": "List[str]",
+                "required": True
+            }
+        }
+    }
+]
+
+# The user query
+query = "who won euro 2024"
+
+# Define a preamble to optimize search query generation
+instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
+
+# Generate search queries (if any)
+res = co_v1.chat(
+    preamble=instructions,
+    model="command-r-08-2024",
+    message=query,
+    force_single_step=True,
+    tools=web_search_tool,
+)
+
+# Perform web search based on the generated search queries
+if res.tool_calls:
+    call = res.tool_calls[0]
+    web_search_results = web_search(call.parameters["queries"])["documents"]
+    tool_results = [{"call": call, "outputs": web_search_results}]
+
+    # Generate a response using the web search results
+    res = co_v1.chat(
+        model="command-r-08-2024",
+        chat_history=res.chat_history,
+        message="",
+        force_single_step=True,
+        tools=web_search_tool,
+        tool_results=tool_results
+    )
+
+print(res.text)
+```
+```
+Spain won Euro 2024, becoming the first country to win the Euros four times. They defeated England 2-1 in Berlin and won all seven of their games without needing penalties.
+```
 
 ## Citations
 
@@ -358,7 +493,8 @@ start=70 end=99 text='health and wellness benefits.' sources=[Source_Document(id
 
 ## Tool definition
 
-v2 format adheres more strictly to JSON Schema standards.
+- v1: uses Python types to define tools.
+- v2: uses JSON schema to define tools.
 
 ### v1
 
@@ -415,12 +551,12 @@ tools_v2 = [
 ## Tool calling
 
 - Response handling
-   - v1: Tool calls accessed through `res_v1.tool_calls`
-   - v2: Tool calls accessed through `res_v2.message.tool_calls`
+   - v1: Tool calls accessed through `response.tool_calls`
+   - v2: Tool calls accessed through `response.message.tool_calls`
 
 - Chat history management
    - v1: Tool calls stored in the response's `chat_history`
-   - v2: Requires appending the tool call details (`tool_calls` and `tool_plan`) to the `messages` list
+   - v2: Append the tool call details (`tool_calls` and `tool_plan`) to the `messages` list
 
 ### v1
 
