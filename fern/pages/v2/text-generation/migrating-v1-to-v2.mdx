@@ -34,12 +34,12 @@ co_v2 = cohere.ClientV2(api_key="<YOUR API KEY>")
 ## Messages
 
 - Message structure: 
-   - v1: uses a combination of `preamble`, `message`, and `chat_history` parameters.
-   - v2: uses a single `messages` parameter with a list of role-based dictionaries (`system`, `user`, `assistant`, or `tool`).
+   - v1: uses separate `preamble` and `message` parameters.
+   - v2: uses a single `messages` parameter consisting of a list of roles (`system`, `user`, `assistant`, or `tool`). The `system` role in v2 replaces the `preamble` parameter in v1.
 
 - Chat history:
-   - v1: manages chat history internally via the `chat_history` parameter.
-   - v2: manual management of the conversation in the `messages` list.
+   - v1: manage the chat history via the `chat_history` parameter.
+   - v2: manage the chat history via the `messages` list.
 
 ### v1
 
@@ -187,25 +187,29 @@ for chunk in res:
 
 ## Documents
 
-- v1: uses separate `documents` parameter
-- v2: integrates `documents` as a field in the `user` role in `messages`
-
-```python PYTHON
-# Define the documents
-documents = [
-    {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
-    {"text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."}
-]
-```
+- v1: the `documents` parameter supports a list of objects with multiple fields per document.
+- v2: the `documents` parameter supports a few different options for structuring documents:
+    - List of objects with `data` object: same as v1 described above, but each document passed as a `data` object (with an optional `id` field to be used in citations).
+    - List of objects with `data` string (with an optional `id` field to be used in citations).
+    - List of strings.
 
 ### v1
 
 ```python PYTHON
+
+# Define the documents
+documents_v1 = [
+    {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
+    {"text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."}
+]
+
+# The user query
 message = "Are there fitness-related benefits?"
 
+# Generate the response
 res_v1 = co_v1.chat(model="command-r-plus-08-2024",
                     message=message,
-                    documents=documents)
+                    documents=documents_v1)
 
 print(res_v1.text)
 ```
@@ -216,17 +220,55 @@ Yes, we offer gym memberships and on-site yoga classes as part of our health and
 ### v2
 
 ```python PYTHON
+# Define the documents
+documents_v2 = [
+  {
+    "data": {
+      "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+    }
+  },
+  {
+    "data": {
+      "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+    }
+  }
+]
+
+# The user query
 message = "Are there fitness-related benefits?"
 
-messages = [{'role': 'user', 'content': message, "documents": documents}]
-    
+messages = [{'role': 'user', 'content': message}]
+
+# Generate the response
 res_v2 = co_v2.chat(model="command-r-plus-08-2024",
-                    messages=messages)
+                    messages=messages,
+                    documents=documents_v2)
 
 print(res_v2.message.content[0].text)
 ```
 ```
 Yes, we offer gym memberships and on-site yoga classes as part of our health and wellness benefits.
+```
+
+```python PYTHON
+# All options for structuring documents
+
+documents_v2 = [
+# List of objects with data string
+{
+	"id": "123"
+	"data": "I love penguins. they are fluffy",
+},
+# List of objects with data object
+{"id": "456", "data": {
+	"text": "I love penguins. they are fluffy",
+	"author": "Abdullah",
+	"create_date": "09021989"
+	}
+},
+# List of strings
+"just a string"
+]
 ```
 
 ## Search query generation
@@ -239,7 +281,7 @@ Yes, we offer gym memberships and on-site yoga classes as part of our health and
 Uses the `search_queries_only` parameter to generate search queries.
 
 ```python PYTHON
-res_v1 = co_v1.chat(model="command-r-plus",
+res_v1 = co_v1.chat(model="command-r-plus-08-2024",
               message="Google and Apple revenue 2023",
               search_queries_only=True)
 
@@ -443,7 +485,7 @@ message = "Are there fitness-related benefits?"
 
 res_v1 = co_v1.chat_stream(model="command-r-plus-08-2024",
                            message=message,
-                           documents=documents)
+                           documents=documents_v1)
 
 for chunk in res_v1:
     if chunk.event_type == "text-generation":
@@ -466,10 +508,11 @@ Yes, we offer health and wellness benefits, including gym memberships and on-sit
 ```python PYTHON
 message = "Are there fitness-related benefits?"
 
-messages = [{'role': 'user', 'content': message, "documents": documents}]
+messages = [{'role': 'user', 'content': message}]
 
 res_v2 = co_v2.chat_stream(model="command-r-plus-08-2024",
-                           messages=messages)
+                           messages=messages,
+                           documents=documents_v2)
 
 for chunk in res_v2:
     if chunk:
@@ -770,6 +813,10 @@ It's 20°C in Toronto.
 {'start': 5, 'end': 9, 'text': '20°C', 'sources': [{'type': 'tool', 'id': 'get_weather_jmw7pa5s1rjq:0', 'tool_output': {'temperature': '20C'}}]}
 ```
 
+## Citation quality (both RAG and tool use)
+- v1: controlled via `citation_quality` parameter
+- v2: controlled via `citation_options` parameter (with `mode` as a key)
+
 # Unsupported features
 
 The following v1 features are not supported in v2:
@@ -780,8 +827,6 @@ The following v1 features are not supported in v2:
     - `search_queries_only` parameter
     - `connectors` parameter
     - `prompt_truncation` parameter
-    - `citation_quality` (replaced by `citation_mode` with the same functionality)
 - Tool use
     - `force_single_step` parameter (all tool calls are now multi-step by default)
     - `tool_results` parameter (replaced by `tool` role in `messages`)
-    - `citation_quality` (replaced by `citation_mode` with the same functionality)

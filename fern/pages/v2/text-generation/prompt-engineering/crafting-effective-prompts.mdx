@@ -76,9 +76,23 @@ For the example above, we can chunk a news article into different sections and a
 
 ```python PYTHON
 # Sections from the original news article
-document_chunked = [{"text": "Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA)."},
-{"text": "“Rental is going back to ‘normal,’ but normal means that strategy matters again - geography matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you just showed up with equipment and you made money."},
-{"text": "“Everybody was breaking records, from the national rental chains to the smallest rental companies; everybody was having record years, and everybody was raising prices. The conversation was, ‘How much are you up?’ And now, the conversation is changing to ‘What’s my market like?’”"}]
+document_chunked = [
+  {
+    "data": {
+      "text": "Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA)."
+    }
+  },
+  {
+    "data": {
+      "text": "“Rental is going back to ‘normal,’ but normal means that strategy matters again - geography matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you just showed up with equipment and you made money."
+    }
+  },
+  {
+    "data": {
+      "text": "“Everybody was breaking records, from the national rental chains to the smallest rental companies; everybody was having record years, and everybody was raising prices. The conversation was, ‘How much are you up?’ And now, the conversation is changing to ‘What’s my market like?’”"
+    }
+  }
+]
 
 # Add a preamble for additional context
 preamble = """## Task and Context
@@ -88,8 +102,9 @@ You will receive a series of text fragments from a document that are presented i
 message = f"Summarize this text in one sentence."
 
 response = co.chat(model="command-r-plus-08-2024",
+                   documents=document_chunked,
                    messages=[{"role": "system", "content": preamble},
-                             {'role': 'user', "content": message, "documents": document_chunked}])
+                             {'role': 'user', "content": message}])
 
 response_text = response.message.content[0].text
 
