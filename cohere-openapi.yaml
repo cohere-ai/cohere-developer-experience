@@ -36,6 +36,18 @@ paths:
     post:
       parameters:
         - $ref: "#/components/parameters/RequestSource"
+        - name: Accepts
+          description: |
+            Pass text/event-stream to receive the streamed response as server-sent events. The default is `\n` delimited events.
+          x-fern-audiences:
+            - public
+          schema:
+            type: string
+            enum:
+              - text/event-stream
+          in: header
+          required: false
+          example: text/event-stream
       x-fern-audiences:
         - public
       summary: Chat
@@ -5456,7 +5468,7 @@ paths:
                     category: Electronics
       description: |
         Generates a text response to a user message.
-        To learn how to use the Chat API with Streaming and RAG follow our [Text Generation guides](https://docs.cohere.com/docs/chat-api).
+        To learn how to use the Chat API and RAG follow our [Text Generation guides](https://docs.cohere.com/docs/chat-api).
       requestBody:
         content:
           application/json:
@@ -5941,17 +5953,32 @@ paths:
                     A list of available tools (functions) that the model may suggest invoking before producing a text response.
 
                     When `tools` is passed (without `tool_results`), the `text` content in the response will be empty and the `tool_calls` field in the response will be populated with a list of tool calls that need to be made. If no calls need to be made, the `tool_calls` array will be empty.
-                citation_mode:
-                  type: string
-                  enum:
-                    - FAST
-                    - ACCURATE
-                    - OFF
+                documents:
+                  type: array
+                  items:
+                    oneOf:
+                      - type: string
+                      - $ref: "#/components/schemas/Document"
                   description: |
-                    Defaults to `"accurate"`.
-                    Dictates the approach taken to generating citations as part of the RAG flow by allowing the user to specify whether they want `"accurate"` results, `"fast"` results or no results.
+                    A list of relevant documents that the model can cite to generate a more accurate reply. Each document is either a string or document object with content and metadata.
+                citation_options:
+                  $ref: "#/components/schemas/CitationOptions"
                 response_format:
                   $ref: "#/components/schemas/ResponseFormat-2"
+                safety_mode:
+                  enum:
+                    - CONTEXTUAL
+                    - STRICT
+                    - NONE
+                  description: |
+                    Used to select the [safety instruction](/docs/safety-modes) inserted into the prompt. Defaults to `CONTEXTUAL`.
+                    When `NONE` is specified, the safety instruction will be omitted.
+
+                    Safety modes are not yet configurable in combination with `tools`, `tool_results` and `documents` parameters.
+
+                    **Note**: This parameter is only compatible with models [Command R 08-2024](/docs/command-r#august-2024-release), [Command R+ 08-2024](/docs/command-r-plus#august-2024-release) and newer.
+
+                    Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 max_tokens:
                   type: integer
                   description: |
@@ -6204,11 +6231,11 @@ paths:
                 (async () => {
                   const response = await cohere.chat({
                     model: 'command-r-plus',
+                    documents: [{ id: '1', data: 'Cohere is the best!' }],
                     messages: [
                       {
                         role: 'user',
                         content: [{ type: 'text', text: "Who's the best?" }],
-                        documents: [{ id: '1', text: 'Cohere is the best!' }],
                       },
                     ],
                   });
@@ -6226,11 +6253,11 @@ paths:
 
                 response = co.chat(
                     model="command-r-plus",
+                    documents=[{'id': '1', 'data': {'text': 'Cohere is the best!', 'title': 'The best'}}],
                     messages=[
                         {
                             "role": "user",
-                            "content": "Who's the best?",
-                            "documents": [{'id': '1', 'title': 'The best', 'text': 'Cohere is the best!'}]
+                            "content": "Who's the best?"
                         }
                     ]
                 )
@@ -6239,95 +6266,99 @@ paths:
                 print(response)
           request:
             model: "command-r"
+            documents:
+              - data:
+                  content: "CSPC: Backstreet Boys Popularity Analysis - ChartMasters"
+                  snippet: >-
+                    ↓ Skip to Main Content
+
+
+                    Music industry – One step closer to being accurate
+
+
+                    CSPC: Backstreet Boys Popularity Analysis
+
+
+                    Hernán Lopez Posted on February 9, 2017 Posted in CSPC 72
+                    Comments Tagged with Backstreet Boys, Boy band
+
+
+                    At one point, Backstreet Boys defined success: massive
+                    albums sales across the globe, great singles sales, plenty
+                    of chart topping releases, hugely hyped tours and tremendous
+                    media coverage.
+
+
+                    It is true that they benefited from extraordinarily good
+                    market conditions in all markets. After all, the all-time
+                    record year for the music business, as far as revenues in
+                    billion dollars are concerned, was actually 1999. That is,
+                    back when this five men group was at its peak.
+              - data:
+                  content: "CSPC: NSYNC Popularity Analysis - ChartMasters"
+                  snippet: >-
+                    ↓ Skip to Main Content
+
+
+                    Music industry – One step closer to being accurate
+
+
+                    CSPC: NSYNC Popularity Analysis
+
+
+                    MJD Posted on February 9, 2018 Posted in CSPC 27 Comments
+                    Tagged with Boy band, N'Sync
+
+
+                    At the turn of the millennium three teen acts were huge in
+                    the US, the Backstreet Boys, Britney Spears and NSYNC. The
+                    latter is the only one we haven’t study so far. It took 15
+                    years and Adele to break their record of 2,4 million units
+                    sold of No Strings Attached in its first week alone.
+
+
+                    It wasn’t a fluke, as the second fastest selling album of
+                    the Soundscan era prior 2015, was also theirs since
+                    Celebrity debuted with 1,88 million units sold.
+              - data:
+                  content: "CSPC: Backstreet Boys Popularity Analysis - ChartMasters"
+                  snippet: >-
+                    1997, 1998, 2000 and 2001 also rank amongst some of the very
+                    best years.
+
+                    Yet the way many music consumers – especially teenagers and
+                    young women’s – embraced their output deserves its own
+                    chapter. If Jonas Brothers and more recently One Direction
+                    reached a great level of popularity during the past decade,
+                    the type of success achieved by Backstreet Boys is in a
+                    completely different level as they really dominated the
+                    business for a few years all over the world, including in
+                    some countries that were traditionally hard to penetrate for
+                    Western artists.
+
+
+                    We will try to analyze the extent of that hegemony with this
+                    new article with final results which will more than surprise
+                    many readers.
+              - data:
+                  content: "CSPC: NSYNC Popularity Analysis - ChartMasters"
+                  snippet: >-
+                    Was the teen group led by Justin Timberlake really that big?
+                    Was it only in the US where they found success? Or were they
+                    a global phenomenon?
+
+                    As usual, I’ll be using the Commensurate Sales to Popularity
+                    Concept in order to relevantly gauge their results. This
+                    concept will not only bring you sales information for all
+                    NSYNC‘s albums, physical and download singles, as well as
+                    audio and video streaming, but it will also determine their
+                    true popularity. If you are not yet familiar with the CSPC
+                    method, the next page explains it with a short video. I
+                    fully recommend watching the video before getting into the
+                    sales figures.
             messages:
               - role: "user"
                 content: "Who is more popular: Nsync or Backstreet Boys?"
-                documents:
-                  - title: "CSPC: Backstreet Boys Popularity Analysis - ChartMasters"
-                    snippet: >-
-                      ↓ Skip to Main Content
-
-
-                      Music industry – One step closer to being accurate
-
-
-                      CSPC: Backstreet Boys Popularity Analysis
-
-
-                      Hernán Lopez Posted on February 9, 2017 Posted in CSPC 72
-                      Comments Tagged with Backstreet Boys, Boy band
-
-
-                      At one point, Backstreet Boys defined success: massive
-                      albums sales across the globe, great singles sales, plenty
-                      of chart topping releases, hugely hyped tours and
-                      tremendous media coverage.
-
-
-                      It is true that they benefited from extraordinarily good
-                      market conditions in all markets. After all, the all-time
-                      record year for the music business, as far as revenues in
-                      billion dollars are concerned, was actually 1999. That is,
-                      back when this five men group was at its peak.
-                  - title: "CSPC: NSYNC Popularity Analysis - ChartMasters"
-                    snippet: >-
-                      ↓ Skip to Main Content
-
-
-                      Music industry – One step closer to being accurate
-
-
-                      CSPC: NSYNC Popularity Analysis
-
-
-                      MJD Posted on February 9, 2018 Posted in CSPC 27 Comments
-                      Tagged with Boy band, N'Sync
-
-
-                      At the turn of the millennium three teen acts were huge in
-                      the US, the Backstreet Boys, Britney Spears and NSYNC. The
-                      latter is the only one we haven’t study so far. It took 15
-                      years and Adele to break their record of 2,4 million units
-                      sold of No Strings Attached in its first week alone.
-
-
-                      It wasn’t a fluke, as the second fastest selling album of
-                      the Soundscan era prior 2015, was also theirs since
-                      Celebrity debuted with 1,88 million units sold.
-                  - title: "CSPC: Backstreet Boys Popularity Analysis - ChartMasters"
-                    snippet: >-
-                      1997, 1998, 2000 and 2001 also rank amongst some of the
-                      very best years.
-
-                      Yet the way many music consumers – especially teenagers
-                      and young women’s – embraced their output deserves its own
-                      chapter. If Jonas Brothers and more recently One Direction
-                      reached a great level of popularity during the past
-                      decade, the type of success achieved by Backstreet Boys is
-                      in a completely different level as they really dominated
-                      the business for a few years all over the world, including
-                      in some countries that were traditionally hard to
-                      penetrate for Western artists.
-
-
-                      We will try to analyze the extent of that hegemony with
-                      this new article with final results which will more than
-                      surprise many readers.
-                  - title: "CSPC: NSYNC Popularity Analysis - ChartMasters"
-                    snippet: >-
-                      Was the teen group led by Justin Timberlake really that
-                      big? Was it only in the US where they found success? Or
-                      were they a global phenomenon?
-
-                      As usual, I’ll be using the Commensurate Sales to
-                      Popularity Concept in order to relevantly gauge their
-                      results. This concept will not only bring you sales
-                      information for all NSYNC‘s albums, physical and download
-                      singles, as well as audio and video streaming, but it will
-                      also determine their true popularity. If you are not yet
-                      familiar with the CSPC method, the next page explains it
-                      with a short video. I fully recommend watching the video
-                      before getting into the sales figures.
             stream: false
           response:
             body:
@@ -6358,7 +6389,7 @@ paths:
                     text: extremely popular at the turn of the millennium.
                     sources:
                       - type: document
-                        id: doc_1
+                        id: doc:1
                         document:
                           snippet: >-
                             ↓ Skip to Main Content
@@ -6392,7 +6423,7 @@ paths:
                     text: massive album sales across the globe
                     sources:
                       - type: document
-                        id: doc_0
+                        id: doc:0
                         document:
                           snippet: >-
                             ↓ Skip to Main Content
@@ -6427,7 +6458,7 @@ paths:
                     text: great singles sales
                     sources:
                       - type: document
-                        id: doc_0
+                        id: doc:0
                         document:
                           snippet: >-
                             ↓ Skip to Main Content
@@ -6462,7 +6493,7 @@ paths:
                     text: plenty of chart-topping releases
                     sources:
                       - type: document
-                        id: doc_0
+                        id: doc:0
                         document:
                           snippet: >-
                             ↓ Skip to Main Content
@@ -6497,7 +6528,7 @@ paths:
                     text: hyped tours
                     sources:
                       - type: document
-                        id: doc_0
+                        id: doc:0
                         document:
                           snippet: >-
                             ↓ Skip to Main Content
@@ -6532,7 +6563,7 @@ paths:
                     text: tremendous media coverage.
                     sources:
                       - type: document
-                        id: doc_0
+                        id: doc:0
                         document:
                           snippet: >-
                             ↓ Skip to Main Content
@@ -6567,7 +6598,7 @@ paths:
                     text: album No Strings Attached selling 2.4 million units in its first week.
                     sources:
                       - type: document
-                        id: doc_1
+                        id: doc:1
                         document:
                           snippet: >-
                             ↓ Skip to Main Content
@@ -6601,7 +6632,7 @@ paths:
                     text: second fastest-selling album of the Soundscan era before 2015
                     sources:
                       - type: document
-                        id: doc_1
+                        id: doc:1
                         document:
                           snippet: >-
                             ↓ Skip to Main Content
@@ -6635,7 +6666,7 @@ paths:
                     text: Celebrity debuting at 1.88 million units sold.
                     sources:
                       - type: document
-                        id: doc_1
+                        id: doc:1
                         document:
                           snippet: >-
                             ↓ Skip to Main Content
@@ -6670,7 +6701,7 @@ paths:
                       Western artists.
                     sources:
                       - type: document
-                        id: doc_2
+                        id: doc:2
                         document:
                           snippet: >-
                             1997, 1998, 2000 and 2001 also rank amongst some of
@@ -6755,90 +6786,116 @@ paths:
             stream: true
           response:
             stream:
-              - type: message-start
-                id: 29f14a5a-11de-4cae-9800-25e4747408ea
-                delta:
-                  message:
-                    role: "assistant"
-                    content: []
-                    tool_plan: ""
-                    tool_calls: []
-                    citations: []
-              - type: content-start
-                index: 0
-                delta:
-                  message:
-                    content:
-                      type: "text"
-                      text: ""
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: "Hello"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: "!"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: " How"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: " can"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: " I"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: " help"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: " you"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: " today"
-              - type: content-delta
-                index: 0
-                delta:
-                  message:
-                    content:
-                      text: "?"
-              - type: content-end
-                index: 0
-              - event_type: message-end
-                delta:
-                  finish_reason: complete
-                  usage:
-                    api_version:
-                      version: '2'
-                    billed_units:
-                      input_tokens: 3
-                      output_tokens: 9
-                    tokens:
-                      input_tokens: 69
-                      output_tokens: 9
+              - event: stream-start
+                data:
+                  type: message-start
+                  id: 29f14a5a-11de-4cae-9800-25e4747408ea
+                  delta:
+                    message:
+                      role: "assistant"
+                      # content: []
+                      # tool_plan: ""
+                      # tool_calls: []
+                      # citations: []
+              - event: text-generation
+                data:
+                  type: content-start
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        type: "text"
+                        text: ""
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: "Hello"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: "!"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: " How"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: " can"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: " I"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: " help"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: " you"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: " today"
+              - event: text-generation
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: "?"
+              - event: text-generation
+                data:
+                  type: content-end
+                  index: 0
+              - event: stream-end
+                data:
+                  type: message-end
+                  delta:
+                    finish_reason: complete
+                    usage:
+                      # api_version:
+                      #   version: '2'
+                      billed_units:
+                        input_tokens: 3
+                        output_tokens: 9
+                      tokens:
+                        input_tokens: 69
+                        output_tokens: 9
         - code-samples:
             - sdk: typescript
               name: Tools
@@ -6983,26 +7040,27 @@ paths:
               message:
                 role: "assistant"
                 tool_plan: "I will first find the sales summary for 29th September 2023. Then, I
-                  wil"
-            find the details of the products in the 'Electronics' category." tool_calls:
-              - id: query_daily_sales_report_hgxxmkby3wta
-                type: function
-                function:
-                  name: query_daily_sales_report
-                  arguments: "{\"day\": \"2023-09-29\"}"
-              - id: query_product_catalog_rpg0z5h8yyz2
-                type: function
-                function:
-                  name: query_product_catalog
-                  arguments: "{\"category\": \"Electronics\"}"
-            finish_reason: "tool_call"
-            usage:
-              billed_units:
-                input_tokens: 127
-                output_tokens: 69
-              tokens:
-                input_tokens: 1032
-                output_tokens: 124
+                  will find the details of the products in the 'Electronics'
+                  category."
+                tool_calls:
+                  - id: query_daily_sales_report_hgxxmkby3wta
+                    type: function
+                    function:
+                      name: query_daily_sales_report
+                      arguments: "{\"day\": \"2023-09-29\"}"
+                  - id: query_product_catalog_rpg0z5h8yyz2
+                    type: function
+                    function:
+                      name: query_product_catalog
+                      arguments: "{\"category\": \"Electronics\"}"
+              finish_reason: "tool_call"
+              usage:
+                billed_units:
+                  input_tokens: 127
+                  output_tokens: 69
+                tokens:
+                  input_tokens: 1032
+                  output_tokens: 124
   /v1/generate:
     post:
       x-fern-audiences:
@@ -9813,8 +9871,66 @@ paths:
 
                     If `NONE` is selected, when the input exceeds the maximum input token length an error will be returned.
                   writeOnly: true
-              required:
-                - texts
+        description: ""
+  /v2/embed:
+    post:
+      x-fern-audiences:
+        - v2-beta
+      x-fern-sdk-group-name: v2
+      x-fern-sdk-method-name: embed
+      summary: Embed
+      operationId: embedv2
+      parameters:
+        - $ref: "#/components/parameters/RequestSource"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmbedByTypeResponse"
+          headers:
+            X-API-Warning:
+              schema:
+                type: string
+                x-fern-audiences:
+                  - public
+              description: Warning description for incorrect usage of the API
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "429":
+          $ref: "#/components/responses/RateLimit"
+        "498":
+          $ref: "#/components/responses/InvalidToken"
+        "499":
+          $ref: "#/components/responses/RequestCancelled"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+      description: |-
+        This endpoint returns text embeddings. An embedding is a list of floating point numbers that captures semantic information about the text that it represents.
+
+        Embeddings can be used to create text classifiers as well as empower semantic search. To learn more about embeddings, see the embedding page.
+
+        If you want to learn more how to use the embedding model, have a look at the [Semantic Search Guide](/docs/semantic-search).
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/V2EmbedRequest"
         description: ""
   /v1/embed-jobs:
     post:
@@ -11508,7 +11624,7 @@ paths:
                 		&MyReader{Reader: strings.NewReader(`{"text": "The quick brown fox jumps over the lazy dog"}`), name: "test.jsonl"},
                 		&MyReader{Reader: strings.NewReader(""), name: "a.jsonl"},
                 		&cohere.DatasetsCreateRequest{
-                			Name: "prompt-completion-dataset",
+                			Name: "embed-dataset",
                 			Type: cohere.DatasetTypeEmbedResult,
                 		},
                 	)
@@ -11528,9 +11644,9 @@ paths:
 
                 # upload a dataset
                 my_dataset = co.datasets.create(
-                    name="prompt-completion-dataset",
-                    data=open("./prompt-completion.jsonl", "rb"),
-                    type="prompt-completion-finetune-input",
+                    name="chat-dataset",
+                    data=open("./chat.jsonl", "rb"),
+                    type="chat-finetune-input",
                 )
 
                 # wait for validation to complete
@@ -11550,9 +11666,9 @@ paths:
 
                     # upload a dataset
                     response = await co.datasets.create(
-                        name="prompt-completion-dataset",
-                        data=open("./prompt-completion.jsonl", "rb"),
-                        type="prompt-completion-finetune-input",
+                        name="chat-dataset",
+                        data=open("./chat.jsonl", "rb"),
+                        type="chat-finetune-input",
                     )
 
                     # wait for validation to complete
@@ -11583,7 +11699,7 @@ paths:
                     public static void main(String[] args) {
                         Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-                        DatasetsCreateResponse response = cohere.datasets().create(null, Optional.empty(), DatasetsCreateRequest.builder().name("prompt-completion-dataset").type(DatasetType.PROMPT_COMPLETION_FINETUNE_INPUT).build());
+                        DatasetsCreateResponse response = cohere.datasets().create(null, Optional.empty(), DatasetsCreateRequest.builder().name("chat-dataset").type(DatasetType.CHAT_FINETUNE_INPUT).build());
 
                         System.out.println(response);
                     }
@@ -14396,14 +14512,14 @@ paths:
               example:
                 finetuned_models:
                   - id: fee37446-7fc7-42f9-a026-c6ba2fcc422d
-                    name: prompt-completion-ft
+                    name: chat-ft
                     creator_id: 7a317d97-4d05-427d-9396-f31b9fb92c55
                     organization_id: 6bdca3d5-3eae-4de0-ac34-786d8063b7ee
                     settings:
                       base_model:
                         name: medium
                         version: 14.2.0
-                        base_type: BASE_TYPE_GENERATIVE
+                        base_type: BASE_TYPE_CHAT
                         strategy: STRATEGY_TFEW
                       dataset_id: my-dataset-d701tr
                       hyperparameters:
@@ -14655,7 +14771,7 @@ paths:
               name: api-test
               settings:
                 base_model:
-                  base_type: BASE_TYPE_GENERATIVE
+                  base_type: BASE_TYPE_CHAT
                 dataset_id: my-dataset-id
         required: true
       parameters:
@@ -14677,7 +14793,7 @@ paths:
                     public static void main(String[] args) {
                         Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-                        CreateFinetunedModelResponse response = cohere.finetuning().createFinetunedModel(FinetunedModel.builder().name("test-finetuned-model").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_GENERATIVE).build()).datasetId("my-dataset-id").build()).build());
+                        CreateFinetunedModelResponse response = cohere.finetuning().createFinetunedModel(FinetunedModel.builder().name("test-finetuned-model").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_CHAT).build()).datasetId("my-dataset-id").build()).build());
 
                         System.out.println(response);
                     }
@@ -14707,7 +14823,7 @@ paths:
                 			Settings: &finetuning.Settings{
                 				DatasetId: "my-dataset-id",
                 				BaseModel: &finetuning.BaseModel{
-                					BaseType: finetuning.BaseTypeBaseTypeGenerative,
+                					BaseType: finetuning.BaseTypeBaseTypeChat,
                 				},
                 			},
                 		},
@@ -14734,7 +14850,7 @@ paths:
                     name: 'test-finetuned-model',
                     settings: {
                       base_model: {
-                        base_type: Cohere.Finetuning.BaseType.BaseTypeGenerative,
+                        base_type: Cohere.Finetuning.BaseType.BaseTypeChat,
                       },
                       dataset_id: 'test-dataset-id',
                     },
@@ -14786,7 +14902,6 @@ paths:
               code: |
                 from cohere.finetuning import (
                     BaseModel,
-                    BaseType,
                     FinetunedModel,
                     Settings,
                 )
@@ -14802,7 +14917,7 @@ paths:
                             name="test-finetuned-model",
                             settings=Settings(
                                 base_model=BaseModel(
-                                    base_type=BaseType.BASE_TYPE_CHAT,
+                                    base_type="BASE_TYPE_CHAT",
                                 ),
                                 dataset_id="my-dataset-id",
                             ),
@@ -14823,7 +14938,7 @@ paths:
                       "name": "test-finetuned-model",
                       "settings": {
                         "base_model": {
-                          "base_type": "BASE_TYPE_GENERATIVE",
+                          "base_type": "BASE_TYPE_CHAT",
                         },
                         "dataset_id": "test-dataset-id"
                       }
@@ -14969,7 +15084,7 @@ paths:
                     public static void main(String[] args) {
                         Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-                        UpdateFinetunedModelResponse response = cohere.finetuning().updateFinetunedModel("test-id", FinetuningUpdateFinetunedModelRequest.builder().name("new name").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_GENERATIVE).build()).datasetId("my-dataset-id").build()).build());
+                        UpdateFinetunedModelResponse response = cohere.finetuning().updateFinetunedModel("test-id", FinetuningUpdateFinetunedModelRequest.builder().name("new name").settings(Settings.builder().baseModel(BaseModel.builder().baseType(BaseType.BASE_TYPE_CHAT).build()).datasetId("my-dataset-id").build()).build());
 
                         System.out.println(response);
                     }
@@ -15085,14 +15200,14 @@ paths:
               example:
                 finetuned_model:
                   id: fee37446-7fc7-42f9-a026-c6ba2fcc422d
-                  name: prompt-completion-ft
+                  name: chat-ft
                   creator_id: 7a317d97-4d05-427d-9396-f31b9fb92c55
                   organization_id: 6bdca3d5-3eae-4de0-ac34-786d8063b7ee
                   settings:
                     base_model:
                       name: medium
                       version: 14.2.0
-                      base_type: BASE_TYPE_GENERATIVE
+                      base_type: BASE_TYPE_CHAT
                       strategy: STRATEGY_TFEW
                     dataset_id: my-dataset-d701tr
                     hyperparameters:
@@ -16596,12 +16711,6 @@ components:
             - type: array
               items:
                 $ref: "#/components/schemas/Content"
-        documents:
-          type: array
-          minItems: 0
-          description: Documents seen by the model when generating the reply.
-          items:
-            $ref: "#/components/schemas/ChatDocument"
     ToolCall-2:
       x-fern-sdk-group-name: v2
       description: A array of tool calls to be made.
@@ -16725,21 +16834,53 @@ components:
                   propertyName: type
                   mapping:
                     text: "#/components/schemas/TextContent"
-    ToolContent:
+    Document:
       x-fern-sdk-group-name: v2
       type: object
-      description: Tool content result object
+      description: |
+        Relevant information that could be used by the model to generate a more accurate reply.
+        The content of each document are generally short (should be under 300 words). Metadata should be used to provide additional information, both the key name and the value will be
+        passed to the model.
+      properties:
+        data:
+          type: object
+          x-fern-type: map<string, string>
+          additionalProperties:
+            type: string
+          description: |
+            A relevant documents that the model can cite to generate a more accurate reply. Each document is a string-string dictionary.
+        id:
+          type: string
+          description: Unique identifier for this document which will be referenced in
+            citations. If not provided an ID will be automatically generated
+      required:
+        - data
+    DocumentContent:
+      x-fern-sdk-group-name: v2
+      type: object
+      description: Document content.
       required:
         - type
-        - output
+        - document
       properties:
         type:
           type: string
           enum:
-            - tool_result_object
-        output:
-          type: object
-          additionalProperties: true
+            - document
+        document:
+          $ref: "#/components/schemas/Document"
+    ToolContent:
+      x-fern-sdk-group-name: v2
+      description: A content block which contains information about the content of a
+        tool result
+      oneOf:
+        - $ref: "#/components/schemas/TextContent"
+        - $ref: "#/components/schemas/DocumentContent"
+      discriminator:
+        propertyName: type
+        mapping:
+          text: "#/components/schemas/TextContent"
+          document: "#/components/schemas/DocumentContent"
     ToolMessage-2:
       x-fern-sdk-group-name: v2
       type: object
@@ -16755,15 +16896,16 @@ components:
             - tool
         tool_call_id:
           type: string
+          description: The id of the associated tool call that has provided the given
+            content
         tool_content:
-          type: array
-          items:
-            oneOf:
-              - $ref: "#/components/schemas/ToolContent"
-            discriminator:
-              propertyName: type
-              mapping:
-                tool_result_object: "#/components/schemas/ToolContent"
+          description: A single or list of outputs from a tool. The content should
+            formatted as a JSON object string, or a list of tool content blocks
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                $ref: "#/components/schemas/ToolContent"
     ChatMessage-2:
       x-fern-sdk-group-name: v2
       description: Represents a single message in the chat history from a given role.
@@ -16809,13 +16951,50 @@ components:
             parameters:
               type: object
               description: The parameters of the function as a JSON schema.
-    JSONResponseFormat-2:
+    CitationOptions:
+      x-fern-sdk-group-name: v2
+      type: object
+      description: Options for controlling citation generation.
+      properties:
+        mode:
+          type: string
+          enum:
+            - FAST
+            - ACCURATE
+            - OFF
+          description: |
+            Defaults to `"accurate"`.
+            Dictates the approach taken to generating citations as part of the RAG flow by allowing the user to specify whether they want `"accurate"` results, `"fast"` results or no results.
+    ResponseFormatType-2:
+      x-fern-sdk-group-name: v2
+      x-fern-audiences:
+        - public
+      description: |
+        Defaults to `"text"`.
+
+        When set to `"json_object"`, the model's output will be a valid JSON Object.
+      type: string
+      enum:
+        - text
+        - json_object
+    TextResponseFormat-2:
+      x-fern-sdk-group-name: v2
       x-fern-audiences:
         - public
       type: object
       properties:
         type:
-          $ref: "#/components/schemas/ResponseFormatType"
+          $ref: "#/components/schemas/ResponseFormatType-2"
+      required:
+        - type
+    JSONResponseFormat-2:
+      x-fern-sdk-group-name: v2
+      x-fern-audiences:
+        - public
+      type: object
+      properties:
+        type:
+          $ref: "#/components/schemas/ResponseFormatType-2"
         json_schema:
           description: |
             [BETA] A JSON schema object that the output will adhere to. There are some restrictions we have on the schema, refer to [our guide](/docs/structured-outputs-json#schema-constraints) for more information.
@@ -16836,6 +17015,7 @@ components:
       required:
         - type
     ResponseFormat-2:
+      x-fern-sdk-group-name: v2
       description: |
         Configuration for forcing the model output to adhere to the specified format. Supported on [Command R](https://docs.cohere.com/docs/command-r), [Command R+](https://docs.cohere.com/docs/command-r-plus) and newer models.
 
@@ -16846,12 +17026,12 @@ components:
         **Note**: When using  `{ "type": "json_object" }` your `message` should always explicitly instruct the model to generate a JSON (eg: _"Generate a JSON ..."_) . Otherwise the model may end up getting stuck generating an infinite stream of characters and eventually run out of context length.
         **Limitation**: The parameter is not supported in RAG mode (when any of `connectors`, `documents`, `tools`, `tool_results` are provided).
       oneOf:
-        - $ref: "#/components/schemas/TextResponseFormat"
+        - $ref: "#/components/schemas/TextResponseFormat-2"
         - $ref: "#/components/schemas/JSONResponseFormat-2"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextResponseFormat"
+          text: "#/components/schemas/TextResponseFormat-2"
           json_object: "#/components/schemas/JSONResponseFormat-2"
     ChatFinishReason:
       x-fern-sdk-group-name: v2
@@ -17113,6 +17293,7 @@ components:
             index:
               type: integer
     CitationStartEvent:
+      x-fern-sdk-group-name: v2
       description: A streamed event which signifies a citation has been created.
       allOf:
         - $ref: "#/components/schemas/ChatStreamEventType"
@@ -17129,6 +17310,7 @@ components:
                     citations:
                       $ref: "#/components/schemas/Citation"
     CitationEndEvent:
+      x-fern-sdk-group-name: v2
       description: A streamed event which signifies a citation has finished streaming.
       allOf:
         - $ref: "#/components/schemas/ChatStreamEventType"
@@ -17405,6 +17587,7 @@ components:
         - search_query
         - classification
         - clustering
+        - image
       description: |
         Specifies the type of input passed to the model. Required for embedding models v3 and higher.
 
@@ -17412,6 +17595,7 @@ components:
         - `"search_query"`: Used for embeddings of search queries run against a vector DB to find relevant documents.
         - `"classification"`: Used for embeddings passed through a text classifier.
         - `"clustering"`: Used for the embeddings run through a clustering algorithm.
+        - `"image"`: Used for embeddings with image input.
     EmbeddingType:
       x-fern-audiences:
         - public
@@ -19802,6 +19986,143 @@ components:
               api_version:
                 version: "1"
             api_version: v2
+    Texts:
+      x-fern-sdk-group-name: v2
+      type: object
+      x-fern-audiences:
+        - public
+      required:
+        - texts
+        - model
+        - input_type
+      properties:
+        texts:
+          type: array
+          x-fern-audiences:
+            - public
+          minItems: 1
+          maxItems: 96
+          description: An array of strings for the model to embed. Maximum number of texts
+            per call is `96`. We recommend reducing the length of each text to
+            be under `512` tokens for optimal quality.
+          items:
+            type: string
+            x-fern-audiences:
+              - public
+            writeOnly: true
+          writeOnly: true
+        model:
+          type: string
+          x-fern-audiences:
+            - public
+          description: |-
+            Defaults to embed-english-v2.0
+
+            The identifier of the model. Smaller "light" models are faster, while larger models will perform better. [Custom models](/docs/training-custom-models) can also be supplied with their full ID.
+
+            Available models and corresponding embedding dimensions:
+
+            * `embed-english-v3.0`  1024
+            * `embed-multilingual-v3.0`  1024
+            * `embed-english-light-v3.0`  384
+            * `embed-multilingual-light-v3.0`  384
+
+            * `embed-english-v2.0`  4096
+            * `embed-english-light-v2.0`  1024
+            * `embed-multilingual-v2.0`  768
+          writeOnly: true
+        input_type:
+          x-fern-audiences:
+            - public
+          $ref: "#/components/schemas/EmbedInputType"
+        embedding_types:
+          type: array
+          x-fern-audiences:
+            - public
+          items:
+            $ref: "#/components/schemas/EmbeddingType"
+          description: |-
+            Specifies the types of embeddings you want to get back. Not required and default is None, which returns the Embed Floats response type. Can be one or more of the following types.
+
+            * `"float"`: Use this when you want to get back the default float embeddings. Valid for all models.
+            * `"int8"`: Use this when you want to get back signed int8 embeddings. Valid for only v3 models.
+            * `"uint8"`: Use this when you want to get back unsigned int8 embeddings. Valid for only v3 models.
+            * `"binary"`: Use this when you want to get back signed binary embeddings. Valid for only v3 models.
+            * `"ubinary"`: Use this when you want to get back unsigned binary embeddings. Valid for only v3 models.
+          writeOnly: true
+        truncate:
+          type: string
+          x-fern-audiences:
+            - public
+          default: END
+          enum:
+            - NONE
+            - START
+            - END
+          description: |-
+            One of `NONE|START|END` to specify how the API will handle inputs longer than the maximum token length.
+
+            Passing `START` will discard the start of the input. `END` will discard the end of the input. In both cases, input is discarded until the remaining input is exactly the maximum input token length for the model.
+
+            If `NONE` is selected, when the input exceeds the maximum input token length an error will be returned.
+          writeOnly: true
+    Images:
+      x-fern-sdk-group-name: v2
+      type: object
+      x-fern-audiences:
+        - public
+      required:
+        - images
+        - model
+        - input_type
+      properties:
+        model:
+          type: string
+          x-fern-audiences:
+            - public
+          description: |-
+            Defaults to embed-english-v2.0
+            The identifier of the model. Smaller "light" models are faster, while larger models will perform better. [Custom models](/docs/training-custom-models) can also be supplied with their full ID.
+            Available models and corresponding embedding dimensions:
+            * `embed-english-v3.0`  1024
+            * `embed-multilingual-v3.0`  1024
+            * `embed-english-light-v3.0`  384
+            * `embed-multilingual-light-v3.0`  384
+            * `embed-english-v2.0`  4096
+            * `embed-english-light-v2.0`  1024
+            * `embed-multilingual-v2.0`  768
+          writeOnly: true
+        input_type:
+          x-fern-audiences:
+            - public
+          $ref: "#/components/schemas/EmbedInputType"
+        embedding_types:
+          type: array
+          x-fern-audiences:
+            - public
+          items:
+            $ref: "#/components/schemas/EmbeddingType"
+          description: |-
+            Specifies the types of embeddings you want to get back. Not required and default is None, which returns the Embed Floats response type. Can be one or more of the following types.
+            * `"float"`: Use this when you want to get back the default float embeddings. Valid for all models.
+            * `"int8"`: Use this when you want to get back signed int8 embeddings. Valid for only v3 models.
+            * `"uint8"`: Use this when you want to get back unsigned int8 embeddings. Valid for only v3 models.
+            * `"binary"`: Use this when you want to get back signed binary embeddings. Valid for only v3 models.
+            * `"ubinary"`: Use this when you want to get back unsigned binary embeddings. Valid for only v3 models.
+          writeOnly: true
+    V2EmbedRequest:
+      x-fern-sdk-group-name: v2
+      oneOf:
+        - $ref: "#/components/schemas/Texts"
+        - $ref: "#/components/schemas/Images"
+      discriminator:
+        propertyName: input_type
+        mapping:
+          search_document: "#/components/schemas/Texts"
+          search_query: "#/components/schemas/Texts"
+          classification: "#/components/schemas/Texts"
+          clustering: "#/components/schemas/Texts"
+          image: "#/components/schemas/Images"
     EmbedJob:
       type: object
       required:
@@ -21074,7 +21395,7 @@ components:
         The possible types of fine-tuned models.
 
          - BASE_TYPE_UNSPECIFIED: Unspecified model.
-         - BASE_TYPE_GENERATIVE: Generative model.
+         - BASE_TYPE_GENERATIVE: Deprecated: Generative model.
          - BASE_TYPE_CLASSIFICATION: Classification model.
          - BASE_TYPE_RERANK: Rerank model.
          - BASE_TYPE_CHAT: Chat model.
@@ -21092,7 +21413,7 @@ components:
         The possible strategy used to serve a fine-tuned models.
 
          - STRATEGY_UNSPECIFIED: Unspecified strategy.
-         - STRATEGY_VANILLA: Serve the fine-tuned model on a dedicated GPU.
+         - STRATEGY_VANILLA: Deprecated: Serve the fine-tuned model on a dedicated GPU.
          - STRATEGY_TFEW: Serve the fine-tuned model on a shared GPU.
       x-fern-sdk-group-name:
         - finetuning

@@ -1,14 +1,14 @@
 ---
-title: "Starting the Chat Fine-Tuning"
-slug: "docs/chat-starting-the-training"
-
+title: Starting the Chat Fine-Tuning
+slug: docs/chat-starting-the-training
 hidden: false
-description: "This document provides a guide on how to train a fine-tuning model for Chat using both the Web UI and the Python SDK, including steps for data upload, data requirements, training, and calling the model with `co.chat()`."
-image: "../../../assets/images/049a66f-cohere_meta_image.jpg"  
-keywords: "fine-tuning, fine-tuning language models"
-
-createdAt: "Fri Nov 10 2023 18:22:10 GMT+0000 (Coordinated Universal Time)"
-updatedAt: "Wed Jun 12 2024 00:17:37 GMT+0000 (Coordinated Universal Time)"
+description: >-
+  Learn how to fine-tune a Command model for chat with the Cohere Web UI or
+  Python SDK, including data requirements, pricing, and calling your model.
+image: ../../../assets/images/049a66f-cohere_meta_image.jpg
+keywords: 'fine-tuning, fine-tuning language models'
+createdAt: 'Fri Nov 10 2023 18:22:10 GMT+0000 (Coordinated Universal Time)'
+updatedAt: 'Wed Jun 12 2024 00:17:37 GMT+0000 (Coordinated Universal Time)'
 ---
 In this section, we will walk through how you can start training a fine-tuning model for Chat on both the Web UI and the Python SDK.
 
@@ -92,11 +92,11 @@ If you are happy with how the samples look, click on 'Continue' at the bottom of
 
 ### Pricing
 
-This page gives an estimated cost of your finetune. Please see our [latest pricing](https://cohere.com/pricing) for more information.
+This page gives an estimated cost of your fine-tuning job. Please see our [latest pricing](https://cohere.com/pricing) for more information.
 
 <img src='../../../assets/images/b8ddffe-guide-chat-pricing.png' />
 
-Click next to finalize your fine-tune.
+Click next to finalize your fine-tuning job.
 
 ### Start Training
 
@@ -108,7 +108,7 @@ As the training proceeds you'll receive updates with various accuracy and loss m
 
 ## Using the Python SDK
 
-In addition to using the [Web UI](/docs/fine-tuning-with-the-web-ui) for fine-tuning models, customers can also kick off fine-tuning jobs programmatically using the [Cohere Python SDK](https://pypi.org/project/cohere/). This can be useful for fine-tunes that happen on a regular cadence, such as nightly jobs on newly-acquired data.
+In addition to using the [Web UI](/docs/fine-tuning-with-the-web-ui) for fine-tuning models, customers can also kick off fine-tuning jobs programmatically using the [Cohere Python SDK](https://pypi.org/project/cohere/). This can be useful for fine-tuning jobs that happen on a regular cadence, such as nightly jobs on newly-acquired data.
 
 ## Prepare your Dataset
 
@@ -195,16 +195,16 @@ To train a custom model, please see the example below for parameters to pass to 
   - `early_stopping_threshold` (float) How much the loss must improve to prevent early stopping. Must be between 0.001 and 0.1. Defaults to **0.001**.
   - `early_stopping_patience` (int) Stops training if the loss metric does not improve beyond the value of `early_stopping_threshold` after this many rounds of evaluation. Must be between 0 and 10. Defaults to **10**.
 
-You can optionally publish the training metrics and hyper parameter values to your [Weights and Biases](https://wandb.ai) account using the `wandb` parameter. This is currently only supported for chat type finetunes. 
+You can optionally publish the training metrics and hyper parameter values to your [Weights and Biases](https://wandb.ai) account using the `wandb` parameter. This is currently only supported when fine-tuning a Chat model.
 
 - `wandb` (cohere.finetuning.WandbConfig) - The Weights & Biases configuration.
   - `project` (string) The Weights and Biases project to be used during training. This parameter is mandatory.
-  - `api_key` (string) The Weights and Biases API key to be used during training. This parameter is mandatory and will always be stored encrypted and auto-deleted after the finetune creation is complete.
+  - `api_key` (string) The Weights and Biases API key to be used during training. This parameter is mandatory and will always be stored securely and automatically deleted after the fine-tuning job completes training.
   - `entity` (string) The Weights and Biases API entity to be used during training. When not specified, it will assume the default entity for that API key.
 
-When the configuration is valid, the Run ID will correspond to the finetune ID, and Run display name will be the name of the finetune specified during creation. When specifying a invalid Weights and Biases configuration, finetune creation will proceed but nothing will be logged to your Weights and Biases.
+When the configuration is valid, the Run ID will correspond to the fine-tuned model ID, and Run display name will be the name of the fine-tuned model specified during creation. When specifying a invalid Weights and Biases configuration, the fine-tuned model creation will proceed but nothing will be logged to your Weights and Biases.
 
-Once a finetune has been created with a specified Weights and Biases configuration, you may view the finetune run via the Weights and Biases dashboard. It will be available via the following URL: `https://wandb.ai/<your-entity>/<your-project>/runs/<finetune-id>`.
+Once a fine-tuned model has been created with a specified Weights and Biases configuration, you may view the fine-tuning job run via the Weights and Biases dashboard. It will be available via the following URL: `https://wandb.ai/<your-entity>/<your-project>/runs/<finetuned-model-id>`.
 
 ## Example
 
@@ -233,14 +233,14 @@ wnb_config = WandbConfig(
     entity="test-entity",
 )
 
-my_finetune = co.finetuning.create_finetuned_model(
+create_response = co.finetuning.create_finetuned_model(
   request=FinetunedModel(
     name="customer-service-chat-model",
     settings=Settings(
       base_model=BaseModel(
         base_type="BASE_TYPE_CHAT",
       ),
-      dataset_id=my-chat_dataset.id,
+      dataset_id=chat_dataset.id,
       hyperparameters=hp,
       wandb=wnb_config,
     ),
@@ -252,7 +252,7 @@ my_finetune = co.finetuning.create_finetuned_model(
 
 Once your model completes training, you can call it via the [Chat API](/docs/chat-api) and pass your custom model's ID via the `model` parameter.
 
-Please note, the `model_id` is the `id` returned by the finetuned object with the `"-ft"` suffix.
+Please note, the `model_id` is the `id` returned by the fine-tuned model object with the `"-ft"` suffix.
 
 `co.chat()` uses no preamble by default for fine-tuned models. You can specify a preamble using the `preamble` parameter. Note that for the `model` parameter, you must pass the finetune's id with `"-ft"` appended to the end.
 
@@ -264,12 +264,12 @@ Here's a Python script to make this clearer:
 import cohere
 
 co = cohere.Client('Your API key')
-# get the finetuned model object
-ft = co.finetuning.get_finetuned_model(my_finetune.finetuned_model.id)
+# get the fine-tuned model object
+get_response = co.finetuning.get_finetuned_model(create_response.finetuned_model.id)
 
 response = co.chat(
   message="Hi there",
-  model=ft.finetuned_model.id+"-ft",
+  model=get_response.finetuned_model.id+"-ft",
   # optional (to specify a preamble)
   preamble="You are a chatbot trained to answer to my every question. Answer every question with full sentences.",
   # optional
@@ -286,7 +286,7 @@ After your first message with the model, an `id` field will be returned which yo
 # Continuing the above conversation with `response.id`.
 response_2 = co.chat(
   message="How are you?",
-  model=ft.finetuned_model.id+"-ft",
+  model=get_response.finetuned_model.id+"-ft",
   # optional (to specify a preamble)
   preamble_override="You are a chatbot trained to answer to my every question. Answer every question with full sentences",
   # optional
