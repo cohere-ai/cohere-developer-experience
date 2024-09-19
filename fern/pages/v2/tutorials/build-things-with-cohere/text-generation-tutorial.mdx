@@ -9,21 +9,25 @@ keywords: "Cohere, how do LLMs generate text"
 
 <a target="_blank" href="https://colab.research.google.com/github/cohere-ai/notebooks/blob/main/notebooks/guides/getting-started/v2/tutorial_pt2.ipynb">Open in Colab</a>
 
-Command is Cohere’s flagship LLM, able to generate a response based on a user message or prompt. It is trained to follow user commands and to be instantly useful in practical business applications, like summarization, copywriting, extraction, and question-answering.
+Command is Cohere’s flagship LLM. It generates a response based on a user message or prompt. It is trained to follow user commands and to be instantly useful in practical business applications, like summarization, copywriting, extraction, and question-answering.
 
-Command R and Command R+ are the most recent models in the [Command family](/docs/command-r-plus). They strike the kind of balance between efficiency and high levels of accuracy that enable enterprises to move from proof of concept to production-grade AI applications.
+Command R and Command R+ are the most recent models in the Command family. They are the market-leading models that balance high efficiency with strong accuracy to enable enterprises to move from proof of concept into production-grade AI.
 
-This tutorial leans of the Chat endpoint to build an onboarding assistant for new hires at Co1t, a fictional company, and covers:
+You'll use Chat, the Cohere endpoint for accessing the Command models.
 
+In this tutorial, you'll learn about:
 - Basic text generation
 - Prompt engineering
 - Parameters for controlling output
 - Structured output generation
-- Streaming output
+- Streamed output
+
+You'll learn these by building an onboarding assistant for new hires.
 
 ## Setup
 
 To get started, first we need to install the `cohere` library and create a Cohere client.
+
 
 ```python PYTHON
 # pip install cohere
@@ -31,7 +35,7 @@ To get started, first we need to install the `cohere` library and create a Coher
 import cohere
 import json
 
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(api_key"COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
 ```
 
 ## Basic text generation
@@ -41,6 +45,7 @@ To get started with Chat, we need to pass two parameters, `model` for the LLM mo
 The response contains several objects. For simplicity, what we want right now is the `message.content[0].text` object.
 
 Here's an example of the assistant responding to a new hire's query asking for help to make introductions.
+
 
 ```python PYTHON
 # Add the user message
@@ -53,31 +58,33 @@ response = co.chat(model="command-r-plus-08-2024",
 
 print(response.message.content[0].text)
 ```
-
-The response we get back contains several fields, but for the sake of simplicity we'll focus for the moment on `message.content[0].text`:
-
 ```
-Sure! Here is a short introduction message:
+Sure! Here is a draft of an introduction message: 
 
-"Hi everyone! My name is [Your Name] and I am excited to join the Co1t team today. I am passionate about [relevant experience or skills] and look forward to contributing my skills and ideas to the team. In my free time, I enjoy [hobbies or interests]. Feel free to reach out to me directly if you want to chat or collaborate. Let's work together to make Co1t a success!"
+"Hi everyone! My name is [Your Name], and I am thrilled to be joining the Co1t team today. I am excited to get to know you all and contribute to the amazing work being done at this startup. A little about me: [Brief description of your role, experience, and interests]. Outside of work, I enjoy [Hobbies and interests]. I look forward to collaborating with you all and being a part of Co1t's journey. Let's connect and make something great together!" 
+
+Feel free to edit and personalize the message to your liking. Good luck with your new role at Co1t!
 ```
 
-Here are some additional resources if you'd like to read further:
-
-- [Chat endpoint API reference](/reference/chat)
-- [Documentation on Chat fine-tuning](/docs/chat-fine-tuning)
-- [Documentation on Command R+](/docs/command-r-plus)
+Further reading:
+- [Chat endpoint API reference](https://docs.cohere.com/v2/reference/chat)
+- [Documentation on Chat fine-tuning](https://docs.cohere.com/docs/chat-fine-tuning)
+- [Documentation on Command R+](https://docs.cohere.com/docs/command-r-plus)
 - [LLM University module on text generation](https://cohere.com/llmu#text-generation)
+
 
 ## Prompt engineering
 
-Prompting is at the heart of working with LLMs as it provides context for the text that we want the model to generate. Prompts can be anything from simple instructions to more complex pieces of text, and they are used to steer the model to producing a specific type of output.
+Prompting is at the heart of working with LLMs. The prompt provides context for the text that we want the model to generate. The prompts we create can be anything from simple instructions to more complex pieces of text, and they are used to encourage the model to produce a specific type of output.
 
-This section examines a couple of prompting techniques, the first of which is adding more specific instructions to the prompt (the more instructions you provide in the prompt, the closer you can get to the response you need.)
+In this section, we'll look at a couple of prompting techniques.
 
-The limit of how long a prompt can be is dependent on the maximum context length that a model can support (in the case Command R and Command R+, it's 128k tokens).
+The first is to add more specific instructions to the prompt. The more instructions you provide in the prompt, the closer you can get to the response you need.
 
-Below, we'll add one additional instruction to the earlier prompt, the length we need the response to be.
+The limit of how long a prompt can be is dependent on the maximum context length that a model can support (in the case Command R/R+, it's 128k tokens).
+
+Below, we'll add one additional instruction to the earlier prompt: the length we need the response to be.
+
 
 ```python PYTHON
 # Add the user message
@@ -90,13 +97,8 @@ response = co.chat(model="command-r-plus-08-2024",
 
 print(response.message.content[0].text)
 ```
-
 ```
-Here's a potential introduction message:
-
-"Hi everyone, my name is [Your Name] and I'm thrilled to join Co1t today as part of the team, and I look forward to contributing my skills and ideas to drive innovation and success!"
-
-This message expresses your excitement about joining the company and highlights your commitment to contributing to the team's success.
+"Hi everyone, my name is [Your Name], and I am thrilled to join the Co1t team today as a [Your Role], eager to contribute my skills and ideas to the company's growth and success!"
 ```
 
 All our prompts so far use what is called zero-shot prompting, which means that provide instruction without any example. But in many cases, it is extremely helpful to provide examples to the model to guide its response. This is called few-shot prompting.
@@ -104,6 +106,7 @@ All our prompts so far use what is called zero-shot prompting, which means that 
 Few-shot prompting is especially useful when we want the model response to follow a particular style or format. Also, it is sometimes hard to explain what you want in an instruction, and easier to show examples.
 
 Below, we want the response to be similar in style and length to the convention, as we show in the examples.
+
 
 ```python PYTHON
 # Add the user message
@@ -130,14 +133,12 @@ response = co.chat(model="command-r-plus-08-2024",
 
 print(response.message.content[0].text)
 ```
-
 ```
-Server Access Issues
+Ticket title: "Server Access Permissions Issue"
 ```
 
 Further reading:
-
-- [Documentation on prompt engineering](/docs/crafting-effective-prompts)
+- [Documentation on prompt engineering](https://docs.cohere.com/docs/crafting-effective-prompts)
 - [LLM University module on prompt engineering](https://cohere.com/llmu#prompt-engineering)
 
 ## Parameters for controlling output
@@ -145,6 +146,7 @@ Further reading:
 The Chat endpoint provides developers with an array of options and parameters.
 
 For example, you can choose from several variations of the Command model. Different models produce different output profiles, such as quality and latency.
+
 
 ```python PYTHON
 # Add the user message
@@ -156,9 +158,8 @@ response = co.chat(model="command-r-plus-08-2024",
 
 print(response.message.content[0].text)
 ```
-
 ```
-Hello, my name is [Your Name] and I'm thrilled to join the Co1t team today as the new kid in town!
+"Hi, I'm [Your Name] and I'm thrilled to join the Co1t team today as a [Your Role], eager to contribute my skills and ideas to help drive innovation and success for our startup!"
 ```
 
 Often, you’ll need to control the level of randomness of the output. You can control this using a few parameters.
@@ -168,6 +169,7 @@ The most commonly used parameter is `temperature`, which is a number used to tun
 A lower temperature gives more predictable outputs, and a higher temperature gives more "creative" outputs.
 
 Here's an example of setting `temperature` to 0.
+
 
 ```python PYTHON
 # Add the user message
@@ -181,16 +183,17 @@ for idx in range(3):
 
     print(f"{idx+1}: {response.message.content[0].text}\n")
 ```
-
 ```
-1: Curious Historian.
+1: "Revolution Enthusiast"
 
-2: Curious Historian.
+2: "Revolution Enthusiast"
 
-3: Curious Historian.
+3: "Revolution Enthusiast"
 ```
+
 
 And here's an example of setting `temperature` to 1.
+
 
 ```python PYTHON
 # Add the user message
@@ -204,44 +207,44 @@ for idx in range(3):
 
     print(f"{idx+1}: {response.message.content[0].text}\n")
 ```
-
 ```
-1: Sure! Here are two words that can describe you: 
+1: Here is a suggestion: 
 
-1. Industry Enthusiast 
-2. Revolution Aficionado 
+"Revolution Enthusiast. History Fan." 
 
-These words combine your passion for learning about the Industrial Revolution with a modern twist, showcasing your enthusiasm and knowledge in a concise manner.
+This introduction highlights your passion for the industrial revolution and its impact on history while keeping within the word limit.
 
-2: "Revolution Fan"
+2: "Revolution fan."
 
-3: History Enthusiast!
+3: "IR enthusiast."
 ```
+
 
 Further reading:
+- [Available models for the Chat endpoint](https://docs.cohere.com/docs/models#command)
+- [Documentation on predictable outputs](https://docs.cohere.com/v2/docs/predictable-outputs)
+- [Documentation on advanced generation parameters](https://docs.cohere.com/docs/advanced-generation-hyperparameters)
 
-- [Available models for the Chat endpoint](/docs/models#command)
-- [Documentation on predictable outputs](/v2/docs/predictable-outputs)
-- [Documentation on advanced generation parameters](/docs/advanced-generation-hyperparameters)
 
 ## Structured output generation
 
 By adding the `response_format` parameter, you can get the model to generate the output as a JSON object. By generating JSON objects, you can structure and organize the model's responses in a way that can be used in downstream applications.
 
 The `response_format` parameter allows you to specify the schema the JSON object must follow. It takes the following parameters:
-
 - `message`: The user message
 - `response_format`: The schema of the JSON object
+
 
 ```python PYTHON
 # Add the user message
 user_input = "Why can't I access the server? Is it a permissions issue?"
+message = f"""Create an IT ticket for the following user request. Generate a JSON object.
+{user_input}"""
 
 # Generate the response multiple times by adding the JSON schema
 response = co.chat(
   model="command-r-plus-08-2024",
-  message=f"""Create an IT ticket for the following user request. Generate a JSON object.
-  {user_input}""",
+  messages=[{"role": "user", "content": message}],
   response_format={
     "type": "json_object",
     "schema": {
@@ -256,19 +259,16 @@ response = co.chat(
   },
 )
 
-import json
-json_object = json.loads(response.text)
+json_object = json.loads(response.message.content[0].text)
 
 print(json_object)
 ```
-
 ```
-{'title': 'User Unable to Access Server', 'category': 'access', 'status': 'open'}
+{'title': 'Unable to Access Server', 'category': 'access', 'status': 'open'}
 ```
 
 Further reading:
-
-- [Documentation on Structured Generations (JSON)](/docs/structured-outputs-json)
+- [Documentation on Structured Generations (JSON)](https://docs.cohere.com/docs/structured-outputs-json)
 
 ## Streaming responses
 
@@ -279,6 +279,7 @@ The Chat endpoint also provides streaming support. In a streamed response, the e
 To activate it, use `co.chat_stream()` instead of `co.chat()`.
 
 In streaming mode, the endpoint will generate a series of objects. To get the actual text contents, we take objects whose `event_type` is `content-delta`.
+
 
 ```python PYTHON
 # Add the user message
@@ -293,21 +294,16 @@ for event in response:
         if event.type == "content-delta":
             print(event.delta.message.content.text, end="")
 ```
-
 ```
-Here's a potential introduction message:
-
-"Hi everyone, my name is [Your Name] and I'm thrilled to join Co1t today as the newest [Your Role], and I look forward to contributing my skills and expertise to the team and driving innovative solutions for our customers."
+"Hi, I'm [Your Name] and I'm thrilled to join the Co1t team today as a [Your Role], passionate about [Your Expertise], and excited to contribute to our shared mission of [Startup's Mission]!"
 ```
 
 Further reading:
-
-- [Documentation on streaming responses](/v2/docs/streaming)
+- [Documentation on streaming responses](https://docs.cohere.com/docs/streaming)
 
 ## Conclusion
 
 In this tutorial, you learned about:
-
 - How to get started with a basic text generation
 - How to improve outputs with prompt engineering
 - How to control outputs using parameter changes
