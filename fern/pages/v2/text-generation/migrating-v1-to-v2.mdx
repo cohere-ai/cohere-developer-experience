@@ -274,64 +274,8 @@ documents_v2 = [
 ## Search query generation
 
 - v1: Uses `search_queries_only` parameter
-- v2: Supported via tools.
+- v2: Supported via tools. We recommend using the v1 API for this functionality in order to leverage the `force_single_step` feature.
 
-**v1**
-
-Uses the `search_queries_only` parameter to generate search queries.
-
-```python PYTHON
-res_v1 = co_v1.chat(model="command-r-plus-08-2024",
-              message="Google and Apple revenue 2023",
-              search_queries_only=True)
-
-print(res_v1.search_queries)
-```
-```
-[ChatSearchQuery(text='Google revenue 2023', generation_id='dc0a5490-48bf-4be0-8689-67ddf292be2e'), ChatSearchQuery(text='Apple revenue 2023', generation_id='dc0a5490-48bf-4be0-8689-67ddf292be2e')]
-```
-
-**v2**
-
-Search query generation is supported via tools. We recommend using the v1 API for this functionality in order to leverage the `force_single_step` feature.
-
-```python PYTHON
-# Define the query generation tool
-query_gen_tool = [
-{
-    "name": "internet_search",
-    "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
-    "parameter_definitions": {
-        "queries": {
-            "description": "a list of queries to search the internet with.",
-            "type": "List[str]",
-            "required": True
-        }
-    }
-}]
-
-# Define a preamble to optimize search query generation
-instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
-
-# Generate search queries (if any)
-search_queries = []
-
-response = co_v1.chat(
-    preamble=instructions,
-    model="command-r-08-2024",
-    message="Google and Apple revenue 2023",
-    force_single_step=True,
-    tools=query_gen_tool,
-)
-
-if response.tool_calls:
-    search_queries = response.tool_calls[0].parameters["queries"]
-
-print(search_queries)
-```
-```
-['Google revenue 2023', 'Apple revenue 2023']
-```
 ## Web search
 
 - v1: Uses the `connectors` parameter with a web-search connector
@@ -352,13 +296,12 @@ print(res_v1.text)
 Spain won the UEFA Euro 2024, defeating England 2-1 in the final.
 ```
 **v2**
-Web search functionality is supported via tools. We recommend using the v1 API for this functionality in order to leverage the `force_single_step` feature.
-
+Web search functionality is supported via tools.
 
 ```python PYTHON
 # Any search engine can be used. This example uses the Tavily API.
 from tavily import TavilyClient
-tavily_client = TavilyClient(api_key='TAVILY_API_KEY')
+tavily_client = TavilyClient(api_key=os.environ['TAVILY_API_KEY'])
 
 # Create a web search function
 def web_search(queries: list[str]) -> list[dict]:
@@ -379,13 +322,22 @@ def web_search(queries: list[str]) -> list[dict]:
 # Define the web search tool
 web_search_tool = [
     {
-        "name": "web_search",
-        "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
-        "parameter_definitions": {
-            "queries": {
-                "description": "a list of queries to search the internet with.",
-                "type": "List[str]",
-                "required": True
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "queries": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "a list of queries to search the internet with."
+                    }
+                },
+                "required": ["queries"]
             }
         }
     }
@@ -397,35 +349,56 @@ query = "who won euro 2024"
 # Define a preamble to optimize search query generation
 instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
 
+messages = [{"role": "system", "content": instructions},
+            {"role": "user", "content": query}]
+
+
+model="command-r-plus-08-2024"
+
 # Generate search queries (if any)
-res = co_v1.chat(
-    preamble=instructions,
-    model="command-r-08-2024",
-    message=query,
-    force_single_step=True,
-    tools=web_search_tool,
+response = co_v2.chat(
+    model=model,
+    messages=messages,
+    tools=web_search_tool
 )
 
-# Perform web search based on the generated search queries
-if res.tool_calls:
-    call = res.tool_calls[0]
-    web_search_results = web_search(call.parameters["queries"])["documents"]
-    tool_results = [{"call": call, "outputs": web_search_results}]
+search_queries = []
 
-    # Generate a response using the web search results
-    res = co_v1.chat(
-        model="command-r-08-2024",
-        chat_history=res.chat_history,
-        message="",
-        force_single_step=True,
-        tools=web_search_tool,
-        tool_results=tool_results
+while response.message.tool_calls:
+        
+    print("Tool plan:")
+    print(response.message.tool_plan,"\n")
+    print("Tool calls:")
+    for tc in response.message.tool_calls:
+        print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
+    print("="*50)
+
+    messages.append({"role": "assistant", "tool_calls": response.message.tool_calls, "tool_plan": response.message.tool_plan})        
+    
+    # Step 3: Get tool results
+    tool_content = []
+    for idx, tc in enumerate(response.message.tool_calls):
+        tool_result = web_search(**json.loads(tc.function.arguments))
+        tool_content.append(json.dumps(tool_result))
+        messages.append({"role": "tool", "tool_call_id": tc.id, "tool_content": tool_content})
+    
+    # Step 4: Generate response and citations 
+    response = co_v2.chat(
+        model=model,
+        messages=messages,
+        tools=web_search_tool
     )
+    
+print(response.message.content[0].text)
+```
+```
+Tool plan:
+I will search for 'who won euro 2024' to find out who won the competition. 
 
-print(res.text)
-```
-```
-Spain won Euro 2024, becoming the first country to win the Euros four times. They defeated England 2-1 in Berlin and won all seven of their games without needing penalties.
+Tool calls:
+Tool name: web_search | Parameters: {"queries":["who won euro 2024"]}
+==================================================
+Spain won the 2024 European Championship. They beat England in the final, with substitute Mikel Oyarzabal scoring the winning goal.
 ```
 
 ## Citations
@@ -659,19 +632,30 @@ if res_v2.message.tool_calls:
 ```
 **v2**
 ```
+
 "messages": [
-    {
+  {
     "role": "tool", 
     "tool_call_id": "123", 
     "tool_content": [
-        # Option 1: Tool results as one string for one citation output
-        {"type": "text", "text": "[{<key>: <value>}]"},
-        # Option 2: Tool results with metadata for multiple citations 
-        {"type": "document", "document": {"id": "123", "content": "[{<key>: <value>}]", "metadata": {...}}},
-        ]
-    }
+      # Option 1: Tool results as one string for one citation output
+      {
+        "type": "text", 
+        "text": "[{<key>: <value>}]"
+      },
+      # Option 2: Tool results with metadata for multiple citations 
+      {
+        "type": "document", 
+        "document": {
+          "id": "123", 
+          "data": {
+            <key>: <value>
+          }
+        }
+      }
+    ]
+  }
 ]
-
 ```
 
 ## Tool execution
