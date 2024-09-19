@@ -41,7 +41,7 @@ co_v2 = cohere.ClientV2(api_key="<YOUR API KEY>")
    - v1: manage the chat history via the `chat_history` parameter.
    - v2: manage the chat history via the `messages` list.
 
-### v1
+**v1**
 
 ```python PYTHON
 preamble = "You respond in concise sentences."
@@ -73,7 +73,7 @@ message='Make it shorter' tool_calls=None role='USER'
 message='"Excited to join Co1t today as a [Your Role] and looking forward to collaborating with the team."' tool_calls=None role='CHATBOT' 
 ```
 
-### v2
+**v2**
 
 ```python PYTHON
 system_message = "You respond in concise sentences."
@@ -116,7 +116,7 @@ for message in messages:
 - v1: Accessed via `text`
 - v2: Accessed via `message.content[0].text`
 
-### v1
+**v1**
 
 ```python PYTHON
 res = co_v1.chat(model="command-r-plus-08-2024",
@@ -128,7 +128,7 @@ print(res.text)
 The answer is 4.
 ```
 
-### v2
+**v2**
 
 ```python PYTHON
 res = co_v2.chat(model="command-r-plus-08-2024",
@@ -150,7 +150,7 @@ The answer is 4.
    - v1: `chunk.text`
    - v2: `chunk.delta.message.content.text`
 
-### v1
+**v1**
 
 ```python PYTHON
 message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
@@ -166,7 +166,7 @@ for chunk in res:
 "Hi, I'm [your name] and I'm thrilled to join the Co1t team today as a [your role], eager to contribute my skills and ideas to help drive innovation and success for our startup!"
 ```
 
-### v2
+**v2**
 
 ```python PYTHON
 message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
@@ -193,7 +193,7 @@ for chunk in res:
     - List of objects with `data` string (with an optional `id` field to be used in citations).
     - List of strings.
 
-### v1
+**v1**
 
 ```python PYTHON
 
@@ -217,7 +217,7 @@ print(res_v1.text)
 Yes, we offer gym memberships and on-site yoga classes as part of our health and wellness benefits.
 ```
 
-### v2
+**v2**
 
 ```python PYTHON
 # Define the documents
@@ -276,7 +276,7 @@ documents_v2 = [
 - v1: Uses `search_queries_only` parameter
 - v2: Supported via tools.
 
-### v1
+**v1**
 
 Uses the `search_queries_only` parameter to generate search queries.
 
@@ -291,7 +291,7 @@ print(res_v1.search_queries)
 [ChatSearchQuery(text='Google revenue 2023', generation_id='dc0a5490-48bf-4be0-8689-67ddf292be2e'), ChatSearchQuery(text='Apple revenue 2023', generation_id='dc0a5490-48bf-4be0-8689-67ddf292be2e')]
 ```
 
-### v2
+**v2**
 
 Search query generation is supported via tools. We recommend using the v1 API for this functionality in order to leverage the `force_single_step` feature.
 
@@ -337,7 +337,7 @@ print(search_queries)
 - v1: Uses the `connectors` parameter with a web-search connector
 - v2: Supported via tools.
 
-### v1
+**v1**
 Uses the web search connector to search the internet for information relevant to the user's query.
 
 ```python PYTHON
@@ -351,7 +351,7 @@ print(res_v1.text)
 ```
 Spain won the UEFA Euro 2024, defeating England 2-1 in the final.
 ```
-### v2
+**v2**
 Web search functionality is supported via tools. We recommend using the v1 API for this functionality in order to leverage the `force_single_step` feature.
 
 
@@ -437,7 +437,7 @@ Spain won Euro 2024, becoming the first country to win the Euros four times. The
    - v1: `documents`
    - v2: as part of `message.citations`, in the `sources` field
 
-### v1
+**v1**
 
 
 ```python PYTHON
@@ -450,7 +450,7 @@ print(res_v1.documents)
 [{'id': 'doc_1', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}]
 ```
 
-### v2
+**v2**
 
 
 ```python PYTHON
@@ -478,7 +478,7 @@ print(res_v2.message.citations)
    - v1: `chunk.citations`
    - v2: `chunk.delta.message.citations`
 
-### v1
+**v1**
 
 ```python PYTHON
 message = "Are there fitness-related benefits?"
@@ -503,7 +503,7 @@ Yes, we offer health and wellness benefits, including gym memberships and on-sit
 [ChatCitation(start=74, end=95, text='on-site yoga classes.', document_ids=['doc_1'])]
 ```
 
-### v2
+**v2**
 
 ```python PYTHON
 message = "Are there fitness-related benefits?"
@@ -539,7 +539,7 @@ start=70 end=99 text='health and wellness benefits.' sources=[Source_Document(id
 - v1: uses Python types to define tools.
 - v2: uses JSON schema to define tools.
 
-### v1
+**v1**
 
 ```python PYTHON
 def get_weather(location):
@@ -562,7 +562,7 @@ tools_v1 = [
 ]
 ```
 
-### v2
+**v2**
 
 ```python PYTHON
 def get_weather(location):
@@ -601,7 +601,7 @@ tools_v2 = [
    - v1: Tool calls stored in the response's `chat_history`
    - v2: Append the tool call details (`tool_calls` and `tool_plan`) to the `messages` list
 
-### v1
+**v1**
 
 ```python PYTHON
 message = "What's the weather in Toronto?"
@@ -616,7 +616,7 @@ print(res_v1.tool_calls)
 [ToolCall(name='get_weather', parameters={'location': 'Toronto'})]
 ```
 
-### v2
+**v2**
 
 ```python PYTHON
 messages = [{'role': 'user', 'content': "What's the weather in Toronto?"}]
@@ -634,6 +634,46 @@ if res_v2.message.tool_calls:
 [ToolCall2(id='get_weather_s8qdenha4v1z', type='function', function=ToolCall2Function(name='get_weather', arguments='{"location":"Toronto"}'))]
 ```
 
+## Tool call ID
+
+- v1: Tool calls do not emit tool call IDs
+- v2: Tool calls emit tool call IDs. This will help the model match tool results to the right tool call.
+
+
+**v1**
+```
+"tool_results" = [
+  {
+    "call": {
+      "name": <tool name>,
+      "parameters": {
+        <param name>: <param value>
+      }
+    },
+    "outputs": [{
+      <key>: <value>
+    }]
+  },
+]
+
+```
+**v2**
+```
+"messages": [
+    {
+    "role": "tool", 
+    "tool_call_id": "123", 
+    "tool_content": [
+        # Option 1: Tool results as one string for one citation output
+        {"type": "text", "text": "[{<key>: <value>}]"},
+        # Option 2: Tool results with metadata for multiple citations 
+        {"type": "document", "document": {"id": "123", "content": "[{<key>: <value>}]", "metadata": {...}}},
+        ]
+    }
+]
+
+```
+
 ## Tool execution
 
 - Function name access
@@ -648,7 +688,7 @@ if res_v2.message.tool_calls:
    - v1: Append `call` and `outputs` to the chat history
    - v2: Append `tool_call_id` and `tool_content` to `messages` to the chat history
 
-### v1
+**v1**
 
 ```python PYTHON
 tool_content_v1 = []
@@ -664,7 +704,7 @@ print(tool_content_v1)
 [{'call': {'name': 'get_weather', 'parameters': {'location': 'Toronto'}}, 'outputs': [{'temperature': '20C'}]}]
 ```
 
-### v2
+**v2**
 
 ```python PYTHON
 tool_content_v2 = []
@@ -689,7 +729,7 @@ print(tool_content_v2)
     - v1: Passed as `tool_results` parameter
     - v2: Incorporated into the `messages` list as tool responses
 
-### v1
+**v1**
 
 ```python PYTHON
 res_v1 = co_v1.chat(
@@ -706,7 +746,7 @@ print(res_v1.text)
 It's 20°C in Toronto.
 ```
 
-### v2
+**v2**
 
 ```python PYTHON
 res_v2 = co_v2.chat(
@@ -730,7 +770,7 @@ It's 20°C in Toronto.
    - v1: `documents`
    - v2: as part of `message.citations`, in the `sources` field
 
-### v1
+**v1**
 
 ```python PYTHON
 print(res_v1.citations)
@@ -742,7 +782,7 @@ print(res_v1.documents)
 [{'id': 'get_weather:0:2:0', 'temperature': '20C', 'tool_name': 'get_weather'}]
 ```
 
-### v2
+**v2**
 
 ```python PYTHON
 print(res_v2.message.citations)
@@ -769,7 +809,7 @@ print(res_v2.message.citations)
    - v1: `chunk.citations`
    - v2: `chunk.delta.message.citations`
 
-### v1
+**v1**
 
 ```python PYTHON
 res_v1 = co_v1.chat_stream(
@@ -791,7 +831,7 @@ It's currently 20°C in Toronto.
 [ChatCitation(start=15, end=19, text='20°C', document_ids=['get_weather:0:2:0', 'get_weather:0:4:0'])]
 ```
 
-### v2
+**v2**
 
 ```python PYTHON
 res_v2 = co_v2.chat_stream(
@@ -817,7 +857,12 @@ It's 20°C in Toronto.
 - v1: controlled via `citation_quality` parameter
 - v2: controlled via `citation_options` parameter (with `mode` as a key)
 
-# Unsupported features
+# Others
+
+- v2: `model` is a required field for Embed, Rerank, Classify, and Chat.
+- v2: `embedding_types` is a required field for Embed.
+
+# Unsupported features in v2
 
 The following v1 features are not supported in v2:
 - General chat
