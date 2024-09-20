@@ -1,6 +1,5 @@
 from cohere.finetuning import (
     BaseModel,
-    BaseType,
     FinetunedModel,
     Settings,
 )
@@ -16,7 +15,7 @@ async def main():
             name="test-finetuned-model",
             settings=Settings(
                 base_model=BaseModel(
-                    base_type=BaseType.BASE_TYPE_CHAT,
+                    base_type="BASE_TYPE_CHAT",
                 ),
                 dataset_id="my-dataset-id",
             ),
