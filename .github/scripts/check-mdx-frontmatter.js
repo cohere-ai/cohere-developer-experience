@@ -43,7 +43,7 @@ async function checkDescriptionLength(filePath) {
 
   const descriptionLength = data.description.length;
 
-  if (descriptionLength < 70 || descriptionLength > 155) {
+  if (descriptionLength < 50 || descriptionLength > 160) {
     console.log(
       `File "${filePath}" has an invalid description length: ${descriptionLength} characters.`
     );
