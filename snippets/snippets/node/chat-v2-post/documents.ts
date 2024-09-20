@@ -7,11 +7,11 @@ const cohere = new CohereClientV2({
 (async () => {
   const response = await cohere.chat({
     model: 'command-r-plus',
+    documents: [{ id: '1', data: 'Cohere is the best!' }],
     messages: [
       {
         role: 'user',
         content: [{ type: 'text', text: "Who's the best?" }],
-        documents: [{ id: '1', text: 'Cohere is the best!' }],
       },
     ],
   });
