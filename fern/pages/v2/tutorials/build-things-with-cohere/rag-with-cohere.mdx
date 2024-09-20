@@ -102,6 +102,12 @@ if response.message.citations:
     for citation in response.message.citations:
         print(citation, "\n")
 ```
+```
+Yes, we offer gym memberships, on-site yoga classes, and comprehensive health insurance.
+
+CITATIONS:
+start=14 end=88 text='gym memberships, on-site yoga classes, and comprehensive health insurance.' sources=[DocumentSource(type='document', id='doc:2', document={'id': 'doc:2', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'})]
+```
 
 ## Search query generation
 
@@ -121,8 +127,7 @@ Here, we build a tool that takes a user query and returns a list of relevant doc
 
 We'll not do a detailed walkthrough of tool use here as we'll do that in the next tutorial, which is a dedicated tutorial on tool use.
 
-We recommend using the v1 API for this functionality in order to leverage the `force_single_step` feature, as follows:
-
+We recommend using the v1 API for this functionality in order to leverage the `force_single_step` feature. Note: support for search query generation in v2 will be coming soon.
 
 ```python PYTHON
 co_v1 = cohere.Client(api_key="COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
@@ -217,23 +222,63 @@ First, we need to embed the documents to search from. We call the Embed endpoint
 ```python PYTHON
 # Define the documents
 faqs_long = [
-    {"text": "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged."},
-    {"text": "Finding Coffee Spots: For your caffeine fix, head to the break room's coffee machine or cross the street to the café for artisan coffee."},
-    {"text": "Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!"},
-    {"text": "Working Hours Flexibility: We prioritize work-life balance. While our core hours are 9 AM to 5 PM, we offer flexibility to adjust as needed."},
-    {"text": "Side Projects Policy: We encourage you to pursue your passions. Just be mindful of any potential conflicts of interest with our business."},
-    {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
-    {"text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."},
-    {"text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."},
-    {"text": "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year."},
-    {"text": "Proposing New Ideas: Innovation is welcomed! Share your brilliant ideas at our weekly team meetings or directly with your team lead."},
+    {
+        "data": {
+            "text": "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged."
+        }
+    },
+    {
+        "data": {
+            "text": "Finding Coffee Spots: For your caffeine fix, head to the break room's coffee machine or cross the street to the café for artisan coffee."
+        }
+    },
+    {
+        "data": {
+            "text": "Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!"
+        }
+    },
+    {
+        "data": {
+            "text": "Working Hours Flexibility: We prioritize work-life balance. While our core hours are 9 AM to 5 PM, we offer flexibility to adjust as needed."
+        }
+    },
+    {
+        "data": {
+            "text": "Side Projects Policy: We encourage you to pursue your passions. Just be mindful of any potential conflicts of interest with our business."
+        }
+    },
+    {
+        "data": {
+            "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+        }
+    },
+    {
+        "data": {
+            "text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."
+        }
+    },
+    {
+        "data": {
+            "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+        }
+    },
+    {
+        "data": {
+            "text": "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year."
+        }
+    },
+    {
+        "data": {
+            "text": "Proposing New Ideas: Innovation is welcomed! Share your brilliant ideas at our weekly team meetings or directly with your team lead."
+        }
+    },
 ]
 
 # Embed the documents
 doc_emb = co.embed(
             model="embed-english-v3.0",
             input_type="search_document",
-            texts=[doc['text'] for doc in faqs_long],
+            texts=[doc['data']['text'] for doc in faqs_long],
             embedding_types=["float"]).embeddings.float
 ```
 
@@ -281,28 +326,27 @@ for rank, idx in enumerate(max_idx):
     print(f"Rank: {rank+1}")
     print(f"Score: {scores[idx]}")
     print(f"Document: {retrieved_documents[rank]}\n")
-
 ```
 ```
 Rank: 1
 Score: 0.34212792245283796
-Document: {'text': 'Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!'}
+Document: {'data': {'text': 'Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!'}}
 
 Rank: 2
 Score: 0.2883222063024371
-Document: {'text': 'Proposing New Ideas: Innovation is welcomed! Share your brilliant ideas at our weekly team meetings or directly with your team lead.'}
+Document: {'data': {'text': 'Proposing New Ideas: Innovation is welcomed! Share your brilliant ideas at our weekly team meetings or directly with your team lead.'}}
 
 Rank: 3
 Score: 0.278128283997032
-Document: {'text': 'Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.'}
+Document: {'data': {'text': 'Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.'}}
 
 Rank: 4
 Score: 0.19474858706643985
-Document: {'text': "Finding Coffee Spots: For your caffeine fix, head to the break room's coffee machine or cross the street to the café for artisan coffee."}
+Document: {'data': {'text': "Finding Coffee Spots: For your caffeine fix, head to the break room's coffee machine or cross the street to the café for artisan coffee."}}
 
 Rank: 5
 Score: 0.13713692506528824
-Document: {'text': 'Side Projects Policy: We encourage you to pursue your passions. Just be mindful of any potential conflicts of interest with our business.'}
+Document: {'data': {'text': 'Side Projects Policy: We encourage you to pursue your passions. Just be mindful of any potential conflicts of interest with our business.'}}
 ```
 
 
@@ -323,7 +367,7 @@ Here we select `top_n` to be 2, which will be the documents we will pass next fo
 ```python PYTHON
 # Rerank the documents
 results = co.rerank(query=queries_for_search,
-                    documents=retrieved_documents,
+                    documents=[doc['data']['text'] for doc in retrieved_documents],
                     top_n=2,
                     model='rerank-english-v3.0')
 
@@ -338,15 +382,14 @@ reranked_documents = [retrieved_documents[result.index] for result in results.re
 ```
 Rank: 1
 Score: 0.0020507434
-Document: {'text': 'Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.'}
+Document: {'data': {'text': 'Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.'}}
 
 Rank: 2
 Score: 0.0014158706
-Document: {'text': 'Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!'}
+Document: {'data': {'text': 'Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!'}}
 ```
 
-
-Finally we reach the step that we saw in the earlier `Basic RAG` section.
+Finally we reach the step that we saw in the earlier "Basic RAG" section.
 
 To call the Chat API with RAG, we pass the following parameters. This tells the model to run in RAG-mode and use these documents in its response.
 
@@ -377,16 +420,16 @@ if response.message.citations:
         print(citation, "\n")
 ```
 ```
-You can get to know your teammates by joining your company's Slack channels and taking part in team-building activities. You will receive an invite to join relevant Slack channels via email. Your company also organises monthly outings and weekly game nights to foster team spirit.
+You can get to know your teammates by joining relevant Slack channels and engaging in team-building activities. These activities include monthly outings and weekly game nights. You are also welcome to suggest new activity ideas.
 
 CITATIONS:
-start=38 end=75 text="joining your company's Slack channels" sources=[Source_Document(id='doc:0:0', document={'id': 'doc:0:0', 'text': 'Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.'}, type='document')] 
+start=38 end=69 text='joining relevant Slack channels' sources=[DocumentSource(type='document', id='doc:0', document={'id': 'doc:0', 'text': 'Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.'})] 
 
-start=95 end=120 text='team-building activities.' sources=[Source_Document(id='doc:0:1', document={'id': 'doc:0:1', 'text': 'Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!'}, type='document')] 
+start=86 end=111 text='team-building activities.' sources=[DocumentSource(type='document', id='doc:1', document={'id': 'doc:1', 'text': 'Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!'})] 
 
-start=130 end=190 text='receive an invite to join relevant Slack channels via email.' sources=[Source_Document(id='doc:0:0', document={'id': 'doc:0:0', 'text': 'Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.'}, type='document')] 
+start=137 end=176 text='monthly outings and weekly game nights.' sources=[DocumentSource(type='document', id='doc:1', document={'id': 'doc:1', 'text': 'Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!'})] 
 
-start=219 end=280 text='monthly outings and weekly game nights to foster team spirit.' sources=[Source_Document(id='doc:0:1', document={'id': 'doc:0:1', 'text': 'Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!'}, type='document')]
+start=201 end=228 text='suggest new activity ideas.' sources=[DocumentSource(type='document', id='doc:1', document={'id': 'doc:1', 'text': 'Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!'})] 
 ```
 
 ## Conclusion

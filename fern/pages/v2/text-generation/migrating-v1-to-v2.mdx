@@ -101,7 +101,7 @@ Excited to join the team at Co1t, bringing my passion for innovation and a backg
 
 ```python PYTHON
 res = co_v1.chat(model="command-r-plus-08-2024",
-               message="What is 2 + 2")
+                 message="What is 2 + 2")
 
 print(res.text)
 ```
@@ -113,7 +113,12 @@ The answer is 4.
 
 ```python PYTHON
 res = co_v2.chat(model="command-r-plus-08-2024",
-                 messages=[{'role': 'user', 'content': "What is 2 + 2"}])
+                 messages=[
+                     {
+                         "role": "user",
+                         "content": "What is 2 + 2"
+                     }
+                 ])
 
 print(res.message.content[0].text)
 ```
@@ -137,7 +142,7 @@ The answer is 4.
 message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
 
 res = co_v1.chat_stream(model="command-r-plus-08-2024",
-                           message=message)
+                        message=message)
 
 for chunk in res:
     if chunk.event_type == "text-generation":
@@ -153,7 +158,7 @@ for chunk in res:
 message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
 
 res = co_v2.chat_stream(model="command-r-plus-08-2024",
-                           messages=[{'role': 'user', 'content': message}])
+                        messages=[{'role': 'user', 'content': message}])
 
 for chunk in res: 
     if chunk:
@@ -195,7 +200,7 @@ res_v1 = co_v1.chat(model="command-r-plus-08-2024",
 print(res_v1.text)
 ```
 ```
-Yes, we offer gym memberships and on-site yoga classes as part of our health and wellness benefits.
+Yes, there are fitness-related benefits. We offer gym memberships, on-site yoga classes, and comprehensive health insurance.
 ```
 
 **v2**
@@ -228,7 +233,7 @@ res_v2 = co_v2.chat(model="command-r-plus-08-2024",
 print(res_v2.message.content[0].text)
 ```
 ```
-Yes, we offer gym memberships and on-site yoga classes as part of our health and wellness benefits.
+Yes, we offer gym memberships, on-site yoga classes, and comprehensive health insurance.
 ```
 
 The following is a list of the the different options for structuring documents for RAG in v2.
@@ -250,6 +255,40 @@ documents_v2 = [
 # List of strings
 "just a string"
 ]
+```
+
+## Citations
+
+- Citations access:
+   - v1: `citations`
+   - v2: `message.citations`
+- Cited documents access:
+   - v1: `documents`
+   - v2: as part of `message.citations`, in the `sources` field
+
+**v1**
+
+```python PYTHON
+# Yes, there are fitness-related benefits. We offer gym memberships, on-site yoga classes, and comprehensive health insurance.
+
+print(res_v1.citations)
+print(res_v1.documents)
+```
+```
+[ChatCitation(start=50, end=124, text='gym memberships, on-site yoga classes, and comprehensive health insurance.', document_ids=['doc_1'])]
+
+[{'id': 'doc_1', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}]
+```
+
+**v2**
+
+```python PYTHON
+# Yes, we offer gym memberships, on-site yoga classes, and comprehensive health insurance.
+
+print(res_v2.message.citations)
+```
+```
+[Citation(start=14, end=88, text='gym memberships, on-site yoga classes, and comprehensive health insurance.', sources=[DocumentSource(type='document', id='doc:1', document={'id': 'doc:1', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'})])]
 ```
 
 ## Search query generation
@@ -384,37 +423,6 @@ Tool name: web_search | Parameters: {"queries":["who won euro 2024"]}
 Spain won the 2024 European Championship. They beat England in the final, with substitute Mikel Oyarzabal scoring the winning goal.
 ```
 
-## Citations
-
-- Citations access:
-   - v1: `citations`
-   - v2: `message.citations`
-- Cited documents access:
-   - v1: `documents`
-   - v2: as part of `message.citations`, in the `sources` field
-
-**v1**
-
-```python PYTHON
-print(res_v1.citations)
-print(res_v1.documents)
-```
-```
-[ChatCitation(start=14, end=29, text='gym memberships', document_ids=['doc_1']), ChatCitation(start=34, end=55, text='on-site yoga classes.', document_ids=['doc_1'])]
-
-[{'id': 'doc_1', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}]
-```
-
-**v2**
-
-
-```python PYTHON
-print(res_v2.message.citations)
-```
-```
-[Citation(start=14, end=29, text='gym memberships', sources=[Source_Document(id='1', document={'id': '1', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}, type='document')]), Citation(start=34, end=54, text='on-site yoga classes', sources=[Source_Document(id='1', document={'id': '1', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}, type='document')]), Citation(start=70, end=99, text='health and wellness benefits.', sources=[Source_Document(id='1', document={'id': '1', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}, type='document')])]
-```
-
 ## Streaming
 
 - Event containing content:
@@ -449,13 +457,11 @@ for chunk in res_v1:
         print(f"\n{chunk.citations}")
 ```
 ```
-Yes, we offer health and wellness benefits, including gym memberships and on-site yoga classes.
+Yes, we offer gym memberships, on-site yoga classes, and comprehensive health insurance as part of our health and wellness benefits.
 
-[ChatCitation(start=14, end=42, text='health and wellness benefits', document_ids=['doc_1'])]
+[ChatCitation(start=14, end=87, text='gym memberships, on-site yoga classes, and comprehensive health insurance', document_ids=['doc_1'])]
 
-[ChatCitation(start=54, end=69, text='gym memberships', document_ids=['doc_1'])]
-
-[ChatCitation(start=74, end=95, text='on-site yoga classes.', document_ids=['doc_1'])]
+[ChatCitation(start=103, end=132, text='health and wellness benefits.', document_ids=['doc_1'])]
 ```
 
 **v2**
@@ -478,13 +484,9 @@ for chunk in res_v2:
 ```
 
 ```
-Yes, we offer gym memberships and on-site yoga classes as part of our health and wellness benefits.
+Yes, we offer gym memberships, on-site yoga classes, and comprehensive health insurance.
 
-start=14 end=29 text='gym memberships' sources=[Source_Document(id='doc:0:1', document={'id': 'doc:0:1', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}, type='document')]
-
-start=34 end=54 text='on-site yoga classes' sources=[Source_Document(id='doc:0:1', document={'id': 'doc:0:1', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}, type='document')]
-
-start=70 end=99 text='health and wellness benefits.' sources=[Source_Document(id='doc:0:1', document={'id': 'doc:0:1', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}, type='document')]
+start=14 end=88 text='gym memberships, on-site yoga classes, and comprehensive health insurance.' sources=[DocumentSource(type='document', id='doc:1', document={'id': 'doc:1', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'})]
 ```
 
 # Tool use
@@ -586,7 +588,7 @@ if res_v2.message.tool_calls:
     print(res_v2.message.tool_calls)
 ```
 ```
-[ToolCall2(id='get_weather_s8qdenha4v1z', type='function', function=ToolCall2Function(name='get_weather', arguments='{"location":"Toronto"}'))]
+[ToolCallV2(id='get_weather_k88p0m8504w5', type='function', function=ToolCallV2Function(name='get_weather', arguments='{"location":"Toronto"}'))]
 ```
 
 ## Tool call ID
@@ -683,7 +685,7 @@ if res_v2.message.tool_calls:
 print(tool_content_v2)
 ```
 ```
-[ToolContent(output={'temperature': '20C'})]
+['{"temperature": "20C"}']
 ```
 
 ## Response generation
@@ -709,7 +711,7 @@ res_v1 = co_v1.chat(
 print(res_v1.text)
 ```
 ```
-It's 20°C in Toronto.
+It is currently 20°C in Toronto.
 ```
 
 **v2**
@@ -743,7 +745,7 @@ print(res_v1.citations)
 print(res_v1.documents)
 ```
 ```
-[ChatCitation(start=5, end=9, text='20°C', document_ids=['get_weather:0:2:0'])]
+[ChatCitation(start=16, end=20, text='20°C', document_ids=['get_weather:0:2:0'])]
 
 [{'id': 'get_weather:0:2:0', 'temperature': '20C', 'tool_name': 'get_weather'}]
 ```
@@ -754,7 +756,7 @@ print(res_v1.documents)
 print(res_v2.message.citations)
 ```
 ```
-[Citation(start=5, end=9, text='20°C', sources=[Source_Tool(id='get_weather_qdrnx4myss0f:0', tool_output={'temperature': '20C'}, type='tool')])]
+[Citation(start=5, end=9, text='20°C', sources=[ToolSource(type='tool', id='get_weather_k88p0m8504w5:0', tool_output={'temperature': '20C'})])]
 ```
 
 ## Streaming
@@ -792,9 +794,9 @@ for chunk in res_v1:
         print(f"\n{chunk.citations}")
 ```
 ```
-It's currently 20°C in Toronto.
+It's 20°C in Toronto.
 
-[ChatCitation(start=15, end=19, text='20°C', document_ids=['get_weather:0:2:0', 'get_weather:0:4:0'])]
+[ChatCitation(start=5, end=9, text='20°C', document_ids=['get_weather:0:2:0', 'get_weather:0:4:0'])]
 ```
 
 **v2**
@@ -816,7 +818,7 @@ for chunk in res_v2:
 ```
 It's 20°C in Toronto.
 
-{'start': 5, 'end': 9, 'text': '20°C', 'sources': [{'type': 'tool', 'id': 'get_weather_jmw7pa5s1rjq:0', 'tool_output': {'temperature': '20C'}}]}
+start=5 end=9 text='20°C' sources=[ToolSource(type='tool', id='get_weather_k88p0m8504w5:0', tool_output={'temperature': '20C'})]
 ```
 
 ## Citation quality (both RAG and tool use)

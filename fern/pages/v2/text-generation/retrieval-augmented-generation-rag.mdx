@@ -65,7 +65,7 @@ response = co.chat(
     messages=messages,
     documents=documents)
 
-print(response.message.content)
+print(response.message.content[0].text)
 
 print(response.message.citations)
 ```
@@ -77,18 +77,22 @@ Nice :penguin:❄️!
 **Response**
 
 ```
-# response.message.content
-[TextContent(text='The tallest penguins are emperor penguins, which live in Antarctica.', type='text')]
-```
-```
+# response.message.content[0].text
+Emperor penguins are the tallest penguins. They only live in Antarctica.
+
 # response.message.citations
-[Citation(start=4, 
-          end=41, text='tallest penguins are emperor penguins', sources=[Source_Document(id='doc:0:0', document={'id': 'doc:0:0', 'snippet': 'Emperor penguins are the tallest.', 'title': 'Tall penguins'}, type='document')]), 
-          
- Citation(start=57, 
-          end=68, 
-          text='Antarctica.', 
-          sources=[Source_Document(id='doc:0:1', document={'id': 'doc:0:1', 'snippet': 'Emperor penguins only live in Antarctica.', 'title': 'Penguin habitats'}, type='document')])]
+[Citation(start=0,
+          end=16, 
+          text='Emperor penguins', 
+          sources=[DocumentSource(type='document', id='doc:0', document={'id': 'doc:0', 'snippet': 'Emperor penguins are the tallest.', 'title': 'Tall penguins'})]), 
+Citation(start=25, 
+          end=42, 
+          text='tallest penguins.', 
+          sources=[DocumentSource(type='document', id='doc:0', document={'id': 'doc:0', 'snippet': 'Emperor penguins are the tallest.', 'title': 'Tall penguins'})]), 
+Citation(start=61, 
+          end=72, 
+          text='Antarctica.',
+          sources=[DocumentSource(type='document', id='doc:1', document={'id': 'doc:1', 'snippet': 'Emperor penguins only live in Antarctica.', 'title': 'Penguin habitats'})])]
 ```
 
 The response also includes **inline citations**  that reference the first two documents, since they hold the answers.
@@ -118,7 +122,7 @@ There are different possible approaches to do this. In this example, we'll take 
 
 Here, we build a tool that takes a user query and returns a list of relevant document snippets for that query. The tool can generate zero, one or multiple search queries depending on the user query.
 
-We recommend using the v1 API for this functionality in order to leverage the `force_single_step` feature.
+We recommend using the v1 API for this functionality in order to leverage the `force_single_step` feature. Note: support for search query generation in v2 will be coming soon.
 
 ```python PYTHON
 co_v1 = cohere.Client(api_key="<YOUR API KEY>")
@@ -228,7 +232,7 @@ response = co.chat(
     messages=messages,
     documents=documents)
 
-print(response.message.content)
+print(response.message.content[0].text)
 
 print(response.message.citations)
 ```
@@ -236,26 +240,21 @@ print(response.message.citations)
 **Response**
 
 ```
-# response.message.content
-[TextContent(text='Both NSync and Backstreet Boys were extremely popular at the turn of the millennium. Backstreet Boys achieved massive album sales across the globe, great singles sales, plenty of chart-topping releases, hyped tours, and tremendous media coverage. NSync also had huge sales, with their album No Strings Attached selling 2.4 million units in its first week. However, Backstreet Boys achieved success in some countries that were traditionally hard to penetrate for Western artists, which suggests that they may have been more popular overall.', type='text')]
+# response.message.content[0].text
+Both NSYNC and Backstreet Boys were huge in the US at the turn of the millennium. However, Backstreet Boys achieved a greater level of success than NSYNC. They dominated the music business for a few years all over the world, including in some countries that were traditionally hard to penetrate for Western artists. Their success included massive album sales across the globe, great singles sales, plenty of chart-topping releases, hugely hyped tours and tremendous media coverage.
 
 # response.message.citations (truncated for brevity)
 [Citation(start=36, 
-          end=84, 
-          text='extremely popular at the turn of the millennium.', 
-          sources=[Source_Document(id='1', document={'id': '1', 'snippet': "↓ Skip to Main Content\n\nMusic industry – One step closer ...", 'title': 'CSPC: NSYNC Popularity Analysis - ChartMasters'}, type='document')]), 
-
-Citation(start=110, 
-          end=146, 
-          text='massive album sales across the globe', 
-          sources=[Source_Document(id='0', document={'id': '0', 'snippet': '↓ Skip to Main Content\n\nMusic industry – One step closer ...', 'title': 'CSPC: Backstreet Boys Popularity Analysis - ChartMasters'}, type='document')]), 
-Citation(start=148, 
-          end=167, 
-          text='great singles sales', 
-          sources=[Source_Document(id='0', document={'id': '0', 'snippet': '↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: Backstreet ...', 'title': 'CSPC: Backstreet Boys Popularity Analysis - ChartMasters'}, type='document')]), 
-Citation(start=169, 
-          end=201, 
-          ...
+          end=81, 
+          text='huge in the US at the turn of the millennium.', 
+          sources=[DocumentSource(type='document', id='doc:1', document={'id': 'doc:1', 'snippet': "↓ Skip to Main Content\n\nMusic industry – One step closer ...", 'title': 'CSPC: NSYNC Popularity Analysis - ChartMasters'})]),
+Citation(start=107, 
+          end=154, 
+          text='achieved a greater level of success than NSYNC.', 
+          sources=[DocumentSource(type='document', id='doc:2', document={'id': 'doc:2', 'snippet': ' 1997, 1998, 2000 and 2001 also rank amongst some of the very best ...', 'title': 'CSPC: Backstreet Boys Popularity Analysis - ChartMasters'})]),
+Citation(start=160, 
+        end=223,
+        ...
 ...]
 
 ```
