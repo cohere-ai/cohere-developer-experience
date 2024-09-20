@@ -44,71 +44,56 @@ co_v2 = cohere.ClientV2(api_key="<YOUR API KEY>")
 **v1**
 
 ```python PYTHON
-preamble = "You respond in concise sentences."
+res = co_v1.chat(
+	    model="command-r-plus-08-2024",
+	    preamble="You respond in concise sentences.",
+	    chat_history=[
+	        {
+	            "role": "user",
+	            "message": "Hello"
+	        },
+	        {
+	            "role": "chatbot",
+	            "message": "Hi, how can I help you today?"
+	        }
+	    ],
+	    message="I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates?")
 
-message_turn1 = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
-
-res_turn1 = co_v1.chat(model="command-r-plus-08-2024",
-               preamble=preamble,
-               message=message_turn1)
-
-message_turn2 = "Make it shorter"
-
-res_turn2 = co_v1.chat(model="command-r-plus-08-2024",
-                preamble=preamble,
-                message=message_turn2,
-                chat_history=res_turn1.chat_history)
-
-for item in res_turn2.chat_history:
-    print(item, "\n")
+print(res.text)
 ```
 
 ```
-message="I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates." tool_calls=None role='USER' 
-
-message='"Hi, I\'m [Your Name] and I\'m thrilled to join the Co1t team today as a [Your Role], eager to contribute my skills and ideas to the company\'s growth and success."' tool_calls=None role='CHATBOT' 
-
-message='Make it shorter' tool_calls=None role='USER' 
-
-message='"Excited to join Co1t today as a [Your Role] and looking forward to collaborating with the team."' tool_calls=None role='CHATBOT' 
+Excited to join the team at Co1t, where I look forward to contributing my skills and collaborating with everyone to drive innovation and success.
 ```
 
 **v2**
 
 ```python PYTHON
-system_message = "You respond in concise sentences."
+res = co_v2.chat(
+    model="command-r-plus-08-2024",
+    messages=[
+        {
+            "role": "system",
+            "content": "You respond in concise sentences."
+        },
+        {
+            "role": "user",
+            "content": "Hello"
+        },
+        {
+            "role": "assistant",
+            "content": "Hi, how can I help you today?"
+        },
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
+        }
+    ])
 
-message_turn1 = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
-
-messages = [{'role': 'system', 'content': system_message},
-           {'role': 'user', 'content': message_turn1}]
-
-res_turn1 = co_v2.chat(model="command-r-plus-08-2024",
-                    messages=messages)
-
-message_turn2 = "Make it shorter"
-
-messages.extend([{'role': 'assistant', 'content': res_turn1.message.content[0].text},
-                 {'role': 'user', 'content': message_turn2}])
-
-res_turn2 = co_v2.chat(model="command-r-plus-08-2024",
-                          messages=messages)
-
-messages.append({'role': 'assistant', 'content': res_turn2.message.content[0].text})
-
-for message in messages:
-    print(message, "\n")
+print(res.message.content[0].text)
 ```
 ```
-{'role': 'system', 'content': 'You respond in concise sentences.'} 
-
-{'role': 'user', 'content': "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."} 
-
-{'role': 'assistant', 'content': '"Thrilled to join the Co1t team and looking forward to contributing my skills and ideas to drive innovation and success."'} 
-
-{'role': 'user', 'content': 'Make it shorter'} 
-
-{'role': 'assistant', 'content': '"Excited to join Co1t, ready to dive in and make an impact!"'} 
+Excited to join the team at Co1t, bringing my passion for innovation and a background in [your expertise] to contribute to the company's success!
 ```  
 
 ## Response content
