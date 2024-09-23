@@ -1,14 +1,13 @@
 ---
-title: "Trains and deploys a fine-tuned model."
-slug: "docs/classify-starting-the-training"
-
+title: Training and deploying a fine-tuned Cohere model.
+slug: docs/classify-starting-the-training
 hidden: false
-description: "This document provides a guide on how to start training a fine-tuning model for Classification using both the Web UI and the Python SDK, including steps for creating a model, uploading data, previewing data, starting training, and calling the fine-tuned model."
-image: "../../../assets/images/3fe7824-cohere_meta_image.jpg"  
-keywords: "classification models, fine-tuning language models, fine-tuning"
-
-createdAt: "Fri Nov 10 2023 18:14:01 GMT+0000 (Coordinated Universal Time)"
-updatedAt: "Thu Jun 13 2024 13:10:55 GMT+0000 (Coordinated Universal Time)"
+description: >-
+  Fine-tune classification models with Cohere's Web UI or Python SDK using custom datasets.
+image: ../../../assets/images/3fe7824-cohere_meta_image.jpg
+keywords: 'classification models, fine-tuning language models, fine-tuning'
+createdAt: 'Fri Nov 10 2023 18:14:01 GMT+0000 (Coordinated Universal Time)'
+updatedAt: 'Thu Jun 13 2024 13:10:55 GMT+0000 (Coordinated Universal Time)'
 ---
 In this section, we will walk through how you can start training a fine-tuning model for Classification with both the [Web UI](/docs/fine-tuning-with-the-web-ui) and the Python SDK.
 
@@ -85,7 +84,7 @@ Text classification is one of the most common language understanding tasks. A lo
 
 ## Create a New Fine-tuned Model
 
-In addition to using the Web UI for fine-tuning models, customers can also kick off fine-tuning jobs programmatically using the [Cohere Python SDK](https://pypi.org/project/cohere/). This can be useful for fine-tunes that happen on a regular cadence, such as nightly jobs on newly-acquired data.
+In addition to using the Web UI for fine-tuning models, customers can also kick off fine-tuning jobs programmatically using the [Cohere Python SDK](https://pypi.org/project/cohere/). This can be useful for fine-tuning jobs that happen on a regular cadence, such as nightly jobs on newly-acquired data.
 
 Using `co.finetuning.create_finetuned_model()`, you can create a fine-tuned model using either a single-label or multi-label dataset.
 
@@ -93,7 +92,7 @@ Using `co.finetuning.create_finetuned_model()`, you can create a fine-tuned mode
 
 Here are some example code snippets for you to use.
 
-### Starting a Single-label Fine-tune
+### Starting a single-label fine-tuning job
 
 ```python PYTHON
 # create dataset
@@ -103,8 +102,8 @@ single_label_dataset = co.datasets.create(name="single-label-dataset",
                                           parse_info=ParseInfo(delimiter=",")) # parse_info is optional
 print(single_label_dataset.await_validation())
                                               
-# start the fine-tune job using this dataset
-finetune = co.finetuning.create_finetuned_model(
+# start the fine-tuning job using this dataset
+create_response = co.finetuning.create_finetuned_model(
   request=FinetunedModel(
     name="single-label-ft",
     settings=Settings(
@@ -116,10 +115,10 @@ finetune = co.finetuning.create_finetuned_model(
   ),
 )
 
-print(f"fine-tune ID: {finetune.id}, fine-tune status: {finetune.status}")
+print(f"fine-tuned model ID: {create_response.finetuned_model.id}, fine-tuned model status: {create_response.finetuned_model.status}")
 ```
 
-### Starting a Multi-label Fine-tune
+### Starting a multi-label fine-tuning job
 
 ```python PYTHON
 # create dataset
@@ -129,8 +128,8 @@ multi_label_dataset = co.create_dataset(name="multi-label-dataset",
   
 print(multi_label_dataset.await_validation())
                                               
-# start the fine-tune job using this dataset
-finetune = co.finetuning.create_finetuned_model(
+# start the fine-tuning job using this dataset
+create_response = co.finetuning.create_finetuned_model(
   request=FinetunedModel(
     name="single-label-ft",
     settings=Settings(
@@ -142,21 +141,20 @@ finetune = co.finetuning.create_finetuned_model(
   ),
 )
 
-print(f"fine-tune ID: {finetune.id}, fine-tune status: {finetune.status}")
+print(f"fine-tuned model ID: {create_response.finetuned_model.id}, fine-tuned model status: {create_response.finetuned_model.status}")
 ```
 
-### Calling a fine-tune
+### Calling a fine-tuned model
 
 ```python PYTHON
 import cohere
 
 co = cohere.Client('Your API key')
-# get the custom model object
-ft = co.finetuning.get_finetuned_model(finetune.finetuned_model.id)
+get_response = co.finetuning.get_finetuned_model(create_response.finetuned_model.id)
 
 response = client.classify(
     inputs=["classify this!"],
-    model=ft.id+"-ft",
+    model=get_response.finetuned_model.id+"-ft",
 )
 
 # Printing the model's response.
