@@ -97,7 +97,7 @@ async function checkMDXFiles(dirPath) {
   console.log(`Total invalid files: ${totalFilesInvalid}`);
 
   if (!allFilesValid) {
-    console.log(
+    console.error(
       "Some files have invalid or missing descriptions. Meta description needing to be 50-160 characters"
     );
     process.exit(1); // Fail if any file is invalid
