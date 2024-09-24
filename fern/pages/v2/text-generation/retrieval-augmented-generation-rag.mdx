@@ -122,43 +122,53 @@ There are different possible approaches to do this. In this example, we'll take 
 
 Here, we build a tool that takes a user query and returns a list of relevant document snippets for that query. The tool can generate zero, one or multiple search queries depending on the user query.
 
-We recommend using the v1 API for this functionality in order to leverage the `force_single_step` feature. Note: support for search query generation in v2 will be coming soon.
-
 ```python PYTHON
-co_v1 = cohere.Client(api_key="<YOUR API KEY>")
 
 message = "Who is more popular: Nsync or Backstreet Boys?"
 
 # Define the query generation tool
 query_gen_tool = [
-{
-    "name": "internet_search",
-    "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
-    "parameter_definitions": {
-        "queries": {
-            "description": "a list of queries to search the internet with.",
-            "type": "List[str]",
-            "required": True
+    {
+        "type": "function",
+        "function": {
+            "name": "internet_search",
+            "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "queries": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "a list of queries to search the internet with."
+                    }
+                },
+                "required": ["queries"]
+            }
         }
     }
-}]
+]
 
-# Define a preamble to optimize search query generation
+# Define a system message to optimize search query generation
 instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
 
 # Generate search queries (if any)
+import json
+
 search_queries = []
 
-response = co_v1.chat(
-    preamble=instructions,
+res = co.chat(
     model="command-r-08-2024",
-    message=message,
-    force_single_step=True,
+    messages=[{"role": "system", "content": instructions},
+              {"role": "user", "content": message}],
     tools=query_gen_tool,
 )
 
-if response.tool_calls:
-    search_queries = response.tool_calls[0].parameters["queries"]
+if res.message.tool_calls:
+    for tc in res.message.tool_calls:
+        queries = json.loads(tc.function.arguments)["queries"]
+        search_queries.extend(queries)
 
 print(search_queries)
 ```
