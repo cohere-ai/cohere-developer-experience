@@ -138,15 +138,13 @@ query_gen_tool = [
                 "properties": {
                     "queries": {
                         "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": "a list of queries to search the internet with."
+                        "items": {"type": "string"},
+                        "description": "a list of queries to search the internet with.",
                     }
                 },
-                "required": ["queries"]
-            }
-        }
+                "required": ["queries"],
+            },
+        },
     }
 ]
 
@@ -160,8 +158,10 @@ search_queries = []
 
 res = co.chat(
     model="command-r-08-2024",
-    messages=[{"role": "system", "content": instructions},
-              {"role": "user", "content": message}],
+    messages=[
+        {"role": "system", "content": instructions},
+        {"role": "user", "content": message},
+    ],
     tools=query_gen_tool,
 )
 
@@ -190,6 +190,18 @@ instructions = "Write a search query that will find helpful information for answ
 ['NSync popularity', 'Backstreet Boys popularity', 'NSync vs Backstreet Boys popularity comparison', 'Which boy band is more popular NSync or Backstreet Boys', 'NSync and Backstreet Boys fan base size comparison', 'Who has sold more albums NSync or Backstreet Boys', 'NSync and Backstreet Boys chart performance comparison']
 ```
 
+You can then customize the preamble and/or the tool definition to generate queries that are more relevant to your use case.
+
+For example, you can customize the preamble to encourage a longer list of search queries to be generated.
+
+```python PYTHON
+instructions_verbose = "Write many search queries that will find helpful information for answering the user's question accurately. Always write a very long list of at least 7 search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer.
+```
+```
+# Sample response
+['NSync popularity', 'Backstreet Boys popularity', 'NSync vs Backstreet Boys popularity comparison', 'Which boy band is more popular NSync or Backstreet Boys', 'NSync and Backstreet Boys fan base size comparison', 'Who has sold more albums NSync or Backstreet Boys', 'NSync and Backstreet Boys chart performance comparison']
+```
+
 #### Step 2: Fetching relevant documents
 
 The next step is to [fetch documents](https://docs.cohere.com/docs/documents-and-citations) from the relevant data source using the generated search queries. For example, to answer the question about the two pop sensations _NSYNC_ and _Backstreet Boys_, one might want to use an API from a web search engine, and fetch the contents of the websites listed at the top of the search results.
@@ -206,31 +218,31 @@ In the final step, we will be calling the Chat API again, but this time passing 
 import cohere
 co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
-[
-  {
-    "data": {
-      "title": "CSPC: Backstreet Boys Popularity Analysis - ChartMasters",
-      "snippet": "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: Backstreet Boys Popularity Analysis\n\nHernán Lopez Posted on February 9, 2017 Posted in CSPC 72 Comments Tagged with Backstreet Boys, Boy band\n\nAt one point, Backstreet Boys defined success: massive albums sales across the globe, great singles sales, plenty of chart topping releases, hugely hyped tours and tremendous media coverage.\n\nIt is true that they benefited from extraordinarily good market conditions in all markets. After all, the all-time record year for the music business, as far as revenues in billion dollars are concerned, was actually 1999. That is, back when this five men group was at its peak."
-    }
-  },
-  {
-    "data": {
-      "title": "CSPC: NSYNC Popularity Analysis - ChartMasters",
-      "snippet": "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: NSYNC Popularity Analysis\n\nMJD Posted on February 9, 2018 Posted in CSPC 27 Comments Tagged with Boy band, N'Sync\n\nAt the turn of the millennium three teen acts were huge in the US, the Backstreet Boys, Britney Spears and NSYNC. The latter is the only one we haven’t study so far. It took 15 years and Adele to break their record of 2,4 million units sold of No Strings Attached in its first week alone.\n\nIt wasn’t a fluke, as the second fastest selling album of the Soundscan era prior 2015, was also theirs since Celebrity debuted with 1,88 million units sold."
-    }
-  },
-  {
-    "data": {
-      "title": "CSPC: Backstreet Boys Popularity Analysis - ChartMasters",
-      "snippet": " 1997, 1998, 2000 and 2001 also rank amongst some of the very best years.\n\nYet the way many music consumers – especially teenagers and young women’s – embraced their output deserves its own chapter. If Jonas Brothers and more recently One Direction reached a great level of popularity during the past decade, the type of success achieved by Backstreet Boys is in a completely different level as they really dominated the business for a few years all over the world, including in some countries that were traditionally hard to penetrate for Western artists.\n\nWe will try to analyze the extent of that hegemony with this new article with final results which will more than surprise many readers."
-    }
-  },
-  {
-    "data": {
-      "title": "CSPC: NSYNC Popularity Analysis - ChartMasters",
-      "snippet": " Was the teen group led by Justin Timberlake really that big? Was it only in the US where they found success? Or were they a global phenomenon?\n\nAs usual, I’ll be using the Commensurate Sales to Popularity Concept in order to relevantly gauge their results. This concept will not only bring you sales information for all NSYNC‘s albums, physical and download singles, as well as audio and video streaming, but it will also determine their true popularity. If you are not yet familiar with the CSPC method, the next page explains it with a short video. I fully recommend watching the video before getting into the sales figures."
-    }
-  }
+documents = [
+    {
+        "data": {
+            "title": "CSPC: Backstreet Boys Popularity Analysis - ChartMasters",
+            "snippet": "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: Backstreet Boys Popularity Analysis\n\nHernán Lopez Posted on February 9, 2017 Posted in CSPC 72 Comments Tagged with Backstreet Boys, Boy band\n\nAt one point, Backstreet Boys defined success: massive albums sales across the globe, great singles sales, plenty of chart topping releases, hugely hyped tours and tremendous media coverage.\n\nIt is true that they benefited from extraordinarily good market conditions in all markets. After all, the all-time record year for the music business, as far as revenues in billion dollars are concerned, was actually 1999. That is, back when this five men group was at its peak.",
+        }
+    },
+    {
+        "data": {
+            "title": "CSPC: NSYNC Popularity Analysis - ChartMasters",
+            "snippet": "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: NSYNC Popularity Analysis\n\nMJD Posted on February 9, 2018 Posted in CSPC 27 Comments Tagged with Boy band, N'Sync\n\nAt the turn of the millennium three teen acts were huge in the US, the Backstreet Boys, Britney Spears and NSYNC. The latter is the only one we haven’t study so far. It took 15 years and Adele to break their record of 2,4 million units sold of No Strings Attached in its first week alone.\n\nIt wasn’t a fluke, as the second fastest selling album of the Soundscan era prior 2015, was also theirs since Celebrity debuted with 1,88 million units sold.",
+        }
+    },
+    {
+        "data": {
+            "title": "CSPC: Backstreet Boys Popularity Analysis - ChartMasters",
+            "snippet": " 1997, 1998, 2000 and 2001 also rank amongst some of the very best years.\n\nYet the way many music consumers – especially teenagers and young women’s – embraced their output deserves its own chapter. If Jonas Brothers and more recently One Direction reached a great level of popularity during the past decade, the type of success achieved by Backstreet Boys is in a completely different level as they really dominated the business for a few years all over the world, including in some countries that were traditionally hard to penetrate for Western artists.\n\nWe will try to analyze the extent of that hegemony with this new article with final results which will more than surprise many readers.",
+        }
+    },
+    {
+        "data": {
+            "title": "CSPC: NSYNC Popularity Analysis - ChartMasters",
+            "snippet": " Was the teen group led by Justin Timberlake really that big? Was it only in the US where they found success? Or were they a global phenomenon?\n\nAs usual, I’ll be using the Commensurate Sales to Popularity Concept in order to relevantly gauge their results. This concept will not only bring you sales information for all NSYNC‘s albums, physical and download singles, as well as audio and video streaming, but it will also determine their true popularity. If you are not yet familiar with the CSPC method, the next page explains it with a short video. I fully recommend watching the video before getting into the sales figures.",
+        }
+    },
 ]
 
 # Add the user message
@@ -240,7 +252,8 @@ messages = [{"role": "user", "content": message}]
 response = co.chat(
     model="command-r-plus-08-2024",
     messages=messages,
-    documents=documents)
+    documents=documents
+)
 
 print(response.message.content[0].text)
 

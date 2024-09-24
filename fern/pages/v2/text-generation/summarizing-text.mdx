@@ -36,8 +36,10 @@ Rental companies are still seeing growth, but at a more moderate level."""
 
 message = f"Generate a concise summary of this text\n{document}"
 
-response = co.chat(model="command-r-plus-08-2024",
-                   messages=[{"role": "user", "content": message}])
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=[{"role": "user", "content": message}]
+)
 
 
 print(response.message.content[0].text)
@@ -62,8 +64,10 @@ You can further control the output by defining the length of the summary in your
 ```python PYTHON
 message = f"Summarize this text in one sentence\n{document}"
 
-response = co.chat(model="command-r-plus-08-2024",
-                   messages=[{"role": "user", "content": message}])
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=[{"role": "user", "content": message}]
+)
 
 print(response.message.content[0].text)
 ```
@@ -81,8 +85,10 @@ You can also specify the length in terms of word count.
 ```python PYTHON
 message = f"Summarize this text in less than 10 words\n{document}"
 
-response = co.chat(model="command-r-plus-08-2024",
-                   messages=[{"role": "user", "content": message}])
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=[{"role": "user", "content": message}]
+)
 
 print(response.message.content[0].text)
 ```
@@ -100,8 +106,10 @@ Instead of generating summaries as paragraphs, you can also prompt the model to 
 ```python PYTHON
 message = f"Generate a concise summary of this text as bullet points\n{document}"
 
-response = co.chat(model="command-r-plus-08-2024",
-                   messages=[{"role": "user", "content": message}])
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=[{"role": "user", "content": message}]
+)
 
 print(response.message.content[0].text)
 ```
@@ -128,21 +136,21 @@ Here is a chunked version of the document. (we don’t cover the chunking proces
 
 ```python PYTHON
 document_chunked = [
-  {
-    "data": {
-      "text": "Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA)."
-    }
-  },
-  {
-    "data": {
-      "text": "“Rental is going back to ‘normal,’ but normal means that strategy matters again - geography matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you just showed up with equipment and you made money."
-    }
-  },
-  {
-    "data": {
-      "text": "“Everybody was breaking records, from the national rental chains to the smallest rental companies; everybody was having record years, and everybody was raising prices. The conversation was, ‘How much are you up?’ And now, the conversation is changing to ‘What’s my market like?’”"
-    }
-  }
+    {
+        "data": {
+            "text": "Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA)."
+        }
+    },
+    {
+        "data": {
+            "text": "“Rental is going back to ‘normal,’ but normal means that strategy matters again - geography matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you just showed up with equipment and you made money."
+        }
+    },
+    {
+        "data": {
+            "text": "“Everybody was breaking records, from the national rental chains to the smallest rental companies; everybody was having record years, and everybody was raising prices. The conversation was, ‘How much are you up?’ And now, the conversation is changing to ‘What’s my market like?’”"
+        }
+    },
 ]
 ```
 
@@ -150,10 +158,7 @@ It also helps to create a custom system message to prime the model about the tas
 
 ```python PYTHON
 system_message = """## Task and Context
-You will receive a series of text fragments from a document that are presented in chronological order. \
-As the assistant, you must generate responses to user's requests based on the information given in the fragments. \
-Ensure that your responses are accurate and truthful, and that you reference your sources where appropriate to answer \
-the queries, regardless of their complexity."""
+You will receive a series of text fragments from a document that are presented in chronological order. As the assistant, you must generate responses to user's requests based on the information given in the fragments. Ensure that your responses are accurate and truthful, and that you reference your sources where appropriate to answer the queries, regardless of their complexity."""
 
 ```
 Other than the custom system message, the only change to the Chat endpoint call is passing the document parameter containing the list of document chunks.
@@ -163,17 +168,24 @@ Aside from displaying the actual summary, we can display the citations as as wel
 ```python PYTHON
 message = f"Summarize this text in one sentence."
 
-response = co.chat(model="command-r-plus-08-2024",
-                   documents=document_chunked,
-                   messages=[{"role": "system", "content": system_message},
-                             {"role": "user", "content": message}])
+response = co.chat(
+    model="command-r-plus-08-2024",
+    documents=document_chunked,
+    messages=[
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": message},
+    ],
+)
 
 print(response.message.content[0].text)
 
 if response.message.citations:
     print("\nCITATIONS:")
     for citation in response.message.citations:
-        print(f"Start: {citation.start} | End: {citation.end} | Text: '{citation.text}'", end ="")
+        print(
+            f"Start: {citation.start} | End: {citation.end} | Text: '{citation.text}'",
+            end="",
+        )
         if citation.sources:
             for source in citation.sources:
                 print(f"| {source.id}")
@@ -193,39 +205,6 @@ Start: 162 | End: 221 | Text: 'focus on strategy, geography, fleet mix, and cust
 | doc:1:2
 ```
 
-## Migrating from Generate to Chat Endpoint
-
-This guide outlines how to migrate from Generate to Chat; the biggest difference is simply the need to replace the `prompt` argument with `message`, but there's also no model default, so you'll have to specify a model.
-
-```python PYTHON
-# Before
-
-co.generate(
-  prompt="""Write a short summary from the following text in bullet point format, in different
-  words.
-  
-  Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA).
-  “Rental is going back to ‘normal,’ but normal means that strategy matters again - geography matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you just showed up with equipment and you made money.
-  “Everybody was breaking records, from the national rental chains to the smallest rental companies; everybody was having record years, and everybody was raising prices. The conversation was, ‘How much are you up?’ And now, the conversation is changing to ‘What’s my market like?’”
-  Nickell stressed this shouldn’t be taken as a pessimistic viewpoint. It’s simply coming back down to Earth from unprecedented circumstances during the time of Covid. Rental companies are still seeing growth, but at a more moderate level.
-  """
-)
-
-# After
-co.chat(
-  model="command-r-plus-08-2024", # or any model of your choice
-  messages=[{"role": "user", "content": """Write a short summary from the following text in bullet point format,
-  in different words.
-  
-  Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA).
-  “Rental is going back to ‘normal,’ but normal means that strategy matters again - geography matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you just showed up with equipment and you made money.
-  “Everybody was breaking records, from the national rental chains to the smallest rental companies; everybody was having record years, and everybody was raising prices. The conversation was, ‘How much are you up?’ And now, the conversation is changing to ‘What’s my market like?’”
-  Nickell stressed this shouldn’t be taken as a pessimistic viewpoint. It’s simply coming back down to Earth from unprecedented circumstances during the time of Covid. Rental companies are still seeing growth, but at a more moderate level.
-  """}],
-)
-
-```
-
 ## Migration from Summarize to Chat Endpoint
 
 To use the Command R/R+ models for summarization, we recommend using the Chat endpoint. This guide outlines how to migrate from the Summarize endpoint to the Chat endpoint.
@@ -234,10 +213,10 @@ To use the Command R/R+ models for summarization, we recommend using the Chat en
 # Before
 
 co.summarize(
-  format="bullets",
-  length="short",
-  extractiveness="low",
-  text="""Equipment rental in North America is predicted to “normalize” going into 2024, according
+    format="bullets",
+    length="short",
+    extractiveness="low",
+    text="""Equipment rental in North America is predicted to “normalize” going into 2024, according
   to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA).
   “Rental is going back to ‘normal,’ but normal means that strategy matters again - geography
   matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you
@@ -248,20 +227,26 @@ co.summarize(
   Nickell stressed this shouldn’t be taken as a pessimistic viewpoint. It’s simply coming back
   down to Earth from unprecedented circumstances during the time of Covid. Rental companies are
   still seeing growth, but at a more moderate level.
-  """
+  """,
 )
 
 # After
-co.chat(
-  model="command-r-plus-08-2024", # or any model of your choice
-  messages=[{"role": "user", "content": """Write a short summary from the following text in bullet point format,
-  in different words.
-  
-  Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA).
-  “Rental is going back to ‘normal,’ but normal means that strategy matters again - geography matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you just showed up with equipment and you made money.
-  “Everybody was breaking records, from the national rental chains to the smallest rental companies; everybody was having record years, and everybody was raising prices. The conversation was, ‘How much are you up?’ And now, the conversation is changing to ‘What’s my market like?’”
-  Nickell stressed this shouldn’t be taken as a pessimistic viewpoint. It’s simply coming back down to Earth from unprecedented circumstances during the time of Covid. Rental companies are still seeing growth, but at a more moderate level.
-  """}],
+co.summarize(
+    format="bullets",
+    length="short",
+    extractiveness="low",
+    text="""Equipment rental in North America is predicted to “normalize” going into 2024, according
+  to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA).
+  “Rental is going back to ‘normal,’ but normal means that strategy matters again - geography
+  matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you
+  just showed up with equipment and you made money.
+  “Everybody was breaking records, from the national rental chains to the smallest rental companies;
+  everybody was having record years, and everybody was raising prices. The conversation was, ‘How
+  much are you up?’ And now, the conversation is changing to ‘What’s my market like?’”
+  Nickell stressed this shouldn’t be taken as a pessimistic viewpoint. It’s simply coming back
+  down to Earth from unprecedented circumstances during the time of Covid. Rental companies are
+  still seeing growth, but at a more moderate level.
+  """,
 )
 
 ```

@@ -79,6 +79,38 @@ The developer provides the sales database and the products database to the model
 Observe that, for each tool, the developer describes the tool name, description, and inputs. Each input can have a type and can be marked as required.
 
 ```python PYTHON
+# Mock database containing daily sales reports
+sales_database = {
+    "2023-09-28": {
+        "total_sales_amount": 5000,
+        "total_units_sold": 100,
+    },
+    "2023-09-29": {
+        "total_sales_amount": 10000,
+        "total_units_sold": 250,
+    },
+    "2023-09-30": {
+        "total_sales_amount": 8000,
+        "total_units_sold": 200,
+    },
+}
+
+# Mock product catalog
+product_catalog = {
+    "Electronics": [
+        {"product_id": "E1001", "name": "Smartphone", "price": 500, "stock_level": 20},
+        {"product_id": "E1002", "name": "Laptop", "price": 1000, "stock_level": 15},
+        {"product_id": "E1003", "name": "Tablet", "price": 300, "stock_level": 25},
+    ],
+    "Clothing": [
+        {"product_id": "C1001", "name": "T-Shirt", "price": 20, "stock_level": 100},
+        {"product_id": "C1002", "name": "Jeans", "price": 50, "stock_level": 80},
+        {"product_id": "C1003", "name": "Jacket", "price": 100, "stock_level": 40},
+    ],
+}
+```
+
+```python PYTHON
 # Function definitions
 import json
 import cohere
@@ -91,11 +123,11 @@ def query_daily_sales_report(day: str) -> dict:
     report = sales_database.get(day, {})
     if report:
         return {
-            'date': day,
-            'summary': f"Total Sales Amount: {report['total_sales_amount']}, Total Units Sold: {report['total_units_sold']}"
+            "date": day,
+            "summary": f"Total Sales Amount: {report['total_sales_amount']}, Total Units Sold: {report['total_units_sold']}",
         }
     else:
-        return {'date': day, 'summary': 'No sales data available for this day.'}
+        return {"date": day, "summary": "No sales data available for this day."}
 
 
 def query_product_catalog(category: str) -> dict:
@@ -103,15 +135,12 @@ def query_product_catalog(category: str) -> dict:
     Function to retrieve products for the given category
     """
     products = product_catalog.get(category, [])
-    return {
-        'category': category,
-        'products': products
-    }
+    return {"category": category, "products": products}
 
 
 functions_map = {
     "query_daily_sales_report": query_daily_sales_report,
-    "query_product_catalog": query_product_catalog
+    "query_product_catalog": query_product_catalog,
 }
 ```
 
@@ -128,12 +157,12 @@ tools = [
                 "properties": {
                     "day": {
                         "type": "string",
-                        "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD."
+                        "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
                     }
                 },
-                "required": ["day"]
-            }
-        }
+                "required": ["day"],
+            },
+        },
     },
     {
         "type": "function",
@@ -145,13 +174,13 @@ tools = [
                 "properties": {
                     "category": {
                         "type": "string",
-                        "description": "Retrieves product information data for all products in this category."
+                        "description": "Retrieves product information data for all products in this category.",
                     }
                 },
-                "required": ["category"]
-            }
-        }
-    }
+                "required": ["category"],
+            },
+        },
+    },
 ]
 
 ```
@@ -168,8 +197,10 @@ Unless the user asks for a different style of answer, you should answer in full 
 # user request
 message = "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
 
-messages=[{"role": "system", "content": system_message},
-          {"role": "user", "content": message}]
+messages = [
+    {"role": "system", "content": system_message},
+    {"role": "user", "content": message},
+]
 ```
 
 ### Step 2
@@ -177,21 +208,25 @@ The model’s response contains the tool plan, a list of appropriate tools to ca
 
 ```python PYTHON
 
-response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
-)
+response = co.chat(model="command-r-plus-08-2024",
+                   messages=messages,
+                   tools=tools)
 
 print("The model recommends doing the following tool calls:\n")
 print("Tool plan:")
-print(response.message.tool_plan,"\n")
+print(response.message.tool_plan, "\n")
 print("Tool calls:")
 for tc in response.message.tool_calls:
     print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
-    
+
 # append the chat history
-messages.append({'role': 'assistant', 'tool_calls': response.message.tool_calls, 'tool_plan': response.message.tool_plan})
+messages.append(
+    {
+        "role": "assistant",
+        "tool_calls": response.message.tool_calls,
+        "tool_plan": response.message.tool_plan,
+    }
+)
 ```
 
 ```
@@ -217,11 +252,13 @@ tool_content = []
 # Iterate over the tool calls generated by the model
 for tc in response.message.tool_calls:
     # here is where you would call the tool recommended by the model, using the parameters recommended by the model
-    tool_result= functions_map[tc.function.name](**json.loads(tc.function.arguments))
+    tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
     # store the output in a list
     tool_content.append(json.dumps(tool_result))
     # append the chat history
-    messages.append({'role': 'tool', 'tool_call_id': tc.id, 'tool_content': tool_content}) 
+    messages.append(
+        {"role": "tool", "tool_call_id": tc.id, "tool_content": tool_content}
+    )
 
 print("Tool results that will be fed back to the model in step 4:")
 for result in tool_content:
@@ -307,7 +344,7 @@ These citations are optional — you can decide to ignore them. Having said that
 ```python PYTHON
 print("Citations that support the final answer:")
 for citation in response.message.citations:
-  print(f"Start: {citation.start} | End: {citation.end} | Text: '{citation.text}'")
+    print(f"Start: {citation.start} | End: {citation.end} | Text: '{citation.text}'")
 ```
 ```
 # SAMPLE RESPONSE
