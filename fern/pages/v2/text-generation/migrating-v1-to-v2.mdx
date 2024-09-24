@@ -158,7 +158,7 @@ for chunk in res:
 message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
 
 res = co_v2.chat_stream(model="command-r-plus-08-2024",
-                        messages=[{'role': 'user', 'content': message}])
+                        messages=[{"role": "user", "content": message}])
 
 for chunk in res: 
     if chunk:
@@ -223,11 +223,9 @@ documents_v2 = [
 # The user query
 message = "Are there fitness-related benefits?"
 
-messages = [{'role': 'user', 'content': message}]
-
 # Generate the response
 res_v2 = co_v2.chat(model="command-r-plus-08-2024",
-                    messages=messages,
+                    messages=[{"role": "user", "content": message}],
                     documents=documents_v2)
 
 print(res_v2.message.content[0].text)
@@ -323,23 +321,29 @@ Web search functionality is supported via tools.
 ```python PYTHON
 # Any search engine can be used. This example uses the Tavily API.
 from tavily import TavilyClient
-tavily_client = TavilyClient(api_key=os.environ['TAVILY_API_KEY'])
+
+tavily_client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
+
 
 # Create a web search function
 def web_search(queries: list[str]) -> list[dict]:
-    
+
     documents = []
-    
+
     for query in queries:
         response = tavily_client.search(query, max_results=2)
-    
-        results = [{'title': r['title'], 'content': r['content'], 'url': r['url']} for r in response['results']]    
+
+        results = [
+            {"title": r["title"], "content": r["content"], "url": r["url"]}
+            for r in response["results"]
+        ]
 
         for idx, result in enumerate(results):
-            document = {'id': str(idx), 'data': result}
+            document = {"id": str(idx), "data": result}
             documents.append(document)
-    
-    return {"documents" : documents}
+
+    return {"documents": documents}
+
 
 # Define the web search tool
 web_search_tool = [
@@ -353,15 +357,13 @@ web_search_tool = [
                 "properties": {
                     "queries": {
                         "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": "a list of queries to search the internet with."
+                        "items": {"type": "string"},
+                        "description": "a list of queries to search the internet with.",
                     }
                 },
-                "required": ["queries"]
-            }
-        }
+                "required": ["queries"],
+            },
+        },
     }
 ]
 
@@ -371,46 +373,47 @@ query = "who won euro 2024"
 # Define a preamble to optimize search query generation
 instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
 
-messages = [{"role": "system", "content": instructions},
-            {"role": "user", "content": query}]
+messages = [
+    {"role": "system", "content": instructions},
+    {"role": "user", "content": query},
+]
 
-
-model="command-r-plus-08-2024"
+model = "command-r-plus-08-2024"
 
 # Generate search queries (if any)
-response = co_v2.chat(
-    model=model,
-    messages=messages,
-    tools=web_search_tool
-)
+response = co_v2.chat(model=model, messages=messages, tools=web_search_tool)
 
 search_queries = []
 
 while response.message.tool_calls:
-        
+
     print("Tool plan:")
-    print(response.message.tool_plan,"\n")
+    print(response.message.tool_plan, "\n")
     print("Tool calls:")
     for tc in response.message.tool_calls:
         print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
-    print("="*50)
+    print("=" * 50)
 
-    messages.append({"role": "assistant", "tool_calls": response.message.tool_calls, "tool_plan": response.message.tool_plan})        
-    
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_calls": response.message.tool_calls,
+            "tool_plan": response.message.tool_plan,
+        }
+    )
+
     # Step 3: Get tool results
     tool_content = []
     for idx, tc in enumerate(response.message.tool_calls):
         tool_result = web_search(**json.loads(tc.function.arguments))
         tool_content.append(json.dumps(tool_result))
-        messages.append({"role": "tool", "tool_call_id": tc.id, "tool_content": tool_content})
-    
-    # Step 4: Generate response and citations 
-    response = co_v2.chat(
-        model=model,
-        messages=messages,
-        tools=web_search_tool
-    )
-    
+        messages.append(
+            {"role": "tool", "tool_call_id": tc.id, "tool_content": tool_content}
+        )
+
+    # Step 4: Generate response and citations
+    response = co_v2.chat(model=model, messages=messages, tools=web_search_tool)
+
 print(response.message.content[0].text)
 ```
 ```
@@ -469,11 +472,11 @@ Yes, we offer gym memberships, on-site yoga classes, and comprehensive health in
 ```python PYTHON
 message = "Are there fitness-related benefits?"
 
-messages = [{'role': 'user', 'content': message}]
+messages = [{"role": "user", "content": message}]
 
-res_v2 = co_v2.chat_stream(model="command-r-plus-08-2024",
-                           messages=messages,
-                           documents=documents_v2)
+res_v2 = co_v2.chat_stream(
+    model="command-r-plus-08-2024", messages=messages, documents=documents_v2
+)
 
 for chunk in res_v2:
     if chunk:
@@ -576,15 +579,19 @@ print(res_v1.tool_calls)
 **v2**
 
 ```python PYTHON
-messages = [{'role': 'user', 'content': "What's the weather in Toronto?"}]
+messages = [{"role": "user", "content": "What's the weather in Toronto?"}]
 
-res_v2 = co_v2.chat(model="command-r-plus-08-2024",
-                    messages=messages,
-                    tools=tools_v2)
+res_v2 = co_v2.chat(model="command-r-plus-08-2024", messages=messages, tools=tools_v2)
 
 if res_v2.message.tool_calls:
-    messages.append({'role': 'assistant', 'tool_calls': res_v2.message.tool_calls, 'tool_plan': res_v2.message.tool_plan})
-    
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_calls": res_v2.message.tool_calls,
+            "tool_plan": res_v2.message.tool_plan,
+        }
+    )
+
     print(res_v2.message.tool_calls)
 ```
 ```
@@ -599,7 +606,7 @@ if res_v2.message.tool_calls:
 
 **v1**
 ```
-"tool_results" = [
+"tool_results": [
   {
     "call": {
       "name": <tool name>,
@@ -678,10 +685,14 @@ print(tool_content_v1)
 tool_content_v2 = []
 if res_v2.message.tool_calls:
     for tc in res_v2.message.tool_calls:
-        tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
+        tool_result = functions_map[tc.function.name](
+            **json.loads(tc.function.arguments)
+        )
         tool_content_v2.append(json.dumps(tool_result))
-        messages.append({'role': 'tool', 'tool_call_id': tc.id, 'tool_content': tool_content_v2})
-        
+        messages.append(
+            {"role": "tool", "tool_call_id": tc.id, "tool_content": tool_content_v2}
+        )
+
 print(tool_content_v2)
 ```
 ```
