@@ -1,5 +1,5 @@
 ---
-title: "Migrating From the v1 to v2 API"
+title: "Migrating From API v1 to API v2"
 slug: "v2/docs/migrating-v1-to-v2"
 
 hidden: true 
@@ -25,9 +25,17 @@ co_v1 = cohere.Client(api_key="<YOUR API KEY>")
 co_v2 = cohere.ClientV2(api_key="<YOUR API KEY>")
 ```
 
+# General
+
+- v2: `model` is a required field for Embed, Rerank, Classify, and Chat.
+
+# Embed
+
+- v2: `embedding_types` is a required field for Embed.
+
 # Chat
 
-## Messages
+## Messages and preamble
 
 - Message structure: 
    - v1: uses separate `preamble` and `message` parameters.
@@ -294,10 +302,15 @@ print(res_v2.message.citations)
 - v1: Uses `search_queries_only` parameter
 - v2: Supported via tools. We recommend using the v1 API for this functionality in order to leverage the `force_single_step` feature. Support in v2 will be coming soon.
 
+## Connectors
+
+- v1: Supported via the [`connectors` parameter](docs/overview-rag-connectors)
+- v2: Supported via user-defined tools.
+
 ## Web search
 
-- v1: Uses the `connectors` parameter with a web search connector
-- v2: Supported via tools.
+- v1: Supported via the `web-search` connector in the `connectors` parameter
+- v2: Supported via user-defined tools.
 
 **v1**
 
@@ -408,7 +421,7 @@ while response.message.tool_calls:
         tool_result = web_search(**json.loads(tc.function.arguments))
         tool_content.append(json.dumps(tool_result))
         messages.append(
-            {"role": "tool", "tool_call_id": tc.id, "tool_content": tool_content}
+            {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
         )
 
     # Step 4: Generate response and citations
@@ -605,42 +618,35 @@ if res_v2.message.tool_calls:
 
 
 **v1**
-```
-"tool_results": [
+```python PYTHON
+tool_results = [
   {
     "call": {
-      "name": <tool name>,
+      "name": "<tool name>",
       "parameters": {
-        <param name>: <param value>
+        "<param name>": "<param value>"
       }
     },
     "outputs": [{
-      <key>: <value>
+      "<key>": "<value>"
     }]
   },
 ]
 
 ```
 **v2**
-```
-
-"messages": [
+```python PYTHON
+messages = [
   {
     "role": "tool", 
     "tool_call_id": "123", 
-    "tool_content": [
-      # Option 1: Tool results as one string for one citation output
-      {
-        "type": "text", 
-        "text": "[{<key>: <value>}]"
-      },
-      # Option 2: Tool results with metadata for multiple citations 
+    "content": [
       {
         "type": "document", 
         "document": {
           "id": "123", 
           "data": {
-            <key>: <value>
+            "<key>": "<value>"
           }
         }
       }
@@ -649,19 +655,19 @@ if res_v2.message.tool_calls:
 ]
 ```
 
-## Tool execution
+## Response generation
 
-- Function name access
-   - v1: Access through `tc.name`
-   - v2: Access through `tc.function.name`
-   
-- Function parameter access
-   - v1: Access through `tc.parameters`
-   - v2: Access through `tc.function.arguments`
-
-- Chat history management
+- Tool execution: Chat history management
    - v1: Append `call` and `outputs` to the chat history
    - v2: Append `tool_call_id` and `tool_content` to `messages` to the chat history
+
+- Tool execution: Tool results
+    - v1: Passed as `tool_results` parameter
+    - v2: Incorporated into the `messages` list as tool responses
+
+- User message
+    - v1: Set as empty (`""`)
+    - v2: No action required
 
 **v1**
 
@@ -673,44 +679,6 @@ if res_v1.tool_calls:
         tool_result = functions_map[tc.name](**tc.parameters)
         tool_content_v1.append({"call": tool_call, "outputs": [tool_result]})
         
-print(tool_content_v1)
-```
-```
-[{'call': {'name': 'get_weather', 'parameters': {'location': 'Toronto'}}, 'outputs': [{'temperature': '20C'}]}]
-```
-
-**v2**
-
-```python PYTHON
-tool_content_v2 = []
-if res_v2.message.tool_calls:
-    for tc in res_v2.message.tool_calls:
-        tool_result = functions_map[tc.function.name](
-            **json.loads(tc.function.arguments)
-        )
-        tool_content_v2.append(json.dumps(tool_result))
-        messages.append(
-            {"role": "tool", "tool_call_id": tc.id, "tool_content": tool_content_v2}
-        )
-
-print(tool_content_v2)
-```
-```
-['{"temperature": "20C"}']
-```
-
-## Response generation
-
-- User message
-    - v1: Set as empty (`""`)
-    - v2: No action required
-- Tool results
-    - v1: Passed as `tool_results` parameter
-    - v2: Incorporated into the `messages` list as tool responses
-
-**v1**
-
-```python PYTHON
 res_v1 = co_v1.chat(
     model="command-r-plus-08-2024",
     message="",
@@ -728,6 +696,17 @@ It is currently 20°C in Toronto.
 **v2**
 
 ```python PYTHON
+tool_content_v2 = []
+if res_v2.message.tool_calls:
+    for tc in res_v2.message.tool_calls:
+        tool_result = functions_map[tc.function.name](
+            **json.loads(tc.function.arguments)
+        )
+        tool_content_v2.append(json.dumps(tool_result))
+        messages.append(
+            {"role": "tool", "tool_call_id": tc.id, "content": tool_content_v2}
+        )
+        
 res_v2 = co_v2.chat(
     model="command-r-plus-08-2024",
     messages=messages,
@@ -791,6 +770,13 @@ print(res_v2.message.citations)
 **v1**
 
 ```python PYTHON
+tool_content_v1 = []
+if res_v1.tool_calls:
+    for tc in res_v1.tool_calls:
+        tool_call = {"name": tc.name, "parameters": tc.parameters}
+        tool_result = functions_map[tc.name](**tc.parameters)
+        tool_content_v1.append({"call": tool_call, "outputs": [tool_result]})
+
 res_v1 = co_v1.chat_stream(
     message="",
     tools=tools_v1,
@@ -813,6 +799,17 @@ It's 20°C in Toronto.
 **v2**
 
 ```python PYTHON
+tool_content_v2 = []
+if res_v2.message.tool_calls:
+    for tc in res_v2.message.tool_calls:
+        tool_result = functions_map[tc.function.name](
+            **json.loads(tc.function.arguments)
+        )
+        tool_content_v2.append(json.dumps(tool_result))
+        messages.append(
+            {"role": "tool", "tool_call_id": tc.id, "content": tool_content_v2}
+        )
+
 res_v2 = co_v2.chat_stream(
     model="command-r-plus-08-2024",
     messages=messages,
@@ -836,16 +833,10 @@ start=5 end=9 text='20°C' sources=[ToolSource(type='tool', id='get_weather_k88p
 - v1: controlled via `citation_quality` parameter
 - v2: controlled via `citation_options` parameter (with `mode` as a key)
 
-# Others
-
-- v2: `model` is a required field for Embed, Rerank, Classify, and Chat.
-- v2: `embedding_types` is a required field for Embed.
-
 # Unsupported features in v2
 
 The following v1 features are not supported in v2:
 - General chat
-    - `preamble` parameter (replaced by `system` role in `messages`)
     - `conversation_id` parameter (chat history is now managed by the developer via the `messages` parameter)
 - RAG
     - `search_queries_only` parameter
@@ -853,4 +844,3 @@ The following v1 features are not supported in v2:
     - `prompt_truncation` parameter
 - Tool use
     - `force_single_step` parameter (all tool calls are now multi-step by default)
-    - `tool_results` parameter (replaced by `tool` role in `messages`)
