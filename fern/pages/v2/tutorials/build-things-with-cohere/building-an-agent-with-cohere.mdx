@@ -1,0 +1,396 @@
+---
+title: Building an Agent with Cohere
+slug: /v2/docs/building-an-agent-with-cohere
+
+description: "This page describes building a generative-AI powered agent with Cohere."
+image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, agents"
+---
+
+<a target="_blank" href="https://colab.research.google.com/github/cohere-ai/notebooks/blob/main/notebooks/guides/getting-started/v2/tutorial_pt7.ipynb">Open in Colab</a>
+
+Tool use extends the ideas from [RAG](/v2/docs/rag-with-cohere), where external systems are used to guide the response of an LLM, but by leveraging a much bigger set of tools than what’s possible with RAG. The concept of tool use leverages LLMs' useful feature of being able to act as a reasoning and decision-making engine.
+
+While RAG enables applications that can _answer questions_, tool use enables those that can _automate tasks_.
+
+Tool use also enables developers to build agentic applications that can take actions, that is, doing both read and write operations on an external system.
+
+In this tutorial, you'll learn about:
+- Creating tools
+- Tool planning and calling
+- Tool execution
+- Response and citation generation
+- Multi-step tool use
+
+You'll learn these by building an onboarding assistant for new hires.
+
+## Setup
+
+To get started, first we need to install the `cohere` library and create a Cohere client.
+
+
+```python PYTHON
+
+# pip install cohere
+
+import cohere
+import json
+
+co = cohere.ClientV2(api_key="COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
+```
+
+## Creating tools
+
+The pre-requisite, before we can run a tool use workflow, is to set up the tools. Let's create three tools:
+- `search_faqs`: A tool for searching the FAQs. For simplicity, we'll not implement any retrieval logic, but we'll simply pass a list of pre-defined documents, which are the FAQ documents we had used in the Text Embeddings section.
+- `search_emails`: A tool for searching the emails. Same as above, we'll simply pass a list of pre-defined emails from the Reranking section.
+- `create_calendar_event`: A tool for creating new calendar events. Again, for simplicity, we'll not implement actual event bookings, but will return a mock success event. In practice, we can connect to a calendar service API and implement all the necessary logic here.
+
+Here, we are defining a Python function for each tool, but more broadly, the tool can be any function or service that can receive and send objects.
+
+
+```python PYTHON
+# Create the tools
+def search_faqs(query):
+    faqs = [
+        {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
+        {"text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."}
+    ]
+    return  {"faqs" : faqs}
+
+def search_emails(query):
+    emails = [
+        {"from": "it@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "Setting Up Your IT Needs", "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts."},
+        {"from": "john@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "First Week Check-In", "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!"}
+    ]
+    return  {"emails" : emails}
+    
+def create_calendar_event(date: str, time: str, duration: int):
+    # You can implement any logic here
+    return {"is_success": True,
+            "message": f"Created a {duration} hour long event at {time} on {date}"}
+    
+functions_map = {
+    "search_faqs": search_faqs,
+    "search_emails": search_emails,
+    "create_calendar_event": create_calendar_event
+}
+```
+
+The second and final setup step is to define the tool schemas in a format that can be passed to the Chat endpoint. The schema must contain the following fields: `name`, `description`, and `parameters` in the format shown below. 
+
+This schema informs the LLM about what the tool does, and the LLM decides whether to use a particular tool based on it. Therefore, the more descriptive and specific the schema, the more likely the LLM will make the right tool call decisions.
+
+Further reading:
+- [Documentation on parameter types in tool use](https://docs.cohere.com/v2/docs/parameter-types-in-tool-use)
+
+
+```python PYTHON
+# Define the tools
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "search_faqs",
+            "description": "Given a user query, searches a company's frequently asked questions (FAQs) list and returns the most relevant matches to the query.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The query from the user"
+                    }
+                },
+                "required": ["query"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "search_emails",
+            "description": "Given a user query, searches a person's emails and returns the most relevant matches to the query.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The query from the user"
+                    }
+                },
+                "required": ["query"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_calendar_event",
+            "description": "Creates a new calendar event of the specified duration at the specified time and date. A new event cannot be created on the same time as an existing event.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "description": "the date on which the event starts, formatted as mm/dd/yy"
+                    },
+                    "time": {
+                        "type": "string",
+                        "description": "the time of the event, formatted using 24h military time formatting"
+                    },
+                    "duration": {
+                        "type": "number",
+                        "description": "the number of hours the event lasts for"
+                    }
+                },
+                "required": ["date", "time", "duration"]
+            }
+        }
+    }
+]
+```
+
+## Tool planning and calling
+
+We can now run the tool use workflow. We can think of a tool use system as consisting of four components:
+- The user
+- The application
+- The LLM
+- The tools
+
+At its most basic, these four components interact in a workflow through four steps:
+- **Step 1: Get user message** – The LLM gets the user message (via the application)
+- **Step 2: Tool planning and calling** – The LLM makes a decision on the tools to call (if any) and generates - the tool calls
+- **Step 3: Tool execution** - The application executes the tools and the results are sent to the LLM
+- **Step 4: Response and citation generation** – The LLM generates the response and citations to back to the user
+
+
+```python PYTHON
+# Create custom system message
+system_message="""## Task and Context
+You are an assistant who assist new employees of Co1t with their first week. You respond to their questions and assist them with their needs. Today is Monday, June 24, 2024"""
+
+
+# Step 1: Get user message
+message = "Is there any message about getting setup with IT?"
+
+# Add the system and user messages to the chat history
+messages = [{"role": "system", "content": system_message},
+            {"role": "user", "content": message}]
+
+# Step 2: Tool planning and calling
+response = co.chat(
+        model="command-r-plus-08-2024",
+        messages=messages,
+        tools=tools
+    )
+
+if response.message.tool_calls:    
+    print("Tool plan:")
+    print(response.message.tool_plan,"\n")
+    print("Tool calls:")
+    for tc in response.message.tool_calls:
+        print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
+        
+    # Append tool calling details to the chat history
+    messages.append({"role": "assistant", "tool_calls": response.message.tool_calls, "tool_plan": response.message.tool_plan})
+```
+```
+Tool plan:
+I will search the user's emails for any messages about getting set up with IT. 
+
+Tool calls:
+Tool name: search_emails | Parameters: {"query":"IT setup"}
+```
+
+Given three tools to choose from, the model is able to pick the right tool (in this case, `search_emails`) based on what the user is asking for.
+
+Also, notice that the model first generates a plan about what it should do ("I will do ...") before actually generating the tool call(s).
+
+# Tool execution
+
+
+```python PYTHON
+# Step 3: Tool execution
+tool_content = []
+for tc in response.message.tool_calls:
+    tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
+    tool_content.append(json.dumps(tool_result))
+    # Append tool results to the chat history
+    messages.append({"role": "tool", "tool_call_id": tc.id, "content": tool_content}) 
+
+print("Tool results:") 
+for result in tool_content:
+    print(result)
+```
+```
+Tool results:
+{"emails": [{"from": "it@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "Setting Up Your IT Needs", "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts."}, {"from": "john@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "First Week Check-In", "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon\u2014it's a great opportunity to get to know your colleagues!"}]}
+```
+
+## Response and citation generation
+
+
+```python PYTHON
+# Step 4: Response and citation generation
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=messages,
+    tools=tools
+)
+
+# Append assistant response to the chat history
+messages.append({"role": "assistant", "content": response.message.content[0].text})
+
+# Print final response
+print("Response:")
+print(response.message.content[0].text)
+print("="*50)
+
+# Print citations (if any)
+if response.message.citations:
+    print("\nCITATIONS:")
+    for citation in response.message.citations:
+        print(citation, "\n")
+```
+```
+Response:
+Yes, there is an email from IT with a comprehensive guide attached.
+==================================================
+
+CITATIONS:
+start=17 end=30 text='email from IT' sources=[Source_Tool(type='tool', id='search_emails_dy73yjrx50xq:0', tool_output={'emails': '[{"date":"2024-06-24","from":"it@co1t.com","subject":"Setting Up Your IT Needs","text":"Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.","to":"david@co1t.com"},{"date":"2024-06-24","from":"john@co1t.com","subject":"First Week Check-In","text":"Hello! I hope you\'re settling in well. Let\'s connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it\'s a great opportunity to get to know your colleagues!","to":"david@co1t.com"}]'})] 
+
+start=38 end=66 text='comprehensive guide attached' sources=[Source_Tool(type='tool', id='search_emails_dy73yjrx50xq:0', tool_output={'emails': '[{"date":"2024-06-24","from":"it@co1t.com","subject":"Setting Up Your IT Needs","text":"Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.","to":"david@co1t.com"},{"date":"2024-06-24","from":"john@co1t.com","subject":"First Week Check-In","text":"Hello! I hope you\'re settling in well. Let\'s connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it\'s a great opportunity to get to know your colleagues!","to":"david@co1t.com"}]'})] 
+```
+
+
+# Multi-step tool use
+
+The model can execute more complex tasks in tool use – tasks that require tool calls to happen in a sequence. This is referred to as "multi-step" tool use. 
+
+Let's create a function to called `run_assistant` to implement these steps, and along the way, print out the key events and messages. Optionally, this function also accepts the chat history as an argument to keep the state in a multi-turn conversation. 
+
+
+```python PYTHON
+model = "command-r-plus-08-2024"
+
+system_message="""## Task and Context
+You are an assistant who assists new employees of Co1t with their first week. You respond to their questions and assist them with their needs. Today is Monday, June 24, 2024"""
+
+def run_assistant(query, messages=None):
+    if messages is None:
+        messages = []
+        
+    if "system" not in {m.get("role") for m in messages}:
+        messages.append({"role": "system", "content": system_message})
+    
+    # Step 1: get user message
+    print(f"Question:\n{query}")
+    print("="*50)
+    
+    messages.append({"role": "user", "content": query})
+
+    # Step 2: Generate tool calls (if any)
+    response = co.chat(
+        model=model,
+        messages=messages,
+        tools=tools
+    )
+
+    while response.message.tool_calls:
+        
+        print("Tool plan:")
+        print(response.message.tool_plan,"\n")
+        print("Tool calls:")
+        for tc in response.message.tool_calls:
+            print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
+        print("="*50)
+
+        messages.append({"role": "assistant", "tool_calls": response.message.tool_calls, "tool_plan": response.message.tool_plan})        
+        
+        # Step 3: Get tool results
+        tool_content = []
+        for idx, tc in enumerate(response.message.tool_calls):
+            tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
+            tool_content.append(json.dumps(tool_result))
+            messages.append({"role": "tool", "tool_call_id": tc.id, "content": tool_content})
+        
+        # Step 4: Generate response and citations 
+        response = co.chat(
+            model=model,
+            messages=messages,
+            tools=tools
+        )
+    
+    messages.append({"role": "assistant", "content": response.message.content[0].text})
+        
+    # Print final response
+    print("Response:")
+    print(response.message.content[0].text)
+    print("="*50)
+    
+    # Print citations (if any)
+    if response.message.citations:
+        print("\nCITATIONS:")
+        for citation in response.message.citations:
+            print(citation, "\n")
+    
+    return messages
+```
+
+To illustrate the concept of multi-step tool user, let's ask the assistant to block time for any lunch invites received in the email.
+
+This requires tasks to happen over multiple steps in a sequence. Here, we see the assistant running these steps:
+- First, it calls the `search_emails` tool to find any lunch invites, which it found one.
+- Next, it calls the `create_calendar_event` tool to create an event to block the person's calendar on the day mentioned by the email.
+
+This is also an example of tool use enabling a write operation instead of just a read operation that we saw with RAG.
+
+
+```python PYTHON
+messages = run_assistant("Can you check if there are any lunch invites, and for those days, create a one-hour event on my calendar at 12PM.")
+```
+```
+Question:
+Can you check if there are any lunch invites, and for those days, create a one-hour event on my calendar at 12PM.
+==================================================
+Tool plan:
+I will search the user's emails for lunch invites and then create a calendar event for each day they are invited to lunch. 
+
+Tool calls:
+Tool name: search_emails | Parameters: {"query":"lunch invite"}
+==================================================
+Tool plan:
+I have found an email inviting the user to a welcoming lunch on Thursday at noon. I will now create a calendar event for this. 
+
+Tool calls:
+Tool name: create_calendar_event | Parameters: {"date":"06/27/24","duration":1,"time":"12:00"}
+==================================================
+Response:
+Sure, I found an email from John inviting you to a welcoming lunch this Thursday at noon. I've created a one-hour event on your calendar for this Thursday at 12 pm.
+==================================================
+
+CITATIONS:
+start=17 end=32 text='email from John' sources=[Source_Tool(type='tool', id='search_emails_j72zv2xhq0sj:0', tool_output={'emails': '[{"date":"2024-06-24","from":"it@co1t.com","subject":"Setting Up Your IT Needs","text":"Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.","to":"david@co1t.com"},{"date":"2024-06-24","from":"john@co1t.com","subject":"First Week Check-In","text":"Hello! I hope you\'re settling in well. Let\'s connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it\'s a great opportunity to get to know your colleagues!","to":"david@co1t.com"}]'})] 
+
+start=51 end=88 text='welcoming lunch this Thursday at noon' sources=[Source_Tool(type='tool', id='search_emails_j72zv2xhq0sj:0', tool_output={'emails': '[{"date":"2024-06-24","from":"it@co1t.com","subject":"Setting Up Your IT Needs","text":"Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.","to":"david@co1t.com"},{"date":"2024-06-24","from":"john@co1t.com","subject":"First Week Check-In","text":"Hello! I hope you\'re settling in well. Let\'s connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it\'s a great opportunity to get to know your colleagues!","to":"david@co1t.com"}]'})] 
+
+start=105 end=163 text='one-hour event on your calendar for this Thursday at 12 pm' sources=[Source_Tool(type='tool', id='create_calendar_event_vs7mxjzk9jzs:0', tool_output={'is_success': 'true', 'message': 'Created a 1 hour long event at 12:00 on 06/27/24'})] 
+```
+
+
+In this tutorial, you learned about:
+- How to create tools
+- How tool planning and calling happens
+- How tool execution happens
+- How to generate the response and citations
+- How to run tool use in a multi-step scenario
+
+And that concludes our 7-part Cohere tutorial. We hope that they have provided you with a foundational understanding of the Cohere API, the available models and endpoints, and the types of use cases that you can build with them.
+
+To continue your learning, check out:
+- [LLM University - A range of courses and step-by-step guides to help you start building](https://cohere.com/llmu)
+- [Cookbooks - A collection of basic to advanced example applications](https://docs.cohere.com/page/cookbooks)
+- [Cohere's documentation](https://docs.cohere.com/docs/the-cohere-platform)
+- [The Cohere API reference](https://docs.cohere.com/reference/about)

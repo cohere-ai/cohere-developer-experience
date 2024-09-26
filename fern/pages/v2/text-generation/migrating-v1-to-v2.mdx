@@ -1,0 +1,846 @@
+---
+title: "Migrating From API v1 to API v2"
+slug: "v2/docs/migrating-v1-to-v2"
+
+hidden: true 
+description: "The document serves as a reference for developers looking to update their existing Cohere API v1 implementations to the new v2 standard."
+image: "../../../assets/images/b3c8253-cohere_meta_image.jpg"  
+keywords: "Cohere, text generation, LLMs, generative AI"
+
+createdAt: "Thu Feb 29 2024 18:13:25 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Thu May 23 2024 04:32:10 GMT+0000 (Coordinated Universal Time)"
+---
+This guide serves as a reference for developers looking to update their code that uses Cohere API v1 in favor of the new v2 standard. It outlines the key differences and necessary changes when migrating from Cohere API v1 to v2 and the various aspects of the API, including chat functionality, RAG (Retrieval-Augmented Generation), and tool use. Each section provides code examples for both v1 and v2, highlighting the structural changes in request formats, response handling, and new features introduced in v2.
+
+
+```python PYTHON
+# ! pip install -U cohere
+
+import cohere
+
+# instantiating the old client
+co_v1 = cohere.Client(api_key="<YOUR API KEY>")
+
+# instantiating the new client
+co_v2 = cohere.ClientV2(api_key="<YOUR API KEY>")
+```
+
+# General
+
+- v2: `model` is a required field for Embed, Rerank, Classify, and Chat.
+
+# Embed
+
+- v2: `embedding_types` is a required field for Embed.
+
+# Chat
+
+## Messages and preamble
+
+- Message structure: 
+   - v1: uses separate `preamble` and `message` parameters.
+   - v2: uses a single `messages` parameter consisting of a list of roles (`system`, `user`, `assistant`, or `tool`). The `system` role in v2 replaces the `preamble` parameter in v1.
+
+- Chat history:
+   - v1: manages the chat history via the `chat_history` parameter.
+   - v2: manages the chat history via the `messages` list.
+
+**v1**
+
+```python PYTHON
+res = co_v1.chat(
+	    model="command-r-plus-08-2024",
+	    preamble="You respond in concise sentences.",
+	    chat_history=[
+	        {
+	            "role": "user",
+	            "message": "Hello"
+	        },
+	        {
+	            "role": "chatbot",
+	            "message": "Hi, how can I help you today?"
+	        }
+	    ],
+	    message="I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates?")
+
+print(res.text)
+```
+
+```
+Excited to join the team at Co1t, where I look forward to contributing my skills and collaborating with everyone to drive innovation and success.
+```
+
+**v2**
+
+```python PYTHON
+res = co_v2.chat(
+    model="command-r-plus-08-2024",
+    messages=[
+        {
+            "role": "system",
+            "content": "You respond in concise sentences."
+        },
+        {
+            "role": "user",
+            "content": "Hello"
+        },
+        {
+            "role": "assistant",
+            "content": "Hi, how can I help you today?"
+        },
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
+        }
+    ])
+
+print(res.message.content[0].text)
+```
+```
+Excited to join the team at Co1t, bringing my passion for innovation and a background in [your expertise] to contribute to the company's success!
+```  
+
+## Response content
+
+- v1: Accessed via `text`
+- v2: Accessed via `message.content[0].text`
+
+**v1**
+
+```python PYTHON
+res = co_v1.chat(model="command-r-plus-08-2024",
+                 message="What is 2 + 2")
+
+print(res.text)
+```
+```
+The answer is 4.
+```
+
+**v2**
+
+```python PYTHON
+res = co_v2.chat(model="command-r-plus-08-2024",
+                 messages=[
+                     {
+                         "role": "user",
+                         "content": "What is 2 + 2"
+                     }
+                 ])
+
+print(res.message.content[0].text)
+```
+```
+The answer is 4.
+```
+
+## Streaming
+
+- Events containing content:
+   - v1: `chunk.event_type == "text-generation"`
+   - v2: `chunk.type == "content-delta"`
+
+- Accessing response content:
+   - v1: `chunk.text`
+   - v2: `chunk.delta.message.content.text`
+
+**v1**
+
+```python PYTHON
+message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
+
+res = co_v1.chat_stream(model="command-r-plus-08-2024",
+                        message=message)
+
+for chunk in res:
+    if chunk.event_type == "text-generation":
+        print(chunk.text, end="")
+```
+```
+"Hi, I'm [your name] and I'm thrilled to join the Co1t team today as a [your role], eager to contribute my skills and ideas to help drive innovation and success for our startup!"
+```
+
+**v2**
+
+```python PYTHON
+message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
+
+res = co_v2.chat_stream(model="command-r-plus-08-2024",
+                        messages=[{"role": "user", "content": message}])
+
+for chunk in res: 
+    if chunk:
+        if chunk.type == "content-delta":
+            print(chunk.delta.message.content.text, end="")
+```
+```
+"Hi everyone, I'm thrilled to join the Co1t team today and look forward to contributing my skills and ideas to drive innovation and success!"
+```
+
+# RAG
+
+## Documents
+
+- v1: the `documents` parameter supports a list of objects with multiple fields per document.
+- v2: the `documents` parameter supports a few different options for structuring documents:
+    - List of objects with `data` object: same as v1 described above, but each document passed as a `data` object (with an optional `id` field to be used in citations).
+    - List of objects with `data` string (with an optional `id` field to be used in citations).
+    - List of strings.
+
+**v1**
+
+```python PYTHON
+
+# Define the documents
+documents_v1 = [
+    {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
+    {"text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."}
+]
+
+# The user query
+message = "Are there fitness-related benefits?"
+
+# Generate the response
+res_v1 = co_v1.chat(model="command-r-plus-08-2024",
+                    message=message,
+                    documents=documents_v1)
+
+print(res_v1.text)
+```
+```
+Yes, there are fitness-related benefits. We offer gym memberships, on-site yoga classes, and comprehensive health insurance.
+```
+
+**v2**
+
+```python PYTHON
+# Define the documents
+documents_v2 = [
+  {
+    "data": {
+      "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+    }
+  },
+  {
+    "data": {
+      "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+    }
+  }
+]
+
+# The user query
+message = "Are there fitness-related benefits?"
+
+# Generate the response
+res_v2 = co_v2.chat(model="command-r-plus-08-2024",
+                    messages=[{"role": "user", "content": message}],
+                    documents=documents_v2)
+
+print(res_v2.message.content[0].text)
+```
+```
+Yes, we offer gym memberships, on-site yoga classes, and comprehensive health insurance.
+```
+
+The following is a list of the the different options for structuring documents for RAG in v2.
+
+```python PYTHON
+documents_v2 = [
+# List of objects with data string
+{
+	"id": "123"
+	"data": "I love penguins. they are fluffy",
+},
+# List of objects with data object
+{"id": "456", "data": {
+	"text": "I love penguins. they are fluffy",
+	"author": "Abdullah",
+	"create_date": "09021989"
+	}
+},
+# List of strings
+"just a string"
+]
+```
+
+## Citations
+
+- Citations access:
+   - v1: `citations`
+   - v2: `message.citations`
+- Cited documents access:
+   - v1: `documents`
+   - v2: as part of `message.citations`, in the `sources` field
+
+**v1**
+
+```python PYTHON
+# Yes, there are fitness-related benefits. We offer gym memberships, on-site yoga classes, and comprehensive health insurance.
+
+print(res_v1.citations)
+print(res_v1.documents)
+```
+```
+[ChatCitation(start=50, end=124, text='gym memberships, on-site yoga classes, and comprehensive health insurance.', document_ids=['doc_1'])]
+
+[{'id': 'doc_1', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}]
+```
+
+**v2**
+
+```python PYTHON
+# Yes, we offer gym memberships, on-site yoga classes, and comprehensive health insurance.
+
+print(res_v2.message.citations)
+```
+```
+[Citation(start=14, end=88, text='gym memberships, on-site yoga classes, and comprehensive health insurance.', sources=[DocumentSource(type='document', id='doc:1', document={'id': 'doc:1', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'})])]
+```
+
+## Search query generation
+
+- v1: Uses `search_queries_only` parameter
+- v2: Supported via tools. We recommend using the v1 API for this functionality in order to leverage the `force_single_step` feature. Support in v2 will be coming soon.
+
+## Connectors
+
+- v1: Supported via the [`connectors` parameter](docs/overview-rag-connectors)
+- v2: Supported via user-defined tools.
+
+## Web search
+
+- v1: Supported via the `web-search` connector in the `connectors` parameter
+- v2: Supported via user-defined tools.
+
+**v1**
+
+Uses the web search connector to search the internet for information relevant to the user's query.
+
+```python PYTHON
+res_v1 = co_v1.chat(
+	message="who won euro 2024",
+	connectors=[{"id": "web-search"}],
+)
+
+print(res_v1.text)
+```
+```
+Spain won the UEFA Euro 2024, defeating England 2-1 in the final.
+```
+**v2**
+
+Web search functionality is supported via tools.
+
+```python PYTHON
+# Any search engine can be used. This example uses the Tavily API.
+from tavily import TavilyClient
+
+tavily_client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
+
+
+# Create a web search function
+def web_search(queries: list[str]) -> list[dict]:
+
+    documents = []
+
+    for query in queries:
+        response = tavily_client.search(query, max_results=2)
+
+        results = [
+            {"title": r["title"], "content": r["content"], "url": r["url"]}
+            for r in response["results"]
+        ]
+
+        for idx, result in enumerate(results):
+            document = {"id": str(idx), "data": result}
+            documents.append(document)
+
+    return {"documents": documents}
+
+
+# Define the web search tool
+web_search_tool = [
+    {
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "queries": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "a list of queries to search the internet with.",
+                    }
+                },
+                "required": ["queries"],
+            },
+        },
+    }
+]
+
+# The user query
+query = "who won euro 2024"
+
+# Define a preamble to optimize search query generation
+instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
+
+messages = [
+    {"role": "system", "content": instructions},
+    {"role": "user", "content": query},
+]
+
+model = "command-r-plus-08-2024"
+
+# Generate search queries (if any)
+response = co_v2.chat(model=model, messages=messages, tools=web_search_tool)
+
+search_queries = []
+
+while response.message.tool_calls:
+
+    print("Tool plan:")
+    print(response.message.tool_plan, "\n")
+    print("Tool calls:")
+    for tc in response.message.tool_calls:
+        print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
+    print("=" * 50)
+
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_calls": response.message.tool_calls,
+            "tool_plan": response.message.tool_plan,
+        }
+    )
+
+    # Step 3: Get tool results
+    tool_content = []
+    for idx, tc in enumerate(response.message.tool_calls):
+        tool_result = web_search(**json.loads(tc.function.arguments))
+        tool_content.append(json.dumps(tool_result))
+        messages.append(
+            {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
+        )
+
+    # Step 4: Generate response and citations
+    response = co_v2.chat(model=model, messages=messages, tools=web_search_tool)
+
+print(response.message.content[0].text)
+```
+```
+Tool plan:
+I will search for 'who won euro 2024' to find out who won the competition. 
+
+Tool calls:
+Tool name: web_search | Parameters: {"queries":["who won euro 2024"]}
+==================================================
+Spain won the 2024 European Championship. They beat England in the final, with substitute Mikel Oyarzabal scoring the winning goal.
+```
+
+## Streaming
+
+- Event containing content:
+   - v1: `chunk.event_type == "text-generation"`
+   - v2: `chunk.type == "content-delta"`
+
+- Accessing response content:
+   - v1: `chunk.text`
+   - v2: `chunk.delta.message.content.text`
+
+- Events containing citations:
+   - v1: `chunk.event_type == "citation-generation"`
+   - v2: `chunk.type == "citation-start"`
+
+- Accessing citations:
+   - v1: `chunk.citations`
+   - v2: `chunk.delta.message.citations`
+
+**v1**
+
+```python PYTHON
+message = "Are there fitness-related benefits?"
+
+res_v1 = co_v1.chat_stream(model="command-r-plus-08-2024",
+                           message=message,
+                           documents=documents_v1)
+
+for chunk in res_v1:
+    if chunk.event_type == "text-generation":
+        print(chunk.text, end="")
+    if chunk.event_type == "citation-generation":
+        print(f"\n{chunk.citations}")
+```
+```
+Yes, we offer gym memberships, on-site yoga classes, and comprehensive health insurance as part of our health and wellness benefits.
+
+[ChatCitation(start=14, end=87, text='gym memberships, on-site yoga classes, and comprehensive health insurance', document_ids=['doc_1'])]
+
+[ChatCitation(start=103, end=132, text='health and wellness benefits.', document_ids=['doc_1'])]
+```
+
+**v2**
+
+```python PYTHON
+message = "Are there fitness-related benefits?"
+
+messages = [{"role": "user", "content": message}]
+
+res_v2 = co_v2.chat_stream(
+    model="command-r-plus-08-2024", messages=messages, documents=documents_v2
+)
+
+for chunk in res_v2:
+    if chunk:
+        if chunk.type == "content-delta":
+            print(chunk.delta.message.content.text, end="")
+        if chunk.type == "citation-start":
+            print(f"\n{chunk.delta.message.citations}")
+```
+
+```
+Yes, we offer gym memberships, on-site yoga classes, and comprehensive health insurance.
+
+start=14 end=88 text='gym memberships, on-site yoga classes, and comprehensive health insurance.' sources=[DocumentSource(type='document', id='doc:1', document={'id': 'doc:1', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'})]
+```
+
+# Tool use
+
+## Tool definition
+
+- v1: uses Python types to define tools.
+- v2: uses JSON schema to define tools.
+
+**v1**
+
+```python PYTHON
+def get_weather(location):
+    return {"temperature": "20C"}
+  
+functions_map = {"get_weather": get_weather}
+
+tools_v1 = [
+    {
+      "name": "get_weather",
+      "description": "Gets the weather of a given location",
+      "parameter_definitions": {
+        "location": {
+          "description": "The location to get weather, example: San Francisco, CA",
+          "type": "str",
+          "required": True
+        }
+      }
+    },
+]
+```
+
+**v2**
+
+```python PYTHON
+def get_weather(location):
+    return {"temperature": "20C"}
+
+functions_map = {"get_weather": get_weather}
+
+tools_v2 = [
+    {
+    "type": "function",
+    "function": {
+            "name": "get_weather",
+            "description" : "gets the weather of a given location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                "location": {
+                    "type" : "str",
+                    "description": "the location to get weather, example: San Fransisco, CA"
+                }
+                },
+                "required": ["location"]
+            }
+            }
+    },
+]
+```
+
+## Tool calling
+
+- Response handling
+   - v1: Tool calls accessed through `response.tool_calls`
+   - v2: Tool calls accessed through `response.message.tool_calls`
+
+- Chat history management
+   - v1: Tool calls stored in the response's `chat_history`
+   - v2: Append the tool call details (`tool_calls` and `tool_plan`) to the `messages` list
+
+**v1**
+
+```python PYTHON
+message = "What's the weather in Toronto?"
+
+res_v1 = co_v1.chat(model="command-r-plus-08-2024",
+                    message=message,
+                    tools=tools_v1)
+
+print(res_v1.tool_calls)
+```
+```
+[ToolCall(name='get_weather', parameters={'location': 'Toronto'})]
+```
+
+**v2**
+
+```python PYTHON
+messages = [{"role": "user", "content": "What's the weather in Toronto?"}]
+
+res_v2 = co_v2.chat(model="command-r-plus-08-2024", messages=messages, tools=tools_v2)
+
+if res_v2.message.tool_calls:
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_calls": res_v2.message.tool_calls,
+            "tool_plan": res_v2.message.tool_plan,
+        }
+    )
+
+    print(res_v2.message.tool_calls)
+```
+```
+[ToolCallV2(id='get_weather_k88p0m8504w5', type='function', function=ToolCallV2Function(name='get_weather', arguments='{"location":"Toronto"}'))]
+```
+
+## Tool call ID
+
+- v1: Tool calls do not emit tool call IDs
+- v2: Tool calls emit tool call IDs. This will help the model match tool results to the right tool call.
+
+
+**v1**
+```python PYTHON
+tool_results = [
+  {
+    "call": {
+      "name": "<tool name>",
+      "parameters": {
+        "<param name>": "<param value>"
+      }
+    },
+    "outputs": [{
+      "<key>": "<value>"
+    }]
+  },
+]
+
+```
+**v2**
+```python PYTHON
+messages = [
+  {
+    "role": "tool", 
+    "tool_call_id": "123", 
+    "content": [
+      {
+        "type": "document", 
+        "document": {
+          "id": "123", 
+          "data": {
+            "<key>": "<value>"
+          }
+        }
+      }
+    ]
+  }
+]
+```
+
+## Response generation
+
+- Tool execution: Chat history management
+   - v1: Append `call` and `outputs` to the chat history
+   - v2: Append `tool_call_id` and `tool_content` to `messages` to the chat history
+
+- Tool execution: Tool results
+    - v1: Passed as `tool_results` parameter
+    - v2: Incorporated into the `messages` list as tool responses
+
+- User message
+    - v1: Set as empty (`""`)
+    - v2: No action required
+
+**v1**
+
+```python PYTHON
+tool_content_v1 = []
+if res_v1.tool_calls:
+    for tc in res_v1.tool_calls:
+        tool_call = {"name": tc.name, "parameters": tc.parameters}
+        tool_result = functions_map[tc.name](**tc.parameters)
+        tool_content_v1.append({"call": tool_call, "outputs": [tool_result]})
+        
+res_v1 = co_v1.chat(
+    model="command-r-plus-08-2024",
+    message="",
+    tools=tools_v1,
+    tool_results=tool_content_v1,   
+    chat_history=res_v1.chat_history
+)
+
+print(res_v1.text)
+```
+```
+It is currently 20°C in Toronto.
+```
+
+**v2**
+
+```python PYTHON
+tool_content_v2 = []
+if res_v2.message.tool_calls:
+    for tc in res_v2.message.tool_calls:
+        tool_result = functions_map[tc.function.name](
+            **json.loads(tc.function.arguments)
+        )
+        tool_content_v2.append(json.dumps(tool_result))
+        messages.append(
+            {"role": "tool", "tool_call_id": tc.id, "content": tool_content_v2}
+        )
+        
+res_v2 = co_v2.chat(
+    model="command-r-plus-08-2024",
+    messages=messages,
+    tools=tools_v2
+)
+
+print(res_v2.message.content[0].text)
+```
+```
+It's 20°C in Toronto.
+```
+
+## Citations
+
+- Citations access:
+   - v1: `citations`
+   - v2: `message.citations`
+- Cited tools access:
+   - v1: `documents`
+   - v2: as part of `message.citations`, in the `sources` field
+
+**v1**
+
+```python PYTHON
+print(res_v1.citations)
+print(res_v1.documents)
+```
+```
+[ChatCitation(start=16, end=20, text='20°C', document_ids=['get_weather:0:2:0'])]
+
+[{'id': 'get_weather:0:2:0', 'temperature': '20C', 'tool_name': 'get_weather'}]
+```
+
+**v2**
+
+```python PYTHON
+print(res_v2.message.citations)
+```
+```
+[Citation(start=5, end=9, text='20°C', sources=[ToolSource(type='tool', id='get_weather_k88p0m8504w5:0', tool_output={'temperature': '20C'})])]
+```
+
+## Streaming
+
+- Event containing content:
+   - v1: `chunk.event_type == "text-generation"`
+   - v2: `chunk.type == "content-delta"`
+
+- Accessing response content:
+   - v1: `chunk.text`
+   - v2: `chunk.delta.message.content.text`
+
+- Events containing citations:
+   - v1: `chunk.event_type == "citation-generation"`
+   - v2: `chunk.type == "citation-start"`
+
+- Accessing citations:
+   - v1: `chunk.citations`
+   - v2: `chunk.delta.message.citations`
+
+**v1**
+
+```python PYTHON
+tool_content_v1 = []
+if res_v1.tool_calls:
+    for tc in res_v1.tool_calls:
+        tool_call = {"name": tc.name, "parameters": tc.parameters}
+        tool_result = functions_map[tc.name](**tc.parameters)
+        tool_content_v1.append({"call": tool_call, "outputs": [tool_result]})
+
+res_v1 = co_v1.chat_stream(
+    message="",
+    tools=tools_v1,
+    tool_results=tool_content_v1,
+    chat_history=res_v1.chat_history
+)
+
+for chunk in res_v1:
+    if chunk.event_type == "text-generation":
+        print(chunk.text, end="")
+    if chunk.event_type == "citation-generation":
+        print(f"\n{chunk.citations}")
+```
+```
+It's 20°C in Toronto.
+
+[ChatCitation(start=5, end=9, text='20°C', document_ids=['get_weather:0:2:0', 'get_weather:0:4:0'])]
+```
+
+**v2**
+
+```python PYTHON
+tool_content_v2 = []
+if res_v2.message.tool_calls:
+    for tc in res_v2.message.tool_calls:
+        tool_result = functions_map[tc.function.name](
+            **json.loads(tc.function.arguments)
+        )
+        tool_content_v2.append(json.dumps(tool_result))
+        messages.append(
+            {"role": "tool", "tool_call_id": tc.id, "content": tool_content_v2}
+        )
+
+res_v2 = co_v2.chat_stream(
+    model="command-r-plus-08-2024",
+    messages=messages,
+    tools=tools_v2
+)
+
+for chunk in res_v2:
+    if chunk:
+        if chunk.type == "content-delta":
+            print(chunk.delta.message.content.text, end="")
+        elif chunk.type == "citation-start":
+            print(f"\n{chunk.delta.message.citations}")
+```
+```
+It's 20°C in Toronto.
+
+start=5 end=9 text='20°C' sources=[ToolSource(type='tool', id='get_weather_k88p0m8504w5:0', tool_output={'temperature': '20C'})]
+```
+
+## Citation quality (both RAG and tool use)
+- v1: controlled via `citation_quality` parameter
+- v2: controlled via `citation_options` parameter (with `mode` as a key)
+
+# Unsupported features in v2
+
+The following v1 features are not supported in v2:
+- General chat
+    - `conversation_id` parameter (chat history is now managed by the developer via the `messages` parameter)
+- RAG
+    - `search_queries_only` parameter
+    - `connectors` parameter
+    - `prompt_truncation` parameter
+- Tool use
+    - `force_single_step` parameter (all tool calls are now multi-step by default)

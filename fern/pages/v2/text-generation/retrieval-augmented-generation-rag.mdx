@@ -1,0 +1,292 @@
+---
+title: "Retrieval Augmented Generation (RAG)"
+slug: "v2/docs/retrieval-augmented-generation-rag"
+
+hidden: false
+description: >-
+  Generate text with external data and inline citations using Retrieval
+  Augmented Generation and Cohere's Chat API.
+image: "../../../assets/images/1edd35f-cohere_meta_image.jpg"  
+keywords: "retrieval augmented generation, RAG, grounded replies, text generation"
+
+createdAt: "Fri Aug 18 2023 19:13:29 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Wed Jun 19 2024 13:01:22 GMT+0000 (Coordinated Universal Time)"
+---
+Retrieval Augmented Generation (RAG) is a method for generating text using additional information fetched from an external data source, which can greatly increase the accuracy of the response. When used in conjunction with [Command](https://docs.cohere.com/docs/command-beta), [Command R](https://docs.cohere.com/docs/command-r), or [Command R+](https://docs.cohere.com/docs/command-r-plus), the [Chat API](https://docs.cohere.com/reference/chat) makes it easy to generate text that is grounded on supplementary documents.
+
+To call the Chat API with RAG, pass the following parameters as a minimum:
+- `model` for the model ID
+- `messages` for the user's query.
+- `documents` for defining the documents.
+
+A document can be a simple string, or it can consist of different fields, such as `title`, `text`, and `url` for a web search document.
+
+The Chat API supports a few different options for structuring documents in the `documents` parameter:
+    - List of objects with `data` object: Each document is passed as a `data` object (with an optional `id` field to be used in citations).
+    - List of objects with `data` string: Each document is passed as a `data` string (with an optional `id` field to be used in citations).
+    - List of strings: Each document is passed as a string.
+
+The `id` field will be used in citation generation as the reference document IDs. If no `id` field is passed in an API call, the API will automatically generate the IDs based on the documents position in the list.
+
+The code snippet below, for example, will produce a grounded answer to `"Where do the tallest penguins live?"`, along with inline citations based on the provided documents.
+
+**Request**
+
+```python
+import cohere
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
+
+# Retrieve the documents
+documents = [
+  {
+    "data": {
+      "title": "Tall penguins",
+      "snippet": "Emperor penguins are the tallest."
+    }
+  },
+  {
+    "data": {
+      "title": "Penguin habitats",
+      "snippet": "Emperor penguins only live in Antarctica."
+    }
+  },
+  {
+    "data": {
+      "title": "What are animals?",
+      "snippet": "Animals are different from plants."
+    }
+  }
+]
+
+# Add the user message
+message = "Where do the tallest penguins live?"
+messages = [{"role": "user", "content": message}]
+
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=messages,
+    documents=documents)
+
+print(response.message.content[0].text)
+
+print(response.message.citations)
+```
+
+The resulting generation is`"The tallest penguins are emperor penguins, which live in Antarctica."`. The model was able to combine partial information from multiple sources and ignore irrelevant documents to arrive at the full answer.
+
+Nice :penguin:❄️!
+
+**Response**
+
+```
+# response.message.content[0].text
+Emperor penguins are the tallest penguins. They only live in Antarctica.
+
+# response.message.citations
+[Citation(start=0,
+          end=16, 
+          text='Emperor penguins', 
+          sources=[DocumentSource(type='document', id='doc:0', document={'id': 'doc:0', 'snippet': 'Emperor penguins are the tallest.', 'title': 'Tall penguins'})]), 
+Citation(start=25, 
+          end=42, 
+          text='tallest penguins.', 
+          sources=[DocumentSource(type='document', id='doc:0', document={'id': 'doc:0', 'snippet': 'Emperor penguins are the tallest.', 'title': 'Tall penguins'})]), 
+Citation(start=61, 
+          end=72, 
+          text='Antarctica.',
+          sources=[DocumentSource(type='document', id='doc:1', document={'id': 'doc:1', 'snippet': 'Emperor penguins only live in Antarctica.', 'title': 'Penguin habitats'})])]
+```
+
+The response also includes **inline citations**  that reference the first two documents, since they hold the answers.
+
+![](../../../assets/images/0062bc8-image.png)
+
+
+You can find more code and context in [this colab notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/Vanilla_RAG_v2.ipynb).
+
+### Three steps of RAG
+
+The RAG workflow generally consists of **3 steps**:
+
+- **Generating search queries** for finding relevant documents. _What does the model recommend looking up before answering this question? _
+- **Fetching relevant documents** from an external data source using the generated search queries. _Performing a search to find some relevant information._
+- **Generating a response** with inline citations using the fetched documents. _Using the acquired knowledge to produce an educated answer_.
+
+#### Example: Using RAG to identify the definitive 90s boy band
+
+In this section, we will use the three step RAG workflow to finally settle the score between the notorious boy bands Backstreet Boys and NSYNC. We ask the model to provide an informed answer to the question `"Who is more popular: Nsync or Backstreet Boys?"`
+
+#### Step 1: Generating search queries
+
+First, the model needs to generate an optimal set of search queries to use for retrieval. 
+
+There are different possible approaches to do this. In this example, we'll take a [tool use](/v2/docs/tool-use) approach.
+
+Here, we build a tool that takes a user query and returns a list of relevant document snippets for that query. The tool can generate zero, one or multiple search queries depending on the user query.
+
+```python PYTHON
+
+message = "Who is more popular: Nsync or Backstreet Boys?"
+
+# Define the query generation tool
+query_gen_tool = [
+    {
+        "type": "function",
+        "function": {
+            "name": "internet_search",
+            "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "queries": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "a list of queries to search the internet with.",
+                    }
+                },
+                "required": ["queries"],
+            },
+        },
+    }
+]
+
+# Define a system message to optimize search query generation
+instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
+
+# Generate search queries (if any)
+import json
+
+search_queries = []
+
+res = co.chat(
+    model="command-r-08-2024",
+    messages=[
+        {"role": "system", "content": instructions},
+        {"role": "user", "content": message},
+    ],
+    tools=query_gen_tool,
+)
+
+if res.message.tool_calls:
+    for tc in res.message.tool_calls:
+        queries = json.loads(tc.function.arguments)["queries"]
+        search_queries.extend(queries)
+
+print(search_queries)
+```
+```
+# Sample response
+['popularity of NSync', 'popularity of Backstreet Boys']
+```
+Indeed, to generate a factually accurate answer to the question "Who is more popular: Nsync or Backstreet Boys?", looking up `popularity of NSync` and `popularity of Backstreet Boys` first would be helpful.
+
+You can then customize the preamble and/or the tool definition to generate queries that are more relevant to your use case.
+
+For example, you can customize the preamble to encourage a longer list of search queries to be generated.
+
+```python PYTHON
+instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
+```
+```
+# Sample response
+['NSync popularity', 'Backstreet Boys popularity', 'NSync vs Backstreet Boys popularity comparison', 'Which boy band is more popular NSync or Backstreet Boys', 'NSync and Backstreet Boys fan base size comparison', 'Who has sold more albums NSync or Backstreet Boys', 'NSync and Backstreet Boys chart performance comparison']
+```
+
+You can then customize the preamble and/or the tool definition to generate queries that are more relevant to your use case.
+
+For example, you can customize the preamble to encourage a longer list of search queries to be generated.
+
+```python PYTHON
+instructions_verbose = "Write many search queries that will find helpful information for answering the user's question accurately. Always write a very long list of at least 7 search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer.
+```
+```
+# Sample response
+['NSync popularity', 'Backstreet Boys popularity', 'NSync vs Backstreet Boys popularity comparison', 'Which boy band is more popular NSync or Backstreet Boys', 'NSync and Backstreet Boys fan base size comparison', 'Who has sold more albums NSync or Backstreet Boys', 'NSync and Backstreet Boys chart performance comparison']
+```
+
+#### Step 2: Fetching relevant documents
+
+The next step is to [fetch documents](https://docs.cohere.com/docs/documents-and-citations) from the relevant data source using the generated search queries. For example, to answer the question about the two pop sensations _NSYNC_ and _Backstreet Boys_, one might want to use an API from a web search engine, and fetch the contents of the websites listed at the top of the search results.
+
+We won't go into details of fetching data in this guide, since it's very specific to the search API you're querying. However we should mention that breaking up long documents into smaller ones first (1-2 paragraphs) will help you not go over the context limit. When trying to stay within the context length limit, you might need to omit some of the documents from the request. To make sure that only the least relevant documents are omitted, we recommend using the [Rerank endpoint](https://docs.cohere.com/reference/rerank) endpoint which will sort the documents by relevancy to the query. The lowest ranked documents are the ones you should consider dropping first.
+
+#### Step 3: Generating a response
+
+In the final step, we will be calling the Chat API again, but this time passing along the `documents` you acquired in Step 2. A `document` object is a dictionary containing the content and the metadata of the text. We recommend using a few descriptive keys such as `"title"`, `"snippet"`, or `"last updated"` and only including semantically relevant data. The keys and the values will be formatted into the prompt and passed to the model.
+
+**Request**
+
+```py
+import cohere
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
+
+documents = [
+    {
+        "data": {
+            "title": "CSPC: Backstreet Boys Popularity Analysis - ChartMasters",
+            "snippet": "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: Backstreet Boys Popularity Analysis\n\nHernán Lopez Posted on February 9, 2017 Posted in CSPC 72 Comments Tagged with Backstreet Boys, Boy band\n\nAt one point, Backstreet Boys defined success: massive albums sales across the globe, great singles sales, plenty of chart topping releases, hugely hyped tours and tremendous media coverage.\n\nIt is true that they benefited from extraordinarily good market conditions in all markets. After all, the all-time record year for the music business, as far as revenues in billion dollars are concerned, was actually 1999. That is, back when this five men group was at its peak.",
+        }
+    },
+    {
+        "data": {
+            "title": "CSPC: NSYNC Popularity Analysis - ChartMasters",
+            "snippet": "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: NSYNC Popularity Analysis\n\nMJD Posted on February 9, 2018 Posted in CSPC 27 Comments Tagged with Boy band, N'Sync\n\nAt the turn of the millennium three teen acts were huge in the US, the Backstreet Boys, Britney Spears and NSYNC. The latter is the only one we haven’t study so far. It took 15 years and Adele to break their record of 2,4 million units sold of No Strings Attached in its first week alone.\n\nIt wasn’t a fluke, as the second fastest selling album of the Soundscan era prior 2015, was also theirs since Celebrity debuted with 1,88 million units sold.",
+        }
+    },
+    {
+        "data": {
+            "title": "CSPC: Backstreet Boys Popularity Analysis - ChartMasters",
+            "snippet": " 1997, 1998, 2000 and 2001 also rank amongst some of the very best years.\n\nYet the way many music consumers – especially teenagers and young women’s – embraced their output deserves its own chapter. If Jonas Brothers and more recently One Direction reached a great level of popularity during the past decade, the type of success achieved by Backstreet Boys is in a completely different level as they really dominated the business for a few years all over the world, including in some countries that were traditionally hard to penetrate for Western artists.\n\nWe will try to analyze the extent of that hegemony with this new article with final results which will more than surprise many readers.",
+        }
+    },
+    {
+        "data": {
+            "title": "CSPC: NSYNC Popularity Analysis - ChartMasters",
+            "snippet": " Was the teen group led by Justin Timberlake really that big? Was it only in the US where they found success? Or were they a global phenomenon?\n\nAs usual, I’ll be using the Commensurate Sales to Popularity Concept in order to relevantly gauge their results. This concept will not only bring you sales information for all NSYNC‘s albums, physical and download singles, as well as audio and video streaming, but it will also determine their true popularity. If you are not yet familiar with the CSPC method, the next page explains it with a short video. I fully recommend watching the video before getting into the sales figures.",
+        }
+    },
+]
+
+# Add the user message
+message = "Who is more popular: Nsync or Backstreet Boys?"
+messages = [{"role": "user", "content": message}]
+
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=messages,
+    documents=documents
+)
+
+print(response.message.content[0].text)
+
+print(response.message.citations)
+```
+
+**Response**
+
+```
+# response.message.content[0].text
+Both NSYNC and Backstreet Boys were huge in the US at the turn of the millennium. However, Backstreet Boys achieved a greater level of success than NSYNC. They dominated the music business for a few years all over the world, including in some countries that were traditionally hard to penetrate for Western artists. Their success included massive album sales across the globe, great singles sales, plenty of chart-topping releases, hugely hyped tours and tremendous media coverage.
+
+# response.message.citations (truncated for brevity)
+[Citation(start=36, 
+          end=81, 
+          text='huge in the US at the turn of the millennium.', 
+          sources=[DocumentSource(type='document', id='doc:1', document={'id': 'doc:1', 'snippet': "↓ Skip to Main Content\n\nMusic industry – One step closer ...", 'title': 'CSPC: NSYNC Popularity Analysis - ChartMasters'})]),
+Citation(start=107, 
+          end=154, 
+          text='achieved a greater level of success than NSYNC.', 
+          sources=[DocumentSource(type='document', id='doc:2', document={'id': 'doc:2', 'snippet': ' 1997, 1998, 2000 and 2001 also rank amongst some of the very best ...', 'title': 'CSPC: Backstreet Boys Popularity Analysis - ChartMasters'})]),
+Citation(start=160, 
+        end=223,
+        ...
+...]
+
+```
+
+Not only will we discover that the Backstreet Boys were the more popular band, but the model can also _Tell Me Why_, by providing details [supported by citations](https://docs.cohere.com/docs/documents-and-citations).
+
+
+### Caveats
+
+It’s worth underscoring that RAG does not guarantee accuracy. It involves giving a model context which informs its replies, but if the provided documents are themselves out-of-date, inaccurate, or biased, whatever the model generates might be as well. What’s more, RAG doesn’t guarantee that a model won’t hallucinate. It greatly reduces the risk, but doesn’t necessarily eliminate it altogether. This is why we put an emphasis on including inline citations, which allow users to verify the information.

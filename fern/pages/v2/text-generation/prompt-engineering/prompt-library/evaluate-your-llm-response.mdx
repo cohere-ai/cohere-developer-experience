@@ -1,0 +1,64 @@
+---
+title: "Evaluate your LLM response"
+slug: "v2/docs/evaluate-your-llm-response"
+
+hidden: false 
+description: >-
+  Learn how to use Command-R to evaluate natural language responses with an
+  example of grading formality.
+image: "../../../../../assets/images/c643ad5-cohere_meta_image.jpg"  
+keywords: "prompt engineering, large language models"
+
+createdAt: "Wed Mar 13 2024 18:51:59 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Thu May 23 2024 05:32:10 GMT+0000 (Coordinated Universal Time)"
+---
+You can leverage [Command R](/v2/docs/command-r) to evaluate natural language responses that cannot be easily scored with manual rules.
+
+**Prompt**
+
+```
+You are an AI grader that given an output and a criterion, grades the completion based on the prompt and criterion. Below is a prompt, a completion, and a criterion with which to
+grade the completion. You need to respond according to the criterion instructions.
+
+## Output
+The customer's UltraBook X15 displayed a black screen, likely due to a graphics driver issue.
+Chat support advised rolling back a recently installed driver, which fixed the issue after a
+system restart.
+
+## Criterion 
+Rate the ouput text with a score between 0 and 1. 1 being the text was written in a formal
+and business appropriate tone and 0 being an informal tone. Respond only with the score.
+```
+
+**Output**
+
+```
+0.8
+```
+
+**API Request**
+```python PYTHON
+import cohere
+
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
+
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=[{"role": "user", "content": """
+    You are an AI grader that given an output and a criterion, grades the completion based on
+    the prompt and criterion. Below is a prompt, a completion, and a criterion with which to grade
+    the completion. You need to respond according to the criterion instructions.
+    
+    ## Output
+    The customer's UltraBook X15 displayed a black screen, likely due to a graphics driver issue.
+    Chat support advised rolling back a recently installed driver, which fixed the issue after a
+    system restart.
+    
+    ## Criterion 
+    Rate the ouput text with a score between 0 and 1. 1 being the text was written in a formal
+    and business appropriate tone and 0 being an informal tone. Respond only with the score.
+    """}]
+)
+
+print(response.message.content[0].text)
+```

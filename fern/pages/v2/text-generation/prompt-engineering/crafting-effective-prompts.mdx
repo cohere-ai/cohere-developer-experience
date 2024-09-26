@@ -1,0 +1,279 @@
+---
+title: "Crafting Effective Prompts"
+slug: "v2/docs/crafting-effective-prompts"
+
+hidden: false
+description: "This page describes different ways of crafting effective prompts for prompt engineering."
+image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "prompt engineering, Cohere"
+
+createdAt: "Tue Mar 12 2024 18:51:36 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Thu May 23 2024 05:23:40 GMT+0000 (Coordinated Universal Time)"
+---
+The most effective prompts are those that are clear, concise, specific, and include examples of exactly what a response should look like. In this chapter, we will cover several strategies and tactics to get the most effective responses from the Command family of models. We will cover formatting and delimiters, context, using examples, structured output, do vs. do not do, length control, begin the completion yourself, and task splitting. We will highlight best practices as a user crafting prompts in the Cohere playground, as well as through the API. 
+
+## Formatting and Delimiters
+
+A clear, concise, and specific prompt can be more effective for an LLM with careful formatting. Instructions should be placed at the beginning of the prompt, and different types of information, such as instructions, context, and resources, should be delimited with an explanatory header. Headers can be made more clear by prepending them with `##`. 
+
+For example:
+
+```
+## Instructions
+Summarize the text below.
+
+## Input Text
+{input_text}
+```
+
+Then use the Chat API to send a message to the model:
+
+```python PYTHON
+import cohere
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
+
+message = """
+## Instructions
+Summarize the text below.
+
+## Input Text
+{input_text}
+"""
+
+# get model response
+response = co.chat(
+  messages=[{'role': 'user', 'content': message}],
+  model="command-r-plus-08-2024",
+  temperature=0.3
+)
+```
+
+## Context
+
+The previous prompt has concise instructions that begin the prompt (“summarize the text”) and is formatted clearly, where the instructions and resources are separated with delimiters. However, it lacks context that the LLM could use to produce a better-quality summary for the desired output. Including information about the input text could improve the prompt.  
+
+```
+## Instructions
+Below there is a long form news article discussing the 1972 Canada–USSR Summit Series,
+an eight-game ice hockey series between the Soviet Union and Canada, held in September 1972.
+Please summarize the salient points of the text and do so in a flowing high natural language
+quality text. Use bullet points where appropriate.
+
+## News Article
+{news_article}
+
+```
+
+While embedding a news article directly in a prompt works well, Cohere grounded generation is directly available through the Chat API which can result in a much improved completion. Grounded completion focuses on generating accurate and relevant responses by avoiding preambles, or having to include documents directly in the message. The benefits include:
+
+- Less incorrect information.
+- More directly useful responses.
+- Responses with precise citations for source tracing.
+
+For this method, we recommend providing documents through the documents parameter. Our models process conversations and document snippets (100-400 word chunks in key-value pairs) as input, and you have the option of including a system message.
+
+For the example above, we can chunk a news article into different sections and attach them via the `documents` field in the `user` message. The Chat API will then provide us not only with the completion but also citations that ground information from the documents. See the following:
+
+```python PYTHON
+# Sections from the original news article
+document_chunked = [
+  {
+    "data": {
+      "text": "Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA)."
+    }
+  },
+  {
+    "data": {
+      "text": "“Rental is going back to ‘normal,’ but normal means that strategy matters again - geography matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you just showed up with equipment and you made money."
+    }
+  },
+  {
+    "data": {
+      "text": "“Everybody was breaking records, from the national rental chains to the smallest rental companies; everybody was having record years, and everybody was raising prices. The conversation was, ‘How much are you up?’ And now, the conversation is changing to ‘What’s my market like?’”"
+    }
+  }
+]
+
+# Add a system message for additional context
+system_message = """## Task and Context
+You will receive a series of text fragments from a document that are presented in chronological order. As the assistant, you must generate responses to user's requests based on the information given in the fragments. Ensure that your responses are accurate and truthful, and that you reference your sources where appropriate to answer the queries, regardless of their complexity."""
+
+# Call the model
+message = f"Summarize this text in one sentence."
+
+response = co.chat(model="command-r-plus-08-2024",
+                   documents=document_chunked,
+                   messages=[{"role": "system", "content": system_message},
+                             {'role': 'user', "content": message}])
+
+response_text = response.message.content[0].text
+
+print(response_text)
+```
+
+The model returns a concise summary as instructed:
+
+```
+Josh Nickell, vice president of the American Rental Association, predicts that equipment rental in North America will "normalize" in 2024, requiring companies to focus on strategy, geography, fleet mix, and customer type.
+```
+
+But importantly, it also returns citations that ground the completion in the included `documents`. The citations are returned in `response.message.citations` as a list of JSON dictionaries:
+
+```
+[Citation(start=0, 
+        end=12, 
+        text='Josh Nickell', 
+        sources=[DocumentSource(type='document', id='doc:0', document={'id': 'doc:0', 'text': 'Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA).'})]), Citation(start=14, end=63, text='vice president of the American Rental Association', sources=[DocumentSource(type='document', id='doc:0', document={'id': 'doc:0', 'text': 'Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA).'})]), Citation(start=79, end=112, text='equipment rental in North America', sources=[DocumentSource(type='document', id='doc:0', document={'id': 'doc:0', 'text': 'Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA).'})]), 
+Citation(start=118, 
+        end=129, 
+        text='"normalize"', 
+        sources=[DocumentSource(type='document', id='doc:0', document={'id': 'doc:0', 'text': 'Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA).'}), DocumentSource(type='document', id='doc:1', document={'id': 'doc:1', 'text': '“Rental is going back to ‘normal,’ but normal means that strategy matters again - geography matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you just showed up with equipment and you made money.'})]), 
+Citation(start=133, ...
+```
+
+These can easily be rendered into the text to show the source of each piece of information. The following Python function adds the returned citations to the returned completion.
+
+```python PYTHON
+# Function to insert inline citations into the text
+def insert_inline_citations(text, citations):
+    sorted_citations = sorted(citations, key=lambda c: c.start, reverse=True)
+    
+    for citation in sorted_citations:
+        source_ids = [source.id.split(':')[-1] for source in citation.sources]
+        citation_text = f"[{','.join(source_ids)}]"
+        text = text[:citation.end] + citation_text + text[citation.end:]
+    
+    return text
+
+# Function to list source documents
+def list_sources(citations):
+    unique_sources = {}
+    for citation in citations:
+        for source in citation.sources:
+            source_id = source.id.split(':')[-1]
+            if source_id not in unique_sources:
+                unique_sources[source_id] = source.document
+
+    footnotes = []
+    for source_id, document in sorted(unique_sources.items()):
+        footnote = f"[{source_id}] "
+        for key, value in document.items():
+            footnote += f"{key}: {value}, "
+        footnotes.append(footnote.rstrip(", "))
+    
+    return "\n".join(footnotes)
+
+# Use the functions
+cited_text = insert_inline_citations(response.message.content[0].text, response.message.citations)
+
+# Print the result with inline citations
+print(cited_text)
+
+# Print source documents
+if response.message.citations:
+    print("\nSource documents:")
+    print(list_sources(response.message.citations))
+```
+```
+# Sample output
+
+Josh Nickell[0], vice president of the American Rental Association[0], predicts that equipment rental in North America[0] will "normalize"[0,1] in 2024[0], requiring companies to focus on strategy, geography, fleet mix, and customer type.[1,2]
+
+Source documents:
+[0] id: doc:0, text: Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA).
+[1] id: doc:1, text: “Rental is going back to ‘normal,’ but normal means that strategy matters again - geography matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you just showed up with equipment and you made money.
+[2] id: doc:2, text: “Everybody was breaking records, from the national rental chains to the smallest rental companies; everybody was having record years, and everybody was raising prices. The conversation was, ‘How much are you up?’ And now, the conversation is changing to ‘What’s my market like?’”
+```
+
+## Incorporating Example Outputs
+
+LLMs respond well when they have specific examples to work from. For example, instead of asking for the salient points of the text and using bullet points “where appropriate”, give an example of what the output should look like.
+
+```
+## Instructions
+Below there is a long form news article discussing the 1972 Canada–USSR Summit Series, an eight-game ice hockey series between the Soviet Union and Canada, held in September 1972. Please summarize the salient points of the text and do so in a flowing high natural language quality text. Use bullet points where appropriate.
+
+## Example Output
+High level summary: <summary>
+3 important events related to the series:
+* <important event 1>
+* <important event 2>
+* <important event 3>
+
+## News Article
+{news_article}
+
+```
+
+## Structured Output
+
+In addition to examples, asking the model for structured output with a clear and demonstrated output format can help constrain the output to match desired requirements. JSON works particularly well with the Command R models.
+
+```
+Output the summary in the following JSON format:
+{
+  "short_summary": "<include a short summary of the text here>",
+  "most_important_events": [
+    "<one important event>",
+    "<another important event>",
+    "<another important event>"
+  ]
+}
+
+```
+
+## Do vs. Do Not Do
+
+Be explicit in **exactly** what you want the model to do. Be as assertive as possible and avoid language that could be considered vague. To encourage abstract summarization, do not write something like “avoid extracting full sentences from the input text,” and instead do the following:
+
+```
+## Instructions
+Below there is a long form news article discussing the 1972 Canada–USSR Summit Series, an eight-game ice hockey series between the Soviet Union and Canada, held in September 1972. Please summarize the salient points of the text and do so in a flowing high natural language quality text. Use bullet points where appropriate.
+
+Paraphrase the content into re-written, easily digestible sentences. Do not extract full sentences from the input text. 
+
+## News Article
+{news_article}
+
+```
+
+## Length Control
+
+Command R models excel at length control. Use this to your advantage by being explicit about the desired length of completion. Different units of length work well, including paragraphs (“give a summary in two paragraphs”); sentences (“make the response between 3 and 5 sentences long”); and words (“the completion should be at least 100 and no more than 200 words long”).
+
+```
+...
+The output summary should be at least 250 words and no more than 300 words long.
+```
+
+## Begin the Completion Yourself
+
+LLMs can easily be constrained by beginning the completion as part of the input prompt. For example, if it is very important that the output is HTML code and that it must be a well-formed HTML document, you can show the model how the completion should begin, and it will tend to follow suit.
+
+```
+...
+Please generate the response in a well-formed HTML document. The completion should begin as
+follows:
+
+<!DOCTYPE html>
+<html>
+
+```
+
+## Task Splitting
+
+Finally, task splitting should be used when the requested task is complex and can be broken down into sub-tasks. Doing this for the model can help guide it to the best possible answer. Instead of asking for a summary of the most important sentence in the most important paragraph in the input, break it down piece by piece in the prompt:
+
+```
+## Instructions
+Using the included text below, perform the following steps:
+
+1. Read through the entire text carefully
+2. Extract the most important paragraph
+3. From the paragraph extracted in step 2, extract the most important sentence
+4. Summarize the sentence extracted in step 3 and make it between 30 and 50 words long.
+5. Only return the result of step 4 in your response.
+
+```
+
+In the next chapter, we will discuss more advanced prompt engineering techniques, including few-shot prompting and chain-of-thought.
