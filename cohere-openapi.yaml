@@ -5929,6 +5929,8 @@ paths:
               message-end: "#/components/schemas/ChatMessageEndEvent"
       description: |
         Generates a message from the model in response to a provided conversation. To learn how to use the Chat API with Streaming and RAG follow our Text Generation guides.
+      parameters:
+        - $ref: "#/components/parameters/RequestSource"
       requestBody:
         content:
           application/json:
@@ -5971,10 +5973,10 @@ paths:
                   enum:
                     - CONTEXTUAL
                     - STRICT
-                    - NONE
+                    - OFF
                   description: |
                     Used to select the [safety instruction](/docs/safety-modes) inserted into the prompt. Defaults to `CONTEXTUAL`.
-                    When `NONE` is specified, the safety instruction will be omitted.
+                    When `OFF` is specified, the safety instruction will be omitted.
 
                     Safety modes are not yet configurable in combination with `tools`, `tool_results` and `documents` parameters.
 
@@ -6138,6 +6140,80 @@ paths:
                     print(response)
 
                 asyncio.run(main())
+            - sdk: java
+              name: Default
+              code: >
+                /* (C)2024 */
+
+                package chatv2post;
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.resources.v2.requests.V2ChatRequest;
+
+                import com.cohere.api.types.*;
+
+                import java.util.List;
+
+
+                public class Default {
+                    public static void main(String[] args) {
+                        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+
+                        ChatResponse response =
+                                cohere.v2()
+                                        .chat(
+                                                V2ChatRequest.builder()
+                                                        .model("command-r-plus")
+                                                        .messages(
+                                                                List.of(
+                                                                        ChatMessageV2.user(
+                                                                                UserMessage.builder()
+                                                                                        .content(
+                                                                                                UserMessageContent
+                                                                                                        .of(
+                                                                                                                "Who discovered"
+                                                                                                                    + " gravity?"))
+                                                                                        .build()),
+                                                                        ChatMessageV2.assistant(
+                                                                                AssistantMessage.builder()
+                                                                                        .content(
+                                                                                                AssistantMessageContent
+                                                                                                        .of(
+                                                                                                                "The man"
+                                                                                                                    + " who is"
+                                                                                                                    + " widely"
+                                                                                                                    + " credited"
+                                                                                                                    + " with"
+                                                                                                                    + " discovering"
+                                                                                                                    + " gravity"
+                                                                                                                    + " is Sir"
+                                                                                                                    + " Isaac"
+                                                                                                                    + " Newton"))
+                                                                                        .build())))
+                                                        .build());
+
+                        System.out.println(response);
+                    }
+                }
+            - sdk: curl
+              name: Default
+              code: |-
+                curl --request POST \
+                  --url https://api.cohere.com/v1/chat \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY" \
+                  --data '{
+                    "model": "command-r-plus",
+                    "messages": [
+                      {
+                        "role": "user",
+                        "message": "Hello world!"
+                      }
+                    ],
+                  }'
           request:
             model: "command-r"
             messages:
@@ -6266,6 +6342,199 @@ paths:
 
 
                 print(response)
+            - sdk: java
+              name: Documents
+              code: >
+                /* (C)2024 */
+
+                package chatv2post;
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.resources.v2.requests.V2ChatRequest;
+
+                import
+                com.cohere.api.resources.v2.types.V2ChatRequestDocumentsItem;
+
+                import com.cohere.api.types.*;
+
+                import java.util.List;
+
+
+                public class Documents {
+                    public static void main(String[] args) {
+                        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+
+                        ChatResponse response =
+                                cohere.v2()
+                                        .chat(
+                                                V2ChatRequest.builder()
+                                                        .model("command-r-plus")
+                                                        .messages(
+                                                                List.of(
+                                                                        ChatMessageV2.user(
+                                                                                UserMessage.builder()
+                                                                                        .content(
+                                                                                                UserMessageContent
+                                                                                                        .of(
+                                                                                                                "Who is"
+                                                                                                                    + " the most"
+                                                                                                                    + " popular?"))
+                                                                                        .build())))
+                                                        .documents(
+                                                                List.of(
+                                                                        V2ChatRequestDocumentsItem.of(
+                                                                                "↓ Skip to Main Content\n\n"
+                                                                                    + "Music industry – One step"
+                                                                                    + " closer to being"
+                                                                                    + " accurate\n\n"
+                                                                                    + "CSPC: Backstreet Boys"
+                                                                                    + " Popularity Analysis\n\n"
+                                                                                    + "Hernán Lopez Posted on"
+                                                                                    + " February 9, 2017 Posted in"
+                                                                                    + " CSPC 72 Comments Tagged"
+                                                                                    + " with Backstreet Boys, Boy"
+                                                                                    + " band\n\n"
+                                                                                    + "At one point, Backstreet"
+                                                                                    + " Boys defined success:"
+                                                                                    + " massive albums sales across"
+                                                                                    + " the globe, great singles"
+                                                                                    + " sales, plenty of chart"
+                                                                                    + " topping releases, hugely"
+                                                                                    + " hyped tours and tremendous"
+                                                                                    + " media coverage.\n\n"
+                                                                                    + "It is true that they"
+                                                                                    + " benefited from"
+                                                                                    + " extraordinarily good market"
+                                                                                    + " conditions in all markets."
+                                                                                    + " After all, the all-time"
+                                                                                    + " record year for the music"
+                                                                                    + " business, as far as"
+                                                                                    + " revenues in billion dollars"
+                                                                                    + " are concerned, was actually"
+                                                                                    + " 1999. That is, back when"
+                                                                                    + " this five men group was at"
+                                                                                    + " its peak."),
+                                                                        V2ChatRequestDocumentsItem.of(
+                                                                                "↓ Skip to Main Content\n\n"
+                                                                                    + "Music industry – One step"
+                                                                                    + " closer to being"
+                                                                                    + " accurate\n\n"
+                                                                                    + "CSPC: NSYNC Popularity"
+                                                                                    + " Analysis\n\n"
+                                                                                    + "MJD Posted on February 9,"
+                                                                                    + " 2018 Posted in CSPC 27"
+                                                                                    + " Comments Tagged with Boy"
+                                                                                    + " band, N'Sync\n\n"
+                                                                                    + "At the turn of the"
+                                                                                    + " millennium three teen acts"
+                                                                                    + " were huge in the US, the"
+                                                                                    + " Backstreet Boys, Britney"
+                                                                                    + " Spears and NSYNC. The"
+                                                                                    + " latter is the only one we"
+                                                                                    + " haven’t study so far. It"
+                                                                                    + " took 15 years and Adele to"
+                                                                                    + " break their record of 2,4"
+                                                                                    + " million units sold of No"
+                                                                                    + " Strings Attached in its"
+                                                                                    + " first week alone.\n\n"
+                                                                                    + "It wasn’t a fluke, as the"
+                                                                                    + " second fastest selling"
+                                                                                    + " album of the Soundscan era"
+                                                                                    + " prior 2015, was also theirs"
+                                                                                    + " since Celebrity debuted"
+                                                                                    + " with 1,88 million units"
+                                                                                    + " sold."),
+                                                                        V2ChatRequestDocumentsItem.of(
+                                                                                " 1997, 1998, 2000 and 2001 also"
+                                                                                    + " rank amongst some of the"
+                                                                                    + " very best years.\n\n"
+                                                                                    + "Yet the way many music"
+                                                                                    + " consumers – especially"
+                                                                                    + " teenagers and young women’s"
+                                                                                    + " – embraced their output"
+                                                                                    + " deserves its own chapter."
+                                                                                    + " If Jonas Brothers and more"
+                                                                                    + " recently One Direction"
+                                                                                    + " reached a great level of"
+                                                                                    + " popularity during the past"
+                                                                                    + " decade, the type of success"
+                                                                                    + " achieved by Backstreet Boys"
+                                                                                    + " is in a completely"
+                                                                                    + " different level as they"
+                                                                                    + " really dominated the"
+                                                                                    + " business for a few years"
+                                                                                    + " all over the world,"
+                                                                                    + " including in some countries"
+                                                                                    + " that were traditionally"
+                                                                                    + " hard to penetrate for"
+                                                                                    + " Western artists.\n\n"
+                                                                                    + "We will try to analyze the"
+                                                                                    + " extent of that hegemony"
+                                                                                    + " with this new article with"
+                                                                                    + " final results which will"
+                                                                                    + " more than surprise many"
+                                                                                    + " readers."),
+                                                                        V2ChatRequestDocumentsItem.of(
+                                                                                " Was the teen group led by Justin"
+                                                                                    + " Timberlake really that big?"
+                                                                                    + " Was it only in the US where"
+                                                                                    + " they found success? Or were"
+                                                                                    + " they a global"
+                                                                                    + " phenomenon?\n\n"
+                                                                                    + "As usual, I’ll be using the"
+                                                                                    + " Commensurate Sales to"
+                                                                                    + " Popularity Concept in order"
+                                                                                    + " to relevantly gauge their"
+                                                                                    + " results. This concept will"
+                                                                                    + " not only bring you sales"
+                                                                                    + " information for all NSYNC‘s"
+                                                                                    + " albums, physical and"
+                                                                                    + " download singles, as well"
+                                                                                    + " as audio and video"
+                                                                                    + " streaming, but it will also"
+                                                                                    + " determine their true"
+                                                                                    + " popularity. If you are not"
+                                                                                    + " yet familiar with the CSPC"
+                                                                                    + " method, the next page"
+                                                                                    + " explains it with a short"
+                                                                                    + " video. I fully recommend"
+                                                                                    + " watching the video before"
+                                                                                    + " getting into the sales"
+                                                                                    + " figures.")))
+                                                        .build());
+                        System.out.println(response);
+                    }
+                }
+            - sdk: curl
+              name: Documents
+              code: |-
+                curl --request POST \
+                  --url https://api.cohere.com/v1/chat \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY" \
+                  --data '{
+                    "model": "command-r-plus",
+                    "documents": [
+                      {
+                        "id": "1",
+                        "data": "Cohere is the best!"
+                      }
+                    ],
+                    "messages": [
+                      {
+                        "role": "user",
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "Who's the best?"
+                          }
+                        ]
+                      }
+                    ]
+                  }'
           request:
             model: "command-r"
             documents:
@@ -6780,6 +7049,80 @@ paths:
                 for event in response:
                     if event.type == "content-delta":
                         print(event.delta.message.content.text, end='')
+            - sdk: java
+              name: Streaming
+              code: >
+                /* (C)2024 */
+
+                package chatv2post;
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.resources.v2.requests.V2ChatStreamRequest;
+
+                import com.cohere.api.types.*;
+
+                import java.util.List;
+
+
+                public class Stream {
+                    public static void main(String[] args) {
+                        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+
+                        Iterable<StreamedChatResponseV2> response =
+                                cohere.v2()
+                                        .chatStream(
+                                                V2ChatStreamRequest.builder()
+                                                        .model("command-r-plus")
+                                                        .messages(
+                                                                List.of(
+                                                                        ChatMessageV2.user(
+                                                                                UserMessage.builder()
+                                                                                        .content(
+                                                                                                UserMessageContent
+                                                                                                        .of(
+                                                                                                                "Who discovered"
+                                                                                                                    + " gravity?"))
+                                                                                        .build()),
+                                                                        ChatMessageV2.assistant(
+                                                                                AssistantMessage.builder()
+                                                                                        .content(
+                                                                                                AssistantMessageContent
+                                                                                                        .of(
+                                                                                                                "The man"
+                                                                                                                    + " who is"
+                                                                                                                    + " widely"
+                                                                                                                    + " credited"
+                                                                                                                    + " with"
+                                                                                                                    + " discovering"
+                                                                                                                    + " gravity"
+                                                                                                                    + " is Sir"
+                                                                                                                    + " Isaac"
+                                                                                                                    + " Newton"))
+                                                                                        .build())))
+                                                        .build());
+
+                        for (StreamedChatResponseV2 chatResponse : response) {
+                            if (chatResponse.isContentDelta()) {
+                                System.out.println(
+                                        chatResponse
+                                                .getContentDelta()
+                                                .flatMap(ChatContentDeltaEvent::getDelta)
+                                                .flatMap(ChatContentDeltaEventDelta::getMessage)
+                                                .flatMap(ChatContentDeltaEventDeltaMessage::getContent)
+                                                .flatMap(ChatContentDeltaEventDeltaMessageContent::getText)
+                                                .orElse(""));
+                            }
+                        }
+
+                        System.out.println(response);
+                    }
+                }
+            - sdk: curl
+              name: Streaming
+              code:
+                $ref: ./snippets/curl/chat-v2-post/streaming.sh
           request:
             model: "command-r"
             messages:
@@ -7001,6 +7344,165 @@ paths:
 
 
                 print(response)
+            - sdk: java
+              name: Tools
+              code: >
+                /* (C)2024 */
+
+                package chatv2post;
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.resources.v2.requests.V2ChatRequest;
+
+                import com.cohere.api.types.*;
+
+                import java.util.List;
+
+                import java.util.Map;
+
+
+                public class Tools {
+                    public static void main(String[] args) {
+                        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+
+                        ChatResponse response =
+                                cohere.v2()
+                                        .chat(
+                                                V2ChatRequest.builder()
+                                                        .model("command-r-plus")
+                                                        .tools(
+                                                                List.of(
+                                                                        ToolV2.builder()
+                                                                                .function(
+                                                                                        ToolV2Function.builder()
+                                                                                                .name(
+                                                                                                        "query_daily_sales_report")
+                                                                                                .description(
+                                                                                                        "Connects"
+                                                                                                            + " to a"
+                                                                                                            + " database"
+                                                                                                            + " to retrieve"
+                                                                                                            + " overall"
+                                                                                                            + " sales"
+                                                                                                            + " volumes"
+                                                                                                            + " and sales"
+                                                                                                            + " information"
+                                                                                                            + " for a"
+                                                                                                            + " given"
+                                                                                                            + " day.")
+                                                                                                .parameters(
+                                                                                                        Map.of(
+                                                                                                                "day",
+                                                                                                                ToolParameterDefinitionsValue
+                                                                                                                        .builder()
+                                                                                                                        .type(
+                                                                                                                                "str")
+                                                                                                                        .description(
+                                                                                                                                "Retrieves"
+                                                                                                                                    + " sales"
+                                                                                                                                    + " data"
+                                                                                                                                    + " for this"
+                                                                                                                                    + " day,"
+                                                                                                                                    + " formatted"
+                                                                                                                                    + " as YYYY-MM-DD.")
+                                                                                                                        .required(
+                                                                                                                                true)
+                                                                                                                        .build()))
+                                                                                                .build())
+                                                                                .build(),
+                                                                        ToolV2.builder()
+                                                                                .function(
+                                                                                        ToolV2Function.builder()
+                                                                                                .name(
+                                                                                                        "query_product_catalog")
+                                                                                                .description("Connects"
+                                                                                                    + " to a"
+                                                                                                    + " a product"
+                                                                                                    + " catalog"
+                                                                                                    + " with information"
+                                                                                                    + " about all"
+                                                                                                    + " the products being"
+                                                                                                    + " sold,"
+                                                                                                    + " including"
+                                                                                                    + " categories,"
+                                                                                                    + " prices, and stock"
+                                                                                                    + " levels.")
+                                                                                                .parameters(
+                                                                                                        Map.of(
+                                                                                                                "category",
+                                                                                                                ToolParameterDefinitionsValue
+                                                                                                                        .builder()
+                                                                                                                        .type(
+                                                                                                                                "str")
+                                                                                                                        .description(
+                                                                                                                                "Retrieves"
+                                                                                                                                    + " product"
+                                                                                                                                    + " information"
+                                                                                                                                    + " data"
+                                                                                                                                    + " for all"
+                                                                                                                                    + " products"
+                                                                                                                                    + " in this"
+                                                                                                                                    + " category.")
+                                                                                                                        .required(
+                                                                                                                                true)
+                                                                                                                        .build()))
+                                                                                                .build())
+                                                                                .build())
+                                                                )
+                                                        .build());
+
+                        System.out.println(response);
+                    }
+                }
+            - sdk: curl
+              name: Tools
+              code: >
+                curl --request POST \
+                  --url https://api.cohere.com/v1/chat \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY" \
+                  --data '{
+                      "model": "command-r-plus",
+                      "tools": [
+                          {
+                              "type": "function",
+                              "function": {
+                                  "name": "query_daily_sales_report",
+                                  "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+                                  "parameters": {
+                                      "day": {
+                                          "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
+                                          "type": "str",
+                                          "required": true
+                                      }
+                                  }
+                              }
+                          },
+                          {
+                              "type": "function",
+                              "function": {
+                                  "name": "query_product_catalog",
+                                  "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
+                                  "parameters": {
+                                      "category": {
+                                          "description": "Retrieves product information data for all products in this category.",
+                                          "type": "str",
+                                          "required": true
+                                      }
+                                  }
+                              }
+                          }
+                      ],
+                      "messages": [
+                          {
+                              "role": "user",
+                              "content": "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
+                          }
+                      ]
+                  }'
           request:
             model: "command-r"
             messages:
@@ -19261,6 +19763,7 @@ components:
           text: "#/components/schemas/TextContent"
     UserMessage:
       type: object
+      title: User Message
       description: A message from the user.
       required:
         - role
@@ -19343,6 +19846,7 @@ components:
             $ref: "#/components/schemas/Source"
     AssistantMessage:
       type: object
+      title: Assistant Message
       description: A message from the assistant role can contain text and tool call
         information.
       required:
@@ -19375,6 +19879,7 @@ components:
             $ref: "#/components/schemas/Citation"
     SystemMessage:
       type: object
+      title: System Message
       description: A message from the system.
       required:
         - role
@@ -19412,7 +19917,7 @@ components:
         id:
           type: string
           description: Unique identifier for this document which will be referenced in
-            citations. If not provided an ID will be automatically generated
+            citations. If not provided an ID will be automatically generated.
       required:
         - data
     DocumentContent:
@@ -19441,6 +19946,7 @@ components:
           document: "#/components/schemas/DocumentContent"
     ToolMessageV2:
       type: object
+      title: Tool Message
       description: A message from the system.
       required:
         - role
@@ -19455,7 +19961,7 @@ components:
           type: string
           description: The id of the associated tool call that has provided the given
             content
-        tool_content:
+        content:
           description: A single or list of outputs from a tool. The content should
             formatted as a JSON object string, or a list of tool content blocks
           oneOf:
