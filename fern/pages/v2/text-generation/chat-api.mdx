@@ -33,19 +33,36 @@ res = co.chat(
 print(res.message.content[0].text) # "The Ultimate Guide to API Design: Best Practices for Building Robust and Scalable APIs"
 ```
 ```java JAVA
-public class ChatPost {
-  public static void main(String[] args) {
-    Cohere cohere = Cohere.builder().token("<YOUR API KEY>").build();
+package chatv2post;
 
-    NonStreamedChatResponse response = cohere.chat(
-      ChatRequest.builder()
-      	.model("command-r-plus-08-2024")
-      	.message("Write a title for a blog post about API design. Only output the title text.")
-    )
+import com.cohere.api.Cohere;
+import com.cohere.api.resources.v2.requests.V2ChatRequest;
+import com.cohere.api.types.*;
+import java.util.List;
 
-    System.out.println(response); // "The Art of API Design: Crafting Elegant and Powerful Interfaces"
-  }
+public class Default {
+    public static void main(String[] args) {
+        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+
+        ChatResponse response =
+                cohere.v2()
+                        .chat(
+                                V2ChatRequest.builder()
+                                    .model("command-r-plus")
+                                    .messages(
+                                        List.of(
+                                            ChatMessageV2.user(
+                                                UserMessage.builder()
+                                                    .content(
+                                                        UserMessageContent
+                                                                .of("Hello world!"))
+                                                    .build())))
+                                    .build());
+
+        System.out.println(response);
+    }
 }
+
 ```
 ```typescript TYPESCRIPT
 const { CohereClientV2 } = require('cohere-ai');
