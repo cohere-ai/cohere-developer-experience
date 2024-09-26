@@ -10,7 +10,7 @@ public class DetokenizePost {
         Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
         DetokenizeResponse response = cohere.detokenize(
-                DetokenizeRequest.builder().model("command").tokens(List.of(8466, 5169, 2594, 8, 2792, 43)).build()
+                DetokenizeRequest.builder().model("command-r-plus").tokens(List.of(8466, 5169, 2594, 8, 2792, 43)).build()
         );
 
         System.out.println(response);

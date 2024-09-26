@@ -7,7 +7,7 @@ public class TokenizePost {
     public static void main(String[] args) {
         Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-        TokenizeResponse response = cohere.tokenize(TokenizeRequest.builder().text("tokenize me").model("command").build());
+        TokenizeResponse response = cohere.tokenize(TokenizeRequest.builder().text("tokenize me").model("command-r-plus").build());
 
         System.out.println(response);
     }
