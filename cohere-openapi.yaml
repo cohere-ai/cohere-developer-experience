@@ -5928,7 +5928,9 @@ paths:
               citation-end: "#/components/schemas/CitationEndEvent"
               message-end: "#/components/schemas/ChatMessageEndEvent"
       description: |
-        Generates a message from the model in response to a provided conversation. To learn how to use the Chat API with Streaming and RAG follow our Text Generation guides.
+        Generates a message from the model in response to a provided conversation. To learn more about the features of the Chat API follow our [Text Generation guides](https://docs.cohere.com/v2/docs/chat-api).
+
+        Follow the [Migration Guide](https://docs.cohere.com/v2/docs/migrating-v1-to-v2) for instructions on moving from API v1 to API v2.
       parameters:
         - $ref: "#/components/parameters/RequestSource"
       requestBody:
@@ -5943,9 +5945,9 @@ paths:
                 model:
                   type: string
                   description: The name of a compatible [Cohere
-                    model](https://docs.cohere.com/docs/models) (such as
+                    model](https://docs.cohere.com/v2/docs/models) (such as
                     command-r or command-r-plus) or the ID of a
-                    [fine-tuned](https://docs.cohere.com/docs/chat-fine-tuning)
+                    [fine-tuned](https://docs.cohere.com/v2/docs/chat-fine-tuning)
                     model.
                 messages:
                   $ref: "#/components/schemas/ChatMessages"
@@ -5975,18 +5977,18 @@ paths:
                     - STRICT
                     - OFF
                   description: |
-                    Used to select the [safety instruction](/docs/safety-modes) inserted into the prompt. Defaults to `CONTEXTUAL`.
+                    Used to select the [safety instruction](https://docs.cohere.com/v2/docs/safety-modes) inserted into the prompt. Defaults to `CONTEXTUAL`.
                     When `OFF` is specified, the safety instruction will be omitted.
 
                     Safety modes are not yet configurable in combination with `tools`, `tool_results` and `documents` parameters.
 
-                    **Note**: This parameter is only compatible with models [Command R 08-2024](/docs/command-r#august-2024-release), [Command R+ 08-2024](/docs/command-r-plus#august-2024-release) and newer.
-
-                    Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
+                    **Note**: This parameter is only compatible with models [Command R 08-2024](https://docs.cohere.com/v2/docs/command-r#august-2024-release), [Command R+ 08-2024](https://docs.cohere.com/v2/docs/command-r-plus#august-2024-release) and newer.
                 max_tokens:
                   type: integer
                   description: |
-                    The maximum number of tokens the model will generate as part of the response. Note: Setting a low value may result in incomplete generations.
+                    The maximum number of tokens the model will generate as part of the response.
+
+                    **Note**: Setting a low value may result in incomplete generations.
                 stop_sequences:
                   type: array
                   items:
@@ -19861,7 +19863,7 @@ components:
               items:
                 $ref: "#/components/schemas/Content"
     ToolCallV2:
-      description: A array of tool calls to be made.
+      description: An array of tool calls to be made.
       type: object
       properties:
         id:
@@ -19879,6 +19881,7 @@ components:
               type: string
     ToolSource:
       type: object
+      title: Tool Output
       properties:
         id:
           type: string
@@ -19914,10 +19917,13 @@ components:
       properties:
         start:
           type: integer
+          description: Start index of the cited snippet in the original source text.
         end:
           type: integer
+          description: End index of the cited snippet in the original source text.
         text:
           type: string
+          description: Text snippet that is being cited.
         sources:
           type: array
           items:
@@ -19940,6 +19946,8 @@ components:
             $ref: "#/components/schemas/ToolCallV2"
         tool_plan:
           type: string
+          description: A chain-of-thought style reflection and plan that the model
+            generates when working with Tools.
         content:
           oneOf:
             - type: string
@@ -20066,7 +20074,7 @@ components:
       description: |
         A list of chat messages in chronological order, representing a conversation between the user and the model.
 
-        Messages can be from `User`, `Assistant`, `Tool` and `System` roles. Learn more about messages and roles in [the Chat API guide](https://docs.cohere.com/docs/chat-api).
+        Messages can be from `User`, `Assistant`, `Tool` and `System` roles. Learn more about messages and roles in [the Chat API guide](https://docs.cohere.com/v2/docs/chat-api).
       items:
         $ref: "#/components/schemas/ChatMessageV2"
     ToolV2:
@@ -20131,7 +20139,7 @@ components:
           $ref: "#/components/schemas/ResponseFormatTypeV2"
         json_schema:
           description: |
-            [BETA] A JSON schema object that the output will adhere to. There are some restrictions we have on the schema, refer to [our guide](/docs/structured-outputs-json#schema-constraints) for more information.
+            A [JSON schema](https://json-schema.org/overview/what-is-jsonschema) object that the output will adhere to. There are some restrictions we have on the schema, refer to [our guide](/docs/structured-outputs-json#schema-constraints) for more information.
             Example (required name and age object):
             ```json
             {
@@ -20150,14 +20158,17 @@ components:
         - type
     ResponseFormatV2:
       description: |
-        Configuration for forcing the model output to adhere to the specified format. Supported on [Command R](https://docs.cohere.com/docs/command-r), [Command R+](https://docs.cohere.com/docs/command-r-plus) and newer models.
+        Configuration for forcing the model output to adhere to the specified format. Supported on [Command R](https://docs.cohere.com/v2/docs/command-r), [Command R+](https://docs.cohere.com/v2/docs/command-r-plus) and newer models.
 
-        The model can be forced into outputting JSON objects (with up to 5 levels of nesting) by setting `{ "type": "json_object" }`.
+        The model can be forced into outputting JSON objects by setting `{ "type": "json_object" }`.
 
         A [JSON Schema](https://json-schema.org/) can optionally be provided, to ensure a specific structure.
 
         **Note**: When using  `{ "type": "json_object" }` your `message` should always explicitly instruct the model to generate a JSON (eg: _"Generate a JSON ..."_) . Otherwise the model may end up getting stuck generating an infinite stream of characters and eventually run out of context length.
-        **Limitation**: The parameter is not supported in RAG mode (when any of `connectors`, `documents`, `tools`, `tool_results` are provided).
+
+        **Note**: When `json_schema` is not specified, the generated object can have up to 5 layers of nesting.
+
+        **Limitation**: The parameter is not supported when used in combinations with the `documents` or `tools` parameters.
       oneOf:
         - $ref: "#/components/schemas/TextResponseFormatV2"
         - $ref: "#/components/schemas/JsonResponseFormatV2"
@@ -20167,7 +20178,14 @@ components:
           text: "#/components/schemas/TextResponseFormatV2"
           json_object: "#/components/schemas/JsonResponseFormatV2"
     ChatFinishReason:
-      description: The reason a chat request has finished.
+      description: |
+        The reason a chat request has finished.
+
+        - **complete**: The model finished sending a complete message.
+        - **max_tokens**: The number of generated tokens exceeded the model's context length or the value specified via the `max_tokens` parameter.
+        - **stop_sequence**: One of the provided `stop_sequence` entries was reached in the model's generation.
+        - **tool_call**: The model generated a Tool Call and is expecting a Tool Message in return
+        - **error**: The generation failed due to an internal error
       type: string
       enum:
         - complete
@@ -20175,8 +20193,6 @@ components:
         - max_tokens
         - tool_call
         - error
-        - content_blocked
-        - error_limit
     AssistantMessageResponse:
       type: object
       description: A message from the assistant role can contain text and tool call
@@ -20194,6 +20210,8 @@ components:
             $ref: "#/components/schemas/ToolCallV2"
         tool_plan:
           type: string
+          description: A chain-of-thought style reflection and plan that the model
+            generates when working with Tools.
         content:
           type: array
           items:
