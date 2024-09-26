@@ -31,10 +31,16 @@ python -m pip install cohere --upgrade
 ```python 
 import cohere
 
-co = cohere.Client("Your API key")
+co = cohere.ClientV2("<<apiKey>>")
 
 response = co.chat(
-	message="hello world!"
+    model="command-r-plus",
+    messages=[
+        {
+            "role": "user",
+            "content": "hello world!"
+        }
+    ]
 )
 
 print(response)
@@ -49,15 +55,21 @@ npm i -s cohere-ai
 ```
 
 ```typescript
-const { CohereClient } = require("cohere-ai");
+const { CohereClientV2 } = require('cohere-ai');
 
-const cohere = new CohereClient({
-  token: "Your API key",
+const cohere = new CohereClientV2({
+  token: '<<apiKey>>',
 });
 
 (async () => {
   const response = await cohere.chat({
-    message: "hello world!",
+    model: 'command-r-plus',
+    messages: [
+      {
+        role: 'user',
+        content: 'hello world!',
+      },
+    ],
   });
 
   console.log(response);
@@ -73,27 +85,35 @@ implementation 'com.cohere:cohere-java:1.x.x'
 ```
 
 ```java
-import com.cohere.api.Cohere;
-import com.cohere.api.requests.ChatRequest;
-import com.cohere.api.types.ChatMessage;
-import com.cohere.api.types.ChatMessageRole;
-import com.cohere.api.types.NonStreamedChatResponse;
+package chatv2post;
 
+import com.cohere.api.Cohere;
+import com.cohere.api.resources.v2.requests.V2ChatRequest;
+import com.cohere.api.types.*;
 import java.util.List;
 
-
-public class ChatPost {
+public class Default {
     public static void main(String[] args) {
-        Cohere cohere = Cohere.builder().token("Your API key").build();
+        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-        NonStreamedChatResponse response = cohere.chat(
-                ChatRequest.builder()
-                        .message("What year was he born?").build());
+        ChatResponse response =
+                cohere.v2()
+                        .chat(
+                                V2ChatRequest.builder()
+                                    .model("command-r-plus")
+                                    .messages(
+                                        List.of(
+                                            ChatMessageV2.user(
+                                                UserMessage.builder()
+                                                    .content(
+                                                        UserMessageContent
+                                                                .of("Hello world!"))
+                                                    .build())))
+                                    .build());
 
         System.out.println(response);
     }
 }
-
 ```
 
 ### Go
