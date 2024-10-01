@@ -43,14 +43,14 @@ To subscribe to the algorithm:
 First, let's install the Python packages and import them. 
 
 ```TEXT 
-pip install --upgrade cohere-aws
+pip install cohere>=5.11.0
 ```
 
 ```Python PYTHON 
 import os
 import sagemaker as sage
 
-from cohere_aws import Client
+import cohere
 from sagemaker.s3 import S3Uploader
 ```
 
@@ -141,8 +141,8 @@ print("merged_weights", merged_weights)
 Create Cohere client and use it to export the merged weights to the TensorRT-LLM inference engine. The exported TensorRT-LLM engine will be stored in a tar file `{s3_output_dir}/{export_name}.tar.gz` in S3, where the file name is the same as the `export_name`.
 
 ```Python PYTHON 
-co = Client(region_name=region)
-co.export_finetune(
+co = cohere.SageMakerClient(aws_region=region)
+co.sagemaker_finetuning.export_finetune(
     arn=arn,
     name=export_name,
     s3_checkpoint_dir=s3_checkpoint_dir,
@@ -157,7 +157,7 @@ co.export_finetune(
 The Cohere client provides a built-in method to create an endpoint for inference, which will automatically deploy the model from the TensorRT-LLM engine you just exported.
 
 ```Python PYTHON 
-co.create_endpoint(
+co.sagemaker_finetuning.create_endpoint(
     arn=arn,
     endpoint_name=endpoint_name,
     s3_models_dir=s3_output_dir,
@@ -173,10 +173,10 @@ Now, you can perform real-time inference by calling the endpoint you just deploy
 
 ```Python PYTHON
 # If the endpoint is already deployed, you can directly connect to it
-co.connect_to_endpoint(endpoint_name=endpoint_name)
+co.sagemaker_finetuning.connect_to_endpoint(endpoint_name=endpoint_name)
 
 message = "Classify the following text as either very negative, negative, neutral, positive or very positive: mr. deeds is , as comedy goes , very silly -- and in the best way."
-result = co.chat(message=message)
+result = co.sagemaker_finetuning.hat(message=message)
 print(result)
 ```
 
@@ -195,7 +195,7 @@ for line in tqdm(open(eval_data_path).readlines()):
     question_answer_json = json.loads(line)
     question = question_answer_json["messages"][0]["content"]
     answer = question_answer_json["messages"][1]["content"]
-    model_ans = co.chat(message=question, temperature=0).text
+    model_ans = co.sagemaker_finetuning.chat(message=question, temperature=0).text
     if model_ans == answer:
         correct += 1
 
@@ -207,8 +207,8 @@ print(f"Accuracy of finetuned model is %.3f" % (correct / total))
 After you successfully performed the inference, you can delete the deployed endpoint to avoid being charged continuously.
 
 ```Python PYTHON
-co.delete_endpoint()
-co.close()
+co.sagemaker_finetuning.delete_endpoint()
+co.sagemaker_finetuning.close()
 ```
 
 ## Step 9. Unsubscribe to the listing (optional)
