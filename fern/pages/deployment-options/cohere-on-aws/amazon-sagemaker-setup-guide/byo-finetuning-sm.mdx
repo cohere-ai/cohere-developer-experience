@@ -16,7 +16,7 @@ This document shows you how to deploy your own finetuned [HuggingFace Command-R 
 - Export the merged weights to the TensorRT-LLM inference engine using Amazon SageMaker;
 - Deploy the engine as a SageMaker endpoint to serve your business use cases;
 
-You can also find a [companion notebook](https://github.com/cohere-ai/cohere-aws/blob/c946a2c798baf4fb42a3ecfc29f197ba62ee9586/notebooks/sagemaker/Deploy%20your%20own%20finetuned%20command-r-0824.ipynb) with working code samples. 
+You can also find a [companion notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/finetuning/Deploy%20your%20own%20finetuned%20command-r-0824.ipynb) with working code samples. 
 
 ## Prerequisites
 
@@ -26,7 +26,7 @@ To deploy your model successfully, ensure that either:
         - `aws-marketplace:ViewSubscriptions`
         - `aws-marketplace:Unsubscribe`
         - `aws-marketplace:Subscribe`
-    - Or, your AWS account has a subscription to the packages for Cohere Command R Bring Your Own Finetuning. If so, you can skip the "subscribe to the bring your own finetuning algorithm" step below.
+    - Or, your AWS account has a subscription to the packages for `cohere-command-R-v2-byoft`. If so, you can skip the "subscribe to the bring your own finetuning algorithm" step below.
 
 **NOTE:** If you're running the companion notebook, know that it contains elements which render correctly in Jupyter interface, so you should open it from an Amazon SageMaker Notebook Instance or Amazon SageMaker Studio.
 
@@ -34,7 +34,7 @@ To deploy your model successfully, ensure that either:
 
 To subscribe to the algorithm:
 
-- Open the algorithm listing page Cohere Command R Bring Your Own Finetuning.
+- Open the algorithm listing page for `cohere-command-R-v2-byoft`.
 - On the AWS Marketplace listing, click on the Continue to Subscribe button.
 - On the **Subscribe to this software** page, review and click on **"Accept Offer"** if you and your organization agrees with EULA, pricing, and support terms. On the **"Configure and launch"** page, make sure the ARN displayed in your region match with the ARN you will use below.
 
@@ -54,14 +54,14 @@ import cohere
 from sagemaker.s3 import S3Uploader
 ```
 
-Make sure you have access to the resources in your AWS account. For example, you can configure an AWS profile by the command aws configure sso (see [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html#cli-configure-sso-configure)) and run the command below to set the environment variable `AWS_PROFILE` as your profile name.
+Make sure you have access to the resources in your AWS account. For example, you can configure an AWS profile by the command `aws configure sso` (see [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html#cli-configure-sso-configure)) and run the command below to set the environment variable `AWS_PROFILE` as your profile name.
 
 ```Python PYTHON 
 # Change "<aws_profile>" to your own AWS profile name
 os.environ["AWS_PROFILE"] = "<aws_profile>"
 ```
 
-Finally, you need to set all the following variables using your own information. It's best not to not add a trailing slash to these paths, as that could mean  some parts won't work correctly.
+Finally, you need to set all the following variables using your own information. It's best not to add a trailing slash to these paths, as that could mean  some parts won't work correctly.
 
 ```Python PYTHON 
 # The AWS region
@@ -87,6 +87,9 @@ export_name = "<export_name>"
 
 # The name of the SageMaker endpoint
 endpoint_name = "<endpoint_name>"
+
+# The instance type for export and inference. Now "ml.p4de.24xlarge" and "ml.p5.48xlarge" are supported",
+instance_type = "<instance_type>"
 ```
 
 ## Step 3: Get the merged weights
@@ -141,13 +144,13 @@ print("merged_weights", merged_weights)
 Create Cohere client and use it to export the merged weights to the TensorRT-LLM inference engine. The exported TensorRT-LLM engine will be stored in a tar file `{s3_output_dir}/{export_name}.tar.gz` in S3, where the file name is the same as the `export_name`.
 
 ```Python PYTHON 
-co = cohere.SageMakerClient(aws_region=region)
+co = cohere.SagemakerClient(aws_region=region)
 co.sagemaker_finetuning.export_finetune(
     arn=arn,
     name=export_name,
     s3_checkpoint_dir=s3_checkpoint_dir,
     s3_output_dir=s3_output_dir,
-    instance_type="ml.p4de.24xlarge",
+    instance_type=instance_type,
     role="ServiceRoleSagemaker",
 )
 ```
@@ -158,11 +161,11 @@ The Cohere client provides a built-in method to create an endpoint for inference
 
 ```Python PYTHON 
 co.sagemaker_finetuning.create_endpoint(
-    arn=arn,
+    arn=arn[(arn.rfind(\"/\") + 1):],
     endpoint_name=endpoint_name,
     s3_models_dir=s3_output_dir,
     recreate=True,
-    instance_type="ml.p4de.24xlarge",
+    instance_type=instance_type,
     role="ServiceRoleSagemaker",
 )
 ```
@@ -176,7 +179,7 @@ Now, you can perform real-time inference by calling the endpoint you just deploy
 co.sagemaker_finetuning.connect_to_endpoint(endpoint_name=endpoint_name)
 
 message = "Classify the following text as either very negative, negative, neutral, positive or very positive: mr. deeds is , as comedy goes , very silly -- and in the best way."
-result = co.sagemaker_finetuning.hat(message=message)
+result = co.sagemaker_finetuning.chat(message=message)
 print(result)
 ```
 
@@ -220,4 +223,4 @@ If you would like to unsubscribe to the model package, follow these steps. Befor
 Here's how you do that:
 
 - Navigate to **Machine Learning** tab on the [Your Software subscriptions](https://aws.amazon.com/marketplace/ai/library?productType=ml&ref_=mlmp_gitdemo_indust) page;
-- Locate the listing that you want to cancel the subscription for, and then choose Cancel Subscription to cancel the subscription.
+- Locate the listing that you want to cancel the subscription for, and then choose **Cancel Subscription** to cancel the subscription.
