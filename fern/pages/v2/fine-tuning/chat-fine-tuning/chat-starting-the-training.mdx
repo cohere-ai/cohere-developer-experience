@@ -65,8 +65,7 @@ There a certain requirements for the data you use to fine-tune a model for Chat 
 
 - There are only three acceptable values for the `role` field: `System`, `Chatbot` or `User`. There should be at least one instance of `Chatbot` and `User` in each conversation. If your dataset includes other roles, a validation error will be thrown.
 - A preamble should be uploaded as the first message in the conversation, with `role: System`. All other messages with `role: System` will be treated as speakers in the conversation.
-- Preambles should have a context length no longer than 4096 tokens.
-- What's more, each turn in the conversation should be within the context length of 4096 tokens to avoid being dropped from the dataset. We explain a turn in the ['Chat Customization Best Practices'](/v2/docs/chat-preparing-the-data#chat-customization-best-practices) section.
+- What's more, each turn in the conversation should be within the context length of 16384 tokens to avoid being dropped from the dataset. We explain a turn in the ['Chat Customization Best Practices'](/v2/docs/chat-preparing-the-data#chat-customization-best-practices) section.
 
 If you need more information, see ['Preparing the Data'](/v2/docs/chat-preparing-the-data).
 
@@ -182,7 +181,7 @@ Below is a table of errors or warnings you may receive and how to fix them.
 | Error         | 'extra speaker in example: \<extra_speaker_name> (line : X)'                                                                                                         | This means that the uploaded training dataset has speakers which are not one of the allowed roles: `System`,`User` or `Chatbot`                                                                                                                     | Rename or remove the extra speaker and re-upload the dataset.                         |
 | Error         | 'missing Chatbot in example'  \nOR  \n'missing User in example'                                                                                                      | This means the uploaded training dataset is missing either `Chatbot` or `User` speaker, both of which are required.                                                                                                                                | Upload your dataset with required speakers `Chatbot` and `User`                       |
 | Warning       | 'dataset has 0 valid eval rows. dataset will be auto-split'                                                                                                          | This error is thrown when eval data was not uploaded, in which case the dataset will be auto-split with 80% going to training and 20% to evaluation.                                                                                               | None                                                                                  |
-| Warning       | 'train dataset has conversations with too many tokens. conversation number: number of turns with too many tokens is as follows, x:y'  \nOR  \n'eval dataset has conversations with too many tokens. conversation number: number of turns with too many tokens is as follows, x:y' | This means the train and/or eval dataset has turns which exceed the context length of 4096 tokens, and will be dropped for training. The message specifies the conversation index x (which starts at 0), as well as the number of turns over the context length in that conversation, y. | If you do not want any turns dropped, consider shortening turns.                      |
+| Warning       | 'train dataset has conversations with too many tokens. conversation number: number of turns with too many tokens is as follows, x:y'  \nOR  \n'eval dataset has conversations with too many tokens. conversation number: number of turns with too many tokens is as follows, x:y' | This means the train and/or eval dataset has turns which exceed the context length of 16384 tokens, and will be dropped for training. The message specifies the conversation index x (which starts at 0), as well as the number of turns over the context length in that conversation, y. | If you do not want any turns dropped, consider shortening turns.                      |
 
 
 
@@ -197,24 +196,42 @@ To train a custom model, please see the example below for parameters to pass to 
   - `early_stopping_threshold` (float) How much the loss must improve to prevent early stopping. Must be between 0.001 and 0.1. Defaults to **0.001**.
   - `early_stopping_patience` (int) Stops training if the loss metric does not improve beyond the value of `early_stopping_threshold` after this many rounds of evaluation. Must be between 0 and 10. Defaults to **10**.
 
+You can optionally publish the training metrics and hyper parameter values to your [Weights and Biases](https://wandb.ai) account using the `wandb` parameter. This is currently only supported when fine-tuning a Chat model.
+
+- `wandb` (cohere.finetuning.WandbConfig) - The Weights & Biases configuration.
+  - `project` (string) The Weights and Biases project to be used during training. This parameter is mandatory.
+  - `api_key` (string) The Weights and Biases API key to be used during training. This parameter is mandatory and will always be stored securely and automatically deleted after the fine-tuning job completes training.
+  - `entity` (string) The Weights and Biases API entity to be used during training. When not specified, it will assume the default entity for that API key.
+
+When the configuration is valid, the Run ID will correspond to the fine-tuned model ID, and Run display name will be the name of the fine-tuned model specified during creation. When specifying a invalid Weights and Biases configuration, the fine-tuned model creation will proceed but nothing will be logged to your Weights and Biases.
+
+Once a fine-tuned model has been created with a specified Weights and Biases configuration, you may view the fine-tuning job run via the Weights and Biases dashboard. It will be available via the following URL: `https://wandb.ai/<your-entity>/<your-project>/runs/<finetuned-model-id>`.
+
 ## Example
 
 ```python PYTHON
 import cohere
-from cohere.finetuning import Hyperparameters, Settings, BaseModel
+from cohere.finetuning import Hyperparameters, Settings, BaseModel, WandbConfig
 
 co = cohere.ClientV2('Your API key')
 
 chat_dataset = co.datasets.create(name="chat-dataset",
                                   data=open("path/to/train.jsonl", "rb"),
                                   type="chat-finetune-input")
-# optional (define custom  hyperparameters)
+# optional (define custom hyperparameters)
 hp = Hyperparameters(
   early_stopping_patience=10,
   early_stopping_threshold=0.001,
   train_batch_size=16,
   train_epochs=1,
   learning_rate=0.01,
+)
+
+# optional (define wandb configuration)
+wnb_config = WandbConfig(
+    project="test-project",
+    api_key="<<wandbApiKey>>",
+    entity="test-entity",
 )
 
 create_response = co.finetuning.create_finetuned_model(
@@ -224,8 +241,9 @@ create_response = co.finetuning.create_finetuned_model(
       base_model=BaseModel(
         base_type="BASE_TYPE_CHAT",
       ),
-      dataset_id=my-chat_dataset.id,
-      hyperparameters=hp
+      dataset_id=chat_dataset.id,
+      hyperparameters=hp,
+      wandb=wnb_config,
     ),
   ),
 )
