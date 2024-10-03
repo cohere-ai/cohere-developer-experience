@@ -12,7 +12,7 @@ updatedAt: ''
 
 This document shows you how to deploy your own finetuned [HuggingFace Command-R model](https://huggingface.co/CohereForAI/c4ai-command-r-08-2024) using Amazon SageMaker. More specifically, assuming you already have the adapter weights or merged weights from your own finetuned Command model, we will show you how to:
 
-- Merge the adapter weights to the weights of the base model, if you bring only the adapter weights;
+- Merge the adapter weights with the weights of the base model if you only bring the adapter weights;
 - Export the merged weights to the TensorRT-LLM inference engine using Amazon SageMaker;
 - Deploy the engine as a SageMaker endpoint to serve your business use cases;
 
@@ -21,12 +21,12 @@ You can also find a [companion notebook](https://github.com/cohere-ai/notebooks/
 ## Prerequisites
 
 - Ensure that IAM role used has `AmazonSageMakerFullAccess` 
-To deploy your model successfully, ensure that either:
+- To deploy your model successfully, ensure that either:
     - Your IAM role has these three permissions, and you have authority to make AWS Marketplace subscriptions in the relevant AWS account:
         - `aws-marketplace:ViewSubscriptions`
         - `aws-marketplace:Unsubscribe`
         - `aws-marketplace:Subscribe`
-    - Or, your AWS account has a subscription to the packages for `cohere-command-R-v2-byoft`. If so, you can skip the "subscribe to the bring your own finetuning algorithm" step below.
+    - Or, your AWS account has a subscription to the packages for [Cohere Bring Your Own Fine-tuning](https://aws.amazon.com/marketplace/pp/prodview-5wt5pdnw3bbq6). If so, you can skip the "subscribe to the bring your own finetuning algorithm" step below.
 
 **NOTE:** If you're running the companion notebook, know that it contains elements which render correctly in Jupyter interface, so you should open it from an Amazon SageMaker Notebook Instance or Amazon SageMaker Studio.
 
@@ -34,9 +34,9 @@ To deploy your model successfully, ensure that either:
 
 To subscribe to the algorithm:
 
-- Open the algorithm listing page for `cohere-command-R-v2-byoft`.
-- On the AWS Marketplace listing, click on the Continue to Subscribe button.
-- On the **Subscribe to this software** page, review and click on **"Accept Offer"** if you and your organization agrees with EULA, pricing, and support terms. On the **"Configure and launch"** page, make sure the ARN displayed in your region match with the ARN you will use below.
+- Open the algorithm listing page for either [Cohere Bring Your Own Fine-tuning](https://aws.amazon.com/marketplace/pp/prodview-5wt5pdnw3bbq6).
+- On the AWS Marketplace listing, click on the **Continue to Subscribe** button.
+- On the **Subscribe to this software** page, review and click on **Accept Offer** if you and your organization agrees with EULA, pricing, and support terms. On the **Configure and launch** page, make sure the ARN displayed in your region match with the ARN you will use below.
 
 ## Step 2: Preliminary setup
 
@@ -47,10 +47,10 @@ pip install "cohere>=5.11.0"
 ```
 
 ```Python PYTHON 
+import cohere
 import os
 import sagemaker as sage
 
-import cohere
 from sagemaker.s3 import S3Uploader
 ```
 
@@ -61,14 +61,33 @@ Make sure you have access to the resources in your AWS account. For example, you
 os.environ["AWS_PROFILE"] = "<aws_profile>"
 ```
 
-Finally, you need to set all the following variables using your own information. It's best not to add a trailing slash to these paths, as that could mean  some parts won't work correctly.
+Finally, you need to set all the following variables using your own information. It's best not to add a trailing slash to these paths, as that could mean some parts won't work correctly. You can use either `ml.p4de.24xlarge` or `ml.p5.48xlarge` as the `instance_type` for Cohere Bring Your Own Fine-tuning, but the `instance_type` used for export and inference (endpoint creation) must be identical.
 
 ```Python PYTHON 
 # The AWS region
 region = "<region>"
 
-# The arn of the bring your own finetuning algorithm
-arn = "<arn>"
+# Get the arn of the bring your own finetuning algorithm by region
+region = boto3.Session().region_name
+
+# Command R 082024 Finetuning
+cohere_package = "cohere-command-r-v2-ft-cf30836984573101bba9b820364893bc"
+
+# Mapping for algorithms
+algorithm_map = {
+    "us-east-1": f"arn:aws:sagemaker:us-east-1:865070037744:algorithm/{cohere_package}",
+    "us-east-2": f"arn:aws:sagemaker:us-east-2:057799348421:algorithm/{cohere_package}",
+    "us-west-2": f"arn:aws:sagemaker:us-west-2:594846645681:algorithm/{cohere_package}",
+    "eu-central-1": f"arn:aws:sagemaker:eu-central-1:446921602837:algorithm/{cohere_package}",
+    "ap-southeast-1": f"arn:aws:sagemaker:ap-southeast-1:192199979996:algorithm/{cohere_package}",
+    "ap-southeast-2": f"arn:aws:sagemaker:ap-southeast-2:666831318237:algorithm/{cohere_package}",
+    "ap-northeast-1": f"arn:aws:sagemaker:ap-northeast-1:977537786026:algorithm/{cohere_package}",
+    "ap-south-1": f"arn:aws:sagemaker:ap-south-1:077584701553:algorithm/{cohere_package}",
+}
+if region not in algorithm_map.keys():
+    raise Exception(f"Current boto3 session region {region} is not supported.")
+
+arn = algorithm_map[region]
 
 # The local directory of your adapter weights. No need to specify this, if you bring your own merged weights
 adapter_weights_dir = "<adapter_weights_dir>"
@@ -161,7 +180,7 @@ The Cohere client provides a built-in method to create an endpoint for inference
 
 ```Python PYTHON 
 co.sagemaker_finetuning.create_endpoint(
-    arn=arn[(arn.rfind(\"/\") + 1):],
+    arn=arn,
     endpoint_name=endpoint_name,
     s3_models_dir=s3_output_dir,
     recreate=True,
@@ -183,7 +202,7 @@ result = co.sagemaker_finetuning.chat(message=message)
 print(result)
 ```
 
-You can also evaluate your finetuned model using a evaluation dataset. The following is an example with the ScienceQA dataset:
+You can also evaluate your finetuned model using an evaluation dataset. The following is an example with the [ScienceQA](https://scienceqa.github.io/) evaluation using these [data](https://github.com/cohere-ai/notebooks/blob/main/notebooks/data/scienceQA_eval.jsonl):
 
 ```Python PYTHON
 import json
