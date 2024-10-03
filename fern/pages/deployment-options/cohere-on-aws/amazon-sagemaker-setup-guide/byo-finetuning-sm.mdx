@@ -34,7 +34,7 @@ You can also find a [companion notebook](https://github.com/cohere-ai/notebooks/
 
 To subscribe to the algorithm:
 
-- Open the algorithm listing page for either [Cohere Bring Your Own Fine-tuning](https://aws.amazon.com/marketplace/pp/prodview-5wt5pdnw3bbq6).
+- Open the algorithm listing page for [Cohere Bring Your Own Fine-tuning](https://aws.amazon.com/marketplace/pp/prodview-5wt5pdnw3bbq6).
 - On the AWS Marketplace listing, click on the **Continue to Subscribe** button.
 - On the **Subscribe to this software** page, review and click on **Accept Offer** if you and your organization agrees with EULA, pricing, and support terms. On the **Configure and launch** page, make sure the ARN displayed in your region match with the ARN you will use below.
 
@@ -68,12 +68,7 @@ Finally, you need to set all the following variables using your own information.
 region = "<region>"
 
 # Get the arn of the bring your own finetuning algorithm by region
-region = boto3.Session().region_name
-
-# Command R 082024 Finetuning
-cohere_package = "cohere-command-r-v2-ft-cf30836984573101bba9b820364893bc"
-
-# Mapping for algorithms
+cohere_package = "cohere-command-r-v2-byoft-8370167e649c32a1a5f00267cd334c2c"
 algorithm_map = {
     "us-east-1": f"arn:aws:sagemaker:us-east-1:865070037744:algorithm/{cohere_package}",
     "us-east-2": f"arn:aws:sagemaker:us-east-2:057799348421:algorithm/{cohere_package}",
@@ -84,9 +79,8 @@ algorithm_map = {
     "ap-northeast-1": f"arn:aws:sagemaker:ap-northeast-1:977537786026:algorithm/{cohere_package}",
     "ap-south-1": f"arn:aws:sagemaker:ap-south-1:077584701553:algorithm/{cohere_package}",
 }
-if region not in algorithm_map.keys():
-    raise Exception(f"Current boto3 session region {region} is not supported.")
-
+if region not in algorithm_map:
+    raise Exception(f"Current region {region} is not supported.")
 arn = algorithm_map[region]
 
 # The local directory of your adapter weights. No need to specify this, if you bring your own merged weights
@@ -107,7 +101,7 @@ export_name = "<export_name>"
 # The name of the SageMaker endpoint
 endpoint_name = "<endpoint_name>"
 
-# The instance type for export and inference. Now "ml.p4de.24xlarge" and "ml.p5.48xlarge" are supported",
+# The instance type for export and inference. Now "ml.p4de.24xlarge" and "ml.p5.48xlarge" are supported
 instance_type = "<instance_type>"
 ```
 
@@ -170,7 +164,7 @@ co.sagemaker_finetuning.export_finetune(
     s3_checkpoint_dir=s3_checkpoint_dir,
     s3_output_dir=s3_output_dir,
     instance_type=instance_type,
-    role="ServiceRoleSagemaker"
+    role="ServiceRoleSagemaker",
 )
 ```
 
@@ -185,7 +179,7 @@ co.sagemaker_finetuning.create_endpoint(
     s3_models_dir=s3_output_dir,
     recreate=True,
     instance_type=instance_type,
-    role="ServiceRoleSagemaker"
+    role="ServiceRoleSagemaker",
 )
 ```
 
