@@ -1,6 +1,6 @@
 import cohere
 
-co = cohere.Client("<<apiKey>>")
+co = cohere.ClientV2("<<apiKey>>")
 
 docs = [
     "Carson City is the capital city of the American state of Nevada.",

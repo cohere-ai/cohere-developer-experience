@@ -7,55 +7,51 @@ import com.cohere.api.types.*;
 import java.util.List;
 
 public class Stream {
-    public static void main(String[] args) {
-        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+  public static void main(String[] args) {
+    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-        Iterable<StreamedChatResponseV2> response =
-                cohere.v2()
-                        .chatStream(
-                                V2ChatStreamRequest.builder()
-                                        .model("command-r-plus")
-                                        .messages(
-                                                List.of(
-                                                        ChatMessageV2.user(
-                                                                UserMessage.builder()
-                                                                        .content(
-                                                                                UserMessageContent
-                                                                                        .of(
-                                                                                                "Who discovered"
-                                                                                                    + " gravity?"))
-                                                                        .build()),
-                                                        ChatMessageV2.assistant(
-                                                                AssistantMessage.builder()
-                                                                        .content(
-                                                                                AssistantMessageContent
-                                                                                        .of(
-                                                                                                "The man"
-                                                                                                    + " who is"
-                                                                                                    + " widely"
-                                                                                                    + " credited"
-                                                                                                    + " with"
-                                                                                                    + " discovering"
-                                                                                                    + " gravity"
-                                                                                                    + " is Sir"
-                                                                                                    + " Isaac"
-                                                                                                    + " Newton"))
-                                                                        .build())))
-                                        .build());
+    Iterable<StreamedChatResponseV2> response =
+        cohere
+            .v2()
+            .chatStream(
+                V2ChatStreamRequest.builder()
+                    .model("command-r-plus")
+                    .messages(
+                        List.of(
+                            ChatMessageV2.user(
+                                UserMessage.builder()
+                                    .content(UserMessageContent.of("Who discovered" + " gravity?"))
+                                    .build()),
+                            ChatMessageV2.assistant(
+                                AssistantMessage.builder()
+                                    .content(
+                                        AssistantMessageContent.of(
+                                            "The man"
+                                                + " who is"
+                                                + " widely"
+                                                + " credited"
+                                                + " with"
+                                                + " discovering"
+                                                + " gravity"
+                                                + " is Sir"
+                                                + " Isaac"
+                                                + " Newton"))
+                                    .build())))
+                    .build());
 
-        for (StreamedChatResponseV2 chatResponse : response) {
-            if (chatResponse.isContentDelta()) {
-                System.out.println(
-                        chatResponse
-                                .getContentDelta()
-                                .flatMap(ChatContentDeltaEvent::getDelta)
-                                .flatMap(ChatContentDeltaEventDelta::getMessage)
-                                .flatMap(ChatContentDeltaEventDeltaMessage::getContent)
-                                .flatMap(ChatContentDeltaEventDeltaMessageContent::getText)
-                                .orElse(""));
-            }
-        }
-
-        System.out.println(response);
+    for (StreamedChatResponseV2 chatResponse : response) {
+      if (chatResponse.isContentDelta()) {
+        System.out.println(
+            chatResponse
+                .getContentDelta()
+                .flatMap(ChatContentDeltaEvent::getDelta)
+                .flatMap(ChatContentDeltaEventDelta::getMessage)
+                .flatMap(ChatContentDeltaEventDeltaMessage::getContent)
+                .flatMap(ChatContentDeltaEventDeltaMessageContent::getText)
+                .orElse(""));
+      }
     }
+
+    System.out.println(response);
+  }
 }

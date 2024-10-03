@@ -1,0 +1,118 @@
+---
+title: "Introduction to Embeddings at Cohere"
+slug: "v2/docs/embeddings"
+
+hidden: false
+description: >-
+  Embeddings transform text into numerical data, enabling language-agnostic
+  similarity searches and efficient storage with compression.
+image: "../../../assets/images/fa074c3-cohere_docs_preview_image_1200x630_copy.jpg"  
+keywords: "vector embeddings, embeddings, natural language processing"
+
+createdAt: "Thu Sep 01 2022 14:50:09 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Tue May 28 2024 19:14:00 GMT+0000 (Coordinated Universal Time)"
+---
+<img src='../../../assets/images/e8ea586-Embeddings_Visual_1_1.png' alt='embeddings.' />
+
+
+Embeddings are a way to represent the **meaning** of text as a list of numbers. Using a simple comparison function, we can then calculate a similarity score for two embeddings to figure out whether two texts are talking about similar things. Common use-cases for embeddings include semantic search, clustering, and classification.
+
+In the example below we use the `embed-english-v3.0` model to generate embeddings for 3 phrases and compare them using a similarity function. The two **similar** phrases have a **high similarity score**, and the embeddings for two **unrelated** phrases have a **low similarity score**:
+
+```python PYTHON
+import cohere
+import numpy as np
+
+co = cohere.ClientV2(api_key="YOUR_API_KEY")
+
+# get the embeddings
+phrases = ["i love soup", "soup is my favorite", "london is far away"]
+
+model="embed-english-v3.0"
+input_type="search_query"
+
+res = co.embed(texts=phrases,
+                model=model,
+                input_type=input_type,
+                embedding_types=['float'])
+
+(soup1, soup2, london) = res.embeddings.float
+
+# compare them
+def calculate_similarity(a, b):
+  return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+calculate_similarity(soup1, soup2) # 0.85 - very similar!
+calculate_similarity(soup1, london) # 0.16 - not similar!
+```
+
+## The `input_type` parameter
+
+Cohere embeddings are optimized for different types of inputs. For example, when using embeddings for semantic search, the search query should be embedded by setting `input_type="search_query"` whereas the text passages that are being searched over should be embedded with `input_type="search_document"`.  You can find more details and a code snippet in the [Semantic Search guide](/v2/docs/semantic-search). Similarly, the input type can be set to `classification` ([example](/v2/docs/text-classification-with-cohere)) and `clustering` to optimize the embeddings for those use cases.
+
+## Multilingual Support
+
+In addition to `embed-english-v3.0` we offer a best-in-class multilingual model [embed-multilingual-v3.0](/v2/docs/embed-2#multi-lingual-models)  with support for over 100 languages, including Chinese, Spanish, and French. This model can be used with the Embed API, just like its English counterpart:
+
+```python PYTHON
+import cohere  
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
+
+texts = [  
+   'Hello from Cohere!', 'مرحبًا من كوهير!', 'Hallo von Cohere!',  
+   'Bonjour de Cohere!', '¡Hola desde Cohere!', 'Olá do Cohere!',  
+   'Ciao da Cohere!', '您好，来自 Cohere！', 'कोहेरे से नमस्ते!'  
+]  
+
+response = co.embed(
+  model='embed-multilingual-v3.0',
+  texts=texts, 
+  input_type='classification',
+  embedding_types=['float']) 
+
+embeddings = response.embeddings.float # All text embeddings 
+print(embeddings[0][:5]) # Print embeddings for the first text
+
+```
+
+## Compression Levels
+
+The Cohere embeddings platform supports compression. The Embed API features a required parameter, `embeddings_types`, which allows the user to specify various ways of compressing the output.  
+
+The following embedding types are now supported: 
+
+- `float`
+- `int8`
+- `unint8`
+- `binary`
+- `ubinary`
+
+To specify an `embedding type`, pass one of the types from the list above in as list containing a string:
+
+```python PYTHON
+ret = co.embed(texts=phrases,
+               model=model,
+               input_type=input_type,
+               embedding_types=['int8'])
+
+ret.embeddings.int8 # This contains your int8 embeddings
+ret.embeddings.float # This will be empty
+ret.embeddings.uint8 # This will be empty
+ret.embeddings.ubinary # This will be empty
+ret.embeddings.binary # This will be empty
+```
+
+Finally, you can also pass several `embedding_types` in as a list, in which case the endpoint will return a dictionary with both types available:
+
+```python PYTHON
+ret = co.embed(texts=phrases,
+               model=model,
+               input_type=input_type,
+               embedding_types=['int8', 'float'])
+
+ret.embeddings.int8 # This contains your int8 embeddings
+ret.embeddings.float # This contains your float embeddings
+ret.embeddings.uint8 # This will be empty
+ret.embeddings.ubinary # This will be empty
+ret.embeddings.binary # This will be empty
+```

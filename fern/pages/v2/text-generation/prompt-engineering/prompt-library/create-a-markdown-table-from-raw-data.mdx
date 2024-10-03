@@ -1,0 +1,62 @@
+---
+title: "Create a markdown table from raw data"
+slug: "v2/docs/create-a-markdown-table-from-raw-data"
+
+hidden: false 
+description: "The document provides a prompt to format CSV data into a markdown table and includes the output table as well as an API request using the Cohere platform."
+image: "../../../../../assets/images/50cf2a8-cohere_meta_image.jpg"  
+keywords: "prompt engineering, large language models"
+
+createdAt: "Wed Mar 13 2024 18:48:17 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Thu May 23 2024 05:30:46 GMT+0000 (Coordinated Universal Time)"
+---
+This is useful if you want to quickly format a great deal of raw data into a more useful markdown table.
+
+**Prompt**
+
+````txt
+You are an expert in data formatting. For the following csv data, output it as a markdown table.
+Output the table only. 
+
+```
+name,age,occupation
+Jane Smith,25,Data Scientist
+Bob Johnson,42,Software Developer
+Emily Davis,37,Product Manager
+```
+````
+
+**Output**
+
+```
+| Name | Age | Occupation |
+| --- | --- | --- |
+| Jane Smith | 25 | Data Scientist |
+| Bob Johnson | 42 | Software Developer |
+| Emily Davis | 37 | Product Manager |
+```
+
+**API Request**
+
+````python PYTHON
+import cohere
+
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
+
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=[{"role": "user", "content": """
+    You are an expert in data formatting. For the following csv data, output it as a markdown table.
+    Output the table only. 
+
+    ```
+    name,age,occupation
+    Jane Smith,25,Data Scientist
+    Bob Johnson,42,Software Developer
+    Emily Davis,37,Product Manager
+    ```
+    """}]
+    )
+
+print(response.message.content[0].text)
+````

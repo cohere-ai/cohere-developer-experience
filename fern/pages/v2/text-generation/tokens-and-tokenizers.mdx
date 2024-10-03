@@ -1,0 +1,97 @@
+---
+title: "Tokens and Tokenizers"
+slug: "v2/docs/tokens-and-tokenizers"
+
+hidden: false 
+description: >-
+  This document describes how to use the tokenize and detokenize API endpoints.
+image: "../../../assets/images/5d536ac-cohere_meta_image.jpg"  
+keywords: "language model tokens, natural language processing"
+
+createdAt: "Thu Feb 29 2024 18:14:01 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Thu May 23 2024 05:39:13 GMT+0000 (Coordinated Universal Time)"
+---
+## What is a Token?
+
+Our language models understand "tokens" rather than characters or bytes. One token can be a part of a word, an entire word, or punctuation. Very common words like "water" will have their own unique tokens. A longer, less frequent word might be encoded into 2-3 tokens, e.g. "waterfall" gets encoded into two tokens, one for "water" and one for "fall". Note that tokenization is sensitive to whitespace and capitalization.
+
+Here are some references to calibrate how many tokens are in a text:
+
+- One word tends to be about 2-3 tokens.
+- A paragraph is about 128 tokens.
+- This short article you're reading now has about 300 tokens.
+
+The number of tokens per word depends on the complexity of the text. Simple text may approach one token per word on average, while complex texts may use less common words that require 3-4 tokens per word on average.
+
+Our vocabulary of tokens is created using byte pair encoding, which you can read more about [here](https://en.wikipedia.org/wiki/Byte_pair_encoding).
+
+## Tokenizers
+
+A tokenizer is a tool used to convert text into tokens and vice versa. Tokenizers are model specific; the tokenizer for `command` is not compatible with the `command-r` model, for instance, because they were trained using different tokenization methods.
+
+Tokenizers are often used to count how many tokens a text contains. This is useful because models can handle only a certain number of tokens in one go. This limitation is known as “context length,” and the number varies from model to model.
+
+## The `tokenize` and `detokenize` API endpoints
+
+Cohere offers the [tokenize](/reference/tokenize) and [detokenize](/reference/detokenize) API endpoints for converting between text and tokens for the specified model. The hosted tokenizer saves users from needing to download their own tokenizer, but this may result in higher latency from a network call.
+
+## Tokenization in Python SDK
+
+Cohere Tokenizers are publicly hosted and can be used locally to avoid network calls. If you are using the Python SDK, the `tokenize` and `detokenize` functions will take care of downloading and caching the tokenizer for you
+
+```python PYTHON
+import cohere  
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
+
+co.tokenize(text="caterpillar", model="command-r-08-2024") # -> [74, 2340,107771]
+```
+
+Notice that this downloads the tokenizer config for the model `command-r`, which might take a couple of seconds for the initial request.
+
+### Caching and Optimization
+
+The cache for the tokenizer configuration is declared for each client instance. This means that starting a new process will re-download the configurations again.
+
+If you are doing development work before going to production with your application, this might be slow if you are just experimenting by redefining the client initialization. Cohere API offers endpoints for `tokenize` and `detokenize` which avoids downloading the tokenizer configuration file. In the Python SDK, these can be accessed by setting `offline=False` like so:
+
+```python PYTHON
+import cohere  
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
+
+co.tokenize(text="caterpillar", model="command-r-08-2024", offline=False) # -> [74, 2340,107771], no tokenizer config was downloaded
+```
+
+## Downloading a Tokenizer
+
+Alternatively, the latest version of the tokenizer can be downloaded manually:
+
+```python PYTHON
+# pip install tokenizers
+
+from tokenizers import Tokenizer  
+import requests
+
+# download the tokenizer
+
+tokenizer_url = "https://..." # use /models/<id> endpoint for latest URL
+
+response = requests.get(tokenizer_url)  
+tokenizer = Tokenizer.from_str(response.text)
+
+tokenizer.encode(sequence="...", add_special_tokens=False)
+```
+
+The URL for the tokenizer should be obtained dynamically by calling the [Models API](/reference/get-model). Here is a sample response for the Command R model:
+
+```json JSON
+{  
+  "name": "command-r-08-2024",  
+  ...
+  "tokenizer_url": "https://storage.googleapis.com/cohere-public/tokenizers/command-r-08-2024.json"
+}
+```
+
+## Getting a Local Tokenizer
+
+We commonly have requests for local tokenizers that don't necessitate using the Cohere API. Hugging Face hosts options for the [`command-nightly`](https://huggingface.co/Cohere/Command-nightly) and [multilingual embedding](https://huggingface.co/Cohere/multilingual-22-12) models.
+
