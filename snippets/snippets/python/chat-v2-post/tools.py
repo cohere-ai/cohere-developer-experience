@@ -3,7 +3,7 @@ import cohere
 co = cohere.Client("<<apiKey>>")
 
 response = co.chat(
-    model="command-r-plus",
+    model="command-r-plus-08-2024",
     tools=[
         cohere.ToolV2(type='function', function={
             "name": 'query_daily_sales_report',
