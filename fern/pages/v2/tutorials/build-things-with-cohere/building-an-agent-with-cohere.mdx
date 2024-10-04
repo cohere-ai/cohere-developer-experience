@@ -56,14 +56,14 @@ def search_faqs(query):
         {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
         {"text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."}
     ]
-    return  {"faqs" : faqs}
+    return faqs
 
 def search_emails(query):
     emails = [
         {"from": "it@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "Setting Up Your IT Needs", "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts."},
         {"from": "john@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "First Week Check-In", "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!"}
     ]
-    return  {"emails" : emails}
+    return emails
     
 def create_calendar_event(date: str, time: str, duration: int):
     # You can implement any logic here
@@ -212,20 +212,23 @@ Also, notice that the model first generates a plan about what it should do ("I w
 
 ```python PYTHON
 # Step 3: Tool execution
-tool_content = []
 for tc in response.message.tool_calls:
     tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
-    tool_content.append(json.dumps(tool_result))
+    tool_content = []
+    for idx, data in enumerate(tool_result):
+        tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+        # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
     # Append tool results to the chat history
-    messages.append({"role": "tool", "tool_call_id": tc.id, "content": tool_content}) 
+    messages.append({"role": "tool", "tool_call_id": tc.id, "content": tool_content})
 
-print("Tool results:") 
-for result in tool_content:
-    print(result)
+    print("Tool results:")
+    for result in tool_content:
+        print(result)
 ```
 ```
 Tool results:
-{"emails": [{"from": "it@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "Setting Up Your IT Needs", "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts."}, {"from": "john@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "First Week Check-In", "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon\u2014it's a great opportunity to get to know your colleagues!"}]}
+{'type': 'document', 'document': {'data': '{"from": "it@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "Setting Up Your IT Needs", "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts."}'}}
+{'type': 'document', 'document': {'data': '{"from": "john@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "First Week Check-In", "text": "Hello! I hope you\'re settling in well. Let\'s connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon\\u2014it\'s a great opportunity to get to know your colleagues!"}'}}
 ```
 
 ## Response and citation generation
@@ -255,13 +258,13 @@ if response.message.citations:
 ```
 ```
 Response:
-Yes, there is an email from IT with a comprehensive guide attached.
+Yes, there is an email from it@co1t.com with the subject 'Setting Up Your IT Needs'. It includes an attached guide to help you set up your work accounts.
 ==================================================
 
 CITATIONS:
-start=17 end=30 text='email from IT' sources=[Source_Tool(type='tool', id='search_emails_dy73yjrx50xq:0', tool_output={'emails': '[{"date":"2024-06-24","from":"it@co1t.com","subject":"Setting Up Your IT Needs","text":"Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.","to":"david@co1t.com"},{"date":"2024-06-24","from":"john@co1t.com","subject":"First Week Check-In","text":"Hello! I hope you\'re settling in well. Let\'s connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it\'s a great opportunity to get to know your colleagues!","to":"david@co1t.com"}]'})] 
+start=17 end=83 text="email from it@co1t.com with the subject 'Setting Up Your IT Needs'" sources=[ToolSource(type='tool', id='search_emails_wqs498sp2d07:0', tool_output={'date': '2024-06-24', 'from': 'it@co1t.com', 'subject': 'Setting Up Your IT Needs', 'text': 'Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.', 'to': 'david@co1t.com'})] 
 
-start=38 end=66 text='comprehensive guide attached' sources=[Source_Tool(type='tool', id='search_emails_dy73yjrx50xq:0', tool_output={'emails': '[{"date":"2024-06-24","from":"it@co1t.com","subject":"Setting Up Your IT Needs","text":"Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.","to":"david@co1t.com"},{"date":"2024-06-24","from":"john@co1t.com","subject":"First Week Check-In","text":"Hello! I hope you\'re settling in well. Let\'s connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it\'s a great opportunity to get to know your colleagues!","to":"david@co1t.com"}]'})] 
+start=100 end=153 text='attached guide to help you set up your work accounts.' sources=[ToolSource(type='tool', id='search_emails_wqs498sp2d07:0', tool_output={'date': '2024-06-24', 'from': 'it@co1t.com', 'subject': 'Setting Up Your IT Needs', 'text': 'Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.', 'to': 'david@co1t.com'})] 
 ```
 
 
@@ -310,11 +313,17 @@ def run_assistant(query, messages=None):
         messages.append({"role": "assistant", "tool_calls": response.message.tool_calls, "tool_plan": response.message.tool_plan})        
         
         # Step 3: Get tool results
-        tool_content = []
         for idx, tc in enumerate(response.message.tool_calls):
-            tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
-            tool_content.append(json.dumps(tool_result))
-            messages.append({"role": "tool", "tool_call_id": tc.id, "content": tool_content})
+            tool_result = functions_map[tc.function.name](
+                **json.loads(tc.function.arguments)
+            )
+            tool_content = []
+            for idx, data in enumerate(tool_result):
+                tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+                # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
+            messages.append(
+                {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
+            )
         
         # Step 4: Generate response and citations 
         response = co.chat(
@@ -356,27 +365,27 @@ Question:
 Can you check if there are any lunch invites, and for those days, create a one-hour event on my calendar at 12PM.
 ==================================================
 Tool plan:
-I will search the user's emails for lunch invites and then create a calendar event for each day they are invited to lunch. 
+I will first search the user's emails for lunch invites. Then, I will create a one-hour event on the user's calendar at 12PM for each day that the user has a lunch invite. 
 
 Tool calls:
-Tool name: search_emails | Parameters: {"query":"lunch invite"}
+Tool name: search_emails | Parameters: {"query":"lunch invites"}
 ==================================================
 Tool plan:
-I have found an email inviting the user to a welcoming lunch on Thursday at noon. I will now create a calendar event for this. 
+I have found one lunch invite for Thursday at noon. I will now create a one-hour event on the user's calendar for Thursday at noon. 
 
 Tool calls:
 Tool name: create_calendar_event | Parameters: {"date":"06/27/24","duration":1,"time":"12:00"}
 ==================================================
 Response:
-Sure, I found an email from John inviting you to a welcoming lunch this Thursday at noon. I've created a one-hour event on your calendar for this Thursday at 12 pm.
+I found one lunch invite for Thursday, June 27, 2024. I have created a one-hour event on your calendar for that day at 12pm.
 ==================================================
 
 CITATIONS:
-start=17 end=32 text='email from John' sources=[Source_Tool(type='tool', id='search_emails_j72zv2xhq0sj:0', tool_output={'emails': '[{"date":"2024-06-24","from":"it@co1t.com","subject":"Setting Up Your IT Needs","text":"Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.","to":"david@co1t.com"},{"date":"2024-06-24","from":"john@co1t.com","subject":"First Week Check-In","text":"Hello! I hope you\'re settling in well. Let\'s connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it\'s a great opportunity to get to know your colleagues!","to":"david@co1t.com"}]'})] 
+start=29 end=53 text='Thursday, June 27, 2024.' sources=[ToolSource(type='tool', id='search_emails_1dxqzwragh9g:1', tool_output={'date': '2024-06-24', 'from': 'john@co1t.com', 'subject': 'First Week Check-In', 'text': "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!", 'to': 'david@co1t.com'})] 
 
-start=51 end=88 text='welcoming lunch this Thursday at noon' sources=[Source_Tool(type='tool', id='search_emails_j72zv2xhq0sj:0', tool_output={'emails': '[{"date":"2024-06-24","from":"it@co1t.com","subject":"Setting Up Your IT Needs","text":"Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.","to":"david@co1t.com"},{"date":"2024-06-24","from":"john@co1t.com","subject":"First Week Check-In","text":"Hello! I hope you\'re settling in well. Let\'s connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it\'s a great opportunity to get to know your colleagues!","to":"david@co1t.com"}]'})] 
+start=71 end=85 text='one-hour event' sources=[ToolSource(type='tool', id='create_calendar_event_w11caj6hmqz2:0', tool_output={'content': '"is_success"'})] 
 
-start=105 end=163 text='one-hour event on your calendar for this Thursday at 12 pm' sources=[Source_Tool(type='tool', id='create_calendar_event_vs7mxjzk9jzs:0', tool_output={'is_success': 'true', 'message': 'Created a 1 hour long event at 12:00 on 06/27/24'})] 
+start=119 end=124 text='12pm.' sources=[ToolSource(type='tool', id='search_emails_1dxqzwragh9g:1', tool_output={'date': '2024-06-24', 'from': 'john@co1t.com', 'subject': 'First Week Check-In', 'text': "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!", 'to': 'david@co1t.com'})] 
 ```
 
 
