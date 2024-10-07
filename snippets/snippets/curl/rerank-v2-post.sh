@@ -1,5 +1,5 @@
 curl --request POST \
-  --url https://api.cohere.com/v1/rerank \
+  --url https://api.cohere.com/v2/rerank \
   --header 'accept: application/json' \
   --header 'content-type: application/json' \
   --header "Authorization: bearer $CO_API_KEY" \
