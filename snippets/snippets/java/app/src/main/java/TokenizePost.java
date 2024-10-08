@@ -9,7 +9,7 @@ public class TokenizePost {
 
     TokenizeResponse response =
         cohere.tokenize(
-            TokenizeRequest.builder().text("tokenize me").model("command-r-plus").build());
+            TokenizeRequest.builder().text("tokenize me").model("command-r-plus-08-2024").build());
 
     System.out.println(response);
   }

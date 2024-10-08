@@ -1,11 +1,12 @@
 /* (C)2024 */
 package chatv2post;
 
+import java.util.List;
+
 import com.cohere.api.Cohere;
 import com.cohere.api.resources.v2.requests.V2ChatRequest;
 import com.cohere.api.resources.v2.types.V2ChatRequestDocumentsItem;
 import com.cohere.api.types.*;
-import java.util.List;
 
 public class Documents {
   public static void main(String[] args) {
@@ -16,7 +17,7 @@ public class Documents {
             .v2()
             .chat(
                 V2ChatRequest.builder()
-                    .model("command-r-plus")
+                    .model("command-r-plus-08-2024")
                     .messages(
                         List.of(
                             ChatMessageV2.user(
