@@ -24,12 +24,11 @@ Multi-step is enabled by default. Here's an example of using it to put together 
 from langchain.agents import AgentExecutor
 from langchain_cohere.react_multi_hop.agent import create_cohere_react_agent
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_cohere.chat_models import ChatCohere
-
+from langchain_cohere import ChatCohere
 from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
-os.environ["TAVILY_API_KEY"] = #<your-api-key>
+os.environ["TAVILY_API_KEY"] = "TAVILY_API_KEY"
 
 internet_search = TavilySearchResults()
 internet_search.name = "internet_search"
@@ -72,11 +71,8 @@ print(response['output'])
 In order to utilize single-step mode, you have to set `force_single_step=False`. Here's an example of using it to answer a few questions:
 
 ```python PYTHON
-### Router
-from typing import Literal
-
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from langchain_cohere import ChatCohere
 
 # Data model
@@ -98,7 +94,7 @@ The vectorstore contains documents related to agents, prompt engineering, and ad
 Use the vectorstore for questions on these topics. Otherwise, use web-search."""
 
 # LLM with tool use and preamble
-llm = ChatCohere()
+llm = ChatCohere(cohere_api_key="COHERE_API_KEY", model="command-r-plus-08-2024")
 structured_llm_router = llm.bind_tools(tools=[web_search, vectorstore], preamble=preamble)
 
 # Prompt
@@ -111,8 +107,241 @@ route_prompt = ChatPromptTemplate.from_messages(
 question_router = route_prompt | structured_llm_router
 response = question_router.invoke({"question": "Who will the Bears draft first in the NFL draft?"})
 print(response.response_metadata['tool_calls'])
+
 response = question_router.invoke({"question": "What are the types of agent memory?"})
 print(response.response_metadata['tool_calls'])
+
 response = question_router.invoke({"question": "Hi how are you?"})
 print('tool_calls' in response.response_metadata)
+```
+
+## SQL Agent
+LangChain's SQL Agent abstraction provides a flexible way of interacting with SQL Databases. This can be accessed via the `create_sql_agent` constructor.
+
+```python PYTHON
+from langchain_cohere import ChatCohere, create_sql_agent
+from langchain_community.utilities import SQLDatabase
+import urllib.request
+import sqlite3
+import pandas as pd
+
+# URL for the SQLite version of the Chinook database
+url = "https://github.com/lerocha/chinook-database/raw/master/ChinookDatabase/DataSources/Chinook_Sqlite.sqlite"
+
+# Download the file
+urllib.request.urlretrieve(url, "Chinook.db")
+
+# Connect to the Chinook SQLite database
+conn = sqlite3.connect('Chinook.db')
+
+
+db = SQLDatabase.from_uri("sqlite:///Chinook.db")
+
+llm = ChatCohere(cohere_api_key="COHERE_API_KEY", model="command-r-plus-08-2024", temperature=0)
+agent_executor = create_sql_agent(llm, db=db, verbose=True)
+
+resp = agent_executor.run("Show me the first 5 rows of the Album table.")
+print(resp)
+```
+
+## CSV Agent
+LangChain's CSV Agent abstraction enables building agents that can interact with CSV files. This can be accessed via the `create_csv_agent` constructor.
+
+```python PYTHON
+from langchain_cohere import ChatCohere, create_csv_agent
+
+llm = ChatCohere(cohere_api_key="COHERE_API_KEY", model="command-r-plus-08-2024", temperature=0)
+agent_executor = create_csv_agent(
+    llm,
+    "data/titanic.csv"
+)
+resp = agent_executor.invoke({"input":"How many people were on the titanic?"})
+print(resp)
+```
+
+## Streaming for Tool Calling
+
+When tools are called in a streaming context, message chunks will be populated with tool call chunk objects in a list via the `.tool_call_chunks` attribute.
+
+```python PYTHON
+from langchain_core.tools import tool
+from langchain_cohere import ChatCohere
+
+@tool
+def add(a: int, b: int) -> int:
+    """Adds a and b."""
+    return a + b
+
+
+@tool
+def multiply(a: int, b: int) -> int:
+    """Multiplies a and b."""
+    return a * b
+
+tools = [add, multiply]
+
+
+llm = ChatCohere(cohere_api_key="COHERE_API_KEY", model="command-r-plus-08-2024", temperature=0)
+llm_with_tools = llm.bind_tools(tools)
+
+query = "What is 3 * 12? Also, what is 11 + 49?"
+
+for chunk in llm_with_tools.stream(query):    
+    print(chunk.tool_call_chunks)
+```
+
+## LangGraph Agents
+LangGraph is a stateful, orchestration framework that brings added control to agent workflows.
+
+### Basic Chatbot
+This simple chatbot example will illustrate the core concepts of building with LangGraph.
+
+```python PYTHON
+from typing import Annotated
+from typing_extensions import TypedDict
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
+from langchain_cohere import ChatCohere
+
+# Create a state graph
+class State(TypedDict):
+    messages: Annotated[list, add_messages]
+
+graph_builder = StateGraph(State)
+
+# Define the LLM
+llm = ChatCohere(cohere_api_key="COHERE_API_KEY", model="command-r-plus-08-2024")
+
+# Add nodes
+def chatbot(state: State):
+    return {"messages": [llm.invoke(state["messages"])]}
+
+graph_builder.add_node("chatbot", chatbot)
+graph_builder.add_edge(START, "chatbot")
+graph_builder.add_edge("chatbot", END)
+
+# Compile the graph
+graph = graph_builder.compile()
+
+# Run the chatbot
+while True:
+    user_input = input("User: ")
+    print("User: "+ user_input)
+    if user_input.lower() in ["quit", "exit", "q"]:
+        print("Goodbye!")
+        break
+    for event in graph.stream({"messages": ("user", user_input)}):
+        for value in event.values():
+            print("Assistant:", value["messages"][-1].content)
+```
+
+### Enhancing the Chatbot with Tools
+To handle queries our chatbot can't answer "from memory", we'll integrate a web search tool. Our bot can use this tool to find relevant information and provide better responses.
+
+```python PYTHON
+from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_cohere import ChatCohere
+from langgraph.graph import StateGraph, START
+from langgraph.graph.message import add_messages
+from langchain_core.messages import ToolMessage
+from langchain_core.messages import BaseMessage
+from typing import Annotated, Literal
+from typing_extensions import TypedDict
+import json
+
+
+# Create a tool
+tool = TavilySearchResults(max_results=2)
+tools = [tool]
+
+
+# Create a state graph
+class State(TypedDict):
+    messages: Annotated[list, add_messages]
+
+
+graph_builder = StateGraph(State)
+
+# Define the LLM
+llm = ChatCohere(cohere_api_key="COHERE_API_KEY", model="command-r-plus-08-2024")
+
+# Bind the tools to the LLM
+llm_with_tools = llm.bind_tools(tools)
+
+
+# Add nodes
+def chatbot(state: State):
+    return {"messages": [llm_with_tools.invoke(state["messages"])]}
+
+
+graph_builder.add_node("chatbot", chatbot)
+
+class BasicToolNode:
+    """A node that runs the tools requested in the last AIMessage."""
+
+    def __init__(self, tools: list) -> None:
+        self.tools_by_name = {tool.name: tool for tool in tools}
+
+    def __call__(self, inputs: dict):
+        if messages := inputs.get("messages", []):
+            message = messages[-1]
+        else:
+            raise ValueError("No message found in input")
+        outputs = []
+        for tool_call in message.tool_calls:
+            tool_result = self.tools_by_name[tool_call["name"]].invoke(
+                tool_call["args"]
+            )
+            outputs.append(
+                ToolMessage(
+                    content=json.dumps(tool_result),
+                    name=tool_call["name"],
+                    tool_call_id=tool_call["id"],
+                )
+            )
+        return {"messages": outputs}
+
+
+tool_node = BasicToolNode(tools=[tool])
+graph_builder.add_node("tools", tool_node)
+
+def route_tools(
+    state: State,
+) -> Literal["tools", "__end__"]:
+    """
+    Use in the conditional_edge to route to the ToolNode if the last message
+    has tool calls. Otherwise, route to the end.
+    """
+    if isinstance(state, list):
+        ai_message = state[-1]
+    elif messages := state.get("messages", []):
+        ai_message = messages[-1]
+    else:
+        raise ValueError(f"No messages found in input state to tool_edge: {state}")
+    if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
+        return "tools"
+    return "__end__"
+
+
+graph_builder.add_conditional_edges(
+    "chatbot",
+    route_tools,
+    {"tools": "tools", "__end__": "__end__"},
+)
+graph_builder.add_edge("tools", "chatbot")
+graph_builder.add_edge(START, "chatbot")
+
+# Compile the graph
+graph = graph_builder.compile()
+
+# Run the chatbot
+while True:
+    user_input = input("User: ")
+    if user_input.lower() in ["quit", "exit", "q"]:
+        print("Goodbye!")
+        break
+    for event in graph.stream({"messages": [("user", user_input)]}):
+        for value in event.values():
+            if isinstance(value["messages"][-1], BaseMessage):
+                print("Assistant:", value["messages"][-1].content)
 ```
