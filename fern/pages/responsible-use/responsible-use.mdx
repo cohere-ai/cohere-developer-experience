@@ -2,7 +2,7 @@
 title: "Overview"
 slug: "docs/responsible-use"
 
-hidden: true 
+hidden: false 
 description: "The Responsible Use documentation provides guidelines for developers to use language models ethically and constructively, including model cards to communicate strengths and weaknesses, a data statement, and measures for harm prevention such as a dedicated safety team and external advisory council."
 image: "../../assets/images/5d25315-cohere_docs_preview_image_1200x630_copy.jpg"  
 keywords: "AI safety, AI risk, responsible AI"
@@ -10,19 +10,69 @@ keywords: "AI safety, AI risk, responsible AI"
 createdAt: "Thu Sep 01 2022 19:22:12 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Fri Mar 15 2024 04:47:51 GMT+0000 (Coordinated Universal Time)"
 ---
-The Responsible Use documentation aims to guide developers in using language models constructively and ethically. Toward this end, we've published [guidelines](/docs/usage-guidelines) for using our API safely, as well as our processes around [harm prevention](#harm-prevention). We provide model cards to communicate the strengths and weaknesses of our models and to encourage responsible use (motivated by [Mitchell, 2019](https://arxiv.org/pdf/1810.03993.pdf)). We also provide a [data statement](/data-statement) describing our pre-training datasets (motivated by [Bender and Friedman, 2018](https://www.aclweb.org/anthology/Q18-1041/)).
+The Responsible Use documentation aims to guide developers in using language models constructively and ethically. Toward this end, we've included information below on how our models perform on important safety benchmarks, the intended (and unintended) use cases they support, on some notes on toxicity and various technical specifics.
 
-**Model Cards:**
+## Safety Benchmarks 
 
-- [Generation](/docs/generation-benchmarks)
-- [Representation](/docs/representation-benchmarks)
+The safety of our Command R and Command R+ models has been evaluated on the BOLD (Biases in Open-ended Language Generation) dataset (Dhamala et al, 2021), which contains nearly 24,000 prompts testing for biases based on profession, gender, race, religion, and political ideology. 
 
-If you have feedback or questions, please feel free to [let us know](mailto:responsibility@cohere.ai) — we are here to help.
+Overall, both models show a remarkable lack of bias, with generations that are very rarely toxic. That said, there remain some differences in bias between the two, as measured by their respective sentiment and regard for "Gender" and "Religion" categories. Command R+, the more powerful model, tends to display slightly less bias than Command R. 
 
-## Harm Prevention
+Below, we report differences in privileged vs. minoritised groups for gender, race, and religion. We include raw values for groups within profession and political ideology, as there is no codified privileged group for those categories. 
 
-We aim to mitigate adverse use of our models with the following:
+[IMAGE 1]
 
-- **Responsible AI Research:** We’ve established a dedicated safety team which conducts [research](https://arxiv.org/abs/2108.07790) and development to build safer language models, and we’re investing in technical (e.g., usage monitoring) and non-technical (e.g., a dedicated team reviewing use cases) measures to mitigate potential harms.
-- **Cohere Responsibility Council:** We’ve established an external advisory council made up of experts who work with us to ensure that the technology we’re building is deployed safely for everyone.
-- **No online learning:** To safeguard model integrity and prevent underlying models from [being poisoned](https://www.theverge.com/2016/3/24/11297050/tay-microsoft-chatbot-racist) with harmful content by adversarial actors, user input goes through curation and enrichment prior to integration with training.
+[IMAGE 2]
+
+## Intended Use Cases 
+Command R models are trained for sophisticated text generation--which can include natural text, summarization, code, and markdown--as well as to support complex [Retrieval Augmented Generation](https://docs.cohere.com/docs/retrieval-augmented-generation-rag) (RAG) and [multi-step tool use](https://cohere.com/blog/multi-step-tool-use-2) tasks. 
+
+Command R models support 23 languages, including 10 languages whicha are key to global business (English, French, Spanish, Italian, German, Portuguese, Japanese, Korean, Chinese, Arabic). While it has strong performance on these ten languages, the others are lower-resource and less rigorously evaluated.
+
+## Unintended Use Cases 
+We do not recommend use of any Foundation model for decisions related to financing, employment, and housing, for any political campaigning or lobbying, surveillance, social scoring, criminal justice decisions,and  law enforcement.
+
+To better understand use cases that our models are not intended for, refer to Cohere’s dedicated [responsibility page](https://cohere.com/responsibility).
+
+## Usage Notes
+
+For general guidance on how to responsibly leverage the Cohere platform, we rocemmend you consult our [guidelines page](https://docs.cohere.com/docs/usage-guidelines).
+
+In the next few sections, we offer some model-specific usage notes.
+
+### Model Toxicity and Bias
+Language  models  learn  the  statistical  relationships  present  in  training  datasets,  which  may  include toxic language and historical biases along race, gender, sexual orientation, ability, language, cultural,
+and  intersectional  dimensions. We recommend that developers be especially attunde to risks presented by toxic degeneration and the reinforcement of historical social biases.
+
+#### Toxic  Degeneration
+Models have been trained on a wide variety of text from many sources that contain toxic content (see Luccioni and Viviano, 2021). As a result, models  may  generate  toxic  text. This  may  include  obscenities, sexually  explicit content, and  messages  which  mischaracterize or stereotype  groups of people based on problematic historical biases perpetuated by internet communities (see Gehman et al., 2020 for more about toxic language model degeneration).
+
+We have put safeguards in place to avoid generating harmful text, and they are extremely effective overall (see the "Safety Benchmarks" section above), but it is still possible to encounter toxicity, especially over long conversations with multiple turns.
+
+#### Reinforcing Historical Social Biases
+Language models capture problematic associations and stereotypes that are prominent on the internet and society at large. They should not be used to make decisions about individuals or the groups they belong to. For example, it is dangerous to use Generation model outputs in CV ranking systems due to known biases (Nadeem et al., 2020).
+
+## Technical Notes
+Now, we'll discuss some details of our underlying models that should be kept in mind. 
+
+### Language Limitations 
+This model is designed to excel at English, French, Spanish, Italian, German, Portuguese, Japanese, Korean, Chinese, and Arabic, and to generate in 13 other languages well. It will sometimes respond in other languages, but the generations are unlikely to be reliable.
+
+### Sampling Parameters 
+A model's generation quality is highly dependent on its sampling parameters. Please consult the documentation for details about each parameter and tune the values used for your application. Parameters may require re-tuning upon a new model release.
+
+### Prompt Engineering 
+Performance quality on generation tasks may increase when examples
+are provided as part of the system prompt. See documentation for examples on how to do this.
+
+### Potential for Misuse
+Here we describe a bevy of concerns around misuse of the generation model, drawing on the NAACL Ethics Review Questions. By documenting adverse use cases, we aim to encourage Cohere and
+its  customers  to  prevent  adversarial  actors  from  leveraging  our  models  to  the  following  malicious ends.
+
+The examples in this section are not comprehensive; they are meant to be more model-specific and tangible than those in the Usage Guidelines, and are only meant to illustrate our understanding of potential harms. Each of these malicious use cases violates our usage guidelines and Terms of Use, and Cohere reserves the right to restrict API access at any time.
+
+- **Astroturfing:** Generated text used to provide the illusion of discourse or expression of opinion
+by members of the public, on social media or any other channel.
+- **Generation of misinformation and other harmful content:**  The  generation  of  news  or  other
+articles which manipulate public opinion, or any content which aims to incite hate or mischaracterize a group of people.
+- **Human-outside-the-loop:** The generation of text that could be used to make decisions about people,  without a human-in-the-loop. 
