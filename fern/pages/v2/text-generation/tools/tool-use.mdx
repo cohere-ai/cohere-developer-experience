@@ -294,6 +294,24 @@ print("Final answer:")
 print(response.message.content[0].text)
 
 ```
+
+<Accordion title='Streaming option'>
+```python PYTHON
+response = co.chat_stream(
+    model="command-r-plus-08-2024",
+    messages=messages,
+    tools=tools
+)
+
+print("Final answer:")
+for chunk in response:
+    if chunk:
+        if chunk.type == "content-delta":
+            print(chunk.delta.message.content.text, end="")
+
+```
+</Accordion>
+
 ```
 # SAMPLE RESPONSE
 
@@ -327,6 +345,17 @@ print("Citations that support the final answer:")
 for citation in response.message.citations:
     print(f"Start: {citation.start} | End: {citation.end} | Text: '{citation.text}'")
 ```
+
+<Accordion title='Streaming option'>
+```python PYTHON {5-6}
+for chunk in response:
+    if chunk:
+        if chunk.type == "content-delta":
+            print(chunk.delta.message.content.text, end="")
+        elif chunk.type == "citation-start":
+            print(f"\n{chunk.delta.message.citations}")
+```
+</Accordion>
 ```
 # SAMPLE RESPONSE
 
