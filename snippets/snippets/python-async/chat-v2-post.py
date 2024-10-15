@@ -8,7 +8,7 @@ async def main():
     response = await co.chat(
         model="command-r-plus-08-2024",
         messages=[
-            cohere.v2.ChatMessage2_User(
+            cohere.UserChatMessageV2(
                 content="hello world!"
             )
         ]
