@@ -1,13 +1,13 @@
+/* (C)2024 */
 import com.cohere.api.Cohere;
 import com.cohere.api.resources.datasets.types.DatasetsGetUsageResponse;
 
-
 public class DatasetUsageGet {
-    public static void main(String[] args) {
-        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+  public static void main(String[] args) {
+    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-        DatasetsGetUsageResponse response = cohere.datasets().getUsage();
+    DatasetsGetUsageResponse response = cohere.datasets().getUsage();
 
-        System.out.println(response);
-    }
+    System.out.println(response);
+  }
 }
