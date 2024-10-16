@@ -25,10 +25,11 @@ from langchain.agents import AgentExecutor
 from langchain_cohere.react_multi_hop.agent import create_cohere_react_agent
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_cohere import ChatCohere
+
 from langchain_community.tools.tavily_search import TavilySearchResults
 from pydantic import BaseModel, Field
 
-os.environ["TAVILY_API_KEY"] = "TAVILY_API_KEY"
+os.environ["TAVILY_API_KEY"] ="TAVILY_API_KEY"
 
 internet_search = TavilySearchResults()
 internet_search.name = "internet_search"
@@ -38,9 +39,10 @@ class TavilySearchInput(BaseModel):
     query: str = Field(description="Query to search the internet with")
 internet_search.args_schema = TavilySearchInput
 
-# LLM
-llm = ChatCohere(model="command-r-plus-08-2024", temperature=0)
-
+# Define the Cohere LLM
+llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
+                 model="command-r-plus-08-2024",
+                 temperature=0)
 # Preamble
 preamble = """
 You are an expert who answers the user's question with the most relevant datasource. You are equipped with an internet search tool and a special vectorstore of information about how to write good essays.
@@ -59,7 +61,7 @@ agent = create_cohere_react_agent(
 agent_executor = AgentExecutor(agent=agent, tools=[internet_search], verbose=True)
 
 response = agent_executor.invoke({
-    "input": "I want to write an essay. Any tips?",
+    "input": "Who is the mayor of the capital of Ontario",
     "preamble": preamble,
 })
 
@@ -94,7 +96,7 @@ The vectorstore contains documents related to agents, prompt engineering, and ad
 Use the vectorstore for questions on these topics. Otherwise, use web-search."""
 
 # LLM with tool use and preamble
-llm = ChatCohere(cohere_api_key="COHERE_API_KEY", model="command-r-plus-08-2024")
+llm = ChatCohere()
 structured_llm_router = llm.bind_tools(tools=[web_search, vectorstore], preamble=preamble)
 
 # Prompt
@@ -122,25 +124,27 @@ LangChain's SQL Agent abstraction provides a flexible way of interacting with SQ
 from langchain_cohere import ChatCohere, create_sql_agent
 from langchain_community.utilities import SQLDatabase
 import urllib.request
-import sqlite3
 import pandas as pd
+import sqlite3
 
-# URL for the SQLite version of the Chinook database
+# Download the Chinook SQLite database
 url = "https://github.com/lerocha/chinook-database/raw/master/ChinookDatabase/DataSources/Chinook_Sqlite.sqlite"
-
-# Download the file
 urllib.request.urlretrieve(url, "Chinook.db")
-
-# Connect to the Chinook SQLite database
-conn = sqlite3.connect('Chinook.db')
-
+print("Chinook database downloaded successfully.")
 
 db = SQLDatabase.from_uri("sqlite:///Chinook.db")
+print(db.dialect)
+print(db.get_usable_table_names())
+db.run("SELECT * FROM Artist LIMIT 10;")
 
-llm = ChatCohere(cohere_api_key="COHERE_API_KEY", model="command-r-plus-08-2024", temperature=0)
+# Define the Cohere LLM
+llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
+                 model="command-r-plus-08-2024",
+                 temperature=0)
+
 agent_executor = create_sql_agent(llm, db=db, verbose=True)
 
-resp = agent_executor.run("Show me the first 5 rows of the Album table.")
+resp = agent_executor.invoke("Show me the first 5 rows of the Album table.")
 print(resp)
 ```
 
@@ -150,13 +154,18 @@ LangChain's CSV Agent abstraction enables building agents that can interact with
 ```python PYTHON
 from langchain_cohere import ChatCohere, create_csv_agent
 
-llm = ChatCohere(cohere_api_key="COHERE_API_KEY", model="command-r-plus-08-2024", temperature=0)
+# Define the Cohere LLM
+llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
+                 model="command-r-plus-08-2024",
+                 temperature=0)
+
 agent_executor = create_csv_agent(
     llm,
-    "data/titanic.csv"
+    "titanic.csv" # https://github.com/langchain-ai/langchain/blob/master/templates/csv-agent/titanic.csv
 )
+
 resp = agent_executor.invoke({"input":"How many people were on the titanic?"})
-print(resp)
+print(resp.get("output")) 
 ```
 
 ## Streaming for Tool Calling
@@ -180,18 +189,24 @@ def multiply(a: int, b: int) -> int:
 
 tools = [add, multiply]
 
+# Define the Cohere LLM
+llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
+                 model="command-r-plus-08-2024",
+                 temperature=0)
 
-llm = ChatCohere(cohere_api_key="COHERE_API_KEY", model="command-r-plus-08-2024", temperature=0)
 llm_with_tools = llm.bind_tools(tools)
 
 query = "What is 3 * 12? Also, what is 11 + 49?"
 
-for chunk in llm_with_tools.stream(query):    
-    print(chunk.tool_call_chunks)
+for chunk in llm_with_tools.stream(query):
+    if chunk.tool_call_chunks:
+        print(chunk.tool_call_chunks)
 ```
 
 ## LangGraph Agents
 LangGraph is a stateful, orchestration framework that brings added control to agent workflows.
+
+To use LangGraph with Cohere, you need to install the LangGraph package. To install it, run `pip install langgraph`.
 
 ### Basic Chatbot
 This simple chatbot example will illustrate the core concepts of building with LangGraph.
@@ -209,8 +224,9 @@ class State(TypedDict):
 
 graph_builder = StateGraph(State)
 
-# Define the LLM
-llm = ChatCohere(cohere_api_key="COHERE_API_KEY", model="command-r-plus-08-2024")
+# Define the Cohere LLM
+llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
+                 model="command-r-plus-08-2024")
 
 # Add nodes
 def chatbot(state: State):
@@ -263,7 +279,8 @@ class State(TypedDict):
 graph_builder = StateGraph(State)
 
 # Define the LLM
-llm = ChatCohere(cohere_api_key="COHERE_API_KEY", model="command-r-plus-08-2024")
+llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
+                 model="command-r-plus-08-2024")
 
 # Bind the tools to the LLM
 llm_with_tools = llm.bind_tools(tools)
