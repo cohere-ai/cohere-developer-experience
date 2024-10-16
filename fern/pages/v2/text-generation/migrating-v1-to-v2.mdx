@@ -355,7 +355,7 @@ def web_search(queries: list[str]) -> list[dict]:
             document = {"id": str(idx), "data": result}
             documents.append(document)
 
-    return {"documents": documents}
+    return documents
 
 
 # Define the web search tool
@@ -416,10 +416,12 @@ while response.message.tool_calls:
     )
 
     # Step 3: Get tool results
-    tool_content = []
     for idx, tc in enumerate(response.message.tool_calls):
         tool_result = web_search(**json.loads(tc.function.arguments))
-        tool_content.append(json.dumps(tool_result))
+        tool_content = []
+        for data in tool_result:
+            tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+            # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
         messages.append(
             {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
         )
@@ -539,7 +541,8 @@ tools_v1 = [
 
 ```python PYTHON
 def get_weather(location):
-    return {"temperature": "20C"}
+    return [{"temperature": "20C"}]
+    # You can return a list of objects e.g. [{"url": "abc.com", "text": "..."}, {"url": "xyz.com", "text": "..."}]
 
 functions_map = {"get_weather": get_weather}
 
@@ -696,17 +699,19 @@ It is currently 20°C in Toronto.
 **v2**
 
 ```python PYTHON
-tool_content_v2 = []
 if res_v2.message.tool_calls:
     for tc in res_v2.message.tool_calls:
         tool_result = functions_map[tc.function.name](
             **json.loads(tc.function.arguments)
         )
-        tool_content_v2.append(json.dumps(tool_result))
+        tool_content_v2 = []
+        for data in tool_result:
+            tool_content_v2.append({"type": "document", "document": {"data": json.dumps(data)}})
+            # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
         messages.append(
             {"role": "tool", "tool_call_id": tc.id, "content": tool_content_v2}
         )
-        
+
 res_v2 = co_v2.chat(
     model="command-r-plus-08-2024",
     messages=messages,
@@ -799,13 +804,15 @@ It's 20°C in Toronto.
 **v2**
 
 ```python PYTHON
-tool_content_v2 = []
 if res_v2.message.tool_calls:
     for tc in res_v2.message.tool_calls:
         tool_result = functions_map[tc.function.name](
             **json.loads(tc.function.arguments)
         )
-        tool_content_v2.append(json.dumps(tool_result))
+        tool_content_v2 = []
+        for data in tool_result:
+            tool_content_v2.append({"type": "document", "document": {"data": json.dumps(data)}})
+            # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
         messages.append(
             {"role": "tool", "tool_call_id": tc.id, "content": tool_content_v2}
         )

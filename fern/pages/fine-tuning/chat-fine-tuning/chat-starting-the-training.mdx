@@ -1,5 +1,5 @@
 ---
-title: Starting the Chat Fine-Tuning
+title: Starting Chat Fine-Tuning
 slug: docs/chat-starting-the-training
 hidden: false
 description: >-
@@ -63,8 +63,7 @@ There a certain requirements for the data you use to fine-tune a model for Chat 
 
 - There are only three acceptable values for the `role` field: `System`, `Chatbot` or `User`. There should be at least one instance of `Chatbot` and `User` in each conversation. If your dataset includes other roles, a validation error will be thrown.
 - A preamble should be uploaded as the first message in the conversation, with `role: System`. All other messages with `role: System` will be treated as speakers in the conversation.
-- Preambles should have a context length no longer than 4096 tokens.
-- What's more, each turn in the conversation should be within the context length of 4096 tokens to avoid being dropped from the dataset. We explain a turn in the ['Chat Customization Best Practices'](/docs/chat-preparing-the-data#:~:text=.await_validation()) section.
+- What's more, each turn in the conversation should be within the context length of 16384 tokens to avoid being dropped from the dataset. We explain a turn in the ['Chat Customization Best Practices'](/docs/chat-preparing-the-data#:~:text=.await_validation()) section.
 
 If you need more information, see ['Preparing the Data'](/docs/chat-preparing-the-data).
 
@@ -180,7 +179,7 @@ Below is a table of errors or warnings you may receive and how to fix them.
 | Error         | 'extra speaker in example: \<extra_speaker_name> (line : X)'                                                                                                         | This means that the uploaded training dataset has speakers which are not one of the allowed roles: `System`,`User` or `Chatbot`                                                                                                                     | Rename or remove the extra speaker and re-upload the dataset.                         |
 | Error         | 'missing Chatbot in example'  \nOR  \n'missing User in example'                                                                                                      | This means the uploaded training dataset is missing either `Chatbot` or `User` speaker, both of which are required.                                                                                                                                | Upload your dataset with required speakers `Chatbot` and `User`                       |
 | Warning       | 'dataset has 0 valid eval rows. dataset will be auto-split'                                                                                                          | This error is thrown when eval data was not uploaded, in which case the dataset will be auto-split with 80% going to training and 20% to evaluation.                                                                                               | None                                                                                  |
-| Warning       | 'train dataset has conversations with too many tokens. conversation number: number of turns with too many tokens is as follows, x:y'  \nOR  \n'eval dataset has conversations with too many tokens. conversation number: number of turns with too many tokens is as follows, x:y' | This means the train and/or eval dataset has turns which exceed the context length of 4096 tokens, and will be dropped for training. The message specifies the conversation index x (which starts at 0), as well as the number of turns over the context length in that conversation, y. | If you do not want any turns dropped, consider shortening turns.                      |
+| Warning       | 'train dataset has conversations with too many tokens. conversation number: number of turns with too many tokens is as follows, x:y'  \nOR  \n'eval dataset has conversations with too many tokens. conversation number: number of turns with too many tokens is as follows, x:y' | This means the train and/or eval dataset has turns which exceed the context length of 16384 tokens, and will be dropped for training. The message specifies the conversation index x (which starts at 0), as well as the number of turns over the context length in that conversation, y. | If you do not want any turns dropped, consider shortening turns.                      |
 
 
 
@@ -210,7 +209,7 @@ Once a fine-tuned model has been created with a specified Weights and Biases con
 
 ```python PYTHON
 import cohere
-from cohere.finetuning import Hyperparameters, Settings, BaseModel, WandbConfig
+from cohere.finetuning import Hyperparameters, Settings, FinetunedModel, BaseModel, WandbConfig
 
 co = cohere.Client('Your API key')
 

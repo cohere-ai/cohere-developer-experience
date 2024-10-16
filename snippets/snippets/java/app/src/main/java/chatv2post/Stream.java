@@ -1,10 +1,11 @@
 /* (C)2024 */
 package chatv2post;
 
+import java.util.List;
+
 import com.cohere.api.Cohere;
 import com.cohere.api.resources.v2.requests.V2ChatStreamRequest;
 import com.cohere.api.types.*;
-import java.util.List;
 
 public class Stream {
   public static void main(String[] args) {
@@ -15,7 +16,7 @@ public class Stream {
             .v2()
             .chatStream(
                 V2ChatStreamRequest.builder()
-                    .model("command-r-plus")
+                    .model("command-r-plus-08-2024")
                     .messages(
                         List.of(
                             ChatMessageV2.user(

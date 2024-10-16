@@ -93,7 +93,10 @@ while res.message.tool_calls:
     for tc in res.message.tool_calls:
         tool_result = web_search(**json.loads(tc.function.arguments))
         print(tool_result)
-        tool_content = [json.dumps(tool_result)]
+        tool_content = []
+        for data in tool_result:
+            tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+            # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
         messages.append(
             {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
         )
@@ -113,30 +116,32 @@ if res.message.citations:
 # EXAMPLE RESPONSE
 
 Tool plan:
-First I will search for the capital of Ontario, then I will search for the mayor of that city.
+I will search for the capital of Ontario, then search for the mayor of that city.
 
 Tool calls:
-Tool name: web_search | Parameters: {"query":"capital of Ontario"}
+Tool name: web_search | Parameters: {"query":"capital of ontario"}
 
 Tool results:
-{'documents': [{'title': 'Ontario', 'snippet': "It is home to the nation's capital, Ottawa, and its most populous city, Toronto, which is Ontario's provincial capital. Ontario. Province · A red flag ...", 'url': 'https://en.wikipedia.org/wiki/Ontario'}]}
+[{'url': 'https://simple.wikipedia.org/wiki/Toronto', 'text': 'Toronto is the capital city of the province of Ontario.It is also the largest city in Ontario. It is found on the north-west side of Lake Ontario behind New York City and Chicago.. The City of Toronto itself has a population of almost 3 million people. Even more people live in the regions around it. All together, the Greater Toronto Area is home to over 6.2 million people.'}]
 
 Tool plan:
-I now know that Toronto is the capital of Ontario. I need to search for the mayor of Toronto.
+I have found that Toronto is the capital of Ontario. I will now search for the mayor of Toronto.
 
 Tool calls:
 Tool name: web_search | Parameters: {"query":"mayor of toronto"}
 
 Tool results:
-{'documents': [{'title': 'Mayor of Toronto', 'snippet': 'Olivia Chow has served as the 66th and current mayor of Toronto since July 12, 2023, after winning the 2023 by-election.', 'url': 'https://en.wikipedia.org/wiki/Mayor_of_Toronto'}]}
+[{'url': 'https://en.wikipedia.org/wiki/Mayor_of_Toronto', 'text': 'The mayor of Toronto is the head of Toronto City Council and chief executive officer of the municipal government.The mayor is elected alongside city council every four years on the fourth Monday of October; there are no term limits. [2] While in office, mayors are styled His/Her Worship. [3]Olivia Chow has served as the 66th and current mayor of Toronto since July 12, 2023, after winning the ...'}]
 
 Response:
-Toronto is the capital of Ontario, and Olivia Chow is the current mayor.
+The capital of Ontario is Toronto. The current mayor of Toronto is Olivia Chow, who has been in office since July 12, 2023.
 
 Citations:
-start=0 end=7 text='Toronto' sources=[Source_Tool(id='web_search_vzj0at1aj4h6:0', tool_output={'documents': '[{"snippet":"It is home to the nation\'s capital, Ottawa, and its most populous city, Toronto, which is Ontario\'s provincial capital. Ontario. Province · A red flag ...","title":"Ontario","url":"https://en.wikipedia.org/wiki/Ontario"}]'}, type='tool')] 
+start=26 end=34 text='Toronto.' sources=[ToolSource(type='tool', id='web_search_p7f8t49dzs8e:0', tool_output={'text': 'Toronto is the capital city of the province of Ontario.It is also the largest city in Ontario. It is found on the north-west side of Lake Ontario behind New York City and Chicago.. The City of Toronto itself has a population of almost 3 million people. Even more people live in the regions around it. All together, the Greater Toronto Area is home to over 6.2 million people.', 'url': 'https://simple.wikipedia.org/wiki/Toronto'})] 
 
-start=39 end=50 text='Olivia Chow' sources=[Source_Tool(id='web_search_nk68kpe77jq8:0', tool_output={'documents': '[{"snippet":"Olivia Chow has served as the 66th and current mayor of Toronto since July 12, 2023, after winning the 2023 by-election.","title":"Mayor of Toronto","url":"https://en.wikipedia.org/wiki/Mayor_of_Toronto"}]'}, type='tool')] 
+start=67 end=78 text='Olivia Chow' sources=[ToolSource(type='tool', id='web_search_6p4e6ba9e2cv:0', tool_output={'text': 'The mayor of Toronto is the head of Toronto City Council and chief executive officer of the municipal government.The mayor is elected alongside city council every four years on the fourth Monday of October; there are no term limits. [2] While in office, mayors are styled His/Her Worship. [3]Olivia Chow has served as the 66th and current mayor of Toronto since July 12, 2023, after winning the ...', 'url': 'https://en.wikipedia.org/wiki/Mayor_of_Toronto'})] 
+
+start=109 end=123 text='July 12, 2023.' sources=[ToolSource(type='tool', id='web_search_6p4e6ba9e2cv:0', tool_output={'text': 'The mayor of Toronto is the head of Toronto City Council and chief executive officer of the municipal government.The mayor is elected alongside city council every four years on the fourth Monday of October; there are no term limits. [2] While in office, mayors are styled His/Her Worship. [3]Olivia Chow has served as the 66th and current mayor of Toronto since July 12, 2023, after winning the ...', 'url': 'https://en.wikipedia.org/wiki/Mayor_of_Toronto'})] 
 
 ```
 
@@ -178,8 +183,8 @@ tavily_client = TavilyClient(api_key="TAVILY_API_KEY")
 
 # here's a web search engine
 def web_search(query: str) -> list[dict]:
-    response = tavily_client.search(query, max_results=3)["results"]
-    return {"results": response}
+    results = tavily_client.search(query, max_results=3)["results"]
+    return results
 
 
 # the LLM is equipped with a description of the web search engine
@@ -217,7 +222,7 @@ def python_interpreter(code: str) -> list[dict]:
     except Exception as e:
         return {"error": str(e), "executed_code": code}
     # Get stdout
-    return {"console_output": output.getvalue(), "executed_code": code}
+    return [{"console_output": output.getvalue(), "executed_code": code}]
     
 # the LLM is equipped with a description of a python console
 python_interpreter_tool = {
@@ -268,7 +273,7 @@ Next, we run the tool use workflow involving for steps:
 
 ```python PYTHON
 model = "command-r-plus-08-2024"
-tools = [web_search_tool, python_interpreter_tool]
+tools = [web_search_tool,python_interpreter_tool]
 
 # Step 1: get user message
 print(f"USER MESSAGE:\n{message}")
@@ -280,7 +285,7 @@ messages = [{'role': 'user','content': message}]
 res = co.chat(model=model,
         messages=messages,
         tools=tools,
-        temperature=0)
+        temperature=0.1)
 
 # Keep invoking tools as long as the model generates tool calls
 while res.message.tool_calls:
@@ -305,18 +310,20 @@ while res.message.tool_calls:
     print("\nTOOL RESULTS:")
     for tc in res.message.tool_calls:
         tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
-        tool_content = [json.dumps(tool_result)]
         print(tool_result, "\n")
-        
-        messages.append({"role": "tool",
-                        "tool_call_id": tc.id,
-                        "content": tool_content}) 
+        tool_content = []
+        for data in tool_result:
+            tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+            # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
+        messages.append(
+            {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
+        )
 
     # 4 - Model either generates more tool calls or returns a response
     res = co.chat(model=model,
                 messages=messages,
                 tools=tools,
-                temperature=0)
+                temperature=0.1)
     
 messages.append({"role": "assistant", "content": res.message.content[0].text})
 
@@ -351,75 +358,133 @@ Remember to inspect the dataset and get a list of its columnsto understand its s
 ==================================================
 
 TOOL PLAN:
-I will first inspect the dataset to understand its structure and the columns it contains. Then, I will write and execute Python code to find the top 3 most streamed songs on Spotify in 2023 and their respective artists. Finally, I will search for the age and citizenship of each artist online.
+I will first inspect the dataset to understand its structure. Then, I will write and execute Python code to find the top 3 most streamed songs on Spotify in 2023. After that, I will search for the age and citizenship of the artists of these songs.
 
 TOOL CALLS:
 Tool name: python_interpreter
   import pandas as pd
   
-  df = pd.read_csv('spotify_dataset.csv')
+  df = pd.read_csv("spotify_dataset.csv")
   
+  # Print the first 5 rows of the dataset
+  print(df.head())
+  
+  # Print the column names
   print(df.columns)
+None
 
 TOOL RESULTS:
-{'console_output': "Index(['track_name', 'artist(s)_name', 'artist_count', 'released_year',\n       'released_month', 'released_day', 'in_spotify_playlists',\n       'in_spotify_charts', 'streams', 'in_apple_playlists', 'in_apple_charts',\n       'in_deezer_playlists', 'in_deezer_charts', 'in_shazam_charts', 'bpm',\n       'key', 'mode', 'danceability', 'valence', 'energy', 'acousticness',\n       'instrumentalness', 'liveness', 'speechiness', 'release_date'],\n      dtype='object')\n", 'executed_code': "import pandas as pd\n\ndf = pd.read_csv('spotify_dataset.csv')\n\nprint(df.columns)"} 
+[{'console_output': "                            track_name    artist(s)_name  artist_count  \\\n0  Seven (feat. Latto) (Explicit Ver.)  Latto, Jung Kook             2   \n1                                 LALA       Myke Towers             1   \n2                              vampire    Olivia Rodrigo             1   \n3                         Cruel Summer      Taylor Swift             1   \n4                       WHERE SHE GOES         Bad Bunny             1   \n\n   released_year  released_month  released_day  in_spotify_playlists  \\\n0           2023               7            14                   553   \n1           2023               3            23                  1474   \n2           2023               6            30                  1397   \n3           2019               8            23                  7858   \n4           2023               5            18                  3133   \n\n   in_spotify_charts      streams  in_apple_playlists  ...  key   mode  \\\n0                147  141381703.0                  43  ...    B  Major   \n1                 48  133716286.0                  48  ...   C#  Major   \n2                113  140003974.0                  94  ...    F  Major   \n3                100  800840817.0                 116  ...    A  Major   \n4                 50  303236322.0                  84  ...    A  Minor   \n\n   danceability valence  energy acousticness instrumentalness  liveness  \\\n0            80      89      83           31                0         8   \n1            71      61      74            7                0        10   \n2            51      32      53           17                0        31   \n3            55      58      72           11                0        11   \n4            65      23      80           14               63        11   \n\n   speechiness  release_date  \n0            4    2023-07-14  \n1            4    2023-03-23  \n2            6    2023-06-30  \n3           15    2019-08-23  \n4            6    2023-05-18  \n\n[5 rows x 25 columns]\nIndex(['track_name', 'artist(s)_name', 'artist_count', 'released_year',\n       'released_month', 'released_day', 'in_spotify_playlists',\n       'in_spotify_charts', 'streams', 'in_apple_playlists', 'in_apple_charts',\n       'in_deezer_playlists', 'in_deezer_charts', 'in_shazam_charts', 'bpm',\n       'key', 'mode', 'danceability', 'valence', 'energy', 'acousticness',\n       'instrumentalness', 'liveness', 'speechiness', 'release_date'],\n      dtype='object')\n", 'executed_code': 'import pandas as pd\r\n\r\ndf = pd.read_csv("spotify_dataset.csv")\r\n\r\n# Print the first 5 rows of the dataset\r\nprint(df.head())\r\n\r\n# Print the column names\r\nprint(df.columns)'}] 
 
 
 TOOL PLAN:
-I now know the column names of the dataset. I will now find the top 3 most streamed songs on Spotify in 2023 and then find the age and citizenship of the artists of those songs.
+The dataset contains a column called 'artist(s)_name' which contains the names of the artists. It also contains a column called 'released_year' which contains the year the song was released.
+
+I will now write and execute Python code to find the top 3 most streamed songs on Spotify in 2023.
 
 TOOL CALLS:
 Tool name: python_interpreter
   import pandas as pd
   
-  df = pd.read_csv('spotify_dataset.csv')
+  df = pd.read_csv("spotify_dataset.csv")
   
-  # Filter for songs released in 2023
-  df_2023 = df[df['released_year'] == 2023]
+  # Filter the dataset to only include songs released in 2023
+  df_2023 = df[df["released_year"] == 2023]
   
-  # Sort by streams in descending order
-  df_2023 = df_2023.sort_values(by='streams', ascending=False)
+  # Sort the dataset by the number of streams in descending order
+  df_2023_sorted = df_2023.sort_values("streams", ascending=False)
   
-  # Get the top 3 most streamed songs
-  top_3_songs = df_2023[['track_name', 'artist(s)_name']].head(3)
-  print("Top 3 most streamed songs on Spotify in 2023:", top_3_songs)
+  # Print the top 3 most streamed songs
+  print(df_2023_sorted.head(3))
   
-  # Get the artists' names
-  artists = top_3_songs['artist(s)_name'].tolist()
-  print("Artists:", artists)
+  # Print the names of the artists of the top 3 most streamed songs
+  print(df_2023_sorted.head(3)["artist(s)_name"])
+None
 
 TOOL RESULTS:
-{'console_output': "Top 3 most streamed songs on Spotify in 2023:                                 track_name              artist(s)_name\n12                                 Flowers                 Miley Cyrus\n6                          Ella Baila Sola  Eslabon Armado, Peso Pluma\n133  Shakira: Bzrp Music Sessions, Vol. 53           Shakira, Bizarrap\nArtists: ['Miley Cyrus', 'Eslabon Armado, Peso Pluma', 'Shakira, Bizarrap']\n", 'executed_code': 'import pandas as pd\n\ndf = pd.read_csv(\'spotify_dataset.csv\')\n\n# Filter for songs released in 2023\ndf_2023 = df[df[\'released_year\'] == 2023]\n\n# Sort by streams in descending order\ndf_2023 = df_2023.sort_values(by=\'streams\', ascending=False)\n\n# Get the top 3 most streamed songs\ntop_3_songs = df_2023[[\'track_name\', \'artist(s)_name\']].head(3)\nprint("Top 3 most streamed songs on Spotify in 2023:", top_3_songs)\n\n# Get the artists\' names\nartists = top_3_songs[\'artist(s)_name\'].tolist()\nprint("Artists:", artists)'} 
+[{'console_output': '                                track_name              artist(s)_name  \\\n12                                 Flowers                 Miley Cyrus   \n6                          Ella Baila Sola  Eslabon Armado, Peso Pluma   \n133  Shakira: Bzrp Music Sessions, Vol. 53           Shakira, Bizarrap   \n\n     artist_count  released_year  released_month  released_day  \\\n12              1           2023               1            12   \n6               2           2023               3            16   \n133             2           2023               1            11   \n\n     in_spotify_playlists  in_spotify_charts       streams  \\\n12                  12211                115  1.316856e+09   \n6                    3090                 50  7.259801e+08   \n133                  5724                 44  7.219756e+08   \n\n     in_apple_playlists  ...  key   mode  danceability valence  energy  \\\n12                  300  ...  NaN  Major            71      65      68   \n6                    34  ...    F  Minor            67      83      76   \n133                 119  ...    D  Minor            78      50      63   \n\n    acousticness instrumentalness  liveness  speechiness  release_date  \n12             6                0         3            7    2023-01-12  \n6             48                0         8            3    2023-03-16  \n133           27                0         9            5    2023-01-11  \n\n[3 rows x 25 columns]\n12                    Miley Cyrus\n6      Eslabon Armado, Peso Pluma\n133             Shakira, Bizarrap\nName: artist(s)_name, dtype: object\n', 'executed_code': 'import pandas as pd\r\n\r\ndf = pd.read_csv("spotify_dataset.csv")\r\n\r\n# Filter the dataset to only include songs released in 2023\r\ndf_2023 = df[df["released_year"] == 2023]\r\n\r\n# Sort the dataset by the number of streams in descending order\r\ndf_2023_sorted = df_2023.sort_values("streams", ascending=False)\r\n\r\n# Print the top 3 most streamed songs\r\nprint(df_2023_sorted.head(3))\r\n\r\n# Print the names of the artists of the top 3 most streamed songs\r\nprint(df_2023_sorted.head(3)["artist(s)_name"])'}] 
 
+
+TOOL PLAN:
+I have found that the top 3 most streamed songs on Spotify in 2023 are:
+1. Flowers by Miley Cyrus
+2. Ella Baila Sola by Eslabon Armado, Peso Pluma
+3. Shakira: Bzrp Music Sessions, Vol. 53 by Shakira, Bizarrap
+
+I will now search the internet for the age and citizenship of these artists.
+
+TOOL CALLS:
+Tool name: web_search | Parameters: {"query":"Miley Cyrus age"}
+Tool name: web_search | Parameters: {"query":"Miley Cyrus citizenship"}
+Tool name: web_search | Parameters: {"query":"Eslabon Armado age"}
+Tool name: web_search | Parameters: {"query":"Eslabon Armado citizenship"}
+Tool name: web_search | Parameters: {"query":"Peso Pluma age"}
+Tool name: web_search | Parameters: {"query":"Peso Pluma citizenship"}
+Tool name: web_search | Parameters: {"query":"Shakira age"}
+Tool name: web_search | Parameters: {"query":"Shakira citizenship"}
+Tool name: web_search | Parameters: {"query":"Bizarrap age"}
+Tool name: web_search | Parameters: {"query":"Bizarrap citizenship"}
+
+TOOL RESULTS:
+[{'title': 'Miley Cyrus Height, Weight, Age, Husband, Bio, Net Worth, Facts', 'url': 'https://www.celebsline.com/miley-cyrus/', 'content': 'Miley Cyrus Height, Weight, Age, Husband, Bio, Net Worth, Facts Miley Cyrus ...', 'score': 0.853669, 'raw_content': None}] 
+
+[{'title': "Miley Cyrus Talks Global Citizen's Fight to End Inequality, COVID-19", 'url': 'https://www.rollingstone.com/music/music-news/miley-cyrus-global-citizen-global-goal-interview-1021734/', 'content': "Miley Cyrus Talks Fighting Inequality, ...", 'score': 0.39589298, 'raw_content': None}] 
+
+[{'title': 'Eslabon Armado - Wikipedia', 'url': 'https://en.wikipedia.org/wiki/Eslabon_Armado', 'content': 'Eslabon Armado is an American regional Mexican group from Patterson, California, formed in 2017.The group consists of Pedro Tovar ...', 'score': 0.9923638, 'raw_content': None}] 
+
+... 
+
+...
 
 RESPONSE:
 The top 3 most streamed songs on Spotify in 2023 were:
-1. *Flowers* by Miley Cyrus
-2. *Ella Baila Sola* by Eslabon Armado, Peso Pluma
-3. *Shakira: Bzrp Music Sessions, Vol. 53* by Shakira, Bizarrap
+1. 'Flowers' by Miley Cyrus
+2. 'Ella Baila Sola' by Eslabon Armado and Peso Pluma
+3. 'Shakira: Bzrp Music Sessions, Vol. 53' by Shakira and Bizarrap
 
-The artists' ages and citizenships are as follows:
-1. Miley Cyrus: 30 years old (American)
-2. Eslabon Armado: Unknown age (Mexican)
-3. Peso Pluma: 28 years old (Mexican)
-4. Shakira: 46 years old (Colombian-Spanish)
-5. Bizarrap: 24 years old (Argentinian)
+Miley Cyrus is 31 years old and is an American citizen.
+
+Eslabon Armado is a group of musicians from California, USA, formed in 2017. The group consists of Pedro Tovar (lead vocals), Brian Tovar (bass), Ulises González (acoustic guitar), and Damián Pacheco (twelve-string guitar). The members of the group are all in their early 20s.
+
+Peso Pluma is a 24-year-old rapper, singer, and songwriter from Mexico.
+
+Shakira is a 46-year-old Colombian singer, songwriter, and philanthropist.
+
+Bizarrap is a 25-year-old Argentine DJ and producer.
 
 CITATIONS:
-Start: 59 | End: 66 | Text: 'Flowers'
+Start: 58 | End: 67 | Text: ''Flowers''
 Sources:
-python_interpreter_53ea36x4atay:0
+python_interpreter_sbccqz8vt4yj:0
 --------------------------------------------------
 Start: 71 | End: 82 | Text: 'Miley Cyrus'
 Sources:
-python_interpreter_53ea36x4atay:0
+python_interpreter_sbccqz8vt4yj:0
 --------------------------------------------------
-Start: 87 | End: 102 | Text: 'Ella Baila Sola'
+Start: 86 | End: 103 | Text: ''Ella Baila Sola''
 Sources:
-python_interpreter_53ea36x4atay:0
+python_interpreter_sbccqz8vt4yj:0
 --------------------------------------------------
-Start: 107 ...
-
+Start: 107 | End: 136 | Text: 'Eslabon Armado and Peso Pluma'
+Sources:
+python_interpreter_sbccqz8vt4yj:0
+--------------------------------------------------
+Start: 140 | End: 179 | Text: ''Shakira: Bzrp Music Sessions, Vol. 53''
+Sources:
+python_interpreter_sbccqz8vt4yj:0
+--------------------------------------------------
+Start: 183 | End: 203 | Text: 'Shakira and Bizarrap'
+Sources:
+python_interpreter_sbccqz8vt4yj:0
+--------------------------------------------------
+Start: 220 | End: 232 | Text: '31 years old'
+Sources:
+web_search_kvbq3v3yexkc:1
+--------------------------------------------------
+Start: 243 | End: 260 | Text: 'American citizen.'
+Sources:
+web_search_kvbq3v3yexkc:1
+web_search_kvbq3v3yexkc:2
 ...
 
 ```
