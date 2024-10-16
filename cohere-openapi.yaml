@@ -6119,7 +6119,7 @@ paths:
                     response = await co.chat(
                         model="command-r-plus-08-2024",
                         messages=[
-                            cohere.v2.ChatMessage2_User(
+                            cohere.UserChatMessageV2(
                                 content="hello world!"
                             )
                         ]
@@ -7258,10 +7258,12 @@ paths:
                           description:
                             'Connects to a database to retrieve overall sales volumes and sales information for a given day.',
                           parameters: {
-                            day: {
-                              description: 'Retrieves sales data for this day, formatted as YYYY-MM-DD.',
-                              type: 'str',
-                              required: true,
+                            type: 'object',
+                            properties: {
+                              day: {
+                                description: 'Retrieves sales data for this day, formatted as YYYY-MM-DD.',
+                                type: 'string',
+                              },
                             },
                           },
                         },
@@ -7273,10 +7275,13 @@ paths:
                           description:
                             'Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.',
                           parameters: {
-                            category: {
-                              description: 'Retrieves product information data for all products in this category.',
-                              type: 'str',
-                              required: true,
+                            type: 'object',
+                            properties: {
+                              category: {
+                                description:
+                                  'Retrieves product information data for all products in this category.',
+                                type: 'string',
+                              },
                             },
                           },
                         },
@@ -7306,26 +7311,30 @@ paths:
                     model="command-r-plus-08-2024",
                     tools=[
                         cohere.ToolV2(type='function', function={
-                            "name": 'query_daily_sales_report',
-                                    "description": 'Connects to a database to retrieve overall sales volumes and sales information for a given day.',
-                                    "parameters": {
-                                        "day": {
-                                            "description": 'Retrieves sales data for this day, formatted as YYYY-MM-DD.',
-                                            "type": 'str',
-                                            "required": True,
-                                        },
+                            "name": "query_daily_sales_report",
+                            "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+                            "parameters": {
+                                "type": "object",
+                                "properties": {
+                                    "day": {
+                                        "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
+                                        "type": "string"
                                     }
+                                }
+                            }
                         }),
                         cohere.ToolV2(type='function', function={
-                            "name": 'query_product_catalog',
-                                    "description": 'Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.',
-                                    "parameters": {
-                                        "category": {
-                                            "description": 'Retrieves product information data for all products in this category.',
-                                            "type": 'str',
-                                            "required": True,
-                                        },
+                            "name": "query_product_catalog",
+                            "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
+                            "parameters": {
+                                "type": "object",
+                                "properties": {
+                                    "category": {
+                                        "description": "Retrieves product information data for all products in this category.",
+                                        "type": "string"
                                     }
+                                }
+                            }
                         })
                     ],
                     messages=[
@@ -7457,44 +7466,48 @@ paths:
                   --header 'content-type: application/json' \
                   --header "Authorization: bearer $CO_API_KEY" \
                   --data '{
-                      "model": "command-r-plus-08-2024",
-                      "tools": [
-                          {
-                              "type": "function",
-                              "function": {
-                                  "name": "query_daily_sales_report",
-                                  "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
-                                  "parameters": {
-                                      "day": {
-                                          "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
-                                          "type": "str",
-                                          "required": true
-                                      }
-                                  }
-                              }
-                          },
-                          {
-                              "type": "function",
-                              "function": {
-                                  "name": "query_product_catalog",
-                                  "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
-                                  "parameters": {
-                                      "category": {
-                                          "description": "Retrieves product information data for all products in this category.",
-                                          "type": "str",
-                                          "required": true
-                                      }
-                                  }
-                              }
-                          }
-                      ],
-                      "messages": [
-                          {
-                              "role": "user",
-                              "content": "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
-                          }
-                      ]
-                  }'
+                        "model": "command-r-plus-08-2024",
+                        "tools": [
+                            {
+                                "type": "function",
+                                "function": {
+                                    "name": "query_daily_sales_report",
+                                    "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+                                    "parameters": {
+                                        "type": "object",
+                                        "properties": {
+                                            "day": {
+                                                "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "type": "function",
+                                "function": {
+                                    "name": "query_product_catalog",
+                                    "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
+                                    "parameters": {
+                                        "type": "object",
+                                        "properties": {
+                                            "category": {
+                                                "description": "Retrieves product information data for all products in this category.",
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
+                            }
+                        ]
+                    }'
           request:
             model: "command-r"
             messages:
@@ -20186,11 +20199,11 @@ components:
     ToolMessageV2:
       type: object
       title: Tool Message
-      description: A message from the system.
+      description: A message with Tool outputs.
       required:
         - role
         - tool_call_id
-        - tool_content
+        - content
       properties:
         role:
           type: string
@@ -20201,8 +20214,8 @@ components:
           description: The id of the associated tool call that has provided the given
             content
         content:
-          description: A single or list of outputs from a tool. The content should
-            formatted as a JSON object string, or a list of tool content blocks
+          description: Outputs from a tool. The content should formatted as a JSON object
+            string, or a list of tool content blocks
           oneOf:
             - type: string
             - type: array
