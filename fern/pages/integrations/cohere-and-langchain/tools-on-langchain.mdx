@@ -73,9 +73,9 @@ print(response['output'])
 In order to utilize single-step mode, you have to set `force_single_step=False`. Here's an example of using it to answer a few questions:
 
 ```python PYTHON
-from langchain_core.prompts import ChatPromptTemplate
-from pydantic import BaseModel, Field
 from langchain_cohere import ChatCohere
+from langchain_core.messages import HumanMessage
+from pydantic import BaseModel, Field
 
 # Data model
 class web_search(BaseModel):
@@ -96,24 +96,22 @@ The vectorstore contains documents related to agents, prompt engineering, and ad
 Use the vectorstore for questions on these topics. Otherwise, use web-search."""
 
 # LLM with tool use and preamble
-llm = ChatCohere()
-structured_llm_router = llm.bind_tools(tools=[web_search, vectorstore], preamble=preamble)
+# Define the Cohere LLM
+llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
+                 model="command-r-plus-08-2024")
 
-# Prompt
-route_prompt = ChatPromptTemplate.from_messages(
-    [
-        ("human", "{question}"),
-    ]
-)
+llm_with_tools = llm.bind_tools(tools=[web_search, vectorstore], preamble=preamble)
 
-question_router = route_prompt | structured_llm_router
-response = question_router.invoke({"question": "Who will the Bears draft first in the NFL draft?"})
+messages = [HumanMessage("Who will the Bears draft first in the NFL draft?")]
+response = llm_with_tools.invoke(messages, force_single_step=True)
 print(response.response_metadata['tool_calls'])
 
-response = question_router.invoke({"question": "What are the types of agent memory?"})
+messages = [HumanMessage("What are the types of agent memory?")]
+response = llm_with_tools.invoke(messages, force_single_step=True)
 print(response.response_metadata['tool_calls'])
 
-response = question_router.invoke({"question": "Hi how are you?"})
+messages = [HumanMessage("Hi, How are you?")]
+response = llm_with_tools.invoke(messages, force_single_step=True)
 print('tool_calls' in response.response_metadata)
 ```
 
