@@ -6,9 +6,9 @@ co = cohere.AsyncClientV2("<<apiKey>>")
 
 async def main():
     response = await co.chat(
-        model="command-r-plus",
+        model="command-r-plus-08-2024",
         messages=[
-            cohere.v2.ChatMessage2_User(
+            cohere.UserChatMessageV2(
                 content="hello world!"
             )
         ]
