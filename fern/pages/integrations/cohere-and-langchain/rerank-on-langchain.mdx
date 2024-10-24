@@ -24,50 +24,63 @@ To use Cohere's [rerank functionality ](/docs/reranking) with LangChain, start w
 You can then use it with LangChain retrievers, embeddings, and RAG. The example below uses the vector DB chroma, for which you will need to install `pip install chromadb`. Other vector DB's [from this list](https://python.langchain.com/docs/integrations/vectorstores) can also be used.
 
 ```python PYTHON
-from langchain.retrievers import ContextualCompressionRetriever, CohereRagRetriever
-from langchain.retrievers.document_compressors import CohereRerank
-from langchain_community.embeddings import CohereEmbeddings
-from langchain_community.chat_models import ChatCohere
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain_cohere import CohereEmbeddings
+from langchain_cohere import ChatCohere
+from langchain_cohere import CohereRerank, CohereRagRetriever
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import TextLoader
 from langchain_community.vectorstores import Chroma
+from langchain_community.document_loaders import WebBaseLoader
 
-user_query =  "When was Cohere started?"
-# Create cohere's chat model and embeddings objects
-cohere_chat_model = ChatCohere(cohere_api_key="{API_KEY}")
-cohere_embeddings = CohereEmbeddings(cohere_api_key="{API_KEY}")
+user_query =  "what is Cohere Toolkit?"
+
+# Define the Cohere LLM
+llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
+                 model="command-r-plus-08-2024")
+
+# Define the Cohere embedding model
+embeddings = CohereEmbeddings(cohere_api_key="COHERE_API_KEY",
+                              model="embed-english-light-v3.0")
+
 # Load text files and split into chunks, you can also use data gathered elsewhere in your application
-raw_documents = TextLoader('demofile.txt').load()
+raw_documents = WebBaseLoader("https://docs.cohere.com/docs/cohere-toolkit").load()
 text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
 documents = text_splitter.split_documents(raw_documents)
+
 # Create a vector store from the documents
-db = Chroma.from_documents(documents, cohere_embeddings)
+db = Chroma.from_documents(documents, embeddings)
 
 # Create Cohere's reranker with the vector DB using Cohere's embeddings as the base retriever
-cohere_rerank = CohereRerank(cohere_api_key="{API_KEY}")
+reranker = CohereRerank(cohere_api_key="COHERE_API_KEY", 
+                        model="rerank-english-v3.0")
+
 compression_retriever = ContextualCompressionRetriever(
-    base_compressor=cohere_rerank, 
+    base_compressor=reranker,
     base_retriever=db.as_retriever()
 )
 compressed_docs = compression_retriever.get_relevant_documents(user_query)
 # Print the relevant documents from using the embeddings and reranker
 print(compressed_docs)
 
-# Create the cohere rag retriever using the chat model 
-rag = CohereRagRetriever(llm=cohere_chat_model)
+# Create the cohere rag retriever using the chat model
+rag = CohereRagRetriever(llm=llm, connectors=[])
 docs = rag.get_relevant_documents(
     user_query,
-    source_documents=compressed_docs,
+    documents=compressed_docs,
 )
 # Print the documents
+print("Documents:")
 for doc in docs[:-1]:
     print(doc.metadata)
     print("\n\n" + doc.page_content)
     print("\n\n" + "-" * 30 + "\n\n")
-# Print the final generation 
+# Print the final generation
 answer = docs[-1].page_content
+print("Answer:")
 print(answer)
-# Print the final citations 
+# Print the final citations
 citations = docs[-1].metadata['citations']
+print("Citations:")
 print(citations)
 ```

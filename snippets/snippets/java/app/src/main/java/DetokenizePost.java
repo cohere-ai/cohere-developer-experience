@@ -1,9 +1,8 @@
 /* (C)2024 */
-import java.util.List;
-
 import com.cohere.api.Cohere;
 import com.cohere.api.requests.DetokenizeRequest;
 import com.cohere.api.types.DetokenizeResponse;
+import java.util.List;
 
 public class DetokenizePost {
   public static void main(String[] args) {
