@@ -1,4 +1,4 @@
-const { CohereClient } = require('cohere-ai');
+import { CohereClient } from 'cohere-ai';
 
 const cohere = new CohereClient({
   
