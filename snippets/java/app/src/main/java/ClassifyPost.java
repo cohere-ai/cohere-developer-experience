@@ -8,7 +8,7 @@ import java.util.List;
 
 public class ClassifyPost {
     public static void main(String[] args) {
-        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+        Cohere cohere = Cohere.builder().clientName("snippet").build();
 
         ClassifyResponse response = cohere.classify(ClassifyRequest.builder().addAllInputs(
                 List.of("Confirm your email address", "hey i need u to send some $")

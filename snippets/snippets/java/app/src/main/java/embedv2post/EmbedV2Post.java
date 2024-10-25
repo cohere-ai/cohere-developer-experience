@@ -8,7 +8,7 @@ import java.util.List;
 
 public class EmbedV2Post {
   public static void main(String[] args) {
-    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
     EmbedByTypeResponse response =
         cohere

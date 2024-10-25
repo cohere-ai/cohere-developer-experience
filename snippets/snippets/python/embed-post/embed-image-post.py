@@ -2,7 +2,7 @@ import cohere
 import requests
 import base64
 
-co = cohere.Client("<<apiKey>>")
+co = cohere.Client()
 
 image = requests.get("https://cohere.com/favicon-32x32.png")
 stringified_buffer = base64.b64encode(image.content).decode('utf-8')

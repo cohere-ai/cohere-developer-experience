@@ -1,6 +1,6 @@
 import cohere
 
-co = cohere.Client("<<apiKey>>")
+co = cohere.Client()
 
 response = co.generate(
     prompt="Please explain to me how LLMs work",

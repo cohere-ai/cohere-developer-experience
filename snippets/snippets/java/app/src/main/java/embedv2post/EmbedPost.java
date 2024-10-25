@@ -9,7 +9,7 @@ import com.cohere.api.types.EmbedInputType;
 
 public class EmbedPost {
   public static void main(String[] args) {
-    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
     EmbedByTypeResponse response =
         cohere

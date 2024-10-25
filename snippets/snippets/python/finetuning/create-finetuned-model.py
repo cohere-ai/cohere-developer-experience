@@ -7,7 +7,7 @@ from cohere.finetuning import (
 )
 import cohere
 
-co = cohere.Client("<<apiKey>>")
+co = cohere.Client()
 hp = Hyperparameters(
     early_stopping_patience=10,
     early_stopping_threshold=0.001,

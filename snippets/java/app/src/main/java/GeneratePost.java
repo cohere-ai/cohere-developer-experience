@@ -5,7 +5,7 @@ import com.cohere.api.types.Generation;
 
 public class GeneratePost {
     public static void main(String[] args) {
-        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+        Cohere cohere = Cohere.builder().clientName("snippet").build();
 
         Generation response = cohere.generate(GenerateRequest.builder().prompt("Please explain to me how LLMs work").build());
 

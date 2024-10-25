@@ -8,7 +8,7 @@ import java.util.List;
 
 public class RerankPost {
     public static void main(String[] args) {
-        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+        Cohere cohere = Cohere.builder().clientName("snippet").build();
 
         RerankResponse response = cohere.rerank(RerankRequest.builder().query("What is the capital of the United States?").documents(List.of(
                 RerankRequestDocumentsItem.of("Carson City is the capital city of the American state of Nevada."),

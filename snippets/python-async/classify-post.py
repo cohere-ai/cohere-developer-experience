@@ -2,7 +2,7 @@ import cohere
 import asyncio
 from cohere import ClassifyExample
 
-co = cohere.AsyncClient("<<apiKey>>")
+co = cohere.AsyncClient()
 examples = [
     ClassifyExample(text="Dermatologists don't like her!", label="Spam"),
     ClassifyExample(text="'Hello, open to this?'", label="Spam"),

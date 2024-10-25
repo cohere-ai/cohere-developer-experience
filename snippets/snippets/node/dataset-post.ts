@@ -2,7 +2,7 @@ const { CohereClient } = require('cohere-ai');
 const fs = require('fs');
 
 const cohere = new CohereClient({
-  token: '<<apiKey>>',
+  
 });
 
 (async () => {

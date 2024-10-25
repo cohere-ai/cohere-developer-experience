@@ -8,7 +8,7 @@ import java.util.List;
 
 public class EmbedPost {
     public static void main(String[] args) {
-        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+        Cohere cohere = Cohere.builder().clientName("snippet").build();
 
         EmbedResponse response = cohere.embed(EmbedRequest.builder().texts(List.of("hello", "goodbye")).model("embed-english-v3.0").inputType(EmbedInputType.CLASSIFICATION).build());
 

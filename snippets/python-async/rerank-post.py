@@ -1,7 +1,7 @@
 import cohere
 import asyncio
 
-co = cohere.AsyncClient("<<apiKey>>")
+co = cohere.AsyncClient()
 
 docs = [
     "Carson City is the capital city of the American state of Nevada.",

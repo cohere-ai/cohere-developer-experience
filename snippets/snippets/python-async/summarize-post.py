@@ -1,7 +1,7 @@
 import cohere
 import asyncio
 
-co = cohere.AsyncClient("<<apiKey>>")
+co = cohere.AsyncClient()
 
 text = (
     "Ice cream is a sweetened frozen food typically eaten as a snack or dessert. "

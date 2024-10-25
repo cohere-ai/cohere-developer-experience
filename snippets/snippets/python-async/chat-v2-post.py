@@ -1,7 +1,7 @@
 import cohere
 import asyncio
 
-co = cohere.AsyncClientV2("<<apiKey>>")
+co = cohere.AsyncClientV2()
 
 
 async def main():

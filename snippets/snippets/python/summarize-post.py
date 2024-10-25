@@ -1,6 +1,6 @@
 import cohere
 
-co = cohere.Client("<<apiKey>>")
+co = cohere.Client()
 
 text = (
     "Ice cream is a sweetened frozen food typically eaten as a snack or dessert. "

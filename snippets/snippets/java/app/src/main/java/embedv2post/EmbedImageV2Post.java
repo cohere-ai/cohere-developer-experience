@@ -9,7 +9,7 @@ import java.util.List;
 
 public class EmbedImageV2Post {
   public static void main(String[] args) {
-    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
     EmbedByTypeResponse response =
         cohere
