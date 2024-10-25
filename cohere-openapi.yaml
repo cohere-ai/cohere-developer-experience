@@ -8071,1245 +8071,6 @@ paths:
       x-fern-examples:
         - code-samples:
             - sdk: go
-              name: Images
-              code: >
-                package main
-
-
-                import (
-                	"context"
-                	"encoding/base64"
-                	"fmt"
-                	"io"
-                	"log"
-                	"net/http"
-
-                	cohere "github.com/cohere-ai/cohere-go/v2"
-                	client "github.com/cohere-ai/cohere-go/v2/client"
-                )
-
-
-                func main() {
-                	// Fetch the image
-                	resp, err := http.Get("https://cohere.com/favicon-32x32.png")
-                	if err != nil {
-                		log.Println("Error fetching the image:", err)
-                		return
-                	}
-                	defer resp.Body.Close()
-
-                	// Read the image content
-                	buffer, err := io.ReadAll(resp.Body)
-                	if err != nil {
-                		log.Println("Error reading the image content:", err)
-                		return
-                	}
-
-                	stringifiedBuffer := base64.StdEncoding.EncodeToString(buffer)
-                	contentType := resp.Header.Get("Content-Type")
-                	imageBase64 := fmt.Sprintf("data:%s;base64,%s", contentType, stringifiedBuffer)
-
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
-
-                	embed, err := co.Embed(
-                		context.TODO(),
-                		&cohere.EmbedRequest{
-                			Images:         []string{imageBase64},
-                			Model:          cohere.String("embed-english-v3.0"),
-                			InputType:      cohere.EmbedInputTypeImage.Ptr(),
-                			EmbeddingTypes: []cohere.EmbeddingType{cohere.EmbeddingTypeFloat},
-                		},
-                	)
-
-                	if err != nil {
-                		log.Fatal(err)
-                	}
-
-                	log.Printf("%+v", embed)
-                }
-            - sdk: typescript
-              name: Images
-              code: >
-                const { CohereClient } = require('cohere-ai');
-
-
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
-
-
-                (async () => {
-                  const image = await fetch('https://cohere.com/favicon-32x32.png');
-                  const buffer = await image.arrayBuffer();
-                  const stringifiedBuffer = Buffer.from(buffer).toString('base64');
-                  const contentType = image.headers.get('content-type');
-                  const imageBase64 = `data:${contentType};base64,${stringifiedBuffer}`;
-
-                  const embed = await cohere.embed({
-                    model: 'embed-english-v3.0',
-                    inputType: 'image',
-                    embeddingTypes: ['float'],
-                    images: [imageBase64],
-                  });
-                  console.log(embed);
-                })();
-            - sdk: python
-              name: Images
-              code: >
-                import cohere
-
-                import requests
-
-                import base64
-
-
-                co = cohere.Client("<<apiKey>>")
-
-
-                image = requests.get("https://cohere.com/favicon-32x32.png")
-
-                stringified_buffer =
-                base64.b64encode(image.content).decode('utf-8')
-
-                content_type = image.headers['Content-Type']
-
-                image_base64 =
-                f"data:{content_type};base64,{stringified_buffer}"
-
-
-                response = co.embed(
-                    model="embed-english-v3.0",
-                    input_type="image", 
-                    embedding_types=["float"],
-                    images=[image_base64]
-                )
-
-
-                print(response)
-            - sdk: java
-              name: Images
-              code: >
-                package embedpost; /* (C)2024 */
-
-
-                import com.cohere.api.Cohere;
-
-                import com.cohere.api.requests.EmbedRequest;
-
-                import com.cohere.api.types.EmbedInputType;
-
-                import com.cohere.api.types.EmbedResponse;
-
-                import com.cohere.api.types.EmbeddingType;
-
-                import java.io.InputStream;
-
-                import java.net.HttpURLConnection;
-
-                import java.net.URI;
-
-                import java.net.URL;
-
-                import java.util.Base64;
-
-                import java.util.List;
-
-
-                public class EmbedImagePost {
-                  public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
-
-                    URL url =
-                        URI.toUrl(
-                            "https://cohere.com/favicon-32x32.png");
-                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                    connection.connect();
-
-                    InputStream inputStream = connection.getInputStream();
-                    byte[] buffer = inputStream.readAllBytes();
-                    inputStream.close();
-
-                    String imageBase64 =
-                        String.format(
-                            "data:%s;base64,%s",
-                            connection.getHeaderField("Content-Type"), Base64.getEncoder().encodeToString(buffer));
-
-                    EmbedResponse response =
-                        cohere.embed(
-                            EmbedRequest.builder()
-                                .images(List.of(imageBase64))
-                                .model("embed-english-v3.0")
-                                .inputType(EmbedInputType.IMAGE)
-                                .embeddingTypes(List.of(EmbeddingType.FLOAT))
-                                .build());
-
-                    System.out.println(response);
-                  }
-                }
-            - sdk: curl
-              name: Images
-              code: >-
-                curl --request POST \
-                  --url https://api.cohere.com/v1/embed \
-                  --header 'accept: application/json' \
-                  --header 'content-type: application/json' \
-                  --header "Authorization: bearer $CO_API_KEY" \
-                  --data '{
-                    "model": "embed-english-v3.0",
-                    "input_type": "image", 
-                    "embedding_types": ["float"],
-                    "images": ["data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD//gAfQ29tcHJlc3NlZCBieSBqcGVnLXJlY29tcHJlc3P/2wCEAAQEBAQEBAQEBAQGBgUGBggHBwcHCAwJCQkJCQwTDA4MDA4MExEUEA8QFBEeFxUVFx4iHRsdIiolJSo0MjRERFwBBAQEBAQEBAQEBAYGBQYGCAcHBwcIDAkJCQkJDBMMDgwMDgwTERQQDxAUER4XFRUXHiIdGx0iKiUlKjQyNEREXP/CABEIAZABkAMBIgACEQEDEQH/xAAdAAEAAQQDAQAAAAAAAAAAAAAABwEFBggCAwQJ/9oACAEBAAAAAN/gAAAAAAAAAAAAAAAAAAAAAAAAAAHTg9j6agAAp23/ADjsAAAPFrlAUYeagAAArdZ12uzcAAKax6jWUAAAAO/bna+oAC1aBxAAAAAAbM7rVABYvnRgYAAAAAbwbIABw+cMYAAAAAAvH1CuwA091RAAAAAAbpbPAGJfMXzAAAAAAJk+hdQGlmsQAAAAABk31JqBx+V1iAAAAAALp9W6gRp826AAAAAAGS/UqoGuGjwAAAAAAl76I1A1K1EAAAAAAG5G1ADUHU0AAAAAAu/1Cu4DVbTgAAAAAA3n2JAIG0IAAAAAArt3toAMV+XfEAAAAAL1uzPlQBT5qR2AAAAAenZDbm/AAa06SgAAAAerYra/LQADp+YmIAAAAC77J7Q5KAACIPnjwAAAAzbZzY24gAAGq+m4AAA7Zo2cmaoAAANWdOOAAAMl2N2TysAAAApEOj2HgAOyYtl5w5jw4zZPJyuGQ5H2AAAdes+suDUAVyfYbZTLajG8HxjgD153n3IAABH8QxxiVo4XPKpGlyTKjowvCbUAF4mD3AAACgqCzYPiPQAA900XAACmN4favRk+a9wB0xdiNAAAvU1cgAxeDcUoPdL0s1B44atQAACSs8AEewD0gM72I5jjDFiAAAPfO1QGL6z9IAlGdRgkaAAABMmRANZsSADls7k6kFW8AAAJIz4DHtW6AAk+d1jhUAAAGdyWBFcGgAX/AGnYZFgAAAM4k4CF4hAA9u3FcKi4AAAEiSEBCsRgAe3biuGxWAAACXsoAiKFgALttgs0J0AAAHpnvkBhOt4AGebE1pBtsAAAGeySA4an2wAGwEjGFxaAAAe+c+wAjKBgAyfZ3kUh3HAAAO6Yb+AKQLGgBctmb2HXDNjAAD1yzkQAENRF1gyvYG9AcI2wjgAByyuSveAAWWMcQtnoyOQs8qAPFhVh8HADt999y65gAAKKgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/8QAGgEBAAMBAQEAAAAAAAAAAAAAAAEFBgIEA//aAAgBAhAAAAAAAAAAAAABEAAJkBEAAB0CIAABMhyAAA6EQAAA6EQAABMiIAAAmREAAAmQiAABMgOQAEyAHIATIACIBMu7H3fT419eACEnps7DoPFQch889Wd3V2TeWIBV0o+eF8I0OrXVoAIyvBm8uDe2Wp6ADO+Mw9WDV6rSgAzvjMNWA1Op1AARlvmZbOA3NnpfSAK6iHnwfnFttZ9Wh7AeXPcB5cxWd3Wk7Pvb+uR8q+rgAAAAAAAAP//EABsBAQABBQEAAAAAAAAAAAAAAAAEAQIDBQYH/9oACAEDEAAAAAAAAAC20AL6gCNDxAArnn3gpro4AAv2l4QIgAAJWwGLVAAAX7cQYYAAFdyNZgAAAy7UazAAABsZI18UAAE6YEfWgACRNygavCACsmZkALNZjAMkqVcAC2FFoKyJWe+fMyYoMAAUw2L8t0jYzqhE0dAzd70eHj+PK7mcAa7UDN7VvBwXmDb7EAU5uw9C9KCnh2n6WoAaKIey9ODy/jN+ADRRD2fpQeY8P0QAU5zGel+gg8V53oc4AgaYTfcJ45Tx5I31wCPobQ2PpPRYuP8APMZm2kqoxQddQAAAAAAAAP/EAFMQAAEDAgIDCQkMBwUIAwAAAAECAwQFEQAGBzFREhMhMEBBYXGBCBQYIjJCRlDSFSBSVGJygpGTobHREDRDc6LBwiMzU3CyFiQlNVVkdISSlLP/2gAIAQEAAT8A/wAo74nVaBAb32bNYitfDfcS2PrURiZpU0dwVFMjN1OVY8O8u7//APkFYc076LmfSVSvmQpB/ox4QGjH/r7v/wBGR7OPCA0YH0ge7IMj2ceEBowPpA92QZHs48IDRgfSB7sgyPZx4QGjA+kD3ZBkezjwgNGB9IHuyDI9nHhAaMD6QPdkGR7OPCA0YH0ge7IMj2ceEBowPpA92QZHs48IDRgfSB7sgyPZx4QGjA+kD3ZBkezjwgNGB9IHuyDI9nHhAaMD6QPdkGR7OPCA0YH0ge7IMj2ceEBowPpA92QZHs48IDRgfSB7sgyPZx4QGjA+kD3ZBkezjwgNGB9IHuyDI9nHhAaMD6QPdkGR7OPCA0Y89fd7IMj2cN6e9GDpCTmRaOuFI9nEDSlo9qakpj5upoJNgH3d4+50JxGlxpbSH4r7bzSvJW0sLSeop5NWsw0fL8RU2rVGPDjJ4C6+4EAnYnaegYzV3StDhFcfK1LdqDuoSZBLDHWlPlqxXtNmkOulaVVxcFg3/sYA73A+kLrxKnTJrpfmSXX3jrcdWVqPWVYudvJ7nbil16s0R7vikVSVDduCVR3lNk9e5IvjKfdG5rpKmo+Yo7NXi8ALlgxJH0kiysZL0l5Uzsz/AMFn2l7m7kJ8BuSj6PnAbU8ieeZitOPPuoQ22krWtZCUpSkXJJOoDGkHui4MBT1MyW2ibITdJnuA97o/dJ1uHFczFXMyzV1Gu1N+bJV57yr7kbEjUkdA5dGlSYb7UqJIcZfaUFtuNLKFoUNRSocIONF3dBb6tih58eSCQEM1PUOqT7eELS4lK0KCkkAgg3BB4/M2Z6NlKlSKtWJiI8VoWueFS1nUhA85ZxpJ0v13Pj7kNorg0NC7tw0K4XNi3yPKPRqHqLQnpkeoD8XKmZZJVSHCG4klw/qijqQs/wCF/pwDfjc1ZqpOUKNLrVXf3qMyLJSLFbrh8ltA51qxn7P9az9V1z6istxWypMSIhRLbCD+Kj5yvUYJHCMdz7pLXWoByfWJBXUILV4bizwvRk+Z0qa4yoTodKgyZ859DEWO0t11xZslCEC5UrGlHSNOz/XVvBa26RFKkQY+xHO4v5a/UtArU3LlZptbpzm4lQ30ut7DbWk9ChwHGXq5EzHQ6ZWoCv8AdpsdDyRrIKtaFdKTwHi+6I0hrffGRKU/ZloodqSkngW5rQz1I1n1P3M2ZzJpFYyvIXdUJ0SowP8AhP8AAtI6AvitIWbWclZVqlbWElxpvcRmz+0kOcDaf5nEyXJnypM2Y8p2Q+6t11xRupa1m6lHpJ9T6B6uaVpHo7alEMz0PQnepxN0/wASRgauJ7pTNZmVynZTjuXZpzYkSRtkPDgB6UI9UZMlrgZsy1MQqxZqkRy/QHRfA4iZIaiRX5D6ghpptTi1bEIFycZmrL2YcwVitvk7ubLdfsfNClcCewcHqiiX91qbbX3yz/rGBxGmKse4ujnMz6F2dfjiGj/2VBs/ccE3J9UZOirm5ry3EQm5eqkRu3Qp0YHEd01PLGUqPT0mxk1QLV0oZaPteqdBtKNV0kUIkXah77Md6mkcH8RGBq4jupH7JyXG/wDPcP1tj1T3MuWVMQK5mt9FjJWmDGO1tHjuHqJ4nupEnvrJa+beZ4/jR6ooNGnZhrFOotNa3yXMeS02OvWo9CRwk4ytQIeWKDS6HC/V4TCWgq1itWtSz0rPCeJ7qKNenZSl2/upEtonpcShXqcC+NA+jFeW4H+1NbYKatOaswysWMaOrbscc4rujaYZuj/vzccMCpR3yehwFn+r1MAVGwGNDOhVbK4ubc4xLLFnYMB1PCNjrw/BHF58opzDk7MlHSndOSID28ja6gbtH3jChZRHqShZerOZag1S6JT3pcpzUhsahtUTwJTtJxow0G0vKRYreYS1PrIAUhNrx4yvkA+WsfCONXFnGlTLZytnqvU5KLRlvmTG2Fl/xwB0J1eookOXPkNRYUZ1991W5baaQVrWdiUi5JxkbudKzVCzOzg+abE196NWXKWOnWlvGW8p0DKMEU6g01qKzwFe5F1uEDynFnhUeO7pTJ5n0aBmyK3d+mneJVtZjOnxVfQX6ghwZtRktQ4EV6RJcNkNMoK1qOwJTcnGTe5yr9V3qXmuSKXFNj3uizkpY/0oxlbIOVslRt6oVKaZdIst9XjyHPnOK4ezkFVgw6vAmU2ewHYsllbDiFaloWNyoYz1lKZknMtRoEu6gyvdMO8zrC/IXy2j0Cs5glpg0WmyJkk+YwgrIG1WwdJxk7uap75amZyqQit6zChkLe6lueSnGWcl5ayjGEegUliKCAFuAbp5z57irqPI9NOjVOdqB31T2x7tU5KlxNryNa2CenWnDra2XFtOoUhaFFKkqFiCOAgg8qyro7zdnJwCh0Z5xi9lSVje46etarA22DGUe5spEPe5ebqgue78Ui3aj9Sl+WvFIodHoMREGj02PDjJ1NMNhAJ2m2s8m07aIHJi5WdMsxSZFiuoxG08LoGt9sDz/hjGrkzLD0hxDLDSluLISlKQSpRPMAMZU0C54zFvcidHTR4Sv2k24dI+SyPG+u2MqaBskZc3qRLimrzEftZoBaB+S0PFw0y2y2hppCUIQAEpSAAAOYAauU6XtBJmuycy5LjASVXcl05sWDu1bGxe1GHWnGXFtOoUhxCilSVAghSTYgg6iOR5eyfmXNT/AHvQKNJmKBspTaLNo+es2SntOMq9zNIc3uTm+sBoazEgWWvtdWLDGWchZTyk2E0KiR4zlrKkEbt9XW4u6uW6SNDNAzwHZ7BTTq3YkSm0XS7sS+ka/na8ZuyJmbJMwxK9T1NJJs1IR47D3S2vj2mXXlobabUtaiAlKRcknUAMZV0F56zJvT8iEKVCVY77PuhZHyWvLxlTuesl0Te3qqlysy08JMnxI4PQ0n+onEWDFhMNxokdphhsWQ20gIQkbEpFgPeyqnBg/rMhCCBfc3ur6hw4lZ1hNbpMdlbpGokhKT+OHs7zVf3EdpHzgVfzGDnGqnnbHUkYGcqqOZo/OT+VsMZ5eBG/w0K2lJKPaxDzfTJBCXFLZUTbxk3+q2GJTEhAcYdQtB1KSoEckqdLp1ThvQqnEZkxXU7lbLyAtCusKxnPubKVNU9NyhOMB03Pekm7kfsXwqRjM+jfOWUVLNZochEcapLY31gj56LgduLHZxNjjL+TM0ZpcDdCokuWL2LiEWaSflOKskYyt3M8t0tSM31hLCNZiwbLc7XVCwxljR9lHKDaRQ6Kww6BZUlQ32Qr6a7nAAHvFLSkEqUAAMT81UyGClDm/r2N6u1WKhm2oywpDKt4bPMjX/8ALC3HHCVLWSSbm+338adLhuB2O+tChzg4pOdOFDVRRbm31A/EflhiQ1IbS6y4laFaik3HJCkKBBAII4RjMOibIOYCtc/LkZD6tb0W8Zy+0luwVisdzDRX925RMyS4uxMtlD46gUFGKj3NWdY11wajSpbf71bS/qUnErQTpPjXIy2Xk7WZLCv68L0R6R2/KylO+ikK/A4Tom0jL1ZRqHa3bEXQjpPlkBGVXkDa48yj8V4p/c358lEGW/TIaOcOSCtfYG0qxSO5gp6AldczQ+9tbhsBr+NwqxRNDWjygFDjGXmpL4N99nEyVH6K/FGGmGY7SGm20oQgAJSkAJAHMAPeyJ8WEjfJD6EX1XP4DWTioZ1ZRdEBndnmWvgT2DE6tVCoE98SFFPMgGyR2DBN+E8XSq3MpToUyu7ZIK0HUcUmsRapGK46wlfBuknWnk5AOsY3I2YsNmLAagPf1HMFNp+6S68FOD9mjhV+QxUM5THrohJDKNutWHpL8halvOqWo6yokk8fT58inSESI6ylST2EbDtGKRU49VitvtkJI8tOsg7OOJA1nFSzhQKaVIkT21OA23DV3Fdu51Yk6VICCREpzznS4pKPw3WDpXk34KOgD9+fZwxpWB4JNIIG1D1/xTinaSMvylJDy3YyjwDfUXH1pviFPhTGw/FkNuoOpbagofdxU2fHhMqekOBDadus4q+bJcwqahkssfxnrOFKKjckk8iodWcpUxDySS2rgcTfWMMPtvstvNKCkLSFJI5weMzFm6mZfQUvL32UQCiOg+N1q2DFbzlWa2paXHyzGOplolKbfKOtWLnb72FUp9NeD8GU4y4OdBtfr2jGW9JTbqm4tdQlCr2D6fIPzxzYadbdQhxpYUlQBBBuCD7+pVKPTIq5D6uAcCUjWpWwYqtWlVV9Tr6yE6kIHkpHJcl1cqS5TXjfc+O3f7xxedc6IoqTAgEKnqHCdYZB5ztVsGH5D0p5x+Q6px1ZKlKUbknico5zk0J5EWWtTtPWeFOstdKejaMR5TMxhuQw4lbTiQpKkm4UD7151thtbriwlCElSidQAxXaw7VZalXsyglLadg/M8mpstcKbHko1oWDbb0duGXEOtIcQbpUkKB2g8Tm3MSMv0xbySDJduhhB+FtPQMSJD0p5yRIcK3XFFSlK1kni9HealU+UijzFjvZ5X9iVHyHDzdSve5yqqm2kU5pViuynCNnMOUZVld80lgKsVNEtns4QPqPEKNgTjOdbVWq0+tC7xmCWmRzWTrV2njEqUhQUkkEG4Ixk6ue7dFjPuuXeau08Plp5+0cP6VrS22pSiAACSdgGKpMXPnSJK/PWSBsHMOzlGRX/EmsW8koWOs3B4jONTNNoNQkIUUr3ve27awpzxb4PCTxujGpKYqkinKV4klvdJ+e3+nMkjvakS1DWtIb7FcB+7BNyTyjI67S5CDzsqP1EcRpUkqRTqfFBtvr6l9iE2/nx2V5XeeYKS9/3CEdizuD+OEm4/RnVak0+OhJtd256gm38+U5JTeY+rYyofeniNKyjv8AR0c24f8AxTx1NJTUYKhrD7Z/iGEeSP0Z63Pe8Xc6hur9dxynI7JtNeOqyAO0m/EaVv1mj/Mf/FPHU7/mEL98j8cI8gfozq2pdOZWnmdseopJ5TlKIWKShZFi8tSz2eL/AC4jSsx/Y0qR8FbqD9IA8dQmFSK1S2UjypTQ7N0L4SLJ/RmOOJVIloSk+Ijdjb4nCcEWJB5PDjrlSWWGxdS1hI7TiHHRGjsso8htCUDqSLcRpDppl5ckLABXHUl8DYBwH7jx2juAZeYmXyk7iM2t07L23I/HA/QtIWkpULggjFXgqp8+RHINkrO5O0axyfJlLK3l1F1Pit3S3cecRr7BxMqM3IjusOpCkOoKVjakixGKzTXaTU5cB4HdNOEAnzk6we0cbo3o5g0hU91FnZhCh+7T5PvM6UjfWkTmE3W0LObSnmPZyanQHqjKajMjhUeE2uANpxAhNQYzTDabNtpsOk85PXxWkjLJmRk1mGjdPR0WdA85rb9HjMqUByv1Rtgg97N2W+vYjZ1qww02y2htCQlCEhKUjUAPeLQlxCkLAUlQsQdRBxmKiOUqWopSox1m6FHht0HkjDDsl1DLKCpajYAYoFFRSYw3dlSF8K1bPkji1JCgUkXBxnjJTlJecqVOZvCWbrQn9kT/AEniqVSplYmNQoTRW4s9iRzqUeYDGXaBFoFPbiMC6/KdctYrVt/Ie+qECNMjKjyE7oLHaOkYrVEkUl8hQKmVE7hY1HkUOFInPoYjtla1bMUDLzNKb3xyy5KvKXzDoTxrjaHEKQ4gKSoWIIuCDzYzTo5WlTk2ggEG6lxr6vmH+WHmXWHFtPNqQ4k2UlQIIOwg+/y/lCq19xKm2yzFv4z7g8X6I844oOXoFBiiPDb4TYuOny1kbTxEmOxKaVHebS4hXlA4rWTpEdSnqfdxu5JR5w6tuFtONKKXEFJBsQeOShSzZIvilZTnTShySCwyfhDxj1DFPpcSmtBuM0B8JR4VK6zyCr5apFaQROiJWsCwdT4qx1KGKloseG7XSp4UnmQ+LfxJxJyLmaMoj3OU4n4TakqwrLVfSbGjy/sV4ZyhmN/yKRI+kncf6rYhaM64+QZa2YyOk7tQ7E4o+jyiU0h2SgzHhzu+R2I/PCEIbASgAJAsAOLqFFp84HvphKlkCyhwK4OnZiXkcElUKV9Fz2hh/KdZataPuwfOSoEYXQqog2MJ49Taj/LHuNVPiEj7Jf5Y9xqp8QkfZL/LHuNVPiEj7Jf5Y9xqp8QkfZL/ACx7jVT4hI+yX+WPcaqfEJH2S/yx7jVT4hI+yX+WEUCquaoTw+chQ/EYYyjWHQSpgN9K1C33XOIuR0+VMlfRbH8ziFRKdTwksRkhY89XjK+/VyWwxYf5ef/EADgRAAIBAgMDCQUHBQAAAAAAAAECAwQRAAUgMUFhEhMhIjBAUXGREDJQU6EGFDNCYoGSUnKiwdH/2gAIAQIBAT8A+L37e/wE9zHfj3k90Gk90Gk9ztqPcbd3t3e3b2129qRySGyIScRZY56ZXtwGFoKZfyX8zj7rT/JX0w+X0zbFKngcTZdLHdozyx9cbOg9pbFtENJPNYqlh4nEOWxJYykufQYVFQWRQBw1VVGk4LKAJPHxwysjFWFiNUsscKGSVwqjecVOfgErSxX/AFNhs5r2P4oHkoxHndchHKZXHFf+YpM7gnISYc0/+J0KpYhVFycUtCkQDygM/huHZZjThl59R1l97iNMsqQxvLIbKoucV1dLWykkkRg9VdOUZmyOtLO10PQhO4+Hty6mCrz7jpPu+XZsoZSp2EEYkQxyOh/KSNGf1JAipVO3rNq2EHGW1P3mkikJ6w6reYxGpd0QbyBhVCqFGwC3aV4tUycbHRnLFq+UeAUfTX9nmJhqE3BwfUYoxeqi8+1ryDVPwA0ZwCMwm4hT9Nf2eB5qobcWUfTFM3Inib9Q7QkAEnYMSvzkrv4knRn8BEkVQB0Ecg+Y15RTmCij5Qsz9c/v7KWYTQo28dDefZ5hUBI+aU9Z9vAaamnSqheF9jD0OKmmlpZWilFiNh3Eacqy9quUSSLaFDc8T4YAt7KWpNPJfap94YR1kUOhuD2NTVJTr4vuGHdpHZ3NydVVSQVaciZfIjaMVOR1URJhtKvocNSVSmzU8gP9pxHQVkhASnf9xbFJkJuHq2Fv6F/2cIiRoqIoVQLADRBUSwG6Ho3g7DiLMYX6Huh9RgTwtslT1GOdi+YnqMc7F8xP5DHOxfMT+Qxz0XzE9Rh6ymTbKD5dOJsyY3WFbcThmZiWYkk7z8W//8QAOREAAgECAgYHBwMDBQAAAAAAAQIDAAQFERITICExkQYwQVFSYXEQFCJAQlOBMlChI4KSYnJzsbL/2gAIAQMBAT8A/YCyjiwFa2PxjnWtj8Y51rY/GOda2PxjnWtj8Y51rY/GOda2PxjnWtj8Y51rY/GOda2PxjnWtj8YoMp4EHq5LlV3LvNPNI/FuXW5kcDUdw6cd4pJFkGanbJABJqacvmq7l+RR2Rgy0jiRQw2rmXM6CncOPydq+T6B4HZmfQjJ7eA+UQ6LqfMbN229V/Pyg4j1GzcnOVvlIV0pFH52bgZSt8pbRaC6TcTs3YycHvHyQBJAFQ2+WTyfgbVymlHmOI+Rjt3fe3wio4kj4Df39RNGY38jw60AscgMzSWrHe5yFJEkfBd/f1UiLIpU1JG0ZyPVJE7/pWktRxc/gUqKgyVQOtZVcZMMxUlqw3pvHdRBU5EEbIBO4CktpG3t8IpLeNOzM+fsSN5DkikmosPY75Wy8hS2duv0Z+te7wfaXlT2Nu3BSvoalsJE3xnTH81vG49UVVtzAGjbRH6cq90TxGvdE8RoW0Q7M6Cqu5VA9kVrNLvC5DvNRWEa75CWPIUqqgyVQB5bVzarMCy7n7++mUoxVhkRtW9tPdypBbRNJI3BVFYf0FdlWTErnQP24uP5JqLojgUYyNqznvZ2q46GYLKDq0khPejk/8ArOsU6HX1irTWre8xDeQBk4/FHduPtALEKozJq3skjAaQaT/wOqv4NJdco3jj6bNtby3c8VtAulJIwVRWCYJb4PbKqqGnYDWSdpPcPLZ6V9HEmikxOxjAlQaUqL9Q7x5+2xgCrrmG8/p9OrIDAg8CKkTQd07iRsdBcPV3ucSkX9H9KP1O8naIBBBG410gsBh2K3MCDKNjrE/2tSLpuqDtIFKAqhRwA6y9GVw/mAdjohEEwK2I4u0jH/Lb6exgXljL2tEwP9pq0GdzF69bfHO4fyAGx0ScPgVpl9JkB/yO309cG6w9O0ROeZq3bQnib/UOsJyBJqV9ZI7952Ogl8DDdYezfEra1B5HcdvpTfC+xicoc44QIl/t4/z7LaUTRK3bwPr1d9PoJqlPxN/A2cOvpsNvIbyA/Eh3jvHaDWHYjbYnapdWzgg/qHap7js9JseTDLZreBwbuVSAB9AP1GiSSSeJ9ltcGB8/pPEUjq6hlOYPU3FykC97dgp3aRi7HMnaw3FbzCptdaSZeJDvVh5isO6aYdcqq3gNvJ25705ikxXDJAGS/gI/5FqfHMIt10pb+H0DBjyGdYr03XRaLCojnw1sg/6FTTSzyPNNIXkc5szHMnYhuJIDmh3doPCo7+F9z5oaE0R4SrzrWR/cXnWsj+4vOtZH9xeYrWx/cXmKe6gTjID6b6lxAnMQrl5mmYsSzEkn92//2Q=="]
-                  }'
-          request:
-            model: embed-english-v3.0
-            input_type: image
-            embedding_types:
-              - float
-            images:
-              - data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD//gAfQ29tcHJlc3NlZCBieSBqcGVnLXJlY29tcHJlc3P/2wCEAAQEBAQEBAQEBAQGBgUGBggHBwcHCAwJCQkJCQwTDA4MDA4MExEUEA8QFBEeFxUVFx4iHRsdIiolJSo0MjRERFwBBAQEBAQEBAQEBAYGBQYGCAcHBwcIDAkJCQkJDBMMDgwMDgwTERQQDxAUER4XFRUXHiIdGx0iKiUlKjQyNEREXP/CABEIAZABkAMBIgACEQEDEQH/xAAdAAEAAQQDAQAAAAAAAAAAAAAABwEFBggCAwQJ/9oACAEBAAAAAN/gAAAAAAAAAAAAAAAAAAAAAAAAAAHTg9j6agAAp23/ADjsAAAPFrlAUYeagAAArdZ12uzcAAKax6jWUAAAAO/bna+oAC1aBxAAAAAAbM7rVABYvnRgYAAAAAbwbIABw+cMYAAAAAAvH1CuwA091RAAAAAAbpbPAGJfMXzAAAAAAJk+hdQGlmsQAAAAABk31JqBx+V1iAAAAAALp9W6gRp826AAAAAAGS/UqoGuGjwAAAAAAl76I1A1K1EAAAAAAG5G1ADUHU0AAAAAAu/1Cu4DVbTgAAAAAA3n2JAIG0IAAAAAArt3toAMV+XfEAAAAAL1uzPlQBT5qR2AAAAAenZDbm/AAa06SgAAAAerYra/LQADp+YmIAAAAC77J7Q5KAACIPnjwAAAAzbZzY24gAAGq+m4AAA7Zo2cmaoAAANWdOOAAAMl2N2TysAAAApEOj2HgAOyYtl5w5jw4zZPJyuGQ5H2AAAdes+suDUAVyfYbZTLajG8HxjgD153n3IAABH8QxxiVo4XPKpGlyTKjowvCbUAF4mD3AAACgqCzYPiPQAA900XAACmN4favRk+a9wB0xdiNAAAvU1cgAxeDcUoPdL0s1B44atQAACSs8AEewD0gM72I5jjDFiAAAPfO1QGL6z9IAlGdRgkaAAABMmRANZsSADls7k6kFW8AAAJIz4DHtW6AAk+d1jhUAAAGdyWBFcGgAX/AGnYZFgAAAM4k4CF4hAA9u3FcKi4AAAEiSEBCsRgAe3biuGxWAAACXsoAiKFgALttgs0J0AAAHpnvkBhOt4AGebE1pBtsAAAGeySA4an2wAGwEjGFxaAAAe+c+wAjKBgAyfZ3kUh3HAAAO6Yb+AKQLGgBctmb2HXDNjAAD1yzkQAENRF1gyvYG9AcI2wjgAByyuSveAAWWMcQtnoyOQs8qAPFhVh8HADt999y65gAAKKgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/8QAGgEBAAMBAQEAAAAAAAAAAAAAAAEFBgIEA//aAAgBAhAAAAAAAAAAAAABEAAJkBEAAB0CIAABMhyAAA6EQAAA6EQAABMiIAAAmREAAAmQiAABMgOQAEyAHIATIACIBMu7H3fT419eACEnps7DoPFQch889Wd3V2TeWIBV0o+eF8I0OrXVoAIyvBm8uDe2Wp6ADO+Mw9WDV6rSgAzvjMNWA1Op1AARlvmZbOA3NnpfSAK6iHnwfnFttZ9Wh7AeXPcB5cxWd3Wk7Pvb+uR8q+rgAAAAAAAAP//EABsBAQABBQEAAAAAAAAAAAAAAAAEAQIDBQYH/9oACAEDEAAAAAAAAAC20AL6gCNDxAArnn3gpro4AAv2l4QIgAAJWwGLVAAAX7cQYYAAFdyNZgAAAy7UazAAABsZI18UAAE6YEfWgACRNygavCACsmZkALNZjAMkqVcAC2FFoKyJWe+fMyYoMAAUw2L8t0jYzqhE0dAzd70eHj+PK7mcAa7UDN7VvBwXmDb7EAU5uw9C9KCnh2n6WoAaKIey9ODy/jN+ADRRD2fpQeY8P0QAU5zGel+gg8V53oc4AgaYTfcJ45Tx5I31wCPobQ2PpPRYuP8APMZm2kqoxQddQAAAAAAAAP/EAFMQAAEDAgIDCQkMBwUIAwAAAAECAwQFEQAGBzFREhMhMEBBYXGBCBQYIjJCRlDSFSBSVGJygpGTobHREDRDc6LBwiMzU3CyFiQlNVVkdISSlLP/2gAIAQEAAT8A/wAo74nVaBAb32bNYitfDfcS2PrURiZpU0dwVFMjN1OVY8O8u7//APkFYc076LmfSVSvmQpB/ox4QGjH/r7v/wBGR7OPCA0YH0ge7IMj2ceEBowPpA92QZHs48IDRgfSB7sgyPZx4QGjA+kD3ZBkezjwgNGB9IHuyDI9nHhAaMD6QPdkGR7OPCA0YH0ge7IMj2ceEBowPpA92QZHs48IDRgfSB7sgyPZx4QGjA+kD3ZBkezjwgNGB9IHuyDI9nHhAaMD6QPdkGR7OPCA0YH0ge7IMj2ceEBowPpA92QZHs48IDRgfSB7sgyPZx4QGjA+kD3ZBkezjwgNGB9IHuyDI9nHhAaMD6QPdkGR7OPCA0Y89fd7IMj2cN6e9GDpCTmRaOuFI9nEDSlo9qakpj5upoJNgH3d4+50JxGlxpbSH4r7bzSvJW0sLSeop5NWsw0fL8RU2rVGPDjJ4C6+4EAnYnaegYzV3StDhFcfK1LdqDuoSZBLDHWlPlqxXtNmkOulaVVxcFg3/sYA73A+kLrxKnTJrpfmSXX3jrcdWVqPWVYudvJ7nbil16s0R7vikVSVDduCVR3lNk9e5IvjKfdG5rpKmo+Yo7NXi8ALlgxJH0kiysZL0l5Uzsz/AMFn2l7m7kJ8BuSj6PnAbU8ieeZitOPPuoQ22krWtZCUpSkXJJOoDGkHui4MBT1MyW2ibITdJnuA97o/dJ1uHFczFXMyzV1Gu1N+bJV57yr7kbEjUkdA5dGlSYb7UqJIcZfaUFtuNLKFoUNRSocIONF3dBb6tih58eSCQEM1PUOqT7eELS4lK0KCkkAgg3BB4/M2Z6NlKlSKtWJiI8VoWueFS1nUhA85ZxpJ0v13Pj7kNorg0NC7tw0K4XNi3yPKPRqHqLQnpkeoD8XKmZZJVSHCG4klw/qijqQs/wCF/pwDfjc1ZqpOUKNLrVXf3qMyLJSLFbrh8ltA51qxn7P9az9V1z6istxWypMSIhRLbCD+Kj5yvUYJHCMdz7pLXWoByfWJBXUILV4bizwvRk+Z0qa4yoTodKgyZ859DEWO0t11xZslCEC5UrGlHSNOz/XVvBa26RFKkQY+xHO4v5a/UtArU3LlZptbpzm4lQ30ut7DbWk9ChwHGXq5EzHQ6ZWoCv8AdpsdDyRrIKtaFdKTwHi+6I0hrffGRKU/ZloodqSkngW5rQz1I1n1P3M2ZzJpFYyvIXdUJ0SowP8AhP8AAtI6AvitIWbWclZVqlbWElxpvcRmz+0kOcDaf5nEyXJnypM2Y8p2Q+6t11xRupa1m6lHpJ9T6B6uaVpHo7alEMz0PQnepxN0/wASRgauJ7pTNZmVynZTjuXZpzYkSRtkPDgB6UI9UZMlrgZsy1MQqxZqkRy/QHRfA4iZIaiRX5D6ghpptTi1bEIFycZmrL2YcwVitvk7ubLdfsfNClcCewcHqiiX91qbbX3yz/rGBxGmKse4ujnMz6F2dfjiGj/2VBs/ccE3J9UZOirm5ry3EQm5eqkRu3Qp0YHEd01PLGUqPT0mxk1QLV0oZaPteqdBtKNV0kUIkXah77Md6mkcH8RGBq4jupH7JyXG/wDPcP1tj1T3MuWVMQK5mt9FjJWmDGO1tHjuHqJ4nupEnvrJa+beZ4/jR6ooNGnZhrFOotNa3yXMeS02OvWo9CRwk4ytQIeWKDS6HC/V4TCWgq1itWtSz0rPCeJ7qKNenZSl2/upEtonpcShXqcC+NA+jFeW4H+1NbYKatOaswysWMaOrbscc4rujaYZuj/vzccMCpR3yehwFn+r1MAVGwGNDOhVbK4ubc4xLLFnYMB1PCNjrw/BHF58opzDk7MlHSndOSID28ja6gbtH3jChZRHqShZerOZag1S6JT3pcpzUhsahtUTwJTtJxow0G0vKRYreYS1PrIAUhNrx4yvkA+WsfCONXFnGlTLZytnqvU5KLRlvmTG2Fl/xwB0J1eookOXPkNRYUZ1991W5baaQVrWdiUi5JxkbudKzVCzOzg+abE196NWXKWOnWlvGW8p0DKMEU6g01qKzwFe5F1uEDynFnhUeO7pTJ5n0aBmyK3d+mneJVtZjOnxVfQX6ghwZtRktQ4EV6RJcNkNMoK1qOwJTcnGTe5yr9V3qXmuSKXFNj3uizkpY/0oxlbIOVslRt6oVKaZdIst9XjyHPnOK4ezkFVgw6vAmU2ewHYsllbDiFaloWNyoYz1lKZknMtRoEu6gyvdMO8zrC/IXy2j0Cs5glpg0WmyJkk+YwgrIG1WwdJxk7uap75amZyqQit6zChkLe6lueSnGWcl5ayjGEegUliKCAFuAbp5z57irqPI9NOjVOdqB31T2x7tU5KlxNryNa2CenWnDra2XFtOoUhaFFKkqFiCOAgg8qyro7zdnJwCh0Z5xi9lSVje46etarA22DGUe5spEPe5ebqgue78Ui3aj9Sl+WvFIodHoMREGj02PDjJ1NMNhAJ2m2s8m07aIHJi5WdMsxSZFiuoxG08LoGt9sDz/hjGrkzLD0hxDLDSluLISlKQSpRPMAMZU0C54zFvcidHTR4Sv2k24dI+SyPG+u2MqaBskZc3qRLimrzEftZoBaB+S0PFw0y2y2hppCUIQAEpSAAAOYAauU6XtBJmuycy5LjASVXcl05sWDu1bGxe1GHWnGXFtOoUhxCilSVAghSTYgg6iOR5eyfmXNT/AHvQKNJmKBspTaLNo+es2SntOMq9zNIc3uTm+sBoazEgWWvtdWLDGWchZTyk2E0KiR4zlrKkEbt9XW4u6uW6SNDNAzwHZ7BTTq3YkSm0XS7sS+ka/na8ZuyJmbJMwxK9T1NJJs1IR47D3S2vj2mXXlobabUtaiAlKRcknUAMZV0F56zJvT8iEKVCVY77PuhZHyWvLxlTuesl0Te3qqlysy08JMnxI4PQ0n+onEWDFhMNxokdphhsWQ20gIQkbEpFgPeyqnBg/rMhCCBfc3ur6hw4lZ1hNbpMdlbpGokhKT+OHs7zVf3EdpHzgVfzGDnGqnnbHUkYGcqqOZo/OT+VsMZ5eBG/w0K2lJKPaxDzfTJBCXFLZUTbxk3+q2GJTEhAcYdQtB1KSoEckqdLp1ThvQqnEZkxXU7lbLyAtCusKxnPubKVNU9NyhOMB03Pekm7kfsXwqRjM+jfOWUVLNZochEcapLY31gj56LgduLHZxNjjL+TM0ZpcDdCokuWL2LiEWaSflOKskYyt3M8t0tSM31hLCNZiwbLc7XVCwxljR9lHKDaRQ6Kww6BZUlQ32Qr6a7nAAHvFLSkEqUAAMT81UyGClDm/r2N6u1WKhm2oywpDKt4bPMjX/8ALC3HHCVLWSSbm+338adLhuB2O+tChzg4pOdOFDVRRbm31A/EflhiQ1IbS6y4laFaik3HJCkKBBAII4RjMOibIOYCtc/LkZD6tb0W8Zy+0luwVisdzDRX925RMyS4uxMtlD46gUFGKj3NWdY11wajSpbf71bS/qUnErQTpPjXIy2Xk7WZLCv68L0R6R2/KylO+ikK/A4Tom0jL1ZRqHa3bEXQjpPlkBGVXkDa48yj8V4p/c358lEGW/TIaOcOSCtfYG0qxSO5gp6AldczQ+9tbhsBr+NwqxRNDWjygFDjGXmpL4N99nEyVH6K/FGGmGY7SGm20oQgAJSkAJAHMAPeyJ8WEjfJD6EX1XP4DWTioZ1ZRdEBndnmWvgT2DE6tVCoE98SFFPMgGyR2DBN+E8XSq3MpToUyu7ZIK0HUcUmsRapGK46wlfBuknWnk5AOsY3I2YsNmLAagPf1HMFNp+6S68FOD9mjhV+QxUM5THrohJDKNutWHpL8halvOqWo6yokk8fT58inSESI6ylST2EbDtGKRU49VitvtkJI8tOsg7OOJA1nFSzhQKaVIkT21OA23DV3Fdu51Yk6VICCREpzznS4pKPw3WDpXk34KOgD9+fZwxpWB4JNIIG1D1/xTinaSMvylJDy3YyjwDfUXH1pviFPhTGw/FkNuoOpbagofdxU2fHhMqekOBDadus4q+bJcwqahkssfxnrOFKKjckk8iodWcpUxDySS2rgcTfWMMPtvstvNKCkLSFJI5weMzFm6mZfQUvL32UQCiOg+N1q2DFbzlWa2paXHyzGOplolKbfKOtWLnb72FUp9NeD8GU4y4OdBtfr2jGW9JTbqm4tdQlCr2D6fIPzxzYadbdQhxpYUlQBBBuCD7+pVKPTIq5D6uAcCUjWpWwYqtWlVV9Tr6yE6kIHkpHJcl1cqS5TXjfc+O3f7xxedc6IoqTAgEKnqHCdYZB5ztVsGH5D0p5x+Q6px1ZKlKUbknico5zk0J5EWWtTtPWeFOstdKejaMR5TMxhuQw4lbTiQpKkm4UD7151thtbriwlCElSidQAxXaw7VZalXsyglLadg/M8mpstcKbHko1oWDbb0duGXEOtIcQbpUkKB2g8Tm3MSMv0xbySDJduhhB+FtPQMSJD0p5yRIcK3XFFSlK1kni9HealU+UijzFjvZ5X9iVHyHDzdSve5yqqm2kU5pViuynCNnMOUZVld80lgKsVNEtns4QPqPEKNgTjOdbVWq0+tC7xmCWmRzWTrV2njEqUhQUkkEG4Ixk6ue7dFjPuuXeau08Plp5+0cP6VrS22pSiAACSdgGKpMXPnSJK/PWSBsHMOzlGRX/EmsW8koWOs3B4jONTNNoNQkIUUr3ve27awpzxb4PCTxujGpKYqkinKV4klvdJ+e3+nMkjvakS1DWtIb7FcB+7BNyTyjI67S5CDzsqP1EcRpUkqRTqfFBtvr6l9iE2/nx2V5XeeYKS9/3CEdizuD+OEm4/RnVak0+OhJtd256gm38+U5JTeY+rYyofeniNKyjv8AR0c24f8AxTx1NJTUYKhrD7Z/iGEeSP0Z63Pe8Xc6hur9dxynI7JtNeOqyAO0m/EaVv1mj/Mf/FPHU7/mEL98j8cI8gfozq2pdOZWnmdseopJ5TlKIWKShZFi8tSz2eL/AC4jSsx/Y0qR8FbqD9IA8dQmFSK1S2UjypTQ7N0L4SLJ/RmOOJVIloSk+Ijdjb4nCcEWJB5PDjrlSWWGxdS1hI7TiHHRGjsso8htCUDqSLcRpDppl5ckLABXHUl8DYBwH7jx2juAZeYmXyk7iM2t07L23I/HA/QtIWkpULggjFXgqp8+RHINkrO5O0axyfJlLK3l1F1Pit3S3cecRr7BxMqM3IjusOpCkOoKVjakixGKzTXaTU5cB4HdNOEAnzk6we0cbo3o5g0hU91FnZhCh+7T5PvM6UjfWkTmE3W0LObSnmPZyanQHqjKajMjhUeE2uANpxAhNQYzTDabNtpsOk85PXxWkjLJmRk1mGjdPR0WdA85rb9HjMqUByv1Rtgg97N2W+vYjZ1qww02y2htCQlCEhKUjUAPeLQlxCkLAUlQsQdRBxmKiOUqWopSox1m6FHht0HkjDDsl1DLKCpajYAYoFFRSYw3dlSF8K1bPkji1JCgUkXBxnjJTlJecqVOZvCWbrQn9kT/AEniqVSplYmNQoTRW4s9iRzqUeYDGXaBFoFPbiMC6/KdctYrVt/Ie+qECNMjKjyE7oLHaOkYrVEkUl8hQKmVE7hY1HkUOFInPoYjtla1bMUDLzNKb3xyy5KvKXzDoTxrjaHEKQ4gKSoWIIuCDzYzTo5WlTk2ggEG6lxr6vmH+WHmXWHFtPNqQ4k2UlQIIOwg+/y/lCq19xKm2yzFv4z7g8X6I844oOXoFBiiPDb4TYuOny1kbTxEmOxKaVHebS4hXlA4rWTpEdSnqfdxu5JR5w6tuFtONKKXEFJBsQeOShSzZIvilZTnTShySCwyfhDxj1DFPpcSmtBuM0B8JR4VK6zyCr5apFaQROiJWsCwdT4qx1KGKloseG7XSp4UnmQ+LfxJxJyLmaMoj3OU4n4TakqwrLVfSbGjy/sV4ZyhmN/yKRI+kncf6rYhaM64+QZa2YyOk7tQ7E4o+jyiU0h2SgzHhzu+R2I/PCEIbASgAJAsAOLqFFp84HvphKlkCyhwK4OnZiXkcElUKV9Fz2hh/KdZataPuwfOSoEYXQqog2MJ49Taj/LHuNVPiEj7Jf5Y9xqp8QkfZL/LHuNVPiEj7Jf5Y9xqp8QkfZL/ACx7jVT4hI+yX+WPcaqfEJH2S/yx7jVT4hI+yX+WEUCquaoTw+chQ/EYYyjWHQSpgN9K1C33XOIuR0+VMlfRbH8ziFRKdTwksRkhY89XjK+/VyWwxYf5ef/EADgRAAIBAgMDCQUHBQAAAAAAAAECAwQRAAUgMUFhEhMhIjBAUXGREDJQU6EGFDNCYoGSUnKiwdH/2gAIAQIBAT8A+L37e/wE9zHfj3k90Gk90Gk9ztqPcbd3t3e3b2129qRySGyIScRZY56ZXtwGFoKZfyX8zj7rT/JX0w+X0zbFKngcTZdLHdozyx9cbOg9pbFtENJPNYqlh4nEOWxJYykufQYVFQWRQBw1VVGk4LKAJPHxwysjFWFiNUsscKGSVwqjecVOfgErSxX/AFNhs5r2P4oHkoxHndchHKZXHFf+YpM7gnISYc0/+J0KpYhVFycUtCkQDygM/huHZZjThl59R1l97iNMsqQxvLIbKoucV1dLWykkkRg9VdOUZmyOtLO10PQhO4+Hty6mCrz7jpPu+XZsoZSp2EEYkQxyOh/KSNGf1JAipVO3rNq2EHGW1P3mkikJ6w6reYxGpd0QbyBhVCqFGwC3aV4tUycbHRnLFq+UeAUfTX9nmJhqE3BwfUYoxeqi8+1ryDVPwA0ZwCMwm4hT9Nf2eB5qobcWUfTFM3Inib9Q7QkAEnYMSvzkrv4knRn8BEkVQB0Ecg+Y15RTmCij5Qsz9c/v7KWYTQo28dDefZ5hUBI+aU9Z9vAaamnSqheF9jD0OKmmlpZWilFiNh3Eacqy9quUSSLaFDc8T4YAt7KWpNPJfap94YR1kUOhuD2NTVJTr4vuGHdpHZ3NydVVSQVaciZfIjaMVOR1URJhtKvocNSVSmzU8gP9pxHQVkhASnf9xbFJkJuHq2Fv6F/2cIiRoqIoVQLADRBUSwG6Ho3g7DiLMYX6Huh9RgTwtslT1GOdi+YnqMc7F8xP5DHOxfMT+Qxz0XzE9Rh6ymTbKD5dOJsyY3WFbcThmZiWYkk7z8W//8QAOREAAgECAgYHBwMDBQAAAAAAAQIDAAQFERITICExkQYwQVFSYXEQFCJAQlOBMlChI4KSYnJzsbL/2gAIAQMBAT8A/YCyjiwFa2PxjnWtj8Y51rY/GOda2PxjnWtj8Y51rY/GOda2PxjnWtj8Y51rY/GOda2PxjnWtj8YoMp4EHq5LlV3LvNPNI/FuXW5kcDUdw6cd4pJFkGanbJABJqacvmq7l+RR2Rgy0jiRQw2rmXM6CncOPydq+T6B4HZmfQjJ7eA+UQ6LqfMbN229V/Pyg4j1GzcnOVvlIV0pFH52bgZSt8pbRaC6TcTs3YycHvHyQBJAFQ2+WTyfgbVymlHmOI+Rjt3fe3wio4kj4Df39RNGY38jw60AscgMzSWrHe5yFJEkfBd/f1UiLIpU1JG0ZyPVJE7/pWktRxc/gUqKgyVQOtZVcZMMxUlqw3pvHdRBU5EEbIBO4CktpG3t8IpLeNOzM+fsSN5DkikmosPY75Wy8hS2duv0Z+te7wfaXlT2Nu3BSvoalsJE3xnTH81vG49UVVtzAGjbRH6cq90TxGvdE8RoW0Q7M6Cqu5VA9kVrNLvC5DvNRWEa75CWPIUqqgyVQB5bVzarMCy7n7++mUoxVhkRtW9tPdypBbRNJI3BVFYf0FdlWTErnQP24uP5JqLojgUYyNqznvZ2q46GYLKDq0khPejk/8ArOsU6HX1irTWre8xDeQBk4/FHduPtALEKozJq3skjAaQaT/wOqv4NJdco3jj6bNtby3c8VtAulJIwVRWCYJb4PbKqqGnYDWSdpPcPLZ6V9HEmikxOxjAlQaUqL9Q7x5+2xgCrrmG8/p9OrIDAg8CKkTQd07iRsdBcPV3ucSkX9H9KP1O8naIBBBG410gsBh2K3MCDKNjrE/2tSLpuqDtIFKAqhRwA6y9GVw/mAdjohEEwK2I4u0jH/Lb6exgXljL2tEwP9pq0GdzF69bfHO4fyAGx0ScPgVpl9JkB/yO309cG6w9O0ROeZq3bQnib/UOsJyBJqV9ZI7952Ogl8DDdYezfEra1B5HcdvpTfC+xicoc44QIl/t4/z7LaUTRK3bwPr1d9PoJqlPxN/A2cOvpsNvIbyA/Eh3jvHaDWHYjbYnapdWzgg/qHap7js9JseTDLZreBwbuVSAB9AP1GiSSSeJ9ltcGB8/pPEUjq6hlOYPU3FykC97dgp3aRi7HMnaw3FbzCptdaSZeJDvVh5isO6aYdcqq3gNvJ25705ikxXDJAGS/gI/5FqfHMIt10pb+H0DBjyGdYr03XRaLCojnw1sg/6FTTSzyPNNIXkc5szHMnYhuJIDmh3doPCo7+F9z5oaE0R4SrzrWR/cXnWsj+4vOtZH9xeYrWx/cXmKe6gTjID6b6lxAnMQrl5mmYsSzEkn92//2Q==
-          response:
-            body:
-              id: 5807ee2e-0cda-445a-9ec8-864c60a06606
-              texts: []
-              images:
-                - width: 400
-                  height: 400
-                  format: jpeg
-                  bit_depth: 24
-              embeddings:
-                float:
-                  - - -0.007247925
-                    - -0.041229248
-                    - -0.023223877
-                    - -0.08392334
-                    - -0.03378296
-                    - -0.008308411
-                    - -0.049926758
-                    - 0.041625977
-                    - 0.043151855
-                    - 0.03652954
-                    - -0.05154419
-                    - 0.011787415
-                    - -0.02784729
-                    - -0.024230957
-                    - -0.018295288
-                    - -0.0440979
-                    - 0.032928467
-                    - -0.015007019
-                    - 0.009315491
-                    - -0.028213501
-                    - -0.00022602081
-                    - -0.0074157715
-                    - -0.000975132
-                    - 0.05783081
-                    - 0.029510498
-                    - 0.024871826
-                    - -0.009422302
-                    - -0.028701782
-                    - -0.021118164
-                    - -0.019088745
-                    - -0.0038433075
-                    - 0.04083252
-                    - 0.03024292
-                    - -0.010154724
-                    - -0.008163452
-                    - 0.04269409
-                    - 0.017471313
-                    - -0.010017395
-                    - 0.006629944
-                    - 0.011047363
-                    - 0.013542175
-                    - -0.007926941
-                    - -0.024932861
-                    - -0.05960083
-                    - -0.05404663
-                    - 0.037384033
-                    - -0.049621582
-                    - -0.024002075
-                    - 0.040039062
-                    - 0.02645874
-                    - 0.010261536
-                    - -0.028244019
-                    - 0.016479492
-                    - 0.014266968
-                    - -0.043823242
-                    - -0.022262573
-                    - -0.0057678223
-                    - -0.04800415
-                    - 0.041015625
-                    - 0.01537323
-                    - -0.021530151
-                    - -0.014663696
-                    - 0.051849365
-                    - -0.025558472
-                    - 0.045776367
-                    - -0.025665283
-                    - -0.005821228
-                    - 0.02973938
-                    - 0.053131104
-                    - 0.020706177
-                    - -0.004600525
-                    - 0.0046920776
-                    - 0.02558899
-                    - -0.05319214
-                    - -0.058013916
-                    - 0.080444336
-                    - -0.00068187714
-                    - 0.031311035
-                    - 0.032440186
-                    - -0.051086426
-                    - -0.003534317
-                    - 0.046325684
-                    - -0.032440186
-                    - -0.03894043
-                    - -0.0071907043
-                    - -0.004627228
-                    - -0.01826477
-                    - -0.027755737
-                    - 0.040802002
-                    - 0.019363403
-                    - -0.009727478
-                    - 0.0064468384
-                    - 0.056488037
-                    - 0.018585205
-                    - -0.017974854
-                    - -0.08514404
-                    - 5.0604343e-5
-                    - -0.014839172
-                    - 0.01586914
-                    - 0.00017666817
-                    - 0.02267456
-                    - -0.05105591
-                    - 0.007785797
-                    - -0.02684021
-                    - 0.0064849854
-                    - 0.014411926
-                    - 0.0013427734
-                    - -0.012611389
-                    - 0.043701172
-                    - 0.012290955
-                    - -0.030731201
-                    - 0.034729004
-                    - 0.015289307
-                    - -0.037475586
-                    - -0.030838013
-                    - 0.010009766
-                    - -0.028244019
-                    - 0.051635742
-                    - 0.01725769
-                    - 0.013977051
-                    - 0.008102417
-                    - 0.028121948
-                    - 0.02079773
-                    - 0.0027256012
-                    - 0.009185791
-                    - 0.0016012192
-                    - -0.038116455
-                    - -0.008331299
-                    - -0.028076172
-                    - 0.018463135
-                    - -0.02154541
-                    - 0.021240234
-                    - 0.023376465
-                    - 0.02961731
-                    - -0.028305054
-                    - -0.023101807
-                    - -0.010681152
-                    - -0.0072021484
-                    - -0.04321289
-                    - 0.0058517456
-                    - 0.030792236
-                    - -0.021102905
-                    - 0.050933838
-                    - 0.0060157776
-                    - 0.0128479
-                    - 0.025146484
-                    - -0.006099701
-                    - 0.023345947
-                    - 0.023971558
-                    - 0.015510559
-                    - -0.009895325
-                    - -0.04071045
-                    - 0.049835205
-                    - 0.0053100586
-                    - -0.028930664
-                    - 0.017578125
-                    - -0.0048217773
-                    - -0.0042762756
-                    - -0.034240723
-                    - -0.03253174
-                    - 0.035827637
-                    - 0.01574707
-                    - 0.034851074
-                    - 0.070129395
-                    - 0.011749268
-                    - -0.009223938
-                    - 0.02470398
-                    - -0.005115509
-                    - 0.016723633
-                    - 0.04937744
-                    - -0.032928467
-                    - 0.031280518
-                    - -0.00023400784
-                    - 0.010169983
-                    - -0.01071167
-                    - 0.010520935
-                    - 0.022338867
-                    - -0.0259552
-                    - 0.044769287
-                    - 0.0070610046
-                    - -0.012451172
-                    - -0.04156494
-                    - 0.047088623
-                    - -0.017578125
-                    - 0.012741089
-                    - -0.016479492
-                    - 0.0023078918
-                    - -0.008331299
-                    - 0.021591187
-                    - 0.01473999
-                    - -0.018081665
-                    - 0.033081055
-                    - -0.057556152
-                    - 0.008621216
-                    - 0.013954163
-                    - -0.009742737
-                    - -0.015548706
-                    - 0.015281677
-                    - -0.005958557
-                    - 0.0065307617
-                    - 0.01979065
-                    - 0.041778564
-                    - -0.02684021
-                    - 0.027709961
-                    - -0.07672119
-                    - 0.023406982
-                    - -0.037902832
-                    - 0.035339355
-                    - -0.021881104
-                    - 0.056732178
-                    - 0.03466797
-                    - 0.0059318542
-                    - -0.058654785
-                    - 0.025375366
-                    - 0.015029907
-                    - 0.002380371
-                    - -0.024230957
-                    - 0.014541626
-                    - -0.006641388
-                    - -0.01864624
-                    - 0.012290955
-                    - 0.0007929802
-                    - -0.009277344
-                    - 0.04953003
-                    - -0.004081726
-                    - 0.0029258728
-                    - -0.017181396
-                    - 0.0074920654
-                    - -0.0001707077
-                    - 0.04220581
-                    - 0.008972168
-                    - -0.0071525574
-                    - 0.0015583038
-                    - 0.034362793
-                    - -0.019058228
-                    - 0.013626099
-                    - 0.022613525
-                    - -0.0061149597
-                    - 0.017669678
-                    - 0.015586853
-                    - 0.034973145
-                    - 0.02217102
-                    - -0.045013428
-                    - -0.009864807
-                    - 0.07244873
-                    - 0.010177612
-                    - 0.029724121
-                    - -0.018829346
-                    - -0.034057617
-                    - -0.018859863
-                    - 0.059936523
-                    - -0.0076408386
-                    - 0.021331787
-                    - -0.013786316
-                    - 0.015281677
-                    - 0.016235352
-                    - -0.039855957
-                    - -0.02748108
-                    - -0.033416748
-                    - 0.016174316
-                    - 0.026489258
-                    - 0.0049095154
-                    - -0.026000977
-                    - 0.00831604
-                    - -0.019851685
-                    - -0.021408081
-                    - 0.023010254
-                    - 0.030075073
-                    - 0.0335083
-                    - -0.05493164
-                    - 0.019515991
-                    - -0.020401001
-                    - -0.0061073303
-                    - 0.018997192
-                    - 0.020126343
-                    - -0.027740479
-                    - -0.038116455
-                    - 0.0052948
-                    - -0.008613586
-                    - -0.016494751
-                    - -0.001247406
-                    - 0.022644043
-                    - 0.008300781
-                    - -0.02104187
-                    - 0.016693115
-                    - -0.0032901764
-                    - 0.012046814
-                    - -0.023468018
-                    - -0.007259369
-                    - 0.031234741
-                    - 0.06604004
-                    - 0.051635742
-                    - 0.0009441376
-                    - -0.006084442
-                    - 0.025619507
-                    - -0.006881714
-                    - 0.02999878
-                    - 0.050964355
-                    - 0.017715454
-                    - -0.024856567
-                    - -0.010070801
-                    - 0.05319214
-                    - -0.03652954
-                    - 0.011810303
-                    - -0.011978149
-                    - 0.013046265
-                    - -0.016662598
-                    - 0.017166138
-                    - -0.005542755
-                    - -0.07989502
-                    - 0.029220581
-                    - 0.056488037
-                    - 0.015914917
-                    - -0.011184692
-                    - -0.018203735
-                    - -0.03894043
-                    - -0.026626587
-                    - 0.0010070801
-                    - -0.07397461
-                    - -0.060333252
-                    - 0.046020508
-                    - -0.017440796
-                    - -0.020385742
-                    - -0.0211792
-                    - -0.018295288
-                    - -0.01802063
-                    - 0.003211975
-                    - -0.012969971
-                    - -0.034576416
-                    - -0.022079468
-                    - 0.034606934
-                    - -0.022079468
-                    - -0.02154541
-                    - -0.0039367676
-                    - 0.015419006
-                    - -0.027023315
-                    - 0.024642944
-                    - -0.0007047653
-                    - -0.008293152
-                    - 0.02708435
-                    - 0.05267334
-                    - 0.010177612
-                    - 0.017822266
-                    - -0.021759033
-                    - -0.051116943
-                    - -0.02583313
-                    - -0.06427002
-                    - 0.03213501
-                    - -0.009635925
-                    - -0.04547119
-                    - 0.018997192
-                    - -0.024032593
-                    - -0.011024475
-                    - 0.033935547
-                    - 0.050842285
-                    - 0.011009216
-                    - -0.002527237
-                    - 0.04852295
-                    - 0.038360596
-                    - -0.035583496
-                    - -0.021377563
-                    - -0.016052246
-                    - -0.072143555
-                    - 0.03665161
-                    - 0.02897644
-                    - -0.03842163
-                    - -0.00068187714
-                    - 0.022415161
-                    - -0.0030879974
-                    - 0.043762207
-                    - 0.05392456
-                    - -0.0362854
-                    - -0.04647827
-                    - -0.034057617
-                    - -0.040374756
-                    - -0.03942871
-                    - 0.030761719
-                    - -0.068115234
-                    - 0.011329651
-                    - 0.011413574
-                    - -0.012435913
-                    - 0.01576233
-                    - 0.022766113
-                    - 0.05609131
-                    - 0.07092285
-                    - 0.017593384
-                    - 0.024337769
-                    - 0.027923584
-                    - 0.06994629
-                    - 0.00655365
-                    - -0.020248413
-                    - -0.03945923
-                    - -0.0491333
-                    - -0.049194336
-                    - 0.020050049
-                    - 0.010910034
-                    - 0.013511658
-                    - 0.01676941
-                    - -0.041900635
-                    - -0.046142578
-                    - 0.012268066
-                    - 0.026748657
-                    - -0.036499023
-                    - 0.021713257
-                    - -0.036590576
-                    - 0.014411926
-                    - 0.029174805
-                    - -0.029388428
-                    - 0.04119873
-                    - 0.04852295
-                    - 0.007068634
-                    - -0.00090408325
-                    - 0.0048332214
-                    - -0.015777588
-                    - -0.01499939
-                    - -0.0068206787
-                    - -0.02708435
-                    - 0.010543823
-                    - 0.004085541
-                    - -0.026901245
-                    - -0.0045661926
-                    - 0.0061912537
-                    - -0.0014343262
-                    - 0.028945923
-                    - -0.03552246
-                    - 0.030441284
-                    - -0.029281616
-                    - 0.050628662
-                    - -0.033599854
-                    - -0.085510254
-                    - -0.052520752
-                    - -0.07507324
-                    - -0.008003235
-                    - -0.026382446
-                    - -0.078063965
-                    - -0.025161743
-                    - -0.025421143
-                    - -0.0073165894
-                    - 0.01889038
-                    - -0.05999756
-                    - -0.0051612854
-                    - 0.0072517395
-                    - -0.011497498
-                    - 0.01687622
-                    - 0.002231598
-                    - -0.034423828
-                    - -0.0013084412
-                    - -0.012413025
-                    - 0.008888245
-                    - 0.017486572
-                    - -0.03353882
-                    - 0.0069885254
-                    - -0.02722168
-                    - 0.02015686
-                    - -0.04510498
-                    - -0.038726807
-                    - -0.0031356812
-                    - 0.033233643
-                    - 0.025268555
-                    - -0.015106201
-                    - 0.02407837
-                    - -0.00024700165
-                    - -0.07409668
-                    - -0.012367249
-                    - 0.014785767
-                    - -0.04486084
-                    - 0.074401855
-                    - -0.020690918
-                    - -0.025222778
-                    - 0.029083252
-                    - -0.018997192
-                    - 0.0017557144
-                    - 0.03857422
-                    - -0.020111084
-                    - 0.03338623
-                    - -0.028213501
-                    - 0.0063705444
-                    - -0.010124207
-                    - -0.03112793
-                    - -0.03286743
-                    - 0.0046043396
-                    - -0.0052223206
-                    - 0.00023317337
-                    - 0.0423584
-                    - 0.028030396
-                    - 0.0005788803
-                    - -0.02708435
-                    - 0.006324768
-                    - 0.019821167
-                    - -0.0042686462
-                    - -0.026428223
-                    - -0.02293396
-                    - 0.036590576
-                    - -0.023376465
-                    - -0.022537231
-                    - 0.032226562
-                    - -0.020629883
-                    - 0.017929077
-                    - 0.0440979
-                    - -0.014038086
-                    - -0.022216797
-                    - 0.020446777
-                    - -0.05496216
-                    - -0.018859863
-                    - -0.039855957
-                    - 0.008300781
-                    - 0.07281494
-                    - 0.018295288
-                    - 0.042114258
-                    - 0.005519867
-                    - 0.017990112
-                    - -0.008773804
-                    - 0.011123657
-                    - -0.008239746
-                    - -0.045532227
-                    - 0.026153564
-                    - -0.015853882
-                    - 0.027557373
-                    - -0.049041748
-                    - -0.0022945404
-                    - -0.009399414
-                    - -0.045898438
-                    - 0.05053711
-                    - 0.038513184
-                    - -0.031799316
-                    - 0.012329102
-                    - 0.024871826
-                    - 0.04348755
-                    - -0.04788208
-                    - 0.01423645
-                    - 0.021240234
-                    - 0.05493164
-                    - 0.008956909
-                    - -0.056243896
-                    - 0.032043457
-                    - -0.01574707
-                    - -0.01285553
-                    - -0.009498596
-                    - -0.018951416
-                    - -0.029556274
-                    - 0.0069274902
-                    - -0.032348633
-                    - -0.022445679
-                    - -0.00093603134
-                    - -0.015808105
-                    - -0.027175903
-                    - 0.014091492
-                    - 0.025665283
-                    - -0.023468018
-                    - -0.03250122
-                    - -0.0004544258
-                    - 0.042633057
-                    - -0.06036377
-                    - -0.039611816
-                    - -0.042938232
-                    - -0.02418518
-                    - -0.0703125
-                    - 0.045135498
-                    - -0.001036644
-                    - -0.017913818
-                    - -0.004043579
-                    - 0.0138549805
-                    - -0.02532959
-                    - 0.010765076
-                    - 0.021575928
-                    - 0.013114929
-                    - 0.033935547
-                    - -0.010574341
-                    - 0.017990112
-                    - -0.026107788
-                    - -0.029144287
-                    - -0.046569824
-                    - -0.0030517578
-                    - -0.022994995
-                    - -0.017471313
-                    - -0.0070495605
-                    - -9.846687e-5
-                    - 0.029281616
-                    - 0.017440796
-                    - 0.045532227
-                    - 0.025650024
-                    - 0.0491333
-                    - -0.013145447
-                    - 0.070129395
-                    - -0.0051879883
-                    - -0.04043579
-                    - 0.023864746
-                    - 0.016830444
-                    - -0.014152527
-                    - -0.06359863
-                    - -0.005065918
-                    - -0.009880066
-                    - -0.0034618378
-                    - -0.081726074
-                    - -0.0289917
-                    - -0.007461548
-                    - -0.0013504028
-                    - 0.020523071
-                    - 0.0076446533
-                    - -0.011650085
-                    - 0.014549255
-                    - 0.010955811
-                    - 0.02180481
-                    - -0.027572632
-                    - -0.012252808
-                    - 0.009033203
-                    - -0.0048980713
-                    - 0.031173706
-                    - -0.020309448
-                    - 0.022979736
-                    - -0.013900757
-                    - -0.004108429
-                    - 0.018325806
-                    - -0.031402588
-                    - 0.01737976
-                    - 0.03201294
-                    - -0.02508545
-                    - -0.015625
-                    - -0.04626465
-                    - -0.014656067
-                    - 0.016036987
-                    - -0.030639648
-                    - 0.041748047
-                    - -0.0032978058
-                    - -0.03277588
-                    - 0.037719727
-                    - 0.023788452
-                    - -0.008140564
-                    - -0.041809082
-                    - 0.034698486
-                    - -0.022994995
-                    - -0.009979248
-                    - -0.03729248
-                    - -0.0904541
-                    - 0.00028443336
-                    - 0.080566406
-                    - -0.035125732
-                    - -0.054229736
-                    - -0.017700195
-                    - 0.060668945
-                    - 0.008979797
-                    - 0.015052795
-                    - -0.0072364807
-                    - -0.001490593
-                    - 0.0065231323
-                    - -0.014579773
-                    - 0.016067505
-                    - -0.020339966
-                    - -0.020217896
-                    - 0.02909851
-                    - 0.050628662
-                    - 0.04510498
-                    - -0.01979065
-                    - 0.008918762
-                    - 0.031799316
-                    - 0.031951904
-                    - -0.016906738
-                    - 0.031036377
-                    - 0.0040664673
-                    - -0.046905518
-                    - -0.04928589
-                    - 0.044403076
-                    - -0.0524292
-                    - -0.012832642
-                    - 0.049835205
-                    - 0.0040283203
-                    - -0.012649536
-                    - 0.06878662
-                    - -0.02859497
-                    - -0.014137268
-                    - 0.0036144257
-                    - -0.06262207
-                    - 0.046813965
-                    - 0.024978638
-                    - 0.0017976761
-                    - -0.032409668
-                    - -0.004108429
-                    - -0.013557434
-                    - -0.07196045
-                    - 0.026733398
-                    - 0.0024261475
-                    - -0.022735596
-                    - -0.0022182465
-                    - -0.0064315796
-                    - -0.03652954
-                    - 0.04135132
-                    - -0.032562256
-                    - 0.004524231
-                    - 0.020019531
-                    - -0.0113220215
-                    - -0.071777344
-                    - -0.03451538
-                    - 0.0022583008
-                    - -0.06512451
-                    - -0.005317688
-                    - 0.020248413
-                    - -0.036712646
-                    - 0.005809784
-                    - -0.018951416
-                    - -0.0026855469
-                    - 0.027572632
-                    - -0.00036668777
-                    - 0.0073623657
-                    - -0.018829346
-                    - 0.009101868
-                    - 0.051971436
-                    - 0.023132324
-                    - -0.022537231
-                    - 0.00932312
-                    - 0.00944519
-                    - 0.014183044
-                    - 0.020889282
-                    - 0.0032844543
-                    - -0.0073776245
-                    - -0.05807495
-                    - -0.032440186
-                    - 0.033996582
-                    - 0.0423584
-                    - 0.014259338
-                    - 0.061676025
-                    - -0.02154541
-                    - -0.031982422
-                    - 0.005493164
-                    - -0.01512146
-                    - 0.023101807
-                    - -0.011383057
-                    - -0.059539795
-                    - 0.021820068
-                    - 0.015487671
-                    - -0.004875183
-                    - -0.015640259
-                    - 0.015319824
-                    - -0.0054359436
-                    - -0.026229858
-                    - 0.0061454773
-                    - -0.032348633
-                    - 0.038513184
-                    - 0.004840851
-                    - -0.016021729
-                    - -0.017608643
-                    - -0.019577026
-                    - -0.009178162
-                    - 0.045013428
-                    - -0.01007843
-                    - 0.022323608
-                    - 0.034179688
-                    - 0.00566864
-                    - 0.055511475
-                    - -0.033355713
-                    - -0.019317627
-                    - -8.481741e-5
-                    - 0.017547607
-                    - -0.053344727
-                    - 0.012229919
-                    - 0.022384644
-                    - 0.018051147
-                    - 0.010734558
-                    - 0.004501343
-                    - -0.05911255
-                    - -0.0030918121
-                    - -0.0513916
-                    - -0.0050086975
-                    - -0.01600647
-                    - 0.05343628
-                    - -0.0008234978
-                    - 0.07293701
-                    - -0.056610107
-                    - -0.06549072
-                    - -0.01776123
-                    - -0.0022678375
-                    - 0.023239136
-                    - 0.01020813
-                    - -0.005153656
-                    - -0.00630188
-                    - -0.009880066
-                    - 0.022109985
-                    - 0.033203125
-                    - -0.03567505
-                    - -0.014129639
-                    - 0.015625
-                    - 0.022888184
-                    - -0.038726807
-                    - -0.026321411
-                    - -0.007259369
-                    - 0.005924225
-                    - 0.0010814667
-                    - 0.06665039
-                    - -0.008880615
-                    - 0.053771973
-                    - 0.062194824
-                    - 0.018981934
-                    - 0.022338867
-                    - 0.01361084
-                    - 0.025604248
-                    - 0.022109985
-                    - 0.0044288635
-                    - -0.008331299
-                    - -0.0019416809
-                    - 0.006454468
-                    - -0.045013428
-                    - -0.02519226
-                    - -0.012268066
-                    - -0.032165527
-                    - 7.2181225e-5
-                    - -0.021575928
-                    - -0.006324768
-                    - 0.029785156
-                    - 0.0063438416
-                    - -0.01210022
-                    - 0.029403687
-                    - 0.00592041
-                    - 0.008369446
-                    - 0.00818634
-                    - -0.04498291
-                    - -0.041809082
-                    - 0.0078086853
-                    - -0.05935669
-                    - -0.043518066
-                    - 0.007270813
-                    - 0.060424805
-                    - 0.033996582
-                    - 0.055908203
-                    - 0.013755798
-                    - 0.03982544
-                    - 0.014640808
-                    - -0.01373291
-                    - 0.033325195
-                    - -0.0047073364
-                    - 0.015899658
-                    - -0.00043344498
-                    - 0.022338867
-                    - -0.007095337
-                    - 0.02949524
-                    - 0.042633057
-                    - 0.030670166
-                    - 0.022415161
-                    - -0.0033683777
-                    - 0.018814087
-                    - -0.013031006
-                    - 0.031951904
-                    - 0.022094727
-                    - -0.009986877
-                    - 0.025665283
-                    - -0.0138168335
-                    - 0.049743652
-                    - 0.024307251
-                    - 0.0088272095
-                    - -0.03479004
-                    - 0.07318115
-                    - 0.009849548
-                    - 0.051635742
-                    - -0.05331421
-                    - -0.053131104
-                    - -0.0044898987
-                    - 0.029342651
-                    - 0.005596161
-                    - 0.044189453
-                    - -0.042388916
-                    - -0.012939453
-                    - -0.0007529259
-                    - -0.06088257
-                    - 0.036010742
-                    - -0.02355957
-                    - 0.004497528
-                    - -0.0023822784
-                    - -0.053588867
-                    - -0.04168701
-                    - -0.017868042
-                    - -0.01927185
-                    - -0.06011963
-                    - 0.028884888
-                    - 0.061401367
-                    - -0.005584717
-                    - 0.014823914
-                    - -0.02255249
-                    - 4.631281e-5
-                    - 0.039031982
-                    - -0.0055389404
-                    - 0.007194519
-                    - 0.0037631989
-                    - 0.008834839
-                    - 0.018692017
-                    - 0.033111572
-                    - -0.056274414
-                    - -0.021774292
-                    - 0.04727173
-                    - -0.03265381
-                    - 0.022140503
-                    - 0.027801514
-                    - 0.004043579
-                    - -0.016525269
-                    - -0.041809082
-                    - 0.024520874
-                    - 0.008529663
-                    - 0.049072266
-                    - 0.033447266
-                    - -0.028839111
-                    - 0.048675537
-                    - 0.021453857
-                    - -0.08087158
-                    - 0.034606934
-                    - -0.002910614
-                    - 0.012176514
-                    - 0.035705566
-                    - 0.040161133
-                    - -0.02355957
-                    - -0.01626587
-                    - -0.033721924
-                    - -0.013893127
-                    - -0.04156494
-                    - 0.06719971
-                    - 0.043151855
-                    - -0.033813477
-                    - 0.028045654
-                    - 0.0029525757
-                    - -0.022033691
-                    - -0.093811035
-                    - -0.0056114197
-                    - 0.00026154518
-                    - 0.058746338
-                    - -0.05065918
-                    - 0.02897644
-                    - -0.01550293
-                    - -0.02947998
-                    - -0.018249512
-                    - 0.034942627
-                    - -0.04574585
-                    - -0.037109375
-                    - -0.006160736
-                    - 0.006149292
-                    - -0.0012207031
-                    - -0.042907715
-                    - -0.016448975
-                    - 0.0052719116
-                    - 0.036590576
-                    - -0.045318604
-                    - -0.04220581
-                    - -0.018859863
-                    - -0.031021118
-                    - 0.06439209
-                    - -0.0056533813
-                    - -0.037200928
-                    - -0.026550293
-                    - 0.027786255
-                    - -0.028427124
-                    - 0.09161377
-                    - -0.0088272095
-                    - -0.003643036
-                    - -0.053253174
-                    - -0.01826477
-                    - -0.016540527
-                    - -0.012535095
-                    - -0.03942871
-                    - -0.0049095154
-                    - 0.031311035
-                    - 0.049468994
-                    - -0.066589355
-                    - -0.05029297
-                    - 7.5519085e-5
-                    - -0.0017404556
-                    - -0.013214111
-                    - -0.03756714
-                    - -0.009147644
-                    - -0.025466919
-                    - 0.026672363
-                    - 0.020965576
-                    - -0.0073432922
-                    - 0.0011005402
-                    - -0.04937744
-                    - -0.018463135
-                    - 0.00274086
-                    - -0.013252258
-                    - 0.0126953125
-                    - -0.077697754
-                    - 0.014045715
-                    - 0.00039935112
-                    - -0.019515991
-                    - -0.0027618408
-                    - -0.011672974
-                    - -0.043884277
-                    - 0.009231567
-                    - 0.062805176
-                    - -0.0137786865
-                    - -0.026229858
-                    - -0.034362793
-                    - -0.015090942
-                    - 0.016937256
-                    - 0.030639648
-                    - -0.02420044
-                    - 0.02482605
-                    - -0.0033740997
-                    - 0.046417236
-                    - -0.012008667
-                    - -0.04031372
-                    - -0.00032520294
-                    - 0.01525116
-                    - -0.0066375732
-                    - 0.0062713623
-                    - -0.01171875
-                    - -0.027191162
-                    - -0.014137268
-                    - -0.025390625
-                    - 0.002111435
-                    - -0.06561279
-                    - 0.031555176
-                    - -0.07519531
-                    - -0.04547119
-                    - 0.014472961
-                    - -0.0158844
-                    - -0.091552734
-                    - -0.03366089
-                    - 0.050323486
-                    - -0.0013589859
-                    - -0.033203125
-                    - 0.046539307
-                    - -0.030288696
-                    - 0.0046195984
-                    - 0.049835205
-                    - 0.02003479
-                    - -0.004196167
-                    - 0.013168335
-                    - -0.016403198
-                    - 0.01676941
-                    - -0.00340271
-              meta:
-                api_version:
-                  version: '2'
-                billed_units:
-                  images: 1
-              response_type: embeddings_by_type
-        - code-samples:
-            - sdk: go
               name: Texts
               code: |
                 package main
@@ -11503,6 +10264,1245 @@ paths:
                 billed_units:
                   input_tokens: 2
               response_type: embeddings_floats
+        - code-samples:
+            - sdk: go
+              name: Images
+              code: >
+                package main
+
+
+                import (
+                	"context"
+                	"encoding/base64"
+                	"fmt"
+                	"io"
+                	"log"
+                	"net/http"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	// Fetch the image
+                	resp, err := http.Get("https://cohere.com/favicon-32x32.png")
+                	if err != nil {
+                		log.Println("Error fetching the image:", err)
+                		return
+                	}
+                	defer resp.Body.Close()
+
+                	// Read the image content
+                	buffer, err := io.ReadAll(resp.Body)
+                	if err != nil {
+                		log.Println("Error reading the image content:", err)
+                		return
+                	}
+
+                	stringifiedBuffer := base64.StdEncoding.EncodeToString(buffer)
+                	contentType := resp.Header.Get("Content-Type")
+                	imageBase64 := fmt.Sprintf("data:%s;base64,%s", contentType, stringifiedBuffer)
+
+                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+
+                	embed, err := co.Embed(
+                		context.TODO(),
+                		&cohere.EmbedRequest{
+                			Images:         []string{imageBase64},
+                			Model:          cohere.String("embed-english-v3.0"),
+                			InputType:      cohere.EmbedInputTypeImage.Ptr(),
+                			EmbeddingTypes: []cohere.EmbeddingType{cohere.EmbeddingTypeFloat},
+                		},
+                	)
+
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	log.Printf("%+v", embed)
+                }
+            - sdk: typescript
+              name: Images
+              code: >
+                const { CohereClient } = require('cohere-ai');
+
+
+                const cohere = new CohereClient({
+                  token: '<<apiKey>>',
+                });
+
+
+                (async () => {
+                  const image = await fetch('https://cohere.com/favicon-32x32.png');
+                  const buffer = await image.arrayBuffer();
+                  const stringifiedBuffer = Buffer.from(buffer).toString('base64');
+                  const contentType = image.headers.get('content-type');
+                  const imageBase64 = `data:${contentType};base64,${stringifiedBuffer}`;
+
+                  const embed = await cohere.embed({
+                    model: 'embed-english-v3.0',
+                    inputType: 'image',
+                    embeddingTypes: ['float'],
+                    images: [imageBase64],
+                  });
+                  console.log(embed);
+                })();
+            - sdk: python
+              name: Images
+              code: >
+                import cohere
+
+                import requests
+
+                import base64
+
+
+                co = cohere.Client("<<apiKey>>")
+
+
+                image = requests.get("https://cohere.com/favicon-32x32.png")
+
+                stringified_buffer =
+                base64.b64encode(image.content).decode('utf-8')
+
+                content_type = image.headers['Content-Type']
+
+                image_base64 =
+                f"data:{content_type};base64,{stringified_buffer}"
+
+
+                response = co.embed(
+                    model="embed-english-v3.0",
+                    input_type="image", 
+                    embedding_types=["float"],
+                    images=[image_base64]
+                )
+
+
+                print(response)
+            - sdk: java
+              name: Images
+              code: >
+                package embedpost; /* (C)2024 */
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.requests.EmbedRequest;
+
+                import com.cohere.api.types.EmbedInputType;
+
+                import com.cohere.api.types.EmbedResponse;
+
+                import com.cohere.api.types.EmbeddingType;
+
+                import java.io.InputStream;
+
+                import java.net.HttpURLConnection;
+
+                import java.net.URI;
+
+                import java.net.URL;
+
+                import java.util.Base64;
+
+                import java.util.List;
+
+
+                public class EmbedImagePost {
+                  public static void main(String[] args) {
+                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+
+                    URL url =
+                        URI.toUrl(
+                            "https://cohere.com/favicon-32x32.png");
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.connect();
+
+                    InputStream inputStream = connection.getInputStream();
+                    byte[] buffer = inputStream.readAllBytes();
+                    inputStream.close();
+
+                    String imageBase64 =
+                        String.format(
+                            "data:%s;base64,%s",
+                            connection.getHeaderField("Content-Type"), Base64.getEncoder().encodeToString(buffer));
+
+                    EmbedResponse response =
+                        cohere.embed(
+                            EmbedRequest.builder()
+                                .images(List.of(imageBase64))
+                                .model("embed-english-v3.0")
+                                .inputType(EmbedInputType.IMAGE)
+                                .embeddingTypes(List.of(EmbeddingType.FLOAT))
+                                .build());
+
+                    System.out.println(response);
+                  }
+                }
+            - sdk: curl
+              name: Images
+              code: >-
+                curl --request POST \
+                  --url https://api.cohere.com/v1/embed \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY" \
+                  --data '{
+                    "model": "embed-english-v3.0",
+                    "input_type": "image", 
+                    "embedding_types": ["float"],
+                    "images": ["data:image/jpeg;base64,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"]
+                  }'
+          request:
+            model: embed-english-v3.0
+            input_type: image
+            embedding_types:
+              - float
+            images:
+              - data:image/jpeg;base64,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
+          response:
+            body:
+              id: 5807ee2e-0cda-445a-9ec8-864c60a06606
+              texts: []
+              images:
+                - width: 400
+                  height: 400
+                  format: jpeg
+                  bit_depth: 24
+              embeddings:
+                float:
+                  - - -0.007247925
+                    - -0.041229248
+                    - -0.023223877
+                    - -0.08392334
+                    - -0.03378296
+                    - -0.008308411
+                    - -0.049926758
+                    - 0.041625977
+                    - 0.043151855
+                    - 0.03652954
+                    - -0.05154419
+                    - 0.011787415
+                    - -0.02784729
+                    - -0.024230957
+                    - -0.018295288
+                    - -0.0440979
+                    - 0.032928467
+                    - -0.015007019
+                    - 0.009315491
+                    - -0.028213501
+                    - -0.00022602081
+                    - -0.0074157715
+                    - -0.000975132
+                    - 0.05783081
+                    - 0.029510498
+                    - 0.024871826
+                    - -0.009422302
+                    - -0.028701782
+                    - -0.021118164
+                    - -0.019088745
+                    - -0.0038433075
+                    - 0.04083252
+                    - 0.03024292
+                    - -0.010154724
+                    - -0.008163452
+                    - 0.04269409
+                    - 0.017471313
+                    - -0.010017395
+                    - 0.006629944
+                    - 0.011047363
+                    - 0.013542175
+                    - -0.007926941
+                    - -0.024932861
+                    - -0.05960083
+                    - -0.05404663
+                    - 0.037384033
+                    - -0.049621582
+                    - -0.024002075
+                    - 0.040039062
+                    - 0.02645874
+                    - 0.010261536
+                    - -0.028244019
+                    - 0.016479492
+                    - 0.014266968
+                    - -0.043823242
+                    - -0.022262573
+                    - -0.0057678223
+                    - -0.04800415
+                    - 0.041015625
+                    - 0.01537323
+                    - -0.021530151
+                    - -0.014663696
+                    - 0.051849365
+                    - -0.025558472
+                    - 0.045776367
+                    - -0.025665283
+                    - -0.005821228
+                    - 0.02973938
+                    - 0.053131104
+                    - 0.020706177
+                    - -0.004600525
+                    - 0.0046920776
+                    - 0.02558899
+                    - -0.05319214
+                    - -0.058013916
+                    - 0.080444336
+                    - -0.00068187714
+                    - 0.031311035
+                    - 0.032440186
+                    - -0.051086426
+                    - -0.003534317
+                    - 0.046325684
+                    - -0.032440186
+                    - -0.03894043
+                    - -0.0071907043
+                    - -0.004627228
+                    - -0.01826477
+                    - -0.027755737
+                    - 0.040802002
+                    - 0.019363403
+                    - -0.009727478
+                    - 0.0064468384
+                    - 0.056488037
+                    - 0.018585205
+                    - -0.017974854
+                    - -0.08514404
+                    - 5.0604343e-5
+                    - -0.014839172
+                    - 0.01586914
+                    - 0.00017666817
+                    - 0.02267456
+                    - -0.05105591
+                    - 0.007785797
+                    - -0.02684021
+                    - 0.0064849854
+                    - 0.014411926
+                    - 0.0013427734
+                    - -0.012611389
+                    - 0.043701172
+                    - 0.012290955
+                    - -0.030731201
+                    - 0.034729004
+                    - 0.015289307
+                    - -0.037475586
+                    - -0.030838013
+                    - 0.010009766
+                    - -0.028244019
+                    - 0.051635742
+                    - 0.01725769
+                    - 0.013977051
+                    - 0.008102417
+                    - 0.028121948
+                    - 0.02079773
+                    - 0.0027256012
+                    - 0.009185791
+                    - 0.0016012192
+                    - -0.038116455
+                    - -0.008331299
+                    - -0.028076172
+                    - 0.018463135
+                    - -0.02154541
+                    - 0.021240234
+                    - 0.023376465
+                    - 0.02961731
+                    - -0.028305054
+                    - -0.023101807
+                    - -0.010681152
+                    - -0.0072021484
+                    - -0.04321289
+                    - 0.0058517456
+                    - 0.030792236
+                    - -0.021102905
+                    - 0.050933838
+                    - 0.0060157776
+                    - 0.0128479
+                    - 0.025146484
+                    - -0.006099701
+                    - 0.023345947
+                    - 0.023971558
+                    - 0.015510559
+                    - -0.009895325
+                    - -0.04071045
+                    - 0.049835205
+                    - 0.0053100586
+                    - -0.028930664
+                    - 0.017578125
+                    - -0.0048217773
+                    - -0.0042762756
+                    - -0.034240723
+                    - -0.03253174
+                    - 0.035827637
+                    - 0.01574707
+                    - 0.034851074
+                    - 0.070129395
+                    - 0.011749268
+                    - -0.009223938
+                    - 0.02470398
+                    - -0.005115509
+                    - 0.016723633
+                    - 0.04937744
+                    - -0.032928467
+                    - 0.031280518
+                    - -0.00023400784
+                    - 0.010169983
+                    - -0.01071167
+                    - 0.010520935
+                    - 0.022338867
+                    - -0.0259552
+                    - 0.044769287
+                    - 0.0070610046
+                    - -0.012451172
+                    - -0.04156494
+                    - 0.047088623
+                    - -0.017578125
+                    - 0.012741089
+                    - -0.016479492
+                    - 0.0023078918
+                    - -0.008331299
+                    - 0.021591187
+                    - 0.01473999
+                    - -0.018081665
+                    - 0.033081055
+                    - -0.057556152
+                    - 0.008621216
+                    - 0.013954163
+                    - -0.009742737
+                    - -0.015548706
+                    - 0.015281677
+                    - -0.005958557
+                    - 0.0065307617
+                    - 0.01979065
+                    - 0.041778564
+                    - -0.02684021
+                    - 0.027709961
+                    - -0.07672119
+                    - 0.023406982
+                    - -0.037902832
+                    - 0.035339355
+                    - -0.021881104
+                    - 0.056732178
+                    - 0.03466797
+                    - 0.0059318542
+                    - -0.058654785
+                    - 0.025375366
+                    - 0.015029907
+                    - 0.002380371
+                    - -0.024230957
+                    - 0.014541626
+                    - -0.006641388
+                    - -0.01864624
+                    - 0.012290955
+                    - 0.0007929802
+                    - -0.009277344
+                    - 0.04953003
+                    - -0.004081726
+                    - 0.0029258728
+                    - -0.017181396
+                    - 0.0074920654
+                    - -0.0001707077
+                    - 0.04220581
+                    - 0.008972168
+                    - -0.0071525574
+                    - 0.0015583038
+                    - 0.034362793
+                    - -0.019058228
+                    - 0.013626099
+                    - 0.022613525
+                    - -0.0061149597
+                    - 0.017669678
+                    - 0.015586853
+                    - 0.034973145
+                    - 0.02217102
+                    - -0.045013428
+                    - -0.009864807
+                    - 0.07244873
+                    - 0.010177612
+                    - 0.029724121
+                    - -0.018829346
+                    - -0.034057617
+                    - -0.018859863
+                    - 0.059936523
+                    - -0.0076408386
+                    - 0.021331787
+                    - -0.013786316
+                    - 0.015281677
+                    - 0.016235352
+                    - -0.039855957
+                    - -0.02748108
+                    - -0.033416748
+                    - 0.016174316
+                    - 0.026489258
+                    - 0.0049095154
+                    - -0.026000977
+                    - 0.00831604
+                    - -0.019851685
+                    - -0.021408081
+                    - 0.023010254
+                    - 0.030075073
+                    - 0.0335083
+                    - -0.05493164
+                    - 0.019515991
+                    - -0.020401001
+                    - -0.0061073303
+                    - 0.018997192
+                    - 0.020126343
+                    - -0.027740479
+                    - -0.038116455
+                    - 0.0052948
+                    - -0.008613586
+                    - -0.016494751
+                    - -0.001247406
+                    - 0.022644043
+                    - 0.008300781
+                    - -0.02104187
+                    - 0.016693115
+                    - -0.0032901764
+                    - 0.012046814
+                    - -0.023468018
+                    - -0.007259369
+                    - 0.031234741
+                    - 0.06604004
+                    - 0.051635742
+                    - 0.0009441376
+                    - -0.006084442
+                    - 0.025619507
+                    - -0.006881714
+                    - 0.02999878
+                    - 0.050964355
+                    - 0.017715454
+                    - -0.024856567
+                    - -0.010070801
+                    - 0.05319214
+                    - -0.03652954
+                    - 0.011810303
+                    - -0.011978149
+                    - 0.013046265
+                    - -0.016662598
+                    - 0.017166138
+                    - -0.005542755
+                    - -0.07989502
+                    - 0.029220581
+                    - 0.056488037
+                    - 0.015914917
+                    - -0.011184692
+                    - -0.018203735
+                    - -0.03894043
+                    - -0.026626587
+                    - 0.0010070801
+                    - -0.07397461
+                    - -0.060333252
+                    - 0.046020508
+                    - -0.017440796
+                    - -0.020385742
+                    - -0.0211792
+                    - -0.018295288
+                    - -0.01802063
+                    - 0.003211975
+                    - -0.012969971
+                    - -0.034576416
+                    - -0.022079468
+                    - 0.034606934
+                    - -0.022079468
+                    - -0.02154541
+                    - -0.0039367676
+                    - 0.015419006
+                    - -0.027023315
+                    - 0.024642944
+                    - -0.0007047653
+                    - -0.008293152
+                    - 0.02708435
+                    - 0.05267334
+                    - 0.010177612
+                    - 0.017822266
+                    - -0.021759033
+                    - -0.051116943
+                    - -0.02583313
+                    - -0.06427002
+                    - 0.03213501
+                    - -0.009635925
+                    - -0.04547119
+                    - 0.018997192
+                    - -0.024032593
+                    - -0.011024475
+                    - 0.033935547
+                    - 0.050842285
+                    - 0.011009216
+                    - -0.002527237
+                    - 0.04852295
+                    - 0.038360596
+                    - -0.035583496
+                    - -0.021377563
+                    - -0.016052246
+                    - -0.072143555
+                    - 0.03665161
+                    - 0.02897644
+                    - -0.03842163
+                    - -0.00068187714
+                    - 0.022415161
+                    - -0.0030879974
+                    - 0.043762207
+                    - 0.05392456
+                    - -0.0362854
+                    - -0.04647827
+                    - -0.034057617
+                    - -0.040374756
+                    - -0.03942871
+                    - 0.030761719
+                    - -0.068115234
+                    - 0.011329651
+                    - 0.011413574
+                    - -0.012435913
+                    - 0.01576233
+                    - 0.022766113
+                    - 0.05609131
+                    - 0.07092285
+                    - 0.017593384
+                    - 0.024337769
+                    - 0.027923584
+                    - 0.06994629
+                    - 0.00655365
+                    - -0.020248413
+                    - -0.03945923
+                    - -0.0491333
+                    - -0.049194336
+                    - 0.020050049
+                    - 0.010910034
+                    - 0.013511658
+                    - 0.01676941
+                    - -0.041900635
+                    - -0.046142578
+                    - 0.012268066
+                    - 0.026748657
+                    - -0.036499023
+                    - 0.021713257
+                    - -0.036590576
+                    - 0.014411926
+                    - 0.029174805
+                    - -0.029388428
+                    - 0.04119873
+                    - 0.04852295
+                    - 0.007068634
+                    - -0.00090408325
+                    - 0.0048332214
+                    - -0.015777588
+                    - -0.01499939
+                    - -0.0068206787
+                    - -0.02708435
+                    - 0.010543823
+                    - 0.004085541
+                    - -0.026901245
+                    - -0.0045661926
+                    - 0.0061912537
+                    - -0.0014343262
+                    - 0.028945923
+                    - -0.03552246
+                    - 0.030441284
+                    - -0.029281616
+                    - 0.050628662
+                    - -0.033599854
+                    - -0.085510254
+                    - -0.052520752
+                    - -0.07507324
+                    - -0.008003235
+                    - -0.026382446
+                    - -0.078063965
+                    - -0.025161743
+                    - -0.025421143
+                    - -0.0073165894
+                    - 0.01889038
+                    - -0.05999756
+                    - -0.0051612854
+                    - 0.0072517395
+                    - -0.011497498
+                    - 0.01687622
+                    - 0.002231598
+                    - -0.034423828
+                    - -0.0013084412
+                    - -0.012413025
+                    - 0.008888245
+                    - 0.017486572
+                    - -0.03353882
+                    - 0.0069885254
+                    - -0.02722168
+                    - 0.02015686
+                    - -0.04510498
+                    - -0.038726807
+                    - -0.0031356812
+                    - 0.033233643
+                    - 0.025268555
+                    - -0.015106201
+                    - 0.02407837
+                    - -0.00024700165
+                    - -0.07409668
+                    - -0.012367249
+                    - 0.014785767
+                    - -0.04486084
+                    - 0.074401855
+                    - -0.020690918
+                    - -0.025222778
+                    - 0.029083252
+                    - -0.018997192
+                    - 0.0017557144
+                    - 0.03857422
+                    - -0.020111084
+                    - 0.03338623
+                    - -0.028213501
+                    - 0.0063705444
+                    - -0.010124207
+                    - -0.03112793
+                    - -0.03286743
+                    - 0.0046043396
+                    - -0.0052223206
+                    - 0.00023317337
+                    - 0.0423584
+                    - 0.028030396
+                    - 0.0005788803
+                    - -0.02708435
+                    - 0.006324768
+                    - 0.019821167
+                    - -0.0042686462
+                    - -0.026428223
+                    - -0.02293396
+                    - 0.036590576
+                    - -0.023376465
+                    - -0.022537231
+                    - 0.032226562
+                    - -0.020629883
+                    - 0.017929077
+                    - 0.0440979
+                    - -0.014038086
+                    - -0.022216797
+                    - 0.020446777
+                    - -0.05496216
+                    - -0.018859863
+                    - -0.039855957
+                    - 0.008300781
+                    - 0.07281494
+                    - 0.018295288
+                    - 0.042114258
+                    - 0.005519867
+                    - 0.017990112
+                    - -0.008773804
+                    - 0.011123657
+                    - -0.008239746
+                    - -0.045532227
+                    - 0.026153564
+                    - -0.015853882
+                    - 0.027557373
+                    - -0.049041748
+                    - -0.0022945404
+                    - -0.009399414
+                    - -0.045898438
+                    - 0.05053711
+                    - 0.038513184
+                    - -0.031799316
+                    - 0.012329102
+                    - 0.024871826
+                    - 0.04348755
+                    - -0.04788208
+                    - 0.01423645
+                    - 0.021240234
+                    - 0.05493164
+                    - 0.008956909
+                    - -0.056243896
+                    - 0.032043457
+                    - -0.01574707
+                    - -0.01285553
+                    - -0.009498596
+                    - -0.018951416
+                    - -0.029556274
+                    - 0.0069274902
+                    - -0.032348633
+                    - -0.022445679
+                    - -0.00093603134
+                    - -0.015808105
+                    - -0.027175903
+                    - 0.014091492
+                    - 0.025665283
+                    - -0.023468018
+                    - -0.03250122
+                    - -0.0004544258
+                    - 0.042633057
+                    - -0.06036377
+                    - -0.039611816
+                    - -0.042938232
+                    - -0.02418518
+                    - -0.0703125
+                    - 0.045135498
+                    - -0.001036644
+                    - -0.017913818
+                    - -0.004043579
+                    - 0.0138549805
+                    - -0.02532959
+                    - 0.010765076
+                    - 0.021575928
+                    - 0.013114929
+                    - 0.033935547
+                    - -0.010574341
+                    - 0.017990112
+                    - -0.026107788
+                    - -0.029144287
+                    - -0.046569824
+                    - -0.0030517578
+                    - -0.022994995
+                    - -0.017471313
+                    - -0.0070495605
+                    - -9.846687e-5
+                    - 0.029281616
+                    - 0.017440796
+                    - 0.045532227
+                    - 0.025650024
+                    - 0.0491333
+                    - -0.013145447
+                    - 0.070129395
+                    - -0.0051879883
+                    - -0.04043579
+                    - 0.023864746
+                    - 0.016830444
+                    - -0.014152527
+                    - -0.06359863
+                    - -0.005065918
+                    - -0.009880066
+                    - -0.0034618378
+                    - -0.081726074
+                    - -0.0289917
+                    - -0.007461548
+                    - -0.0013504028
+                    - 0.020523071
+                    - 0.0076446533
+                    - -0.011650085
+                    - 0.014549255
+                    - 0.010955811
+                    - 0.02180481
+                    - -0.027572632
+                    - -0.012252808
+                    - 0.009033203
+                    - -0.0048980713
+                    - 0.031173706
+                    - -0.020309448
+                    - 0.022979736
+                    - -0.013900757
+                    - -0.004108429
+                    - 0.018325806
+                    - -0.031402588
+                    - 0.01737976
+                    - 0.03201294
+                    - -0.02508545
+                    - -0.015625
+                    - -0.04626465
+                    - -0.014656067
+                    - 0.016036987
+                    - -0.030639648
+                    - 0.041748047
+                    - -0.0032978058
+                    - -0.03277588
+                    - 0.037719727
+                    - 0.023788452
+                    - -0.008140564
+                    - -0.041809082
+                    - 0.034698486
+                    - -0.022994995
+                    - -0.009979248
+                    - -0.03729248
+                    - -0.0904541
+                    - 0.00028443336
+                    - 0.080566406
+                    - -0.035125732
+                    - -0.054229736
+                    - -0.017700195
+                    - 0.060668945
+                    - 0.008979797
+                    - 0.015052795
+                    - -0.0072364807
+                    - -0.001490593
+                    - 0.0065231323
+                    - -0.014579773
+                    - 0.016067505
+                    - -0.020339966
+                    - -0.020217896
+                    - 0.02909851
+                    - 0.050628662
+                    - 0.04510498
+                    - -0.01979065
+                    - 0.008918762
+                    - 0.031799316
+                    - 0.031951904
+                    - -0.016906738
+                    - 0.031036377
+                    - 0.0040664673
+                    - -0.046905518
+                    - -0.04928589
+                    - 0.044403076
+                    - -0.0524292
+                    - -0.012832642
+                    - 0.049835205
+                    - 0.0040283203
+                    - -0.012649536
+                    - 0.06878662
+                    - -0.02859497
+                    - -0.014137268
+                    - 0.0036144257
+                    - -0.06262207
+                    - 0.046813965
+                    - 0.024978638
+                    - 0.0017976761
+                    - -0.032409668
+                    - -0.004108429
+                    - -0.013557434
+                    - -0.07196045
+                    - 0.026733398
+                    - 0.0024261475
+                    - -0.022735596
+                    - -0.0022182465
+                    - -0.0064315796
+                    - -0.03652954
+                    - 0.04135132
+                    - -0.032562256
+                    - 0.004524231
+                    - 0.020019531
+                    - -0.0113220215
+                    - -0.071777344
+                    - -0.03451538
+                    - 0.0022583008
+                    - -0.06512451
+                    - -0.005317688
+                    - 0.020248413
+                    - -0.036712646
+                    - 0.005809784
+                    - -0.018951416
+                    - -0.0026855469
+                    - 0.027572632
+                    - -0.00036668777
+                    - 0.0073623657
+                    - -0.018829346
+                    - 0.009101868
+                    - 0.051971436
+                    - 0.023132324
+                    - -0.022537231
+                    - 0.00932312
+                    - 0.00944519
+                    - 0.014183044
+                    - 0.020889282
+                    - 0.0032844543
+                    - -0.0073776245
+                    - -0.05807495
+                    - -0.032440186
+                    - 0.033996582
+                    - 0.0423584
+                    - 0.014259338
+                    - 0.061676025
+                    - -0.02154541
+                    - -0.031982422
+                    - 0.005493164
+                    - -0.01512146
+                    - 0.023101807
+                    - -0.011383057
+                    - -0.059539795
+                    - 0.021820068
+                    - 0.015487671
+                    - -0.004875183
+                    - -0.015640259
+                    - 0.015319824
+                    - -0.0054359436
+                    - -0.026229858
+                    - 0.0061454773
+                    - -0.032348633
+                    - 0.038513184
+                    - 0.004840851
+                    - -0.016021729
+                    - -0.017608643
+                    - -0.019577026
+                    - -0.009178162
+                    - 0.045013428
+                    - -0.01007843
+                    - 0.022323608
+                    - 0.034179688
+                    - 0.00566864
+                    - 0.055511475
+                    - -0.033355713
+                    - -0.019317627
+                    - -8.481741e-5
+                    - 0.017547607
+                    - -0.053344727
+                    - 0.012229919
+                    - 0.022384644
+                    - 0.018051147
+                    - 0.010734558
+                    - 0.004501343
+                    - -0.05911255
+                    - -0.0030918121
+                    - -0.0513916
+                    - -0.0050086975
+                    - -0.01600647
+                    - 0.05343628
+                    - -0.0008234978
+                    - 0.07293701
+                    - -0.056610107
+                    - -0.06549072
+                    - -0.01776123
+                    - -0.0022678375
+                    - 0.023239136
+                    - 0.01020813
+                    - -0.005153656
+                    - -0.00630188
+                    - -0.009880066
+                    - 0.022109985
+                    - 0.033203125
+                    - -0.03567505
+                    - -0.014129639
+                    - 0.015625
+                    - 0.022888184
+                    - -0.038726807
+                    - -0.026321411
+                    - -0.007259369
+                    - 0.005924225
+                    - 0.0010814667
+                    - 0.06665039
+                    - -0.008880615
+                    - 0.053771973
+                    - 0.062194824
+                    - 0.018981934
+                    - 0.022338867
+                    - 0.01361084
+                    - 0.025604248
+                    - 0.022109985
+                    - 0.0044288635
+                    - -0.008331299
+                    - -0.0019416809
+                    - 0.006454468
+                    - -0.045013428
+                    - -0.02519226
+                    - -0.012268066
+                    - -0.032165527
+                    - 7.2181225e-5
+                    - -0.021575928
+                    - -0.006324768
+                    - 0.029785156
+                    - 0.0063438416
+                    - -0.01210022
+                    - 0.029403687
+                    - 0.00592041
+                    - 0.008369446
+                    - 0.00818634
+                    - -0.04498291
+                    - -0.041809082
+                    - 0.0078086853
+                    - -0.05935669
+                    - -0.043518066
+                    - 0.007270813
+                    - 0.060424805
+                    - 0.033996582
+                    - 0.055908203
+                    - 0.013755798
+                    - 0.03982544
+                    - 0.014640808
+                    - -0.01373291
+                    - 0.033325195
+                    - -0.0047073364
+                    - 0.015899658
+                    - -0.00043344498
+                    - 0.022338867
+                    - -0.007095337
+                    - 0.02949524
+                    - 0.042633057
+                    - 0.030670166
+                    - 0.022415161
+                    - -0.0033683777
+                    - 0.018814087
+                    - -0.013031006
+                    - 0.031951904
+                    - 0.022094727
+                    - -0.009986877
+                    - 0.025665283
+                    - -0.0138168335
+                    - 0.049743652
+                    - 0.024307251
+                    - 0.0088272095
+                    - -0.03479004
+                    - 0.07318115
+                    - 0.009849548
+                    - 0.051635742
+                    - -0.05331421
+                    - -0.053131104
+                    - -0.0044898987
+                    - 0.029342651
+                    - 0.005596161
+                    - 0.044189453
+                    - -0.042388916
+                    - -0.012939453
+                    - -0.0007529259
+                    - -0.06088257
+                    - 0.036010742
+                    - -0.02355957
+                    - 0.004497528
+                    - -0.0023822784
+                    - -0.053588867
+                    - -0.04168701
+                    - -0.017868042
+                    - -0.01927185
+                    - -0.06011963
+                    - 0.028884888
+                    - 0.061401367
+                    - -0.005584717
+                    - 0.014823914
+                    - -0.02255249
+                    - 4.631281e-5
+                    - 0.039031982
+                    - -0.0055389404
+                    - 0.007194519
+                    - 0.0037631989
+                    - 0.008834839
+                    - 0.018692017
+                    - 0.033111572
+                    - -0.056274414
+                    - -0.021774292
+                    - 0.04727173
+                    - -0.03265381
+                    - 0.022140503
+                    - 0.027801514
+                    - 0.004043579
+                    - -0.016525269
+                    - -0.041809082
+                    - 0.024520874
+                    - 0.008529663
+                    - 0.049072266
+                    - 0.033447266
+                    - -0.028839111
+                    - 0.048675537
+                    - 0.021453857
+                    - -0.08087158
+                    - 0.034606934
+                    - -0.002910614
+                    - 0.012176514
+                    - 0.035705566
+                    - 0.040161133
+                    - -0.02355957
+                    - -0.01626587
+                    - -0.033721924
+                    - -0.013893127
+                    - -0.04156494
+                    - 0.06719971
+                    - 0.043151855
+                    - -0.033813477
+                    - 0.028045654
+                    - 0.0029525757
+                    - -0.022033691
+                    - -0.093811035
+                    - -0.0056114197
+                    - 0.00026154518
+                    - 0.058746338
+                    - -0.05065918
+                    - 0.02897644
+                    - -0.01550293
+                    - -0.02947998
+                    - -0.018249512
+                    - 0.034942627
+                    - -0.04574585
+                    - -0.037109375
+                    - -0.006160736
+                    - 0.006149292
+                    - -0.0012207031
+                    - -0.042907715
+                    - -0.016448975
+                    - 0.0052719116
+                    - 0.036590576
+                    - -0.045318604
+                    - -0.04220581
+                    - -0.018859863
+                    - -0.031021118
+                    - 0.06439209
+                    - -0.0056533813
+                    - -0.037200928
+                    - -0.026550293
+                    - 0.027786255
+                    - -0.028427124
+                    - 0.09161377
+                    - -0.0088272095
+                    - -0.003643036
+                    - -0.053253174
+                    - -0.01826477
+                    - -0.016540527
+                    - -0.012535095
+                    - -0.03942871
+                    - -0.0049095154
+                    - 0.031311035
+                    - 0.049468994
+                    - -0.066589355
+                    - -0.05029297
+                    - 7.5519085e-5
+                    - -0.0017404556
+                    - -0.013214111
+                    - -0.03756714
+                    - -0.009147644
+                    - -0.025466919
+                    - 0.026672363
+                    - 0.020965576
+                    - -0.0073432922
+                    - 0.0011005402
+                    - -0.04937744
+                    - -0.018463135
+                    - 0.00274086
+                    - -0.013252258
+                    - 0.0126953125
+                    - -0.077697754
+                    - 0.014045715
+                    - 0.00039935112
+                    - -0.019515991
+                    - -0.0027618408
+                    - -0.011672974
+                    - -0.043884277
+                    - 0.009231567
+                    - 0.062805176
+                    - -0.0137786865
+                    - -0.026229858
+                    - -0.034362793
+                    - -0.015090942
+                    - 0.016937256
+                    - 0.030639648
+                    - -0.02420044
+                    - 0.02482605
+                    - -0.0033740997
+                    - 0.046417236
+                    - -0.012008667
+                    - -0.04031372
+                    - -0.00032520294
+                    - 0.01525116
+                    - -0.0066375732
+                    - 0.0062713623
+                    - -0.01171875
+                    - -0.027191162
+                    - -0.014137268
+                    - -0.025390625
+                    - 0.002111435
+                    - -0.06561279
+                    - 0.031555176
+                    - -0.07519531
+                    - -0.04547119
+                    - 0.014472961
+                    - -0.0158844
+                    - -0.091552734
+                    - -0.03366089
+                    - 0.050323486
+                    - -0.0013589859
+                    - -0.033203125
+                    - 0.046539307
+                    - -0.030288696
+                    - 0.0046195984
+                    - 0.049835205
+                    - 0.02003479
+                    - -0.004196167
+                    - 0.013168335
+                    - -0.016403198
+                    - 0.01676941
+                    - -0.00340271
+              meta:
+                api_version:
+                  version: '2'
+                billed_units:
+                  images: 1
+              response_type: embeddings_by_type
       responses:
         "200":
           description: OK
