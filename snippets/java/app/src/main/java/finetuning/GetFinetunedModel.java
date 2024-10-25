@@ -1,3 +1,4 @@
+/* (C)2024 */
 package finetuning;
 
 import com.cohere.api.Cohere;
@@ -12,4 +13,3 @@ public class GetFinetunedModel {
         System.out.println(response);
     }
 }
-

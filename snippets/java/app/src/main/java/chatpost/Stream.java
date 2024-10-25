@@ -4,8 +4,8 @@ package chatpost;
 import com.cohere.api.Cohere;
 import com.cohere.api.requests.ChatStreamRequest;
 import com.cohere.api.types.ChatMessage;
-import com.cohere.api.types.ChatMessageRole;
 import com.cohere.api.types.ChatTextGenerationEvent;
+import com.cohere.api.types.Message;
 import com.cohere.api.types.StreamedChatResponse;
 import java.util.List;
 
@@ -19,17 +19,19 @@ public class Stream {
                                 .message("What year was he born?")
                                 .chatHistory(
                                         List.of(
-                                                ChatMessage.builder()
-                                                        .role(ChatMessageRole.USER)
-                                                        .message("Who discovered gravity?")
-                                                        .build(),
-                                                ChatMessage.builder()
-                                                        .role(ChatMessageRole.CHATBOT)
-                                                        .message(
-                                                                "The man who is widely credited"
-                                                                    + " with discovering gravity is"
-                                                                    + " Sir Isaac Newton")
-                                                        .build()))
+                                                Message.user(
+                                                        ChatMessage.builder()
+                                                                .message("Who discovered gravity?")
+                                                                .build()),
+                                                Message.chatbot(
+                                                        ChatMessage.builder()
+                                                                .message(
+                                                                        "The man who is widely"
+                                                                            + " credited with"
+                                                                            + " discovering gravity"
+                                                                            + " is Sir Isaac"
+                                                                            + " Newton")
+                                                                .build())))
                                 .build());
 
         for (StreamedChatResponse chatResponse : response) {

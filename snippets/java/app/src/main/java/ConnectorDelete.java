@@ -1,5 +1,5 @@
+/* (C)2024 */
 import com.cohere.api.Cohere;
-
 
 public class ConnectorDelete {
     public static void main(String[] args) {
@@ -8,4 +8,3 @@ public class ConnectorDelete {
         cohere.connectors().delete("test-id");
     }
 }
-

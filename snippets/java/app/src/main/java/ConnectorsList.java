@@ -1,6 +1,6 @@
+/* (C)2024 */
 import com.cohere.api.Cohere;
 import com.cohere.api.types.ListConnectorsResponse;
-
 
 public class ConnectorsList {
     public static void main(String[] args) {

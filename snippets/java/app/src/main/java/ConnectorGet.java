@@ -1,6 +1,6 @@
+/* (C)2024 */
 import com.cohere.api.Cohere;
 import com.cohere.api.types.GetConnectorResponse;
-
 
 public class ConnectorGet {
     public static void main(String[] args) {
