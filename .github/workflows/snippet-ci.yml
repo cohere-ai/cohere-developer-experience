@@ -1,0 +1,28 @@
+name: publish-docs
+
+on:
+  pull_request: {}
+  push:
+    branches:
+      - main
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install Dependencies
+        shell: bash
+        run: pnpm install             
+
+      - name: Publish Docs
+        env:
+          CO_API_KEY: ${{ secrets.COHERE_TOKEN }}
+        run: pnpm run --filter snippet-tester test
