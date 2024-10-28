@@ -29,7 +29,7 @@ export const config: {
         },
         {
             "name": "python",
-            "exec": (file: string) => `python3 ${file}`,
+            "exec": (file: string) => `poetry run python ${file}`,
             "snippetRoot": (base: string) => path.join(base, "./snippets/python"),
             "glob": "**/*.py"   
         },
