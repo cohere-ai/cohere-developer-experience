@@ -76,6 +76,8 @@ describe.each(config.languages.map(o => [o.name, o] as [string, Language]))("Tes
 
         const co = new CohereClient()
 
+        let err = { "error": "passed" }
+
         if (error) {
             const explain = await co.v2.chat({
                 model: "command-r-plus",
@@ -104,10 +106,11 @@ describe.each(config.languages.map(o => [o.name, o] as [string, Language]))("Tes
                 }
             })
 
-            expect(JSON.parse(explain.message?.content?.[0].text || "{}")).toMatchSnapshot()
+            err = JSON.parse(explain.message?.content?.[0].text || "{}")
             console.error(error)
-        } else {
-            expect({ error: "passed" }).toMatchSnapshot()
         }
+        
+        expect(err.error).toMatchSnapshot()
+
     }, 1000000);
 })
