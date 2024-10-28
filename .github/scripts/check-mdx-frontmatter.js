@@ -36,6 +36,8 @@ async function shouldExcludeFile(filePath) {
 async function checkDescriptionLength(filePath) {
   const fileContent = await fs.readFile(filePath, "utf8");
   const { data } = matter(fileContent);
+  const minDescriptionLength = 50;
+  const maxDescriptionLength = 160;
 
   if (!data.description) {
     console.log(`File "${filePath}" is missing a description.`);
@@ -44,9 +46,10 @@ async function checkDescriptionLength(filePath) {
 
   const descriptionLength = data.description.length;
 
-  if (descriptionLength < 50 || descriptionLength > 160) {
+  if (descriptionLength < minDescriptionLength || descriptionLength > maxDescriptionLength) {
     console.log(
-      `File "${filePath}" has an invalid description length: ${descriptionLength} characters.`
+      `File "${filePath}" has an invalid description length: ${descriptionLength} characters. ` +
+      `Description should be between ${minDescriptionLength}-${maxDescriptionLength} characters.`
     );
     return false;
   }
@@ -58,6 +61,8 @@ async function checkDescriptionLength(filePath) {
 async function checkTitleLength(filePath) {
     const fileContent = await fs.readFile(filePath, "utf8");
     const { data } = matter(fileContent);
+    const minTitleLength = 30;
+    const maxTitleLength = 60;
 
     if (!data.title) {
         console.log(`File "${filePath}" is missing a title.`);
@@ -65,8 +70,11 @@ async function checkTitleLength(filePath) {
     }
 
     const titleLength = data.title.length;
-    if (titleLength < 30 || titleLength > 60) {
-        console.log(`File "${filePath}" has an invalid title length: ${titleLength} characters.`);
+    if (titleLength < minTitleLength || titleLength > maxTitleLength) {
+        console.log(
+            `File "${filePath}" has an invalid title length: ${titleLength} characters. ` +
+            `Title should be between ${minTitleLength}-${maxTitleLength} characters.`
+        );
         return false;
     }
 
@@ -129,12 +137,12 @@ async function checkMDXFiles(dirPath) {
 
   if (!allFilesValid) {
     console.error(
-      "Some files have invalid or missing descriptions. Meta description needing to be 50-160 characters"
+      "Some files have invalid or missing content."
     );
     process.exit(1); // Fail if any file is invalid
   } else {
     console.log(
-      "All files have a valid description length in the frontmatter."
+      "All files a valid for frontmatter."
     );
   }
 })();
