@@ -10,6 +10,9 @@ let totalFilesChecked = 0;
 let totalFilesValid = 0;
 let totalFilesInvalid = 0;
 
+// List of validators to run
+const validators = [checkDescriptionLength, checkTitleLength];
+
 // List of folders to exclude (relative to mdxDir)
 const excludedFolders = ["-ARCHIVE-", "api-reference", "llm-university"];
 
@@ -31,13 +34,11 @@ async function shouldExcludeFile(filePath) {
 }
 
 async function checkDescriptionLength(filePath) {
-  totalFilesChecked++;
   const fileContent = await fs.readFile(filePath, "utf8");
   const { data } = matter(fileContent);
 
   if (!data.description) {
     console.log(`File "${filePath}" is missing a description.`);
-    totalFilesInvalid++;
     return false;
   }
 
@@ -47,12 +48,29 @@ async function checkDescriptionLength(filePath) {
     console.log(
       `File "${filePath}" has an invalid description length: ${descriptionLength} characters.`
     );
-    totalFilesInvalid++;
     return false;
   }
 
-  totalFilesValid++;
   return true;
+}
+
+
+async function checkTitleLength(filePath) {
+    const fileContent = await fs.readFile(filePath, "utf8");
+    const { data } = matter(fileContent);
+
+    if (!data.title) {
+        console.log(`File "${filePath}" is missing a title.`);
+        return false;
+    }
+
+    const titleLength = data.title.length;
+    if (titleLength < 30 || titleLength > 60) {
+        console.log(`File "${filePath}" has an invalid title length: ${titleLength} characters.`);
+        return false;
+    }
+
+    return true;
 }
 
 async function checkMDXFiles(dirPath) {
@@ -77,9 +95,22 @@ async function checkMDXFiles(dirPath) {
         console.log(`Skipping excluded file: ${fullPath}`);
         continue;
       }
-      const isValid = await checkDescriptionLength(fullPath);
+      let isValid = true;
+
+      for (const validate of validators) {
+        const fileIsValid = await validate(fullPath);
+        if (!fileIsValid) {
+            isValid = false; 
+        }
+      }
+      
+      totalFilesChecked++;
       if (!isValid) {
         allFilesValid = false;
+        totalFilesInvalid++;
+      }
+      else {
+        totalFilesValid++;
       }
     }
   }
