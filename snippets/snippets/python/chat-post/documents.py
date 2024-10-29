@@ -3,7 +3,7 @@ import cohere
 co = cohere.Client("<<apiKey>>")
 
 response = co.chat(
-    model="command",
+    model="command-r-plus-08-2024",
     message="Who is more popular: Nsync or Backstreet Boys?",
     documents=[
         {
