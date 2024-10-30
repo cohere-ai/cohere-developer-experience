@@ -1,0 +1,134 @@
+---
+title: "Structured Generations (JSON)"
+slug: "v2/docs/structured-outputs-json"
+
+hidden: false
+
+description: "This page describes how to get Cohere models to create outputs in a certain format, such as JSON."
+image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, language models, structured outputs"
+
+createdAt: "Thu Jun 06 2024 05:37:56 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Tue Jun 11 2024 02:43:00 GMT+0000 (Coordinated Universal Time)"
+---
+
+Cohere models such as [Command R](https://docs.cohere.com/docs/command-r) and [Command R+](https://docs.cohere.com/docs/command-r-plus) are great at producing structured outputs in formats such as JSON.
+
+## Why generate JSON Objects using an LLM?
+
+JSON is a lightweight format that is easy for humans to read and write and is also easy for machines to parse. By generating JSON objects, you can structure and organize the model's responses in a way that can be used in downstream applications. This is particularly useful when you want to extract specific information from the responses, perform data analysis, or integrate the responses into your applications seamlessly.
+
+## How to use the `response_format` parameter
+
+When making an API request, you can specify the `response_format` parameter to indicate that you want the response in a JSON object format.
+
+```python
+import cohere
+co = cohere.ClientV2(api_key="YOUR API KEY")
+
+res = co.chat(
+  model="command-r-plus-08-2024",
+  messages=[{"role": "user", "content": "Generate a JSON describing a person, with the fields 'name' and 'age'"}],
+  response_format={ "type": "json_object" }
+)
+
+print(res.message.content[0].text)
+```
+By setting the `response_format` type to `"json_object"` in the Chat API, the output of the model is guaranteed to be a valid JSON object.
+
+```
+# Example response
+
+{
+  "name": "Emma Johnson",
+  "age": 32
+}
+
+```
+
+<Info title="Important"> 
+ When using  `{ "type": "json_object" }` your `message` should always explicitly instruct the model to generate a JSON (eg: _"Generate a JSON ..."_) . Otherwise the model may end up getting stuck generating an infinite stream of characters and eventually run out of context length.
+</Info>
+
+## Specifying a schema (beta)
+
+The `response_format` parameter also allows you to define a schema for the generated JSON object. A [JSON Schema](https://json-schema.org/specification) is a way to describe the structure of the JSON object you want the LLM to generate. This is optional, but it gives you more control over the response format. 
+
+For example, let's say you want the LLM to generate a JSON object with specific keys for a book, such as "title," "author," and "publication_year." Your API request might look like this:
+
+```python
+import cohere
+co = cohere.ClientV2(api_key="YOUR API KEY")
+
+res = co.chat(
+    model="command-r-plus-08-2024",
+    messages=[
+        {
+            "role": "user",
+            "content": "Generate a JSON describing a book, with the fields 'title' and 'author' and 'publication_year'",
+        }
+    ],
+    response_format={
+        "type": "json_object",
+        "schema": {
+            "type": "object",
+            "required": ["title", "author", "publication_year"],
+            "properties": {
+                "title": {"type": "string"},
+                "author": {"type": "string"},
+                "publication_year": {"type": "integer"},
+            },
+        },
+    },
+)
+
+print(res.message.content[0].text)
+```
+
+In this schema, we defined three keys ("title," "author," "publication_year") and their expected data types ("string" and "number"). The LLM will generate a JSON object that adheres to this structure.
+
+```
+# Example response
+
+{
+  "title": "The Great Gatsby",
+  "author": "F. Scott Fitzgerald",
+  "publication_year": 1925
+}
+
+```
+
+<Info title="Important"> 
+Specifying a `json_schema` adds even more latency, proportional to the complexity of the schema. This parameter is in **beta**, and will continue seeing performance improvements.
+</Info>
+
+### Generating nested objects
+
+By setting `response_format={ "type": "json_object" }`the model can be configured to output objects with up to 5 levels of nesting. When a `schema` is specified, there are no limitations on the levels of nesting. 
+
+### Schema constraints
+
+When constructing a `schema` keep the following constraints in mind:
+
+- The `type` in the top level schema must be `object`
+- Every object in the schema must have at least one `required` field specified
+
+### Unsupported schema features
+
+We do not support the entirety of the [JSON Schema specification](https://json-schema.org/specification).  Below is a list of some unsupported features:
+
+- [Schema Composition](https://json-schema.org/understanding-json-schema/reference/combining#schema-composition) (`anyOf`, `allOf`, `oneOf` and `not`)
+- [Numeric Ranges](https://json-schema.org/understanding-json-schema/reference/numeric#range) (`maximum` and  `minimum`)
+- [Array Length Ranges](https://json-schema.org/understanding-json-schema/reference/array#length) (`minItems` and `maxItems`) 
+- String limitations:
+  - [String Length](https://json-schema.org/understanding-json-schema/reference/string#length) (`maxLength` and `minLength`)
+  - The following are not supported in [Regular Expressions](https://json-schema.org/understanding-json-schema/reference/string#regexp)
+    - `^`
+    - `$`
+    - `?=`
+    - `?!`
+  - The following [formats](https://json-schema.org/understanding-json-schema/reference/string#format) are the only supported ones
+    - `date-time`
+    - `uuid`
+    - `date`
+    - `time`

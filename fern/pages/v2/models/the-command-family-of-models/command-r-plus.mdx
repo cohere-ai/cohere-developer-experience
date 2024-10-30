@@ -1,0 +1,104 @@
+---
+title: Command R+
+slug: "v2/docs/command-r-plus"
+
+hidden: false
+description: >-
+  Command R+ is Cohere's model for conversational interaction and long-context tasks, best suited for complex RAG workflows and multi-step tool use.
+image: "../../../../assets/images/edb3e49-cohere_meta_image.jpg"  
+keywords: "generative AI, Cohere, large language models"
+
+createdAt: "Thu Apr 04 2024 08:03:47 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Thu Jun 06 2024 22:58:37 GMT+0000 (Coordinated Universal Time)"
+---
+
+Command R+ 08 2024 is Cohere’s newest large language model, optimized for conversational interaction and long-context tasks. It aims at being extremely performant, enabling companies to move beyond proof of concept and into production.
+
+We recommend using Command R+ 08 2024 for those workflows that lean on complex RAG functionality and [multi-step agents](/v2/docs/multi-step-tool-use). Command R 08 2024, on the other hand, is great for simpler [retrieval augmented generation (RAG)](/v2/docs/retrieval-augmented-generation-rag) and simpler tools use cases like function calling, as well as applications where speed or price is a major consideration.
+
+### Model Details
+| Model Name               | Description                                                                                                                                                                                                                                         | Modality             | Context Length | Maximum Output Tokens | Endpoints              |
+|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|----------------|-----------------------|------------------------|
+| `command-r-plus-08-2024` | `command-r-plus-08-2024` is an update of the Command R+ model, delivered in August 2024.                                                                                                                                                            | Text                 | 128k           | 4k                    | [Chat](/reference/chat)|
+| `command-r-plus-04-2024` | Command R+ is an instruction-following conversational model that performs language tasks at a higher quality, more reliably, and with a longer context than previous models. It is best suited for complex RAG workflows and multi-step tool use.   | Text                 | 128k           | 4k                    | [Chat](/reference/chat)|
+| `command-r-plus`         | `command-r-plus` is an alias for `command-r-plus-04-2024`, so if you use `command-r-plus` in the API, that's the model you're pointing to.                                                                                                          | Text                 | 128k           | 4k                    | [Chat](/reference/chat)|
+
+## Command R+ August 2024 Release
+Cohere's flagship text-generation models, Command R and Command R+, received a substantial update in August 2024. We chose to designate these models with time stamps, so in the API Command R+ 08-2024 is accesible with `command-r-plus-08-2024`.
+
+With the release, both models include the following feature improvements:
+- For tool use, Command R and Command R+ have demonstrated improved decision-making around whether or not to use a tool.
+- The updated models are better able to follow instructions included by the user in the preamble.
+- Better structured data analysis for structured data manipulation. 
+- Improved robustness to non-semantic prompt changes like white space or new lines.
+- Models will decline unanswerable questions and are now able to execute RAG workflows without citations
+
+`command-r-plus-08-2024` in particular delivers roughly 50% higher throughput and 25% lower latencies as compared to the previous Command R+ version, while keeping the hardware footprint the same. Read more in the relevant blog post. 
+
+What's more, both these updated models can now operate in one of several safety modes, which gives developers more granular control over how models generate output in a variety of different contexts. Find more in these [safety modes docs](https://docs.cohere.com/docs/safety-modes).
+
+Finally, these refreshed models were trained with data through February 2023, which means if you ask them questions requiring information from after this date their answers will likely be incorrect. But our RAG functionality can connect to the internet or other sources of information, which gives the models access to more timely facts and can improve the quality of their output.
+
+## Unique Command R+ Model Capabilities
+
+Command R+ has been trained on a massive corpus of diverse texts in multiple languages, and can perform a wide array of text-generation tasks. Moreover, Command R+ has been trained with a particular focus on excelling in some of the most critical business use-cases.
+
+Note, however, that RAG and multi-step tool use (agents) are currently only available in English.
+
+### Multilingual Capabilities
+
+The model is optimized to perform well in the following languages: English, French, Spanish, Italian, German, Brazilian Portuguese, Japanese, Korean, Simplified Chinese, and Arabic. 
+
+Additionally, pre-training data has been included for the following 13 languages: Russian, Polish, Turkish, Vietnamese, Dutch, Czech, Indonesian, Ukrainian, Romanian, Greek, Hindi, Hebrew, Persian.
+
+The model has been trained to respond in the language of the user. Here's an example:
+
+```python PYTHON
+import cohere
+co = cohere.ClientV2("<YOUR API KEY>")
+
+co.chat(
+    model="command-r-plus-08-2024",
+    messages=[
+        {
+            "role" : "user",
+            "content" : "Écris une description de produit pour une voiture électrique en 50 à 75 mots"
+        }  
+    ]
+)
+```
+
+And here's what the response might look like:
+
+```text TEXT
+Découvrez la voiture électrique qui va révolutionner votre façon de conduire.
+Avec son design élégant, cette voiture offre une expérience de conduite unique
+avec une accélération puissante et une autonomie impressionnante. Sa
+technologie avancée vous garantit une charge rapide et une fiabilité inégalée.
+Avec sa conception innovante et durable, cette voiture est parfaite pour les 
+trajets urbains et les longues distances. Profitez d'une conduite silencieuse
+et vivez l'expérience de la voiture électrique!
+```
+
+Command R+ can also perform cross-lingual tasks, such as translation or answering questions about content in other languages.
+
+### Retrieval Augmented Generation
+
+Command R+ has the ability to ground its English-language generations. This means that it can generate responses based on a list of supplied document snippets, and it will include citations in its response indicating the source of the information.
+
+For more information, check out our dedicated guide on [retrieval augmented generation](/v2/docs/retrieval-augmented-generation-rag).
+
+### Multi-Step Tool Use
+
+[Tool use](/v2/docs/tool-use) is a technique which allows developers to connect Cohere's models to external tools--search engines, APIs, functions, databases, etc.--and use them to perform various actions.
+
+Tool use comes in single-step and multi-step variants. In the former, the model has access to a bevy of tools to generate a response, and it can call multiple tools, but it must do all of this in a single step. The model cannot execute a sequence of steps, and it cannot use the results from one tool call in a subsequent step. In the latter, however, the model can call more than one tool in a sequence of steps, using the results from one tool call in a subsequent step. This process allows the language model to reason, perform dynamic actions, and quickly adapt on the basis of information coming from external sources.
+
+Command R+ has been trained with multi-step tool use capabilities, with which it is possible to build simple agents. This functionality takes a conversation as input (with an optional user-system preamble), along with a list of available tools. The model will then generate a json-formatted list of actions to execute on a subset of those tools. For more information, check out our dedicated [multi-step tool use](/v2/docs/multi-step-tool-use) guide.
+
+## Temporary Context Window Caveat
+
+We have a known issue where prompts between 112K - 128K in length result in bad generations. We are working to get this resolved, and we appreciate your patience in the meantime.
+
+---
+Congrats on reaching the end of this page! Get an extra $1 API credit by entering the `CommandR+Docs` credit code in [your Cohere dashboard](https://dashboard.cohere.com/billing?tab=payment)

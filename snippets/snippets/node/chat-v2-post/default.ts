@@ -6,7 +6,7 @@ const cohere = new CohereClientV2({
 
 (async () => {
   const response = await cohere.chat({
-    model: 'command-r-plus',
+    model: 'command-r-plus-08-2024',
     messages: [
       {
         role: 'user',
