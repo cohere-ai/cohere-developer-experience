@@ -155,6 +155,7 @@ paths:
             - $ref: "#/components/schemas/ChatToolCallsGenerationEvent"
             - $ref: "#/components/schemas/ChatStreamEndEvent"
             - $ref: "#/components/schemas/ChatToolCallsChunkEvent"
+            - $ref: "#/components/schemas/ChatDebugEvent"
           discriminator:
             propertyName: event_type
             mapping:
@@ -166,6 +167,7 @@ paths:
               tool-calls-generation: "#/components/schemas/ChatToolCallsGenerationEvent"
               stream-end: "#/components/schemas/ChatStreamEndEvent"
               tool-calls-chunk: "#/components/schemas/ChatToolCallsChunkEvent"
+              debug: "#/components/schemas/ChatDebugEvent"
       x-fern-examples:
         - code-samples:
             - sdk: go
@@ -22359,6 +22361,7 @@ components:
             - text-generation
             - citation-generation
             - stream-end
+            - debug
     ChatStreamStartEvent:
       allOf:
         - $ref: "#/components/schemas/ChatStreamEvent"
@@ -22533,6 +22536,15 @@ components:
               type: string
               x-fern-audiences:
                 - public
+    ChatDebugEvent:
+      allOf:
+        - $ref: "#/components/schemas/ChatStreamEvent"
+        - type: object
+          properties:
+            prompt:
+              type: string
+              x-fern-audiences:
+                - public
     StreamedChatResponse:
       description: StreamedChatResponse is returned in streaming mode (specified with
         `stream=True` in the request).
@@ -22546,6 +22558,7 @@ components:
         - $ref: "#/components/schemas/ChatToolCallsGenerationEvent"
         - $ref: "#/components/schemas/ChatStreamEndEvent"
         - $ref: "#/components/schemas/ChatToolCallsChunkEvent"
+        - $ref: "#/components/schemas/ChatDebugEvent"
       discriminator:
         propertyName: event_type
         mapping:
@@ -22557,6 +22570,7 @@ components:
           tool-calls-generation: "#/components/schemas/ChatToolCallsGenerationEvent"
           stream-end: "#/components/schemas/ChatStreamEndEvent"
           tool-calls-chunk: "#/components/schemas/ChatToolCallsChunkEvent"
+          debug: "#/components/schemas/ChatDebugEvent"
     TextContent:
       type: object
       description: Text content of the message.
