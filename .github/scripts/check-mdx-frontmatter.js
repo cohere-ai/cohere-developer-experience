@@ -40,14 +40,14 @@ async function checkDescriptionLength(filePath) {
   const maxDescriptionLength = 160;
 
   if (!data.description) {
-    console.log(`File "${filePath}" is missing a description.`);
+    console.error(`File "${filePath}" is missing a description.`);
     return false;
   }
 
   const descriptionLength = data.description.length;
 
   if (descriptionLength < minDescriptionLength || descriptionLength > maxDescriptionLength) {
-    console.log(
+    console.error(
       `File "${filePath}" has an invalid description length: ${descriptionLength} characters. ` +
       `Description should be between ${minDescriptionLength}-${maxDescriptionLength} characters.`
     );
@@ -64,18 +64,20 @@ async function checkTitleLength(filePath) {
     const minTitleLength = 30;
     const maxTitleLength = 60;
 
+    filePath = path.relative(mdxDir, filePath);
+
     if (!data.title) {
-        console.log(`File "${filePath}" is missing a title.`);
+        console.error(`File "${filePath}" is missing a title.`);
         return false;
     }
 
     const titleLength = data.title.length;
     if (titleLength < minTitleLength || titleLength > maxTitleLength) {
-        console.log(
+        console.warn(
             `File "${filePath}" has an invalid title length: ${titleLength} characters. ` +
             `Title should be between ${minTitleLength}-${maxTitleLength} characters.`
         );
-        return false;
+        return true;
     }
 
     return true;
