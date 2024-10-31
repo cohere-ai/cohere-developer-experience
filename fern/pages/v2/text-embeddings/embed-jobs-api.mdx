@@ -114,7 +114,7 @@ If your dataset hits a validation error, please refer to the dataset validation 
 Your dataset is now ready to be embedded. Here's a code snippet illustrating what that looks like:
 
 ```python PYTHON
-embed_job = co.embed_jobs.create(
+embed_job_response = co.embed_jobs.create(
 	dataset_id=input_dataset.id,
 	input_type='search_document' ,
 	model='embed-english-v3.0',
@@ -122,7 +122,7 @@ embed_job = co.embed_jobs.create(
 	truncate='END')
 
 # block until the job is complete
-co.wait(embed_job)
+embed_job = co.wait(embed_job_response)
 ```
 
 Since we’d like to search over these embeddings and we can think of them as constituting our knowledge base, we set `input_type='search_document'`.
@@ -132,16 +132,14 @@ Since we’d like to search over these embeddings and we can think of them as co
 The output of embed jobs is a dataset object which you can download or pipe directly to a database of your choice:
 
 ```python PYTHON
-created_embed_job = co.embed_jobs.get(id=embed_job.job_id)
-output_dataset=co.datasets.get(id=created_embed_job.output_dataset_id)
+output_dataset=co.datasets.get(id=embed_job.output_dataset_id)
 co.utils.save(filepath='/content/embed_job_output.csv', format="csv")
 ```
 
 Alternatively if you would like to pass the dataset into a downstream function you can do the following:
 
 ```python PYTHON
-created_embed_job = co.embed_jobs.get(id=embed_job.job_id)
-output_dataset=co.datasets.get(id=created_embed_job.output_dataset_id)
+output_dataset=co.datasets.get(id=embed_job.output_dataset_id)
 results=[]
 for record in output_dataset:
 	results.append(record)
