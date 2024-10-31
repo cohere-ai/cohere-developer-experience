@@ -29,7 +29,7 @@ The Embed Jobs API works in conjunction with the Embed API; in production use-ca
 ![](../../../assets/images/0826a69-image.png)
 ### Constructing a Dataset for Embed Jobs
 
-To create a dataset for Embed Jobs, you will need to specify the `embedding_types`, and you need to set `dataset_type` as `embed-input`. The schema of the file looks like: `text:string`.
+To create a dataset for Embed Jobs, you will need to set dataset `type` as `embed-input`. The schema of the file looks like: `text:string`.
 
 The Embed Jobs and Dataset APIs respect metadata through two fields: `keep_fields`, `optional_fields`. During the `create dataset` step, you can specify either `keep_fields` or `optional_fields`, which are a list of strings corresponding to the field of the metadata you’d like to preserve. `keep_fields` is more restrictive, since validation will fail if the field is missing from an entry. However, `optional_fields`, will skip empty fields and allow validation to pass.
 
@@ -66,10 +66,9 @@ ds=co.datasets.create(
 	name='sample_file',
 	# insert your file path here - you can upload it on the right - we accept .csv and jsonl files
 	data=open('embed_jobs_sample_data.jsonl', 'rb'),
-	keep_fields=['wiki_id','url','views','title']
-	optional_fields=['langs']
-	dataset_type="embed-input",
-  embedding_types=['float']
+	keep_fields=['wiki_id','url','views','title'],
+	optional_fields=['langs'],
+	type="embed-input"
 	)
 
 # wait for the dataset to finish validation
@@ -89,7 +88,7 @@ co = cohere.ClientV2(api_key="<YOUR API KEY>")
 input_dataset=co.datasets.create(
 	name='your_file_name',
 	data=open('/content/your_file_path', 'rb'),
-	dataset_type="embed-input"
+	type="embed-input"
 	)
 
 # block on server-side validation
@@ -119,7 +118,7 @@ embed_job = co.embed_jobs.create(
 	dataset_id=input_dataset.id,
 	input_type='search_document' ,
 	model='embed-english-v3.0',
-  embedding_types=['float'],
+        embedding_types=['float'],
 	truncate='END')
 
 # block until the job is complete
@@ -133,14 +132,16 @@ Since we’d like to search over these embeddings and we can think of them as co
 The output of embed jobs is a dataset object which you can download or pipe directly to a database of your choice:
 
 ```python PYTHON
-output_dataset=co.datasets.get(id=embed_job.output.id)
+created_embed_job = co.embed_jobs.get(id=embed_job.job_id)
+output_dataset=co.datasets.get(id=created_embed_job.output_dataset_id)
 co.utils.save(filepath='/content/embed_job_output.csv', format="csv")
 ```
 
 Alternatively if you would like to pass the dataset into a downstream function you can do the following:
 
 ```python PYTHON
-output_dataset=co.datasets.get(id=embed_job.output.id)
+created_embed_job = co.embed_jobs.get(id=embed_job.job_id)
+output_dataset=co.datasets.get(id=created_embed_job.output_dataset_id)
 results=[]
 for record in output_dataset:
 	results.append(record)
