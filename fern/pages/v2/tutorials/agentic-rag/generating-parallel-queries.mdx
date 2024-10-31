@@ -9,25 +9,29 @@ keywords: "Cohere, RAG, agents, function calling,tool use"
 
 <a target="_blank" href="https://colab.research.google.com/github/cohere-ai/notebooks/blob/main/notebooks/guides/agentic-rag/agentic_rag_pt2_parallel_queries.ipynb">Open in Colab</a>
 
-Compare two user queries to a RAG chatbot, "What was Apple's revenue in 2023?" and "What were Apple's and Google's revenue in 2023?".
+Compare two user queries posed to a RAG chatbot:
+- "What was Apple's revenue in 2023?"
+- "What were Apple's and Google's revenue in 2023?".
 
-The first query is straightforward as we can perform retrieval using pretty much the same query we get.
+The first query is straightforward, as we can perform retrieval using pretty much the same query.
 
 But the second query is more complex. We need to break it down into two separate queries, one for Apple and one for Google.
 
-This is an example that requires query expansion. Here, the agentic RAG will need to turn or expand the query into a more optimized set of queries it should use to perform the retrieval.
+This is an example that requires query expansion, in which the agentic RAG application will expand a single query into a set of queries and then run them in parallel. Here are some of the ways in which that can work:
 
-In this part, we'll learn how to create an agentic RAG system that can perform query expansion and then run those queries in parallel:
-- Query expansion
+- Basic query expansion
 - Query expansion over multiple data sources
 - Query expansion in multi-turn conversations
 
-We'll learn these by building an agent that answers questions about using Cohere.
+We'll learn about these options by building an agent that answers questions about using Cohere.
 
 ## Setup
 
 To get started, first we need to install the `cohere` library and create a Cohere client.
 
+We also need to import the tool definitions from the `tool_def.py` file.
+
+<Info> Important: the source code for tool definitions can be [found here](https://github.com/cohere-ai/notebooks/blob/main/notebooks/guides/agentic-rag/tool_def.py). Make sure to have the `tool_def.py` file in the same directory as this notebook for the imports to work correctly. </Info>
 
 ```python PYTHON
 import json
@@ -62,7 +66,7 @@ functions_map = {
 
 ## Running an agentic RAG workflow
 
-We create a `run_agent` function to run the agentic RAG workflow, the same as in Part 1. If you want further details on how to set up the tools, check out Part 1.
+We create a `run_agent` function to run the agentic RAG workflow, just as we did in Part 1. If you want further details on how to set up the tools, check out Part 1.
 
 
 ```python PYTHON
@@ -161,7 +165,7 @@ Let's ask the agent a few questions, starting with this one about the Chat endpo
 
 Firstly, the agent rightly chooses the `search_developer_docs` tool to retrieve the information it needs.
 
-Additionally, because the question asks about two different things, retrieving information using the same query as the user's may not be the most optimal. Instead, the query needs to be expanded, or split into multiple parts, each retrieving its own set of documents.
+Additionally, because the question asks about two different things, retrieving information using the same query as the user's may not be the most optimal approach. Instead, the query needs to be expanded or split into multiple parts, each retrieving its own set of documents.
 
 Thus, the agent expands the original query into two queries.
 
@@ -316,20 +320,17 @@ Sources:
 1. search_code_examples_680znd4ycmm3:2
 ```
     
-
-
 ## Query expansion in multi-turn conversations
 
-A RAG chatbot needs to be able to infer the user's intent for a given query, sometimes based on a vague context.
+A RAG chatbot needs to be able to infer the user's intent for a given query, which is sometimes based on vague context.
 
 This is especially important in multi-turn conversations, where the user's intent may not be clear from a single query. 
 
-For example, in the first turn, a user might ask "What is A" and in the second turn, they might ask "Compare that with B and C". So, the agent needs to be able to infer that the user's intent is to compare A with B and C.
+For example, in the first turn, a user might ask "What is A" and in the second, they might ask "Compare that with B and C". So, the agent needs to be able to infer that the user's intent is to compare A with B and C.
 
-Let's see an example of this. First, note that the `run_agent` function is already enabled to handle multi-turn conversations. It can take messages from the previous conversation turns and append them to the `messages` list.
+Let's see an illustration of this. First, note that the `run_agent` function is already set up to handle multi-turn conversations. It can take messages from the previous conversation turns and append them to the `messages` list.
 
-So in the first turn, the user asks about the Chat endpoint, which the agent duly provides a response to.
-
+In the first turn, the user asks about the Chat endpoint, to which the agent duly responds.
 
 ```python PYTHON
 messages = run_agent("What is the Chat endpoint?")
@@ -355,13 +356,13 @@ Sources:
 ```
 
 
-In the second turn, the user asks a question that contains two parts: first asking how it's different from RAG and then asking for code examples.
+In the second turn, the user asks a question that has two parts: first, how it's different from RAG, and then, for code examples.
 
 We pass the messages from the previous conversation turn to the `run_agent` function.
 
 Because of this, the agent is able to infer that the question is referring to the Chat endpoint even though the user didn't explicitly mention it.
 
-And the agent goes on to expand the query into two separate queries, one for the `search_code_examples` tool and one for the `search_developer_docs` tool.
+The agent then expands the query into two separate queries, one for the `search_code_examples` tool and one for the `search_developer_docs` tool.
 
 
 ```python PYTHON
@@ -438,8 +439,6 @@ Sources:
 1. search_code_examples_qj3q45zxk8gz:3
 ```
     
-
-
 ## Summary
 
 In this tutorial, we learned about:
@@ -447,6 +446,6 @@ In this tutorial, we learned about:
 - How query expansion works over multiple data sources
 - How query expansion works in multi-turn conversations
 
-Having said that, we may encounter even more complex queries that what we've seen so far. In particular, there are queries that require sequential reasoning where the retrieval needs to happen over multiple steps.
+Having said that, we may encounter even more complex queries--especially those that require sequential reasoning over multiple steps.
 
 In Part 3, we'll learn how the agentic RAG system can perform sequential reasoning.
