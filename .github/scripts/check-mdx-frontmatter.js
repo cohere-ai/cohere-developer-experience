@@ -59,6 +59,10 @@ async function checkDescriptionLength(filePath) {
 
 
 async function checkTitleLength(filePath) {
+    // these two files are layout files 
+    // and we don't expect to have title in them
+    const filesToExclude = ["index.mdx", "cookbooks.mdx"];
+    
     const fileContent = await fs.readFile(filePath, "utf8");
     const { data } = matter(fileContent);
     const minTitleLength = 30;
@@ -67,6 +71,9 @@ async function checkTitleLength(filePath) {
     filePath = path.relative(mdxDir, filePath);
 
     if (!data.title) {
+        if (filesToExclude.includes(filePath)) {
+            return true;
+        }
         console.error(`File "${filePath}" is missing a title.`);
         return false;
     }
