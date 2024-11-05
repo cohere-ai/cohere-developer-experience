@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	co := client.NewClient(client.WithToken("<<apiKey>>"))
+	co := client.NewClient()
 
 	_, err := co.Finetuning.DeleteFinetunedModel(context.TODO(), "test-id")
 	if err != nil {

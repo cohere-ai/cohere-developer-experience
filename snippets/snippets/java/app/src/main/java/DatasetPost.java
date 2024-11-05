@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public class DatasetPost {
   public static void main(String[] args) {
-    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
     DatasetsCreateResponse response =
         cohere

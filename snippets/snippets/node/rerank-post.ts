@@ -1,8 +1,6 @@
 const { CohereClient } = require('cohere-ai');
 
-const cohere = new CohereClient({
-  token: '<<apiKey>>',
-});
+const cohere = new CohereClient({});
 
 (async () => {
   const rerank = await cohere.rerank({
