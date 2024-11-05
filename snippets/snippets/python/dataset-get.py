@@ -1,6 +1,6 @@
 import cohere
 
-co = cohere.Client("<<apiKey>>")
+co = cohere.Client()
 
 # get dataset
 response = co.datasets.get(id="<<datasetId>>")

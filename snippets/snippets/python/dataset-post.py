@@ -1,6 +1,6 @@
 import cohere
 
-co = cohere.Client("<<apiKey>>")
+co = cohere.Client()
 
 # upload a dataset
 my_dataset = co.datasets.create(

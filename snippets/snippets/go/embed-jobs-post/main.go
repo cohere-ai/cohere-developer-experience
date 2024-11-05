@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	co := client.NewClient(client.WithToken("<<apiKey>>"))
+	co := client.NewClient()
 
 	resp, err := co.EmbedJobs.Create(
 		context.TODO(),
