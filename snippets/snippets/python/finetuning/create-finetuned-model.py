@@ -3,11 +3,11 @@ from cohere.finetuning import (
     FinetunedModel,
     Hyperparameters,
     Settings,
-    WandbConfig
+    WandbConfig,
 )
 import cohere
 
-co = cohere.Client("<<apiKey>>")
+co = cohere.Client()
 hp = Hyperparameters(
     early_stopping_patience=10,
     early_stopping_threshold=0.001,

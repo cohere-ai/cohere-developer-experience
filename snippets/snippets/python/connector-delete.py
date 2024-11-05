@@ -1,4 +1,4 @@
 import cohere
 
-co = cohere.Client("<<apiKey>>")
+co = cohere.Client()
 co.connectors.delete("test-id")

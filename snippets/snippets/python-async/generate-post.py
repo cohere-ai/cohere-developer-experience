@@ -1,7 +1,7 @@
 import cohere
 import asyncio
 
-co = cohere.AsyncClient("<<apiKey>>")
+co = cohere.AsyncClient()
 
 
 async def main():
@@ -9,5 +9,6 @@ async def main():
         prompt="Please explain to me how LLMs work",
     )
     print(response)
+
 
 asyncio.run(main())

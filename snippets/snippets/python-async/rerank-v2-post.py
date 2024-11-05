@@ -1,7 +1,7 @@
 import cohere
 import asyncio
 
-co = cohere.AsyncClientV2("<<apiKey>>")
+co = cohere.AsyncClientV2()
 
 docs = [
     "Carson City is the capital city of the American state of Nevada.",
@@ -20,5 +20,6 @@ async def main():
         top_n=3,
     )
     print(response)
+
 
 asyncio.run(main())

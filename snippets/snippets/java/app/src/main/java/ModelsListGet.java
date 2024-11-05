@@ -4,7 +4,7 @@ import com.cohere.api.types.ListModelsResponse;
 
 public class ModelsListGet {
   public static void main(String[] args) {
-    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
     ListModelsResponse response = cohere.models().list();
 

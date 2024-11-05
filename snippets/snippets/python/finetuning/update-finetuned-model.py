@@ -4,7 +4,7 @@ from cohere.finetuning import (
 )
 import cohere
 
-co = cohere.Client("<<apiKey>>")
+co = cohere.Client()
 finetuned_model = co.finetuning.update_finetuned_model(
     id="test-id",
     name="new name",
@@ -12,7 +12,8 @@ finetuned_model = co.finetuning.update_finetuned_model(
         base_model=BaseModel(
             base_type="BASE_TYPE_CHAT",
         ),
-        dataset_id="my-dataset-id",)
+        dataset_id="my-dataset-id",
+    ),
 )
 
 print(finetuned_model)
