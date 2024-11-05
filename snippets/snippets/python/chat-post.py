@@ -1,6 +1,6 @@
 import cohere
 
-co = cohere.Client("<<apiKey>>")
+co = cohere.Client()
 response = co.chat(
     chat_history=[
         {"role": "USER", "message": "Who discovered gravity?"},

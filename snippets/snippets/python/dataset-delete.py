@@ -1,6 +1,6 @@
 import cohere
 
-co = cohere.Client("<<apiKey>>")
+co = cohere.Client()
 
 # delete dataset
 co.datasets.delete("id")

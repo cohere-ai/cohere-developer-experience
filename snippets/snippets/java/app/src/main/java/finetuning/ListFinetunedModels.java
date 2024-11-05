@@ -6,7 +6,7 @@ import com.cohere.api.resources.finetuning.finetuning.types.ListFinetunedModelsR
 
 public class ListFinetunedModels {
   public static void main(String[] args) {
-    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
     ListFinetunedModelsResponse response = cohere.finetuning().listFinetunedModels();
 
