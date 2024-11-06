@@ -43,7 +43,8 @@ Import dependencies and set up the Cohere client.
 
 ```python PYTHON
 import cohere
-co = cohere.Client(api_key='Your API key')
+
+co = cohere.Client(api_key="Your API key")
 ```
 
 (All the rest of the examples on this page will be in Python, but you can find more detailed instructions for getting set up by checking out the Github repositories for [Python](https://github.com/cohere-ai/cohere-python), [Typescript](https://github.com/cohere-ai/cohere-typescript), and [Go](https://github.com/cohere-ai/cohere-go).)
@@ -60,9 +61,10 @@ Here is an example code snippet illustrating the process of creating a dataset, 
 
 ```python PYTHON
 my_dataset = co.datasets.create(
-	name="shakespeare",
-	data=open("./shakespeare.jsonl", "rb"),
-	type="chat-finetune-input")
+    name="shakespeare",
+    data=open("./shakespeare.jsonl", "rb"),
+    type="chat-finetune-input",
+)
 
 print(my_dataset.id)
 ```
@@ -110,14 +112,14 @@ As seen in the above example, the following would be a valid `create_dataset` ca
 
 ```python PYTHON
 # Upload a dataset for embed jobs
-ds=co.datasets.create(
-	name='sample_file',
-	# insert your file path here - you can upload it on the right - we accept .csv and jsonl files
-	data=open('embed_jobs_sample_data.jsonl', 'rb'),
-	keep_fields=['wiki_id','url','views','title'],
-	optional_fields=['langs'],
-	type="embed-input"
-	)
+ds = co.datasets.create(
+    name="sample_file",
+    # insert your file path here - you can upload it on the right - we accept .csv and jsonl files
+    data=open("embed_jobs_sample_data.jsonl", "rb"),
+    keep_fields=["wiki_id", "url", "views", "title"],
+    optional_fields=["langs"],
+    type="embed-input",
+)
 
 # wait for the dataset to finish validation
 print(co.wait(ds))
@@ -132,23 +134,23 @@ In the example below, we will create a new dataset and upload an evaluation set 
 ```python PYTHON
 # create a dataset
 my_dataset = co.datasets.create(
-	name="shakespeare",
-	type="chat-finetune-input",
-	data=open("./shakespeare.jsonl", "rb"),
-        eval_data=open("./shakespeare-eval.jsonl", "rb")
+    name="shakespeare",
+    type="chat-finetune-input",
+    data=open("./shakespeare.jsonl", "rb"),
+    eval_data=open("./shakespeare-eval.jsonl", "rb"),
 )
 
 co.wait(my_dataset)
 
 # start training a custom model using the dataset
 co.finetuning.create_finetuned_model(
-	request=FinetunedModel(
+    request=FinetunedModel(
         name="shakespearean-model",
         settings=Settings(
             base_model=BaseModel(
                 base_type="BASE_TYPE_CHAT",
             ),
-            dataset_id=my_dataset.id
+            dataset_id=my_dataset.id,
         ),
     )
 )
@@ -203,12 +205,12 @@ my_dataset = my_dataset_response.dataset
 
 # print each entry in the dataset
 for record in my_dataset:
-  print(record)
+    print(record)
 
 # save the dataset as jsonl
-co.utils.save_dataset(dataset=my_dataset, filepath='./path/to/new/file.jsonl')
+co.utils.save_dataset(dataset=my_dataset, filepath="./path/to/new/file.jsonl")
 # or save the dataset as csv
-co.utils.save_dataset(dataset=my_dataset, filepath='./path/to/new/file.csv')
+co.utils.save_dataset(dataset=my_dataset, filepath="./path/to/new/file.csv")
 ```
 
 ### Deleting a dataset
