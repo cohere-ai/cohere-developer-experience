@@ -8,7 +8,7 @@ curl --request POST \
     "messages": [
       {
         "role": "user",
-        "message": "Hello world!"
+        "content": "Hello world!"
       }
     ],
   }'

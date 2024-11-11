@@ -50,7 +50,7 @@ Cohere embeddings are optimized for different types of inputs.
 
 - When using embeddings for [semantic search](/docs/semantic-search), the search query should be embedded by setting `input_type="search_query"`
 - When using embeddings for semantic search, the text passages that are being searched over should be embedded with `input_type="search_document"`.
-- When using embedding for [`classification`](/docs/text-classification-with-embed) and `clustering` tasks, you can set `input_type` to either 'classification' or 'clustering' to optimize the embeddings appropriately.
+- When using embedding for `classification` and `clustering` tasks, you can set `input_type` to either 'classification' or 'clustering' to optimize the embeddings appropriately.
 - When `input_type='image'`, the expected input to be embedded is an image instead of text.
 
 ## Multilingual Support
@@ -93,7 +93,11 @@ Be aware that image embedding has the following restrictions:
 - Our API currently does not support batch image embeddings.
 
 ```python PYTHON
-import cohere  
+import cohere
+from PIL import Image
+from io import BytesIO
+import base64 
+
 co = cohere.Client(api_key="<YOUR API KEY>")
 
 # The model accepts input in base64 as a Data URL
@@ -125,9 +129,9 @@ ret.embeddings.float
 
 ## Compression Levels
 
-The Cohere embeddings platform now supports compression. The Embed API features an `embeddings_types` parameter which allows the user to specify various ways of compressing the output.  
+The Cohere embeddings platform supports compression. The Embed API features an `embeddings_types` parameter which allows the user to specify various ways of compressing the output.  
 
-The following embedding types are now supported: 
+The following embedding types are supported: 
 
 - `float`
 - `int8`
@@ -145,7 +149,7 @@ ret = co.embed(texts=phrases,
 ret.embeddings # This contains the float embeddings
 ```
 
-However we recommend being explicit about the `embedding type(s)`. To specify an `embedding type`, pass one of the types from the list above in as list containing a string:
+However we recommend being explicit about the `embedding type(s)`. To specify an embedding types, pass one of the types from the list above in as list containing a string:
 
 ```python PYTHON
 ret = co.embed(texts=phrases,

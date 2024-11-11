@@ -10,7 +10,7 @@ import com.cohere.api.resources.finetuning.requests.FinetuningUpdateFinetunedMod
 
 public class UpdateFinetunedModel {
   public static void main(String[] args) {
-    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
     UpdateFinetunedModelResponse response =
         cohere

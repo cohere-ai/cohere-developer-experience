@@ -1,7 +1,7 @@
 import cohere
 import asyncio
 
-co = cohere.AsyncClient("<<apiKey>>")
+co = cohere.AsyncClient()
 
 
 async def main():
@@ -10,5 +10,6 @@ async def main():
         url="https://connector-example.com/search",
     )
     print(response)
+
 
 asyncio.run(main())

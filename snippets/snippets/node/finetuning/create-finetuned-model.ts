@@ -1,8 +1,6 @@
 const { Cohere, CohereClient } = require('cohere-ai');
 
-const cohere = new CohereClient({
-  token: '<<apiKey>>',
-});
+const cohere = new CohereClient({});
 
 (async () => {
   const finetunedModel = await cohere.finetuning.createFinetunedModel({
