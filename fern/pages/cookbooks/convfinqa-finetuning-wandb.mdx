@@ -46,12 +46,19 @@ If you dont already have [Cohere Python SDK](https://github.com/cohere-ai/cohere
 ```python
 import os
 import cohere
-from cohere.finetuning import Hyperparameters, Settings, WandbConfig, FinetunedModel, BaseModel
+from cohere.finetuning import (
+    Hyperparameters,
+    Settings,
+    WandbConfig,
+    FinetunedModel,
+    BaseModel,
+)
 
-os.environ['COHERE_API_KEY'] = "<COHERE_API_KEY>" # fill in your Cohere API key here
+# fill in your Cohere API key here
+os.environ['COHERE_API_KEY'] = "<COHERE_API_KEY>" 
 
 # instantiate the Cohere client
-co = cohere.Client(os.environ['COHERE_API_KEY'])  
+co = cohere.Client(os.environ['COHERE_API_KEY'])
 ```
 
 ## Dataset
@@ -67,20 +74,37 @@ Following is an example datapoint from the finetuning data.
 
 ```python
 {
-    "messages": 
-        [
-            {"role": "System", "content": "stock-based awards under the plan stock options 2013 marathon grants stock options under the 2007 plan and previously granted options under the 2003 plan .\nmarathon 2019s stock options represent the right to purchase shares of common stock at the fair market value of the common stock on the date of grant .\nthrough 2004 , certain stock options were granted under the 2003 plan with a tandem stock appreciation right , which allows the recipient to instead elect to receive cash and/or common stock equal to the excess of the fair market value of shares of common stock , as determined in accordance with the 2003 plan , over the option price of the shares .\nin general , stock options granted under the 2007 plan and the 2003 plan vest ratably over a three-year period and have a maximum term of ten years from the date they are granted .\nstock appreciation rights 2013 prior to 2005 , marathon granted sars under the 2003 plan .\nno stock appreciation rights have been granted under the 2007 plan .\nsimilar to stock options , stock appreciation rights represent the right to receive a payment equal to the excess of the fair market value of shares of common stock on the date the right is exercised over the grant price .\nunder the 2003 plan , certain sars were granted as stock-settled sars and others were granted in tandem with stock options .\nin general , sars granted under the 2003 plan vest ratably over a three-year period and have a maximum term of ten years from the date they are granted .\nstock-based performance awards 2013 prior to 2005 , marathon granted stock-based performance awards under the 2003 plan .\nno stock-based performance awards have been granted under the 2007 plan .\nbeginning in 2005 , marathon discontinued granting stock-based performance awards and instead now grants cash-settled performance units to officers .\nall stock-based performance awards granted under the 2003 plan have either vested or been forfeited .\nas a result , there are no outstanding stock-based performance awards .\nrestricted stock 2013 marathon grants restricted stock and restricted stock units under the 2007 plan and previously granted such awards under the 2003 plan .\nin 2005 , the compensation committee began granting time-based restricted stock to certain u.s.-based officers of marathon and its consolidated subsidiaries as part of their annual long-term incentive package .\nthe restricted stock awards to officers vest three years from the date of grant , contingent on the recipient 2019s continued employment .\nmarathon also grants restricted stock to certain non-officer employees and restricted stock units to certain international employees ( 201crestricted stock awards 201d ) , based on their performance within certain guidelines and for retention purposes .\nthe restricted stock awards to non-officers generally vest in one-third increments over a three-year period , contingent on the recipient 2019s continued employment .\nprior to vesting , all restricted stock recipients have the right to vote such stock and receive dividends thereon .\nthe non-vested shares are not transferable and are held by marathon 2019s transfer agent .\ncommon stock units 2013 marathon maintains an equity compensation program for its non-employee directors under the 2007 plan and previously maintained such a program under the 2003 plan .\nall non-employee directors other than the chairman receive annual grants of common stock units , and they are required to hold those units until they leave the board of directors .\nwhen dividends are paid on marathon common stock , directors receive dividend equivalents in the form of additional common stock units .\nstock-based compensation expense 2013 total employee stock-based compensation expense was $ 80 million , $ 83 million and $ 111 million in 2007 , 2006 and 2005 .\nthe total related income tax benefits were $ 29 million , $ 31 million and $ 39 million .\nin 2007 and 2006 , cash received upon exercise of stock option awards was $ 27 million and $ 50 million .\ntax benefits realized for deductions during 2007 and 2006 that were in excess of the stock-based compensation expense recorded for options exercised and other stock-based awards vested during the period totaled $ 30 million and $ 36 million .\ncash settlements of stock option awards totaled $ 1 million and $ 3 million in 2007 and 2006 .\nstock option awards granted 2013 during 2007 , 2006 and 2005 , marathon granted stock option awards to both officer and non-officer employees .\nthe weighted average grant date fair value of these awards was based on the following black-scholes assumptions: .\nThe weighted average exercise price per share of 2007, 2006, 2005 are $ 60.94, $ 37.84, $ 25.14. The expected annual dividends per share of 2007, 2006, 2005 are $ 0.96, $ 0.80, $ 0.66. The expected life in years of 2007, 2006, 2005 are 5.0, 5.1, 5.5. The expected volatility of 2007, 2006, 2005 are 27% ( 27 % ), 28% ( 28 % ), 28% ( 28 % ). The risk-free interest rate of 2007, 2006, 2005 are 4.1% ( 4.1 % ), 5.0% ( 5.0 % ), 3.8% ( 3.8 % ). The weighted average grant date fair value of stock option awards granted of 2007, 2006, 2005 are $ 17.24, $ 10.19, $ 6.15.\n."}, 
-            {"role": "User", "content": "what was the weighted average exercise price per share in 2007?"}, 
-            {"role": "Chatbot", "content": "60.94"}, 
-            {"role": "User", "content": "and what was it in 2005?"}, 
-            {"role": "Chatbot", "content": "25.14"}, 
-            {"role": "User", "content": "what was, then, the change over the years?"}, 
-            {"role": "Chatbot", "content": "subtract(60.94, 25.14)"}, 
-            {"role": "User", "content": "what was the weighted average exercise price per share in 2005?"}, 
-            {"role": "Chatbot", "content": "25.14"}, 
-            {"role": "User", "content": "and how much does that change represent in relation to this 2005 weighted average exercise price?"}, 
-            {"role": "Chatbot", "content": "subtract(60.94, 25.14), divide(#0, 25.14)"}
-        ]
+    "messages": [
+        {
+            "role": "System",
+            "content": "stock-based awards under the plan stock options 2013 marathon grants stock options under the 2007 plan and previously granted options under the 2003 plan .\nmarathon 2019s stock options represent the right to purchase shares of common stock at the fair market value of the common stock on the date of grant .\nthrough 2004 , certain stock options were granted under the 2003 plan with a tandem stock appreciation right , which allows the recipient to instead elect to receive cash and/or common stock equal to the excess of the fair market value of shares of common stock , as determined in accordance with the 2003 plan , over the option price of the shares .\nin general , stock options granted under the 2007 plan and the 2003 plan vest ratably over a three-year period and have a maximum term of ten years from the date they are granted .\nstock appreciation rights 2013 prior to 2005 , marathon granted sars under the 2003 plan .\nno stock appreciation rights have been granted under the 2007 plan .\nsimilar to stock options , stock appreciation rights represent the right to receive a payment equal to the excess of the fair market value of shares of common stock on the date the right is exercised over the grant price .\nunder the 2003 plan , certain sars were granted as stock-settled sars and others were granted in tandem with stock options .\nin general , sars granted under the 2003 plan vest ratably over a three-year period and have a maximum term of ten years from the date they are granted .\nstock-based performance awards 2013 prior to 2005 , marathon granted stock-based performance awards under the 2003 plan .\nno stock-based performance awards have been granted under the 2007 plan .\nbeginning in 2005 , marathon discontinued granting stock-based performance awards and instead now grants cash-settled performance units to officers .\nall stock-based performance awards granted under the 2003 plan have either vested or been forfeited .\nas a result , there are no outstanding stock-based performance awards .\nrestricted stock 2013 marathon grants restricted stock and restricted stock units under the 2007 plan and previously granted such awards under the 2003 plan .\nin 2005 , the compensation committee began granting time-based restricted stock to certain u.s.-based officers of marathon and its consolidated subsidiaries as part of their annual long-term incentive package .\nthe restricted stock awards to officers vest three years from the date of grant , contingent on the recipient 2019s continued employment .\nmarathon also grants restricted stock to certain non-officer employees and restricted stock units to certain international employees ( 201crestricted stock awards 201d ) , based on their performance within certain guidelines and for retention purposes .\nthe restricted stock awards to non-officers generally vest in one-third increments over a three-year period , contingent on the recipient 2019s continued employment .\nprior to vesting , all restricted stock recipients have the right to vote such stock and receive dividends thereon .\nthe non-vested shares are not transferable and are held by marathon 2019s transfer agent .\ncommon stock units 2013 marathon maintains an equity compensation program for its non-employee directors under the 2007 plan and previously maintained such a program under the 2003 plan .\nall non-employee directors other than the chairman receive annual grants of common stock units , and they are required to hold those units until they leave the board of directors .\nwhen dividends are paid on marathon common stock , directors receive dividend equivalents in the form of additional common stock units .\nstock-based compensation expense 2013 total employee stock-based compensation expense was $ 80 million , $ 83 million and $ 111 million in 2007 , 2006 and 2005 .\nthe total related income tax benefits were $ 29 million , $ 31 million and $ 39 million .\nin 2007 and 2006 , cash received upon exercise of stock option awards was $ 27 million and $ 50 million .\ntax benefits realized for deductions during 2007 and 2006 that were in excess of the stock-based compensation expense recorded for options exercised and other stock-based awards vested during the period totaled $ 30 million and $ 36 million .\ncash settlements of stock option awards totaled $ 1 million and $ 3 million in 2007 and 2006 .\nstock option awards granted 2013 during 2007 , 2006 and 2005 , marathon granted stock option awards to both officer and non-officer employees .\nthe weighted average grant date fair value of these awards was based on the following black-scholes assumptions: .\nThe weighted average exercise price per share of 2007, 2006, 2005 are $ 60.94, $ 37.84, $ 25.14. The expected annual dividends per share of 2007, 2006, 2005 are $ 0.96, $ 0.80, $ 0.66. The expected life in years of 2007, 2006, 2005 are 5.0, 5.1, 5.5. The expected volatility of 2007, 2006, 2005 are 27% ( 27 % ), 28% ( 28 % ), 28% ( 28 % ). The risk-free interest rate of 2007, 2006, 2005 are 4.1% ( 4.1 % ), 5.0% ( 5.0 % ), 3.8% ( 3.8 % ). The weighted average grant date fair value of stock option awards granted of 2007, 2006, 2005 are $ 17.24, $ 10.19, $ 6.15.\n.",
+        },
+        {
+            "role": "User",
+            "content": "what was the weighted average exercise price per share in 2007?",
+        },
+        {"role": "Chatbot", "content": "60.94"},
+        {"role": "User", "content": "and what was it in 2005?"},
+        {"role": "Chatbot", "content": "25.14"},
+        {
+            "role": "User",
+            "content": "what was, then, the change over the years?",
+        },
+        {"role": "Chatbot", "content": "subtract(60.94, 25.14)"},
+        {
+            "role": "User",
+            "content": "what was the weighted average exercise price per share in 2005?",
+        },
+        {"role": "Chatbot", "content": "25.14"},
+        {
+            "role": "User",
+            "content": "and how much does that change represent in relation to this 2005 weighted average exercise price?",
+        },
+        {
+            "role": "Chatbot",
+            "content": "subtract(60.94, 25.14), divide(#0, 25.14)",
+        },
+    ]
 }
 ```
 
@@ -97,19 +121,24 @@ We use the [Datasets API](https://docs.cohere.com/reference/create-dataset) to u
 
 
 ```python
-chat_dataset = co.datasets.create(name="cfqa-ft-dataset",
-                                   data=open("data/convfinqa-train-chat.jsonl", "rb"),
-                                   eval_data=open("data/convfinqa-eval-chat.jsonl", "rb"),
-                                   type="chat-finetune-input")
-print(chat_dataset.id) # we will use this id to refer to the dataset when creating a finetuning job
-
+chat_dataset = co.datasets.create(
+    name="cfqa-ft-dataset",
+    data=open("data/convfinqa-train-chat.jsonl", "rb"),
+    eval_data=open("data/convfinqa-eval-chat.jsonl", "rb"),
+    type="chat-finetune-input",
+)
+print(
+    chat_dataset.id
+)  # we will use this id to refer to the dataset when creating a finetuning job
 ```
 
 Whenever a dataset is created, the data is validated asynchronously. This validation is kicked off automatically on the backend, and must be completed before we can use this dataset for finetuning. You can find more info on interpreting the errors, if you get any, [here](https://docs.cohere.com/docs/datasets#dataset-validation).
 
 
 ```python
-co.wait(chat_dataset) # wait for the dataset to be processed and validated
+co.wait(
+    chat_dataset
+)  # wait for the dataset to be processed and validated
 ```
 
 ## Start finetuning
@@ -123,9 +152,9 @@ There are several hyperparameters that you can modify to get the most out of you
 
 ```python
 hp_config = Hyperparameters(
-  train_batch_size=16,
-  train_epochs=1,
-  learning_rate=0.0001,
+    train_batch_size=16,
+    train_epochs=1,
+    learning_rate=0.0001,
 )
 ```
 
@@ -139,7 +168,7 @@ For chat finetuning, we support WandB integration which allows you to monitor th
 wnb_config = WandbConfig(
     project="test-project",
     api_key="<wandb_api_key>",
-    entity="test-entity", # must be a valid enitity associated with the provided API key
+    entity="test-entity",  # must be a valid enitity associated with the provided API key
 )
 ```
 
@@ -150,19 +179,21 @@ With the dataset, hyperparameters, and the wandb configurations ready, we can cr
 
 ```python
 cfqa_finetune = co.finetuning.create_finetuned_model(
-  request=FinetunedModel(
-    name="cfqa-command-r-ft",
-    settings=Settings(
-      base_model=BaseModel(
-        base_type="BASE_TYPE_CHAT", # specifies this is a chat finetuning
-      ),
-      dataset_id=chat_dataset.id, # the id of the dataset we created above
-      hyperparameters=hp_config,
-      wandb=wnb_config,
+    request=FinetunedModel(
+        name="cfqa-command-r-ft",
+        settings=Settings(
+            base_model=BaseModel(
+                base_type="BASE_TYPE_CHAT",  # specifies this is a chat finetuning
+            ),
+            dataset_id=chat_dataset.id,  # the id of the dataset we created above
+            hyperparameters=hp_config,
+            wandb=wnb_config,
+        ),
     ),
-  ),
 )
-print(cfqa_finetune.finetuned_model.id) # we will use this id to refer to the finetuned model when making predictions/getting status/etc.
+print(
+    cfqa_finetune.finetuned_model.id
+)  # we will use this id to refer to the finetuned model when making predictions/getting status/etc.
 ```
 
 ## Check finetuning status
@@ -171,8 +202,12 @@ Once the finetuning job finishes and the finetuned model is ready to use, you wi
 
 
 ```python
-response = co.finetuning.get_finetuned_model(cfqa_finetune.finetuned_model.id)
-print(response.finetuned_model.status) # when the job finished this will be STATUS_READY
+response = co.finetuning.get_finetuned_model(
+    cfqa_finetune.finetuned_model.id
+)
+print(
+    response.finetuned_model.status
+)  # when the job finished this will be STATUS_READY
 ```
 
 You may view the fine-tuning job loss curves via the Weights and Biases dashboard. It will be available via the following URL once the training starts: `https://wandb.ai/<your-entity>/<your-project>/runs/<finetuned-model-id>`. We log the following to WandB:
@@ -190,7 +225,8 @@ Once the training job finished you can also check the validation metrics as foll
 
 ```python
 train_step_metrics = co.finetuning.list_training_step_metrics(
-    finetuned_model_id=cfqa_finetune.finetuned_model.id)
+    finetuned_model_id=cfqa_finetune.finetuned_model.id
+)
 
 for metric in train_step_metrics.step_metrics:
     print(metric.metrics)
@@ -203,15 +239,21 @@ Once your model completes training, you can call it via co.chat() and pass your 
 
 ```python
 response = co.chat(
-  message="what was the total african and us net undeveloped acres expiring in 2016?",
-  chat_history=[
-    {"role": "System", "message": "in the ordinary course of business , based on our evaluations of certain geologic trends and prospective economics , we have allowed certain lease acreage to expire and may allow additional acreage to expire in the future .\nif production is not established or we take no other action to extend the terms of the leases , licenses or concessions , undeveloped acreage listed in the table below will expire over the next three years .\nwe plan to continue the terms of certain of these licenses and concession areas or retain leases through operational or administrative actions ; however , the majority of the undeveloped acres associated with other africa as listed in the table below pertains to our licenses in ethiopia and kenya , for which we executed agreements in 2015 to sell .\nthe kenya transaction closed in february 2016 and the ethiopia transaction is expected to close in the first quarter of 2016 .\nsee item 8 .\nfinancial statements and supplementary data - note 5 to the consolidated financial statements for additional information about this disposition .\nnet undeveloped acres expiring year ended december 31 .\nThe u.s . of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 68, 89, 128. The e.g . of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 2014, 92, 36. The other africa of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 189, 4352, 854. The total africa of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 189, 4444, 890. The other international of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 2014, 2014, 2014. The total of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 257, 4533, 1018.\n."}, 
-    {"role": "User", "message": "what percentage of undeveloped acres were in the us in 2018?"}, 
-    {"role": "Chatbot", "message": "divide(128, 1018)"} 
-    # {"role": "User", "message": "what was the total african and us net undeveloped acres expiring in 2016?"}, # this is input as the main query above
-    # {"role": "Chatbot", "message": "add(189, 68)"}, # this is the ground truth answer
-  ],
-  model=cfqa_finetune.finetuned_model.id+"-ft"
+    message="what was the total african and us net undeveloped acres expiring in 2016?",
+    chat_history=[
+        {
+            "role": "System",
+            "message": "in the ordinary course of business , based on our evaluations of certain geologic trends and prospective economics , we have allowed certain lease acreage to expire and may allow additional acreage to expire in the future .\nif production is not established or we take no other action to extend the terms of the leases , licenses or concessions , undeveloped acreage listed in the table below will expire over the next three years .\nwe plan to continue the terms of certain of these licenses and concession areas or retain leases through operational or administrative actions ; however , the majority of the undeveloped acres associated with other africa as listed in the table below pertains to our licenses in ethiopia and kenya , for which we executed agreements in 2015 to sell .\nthe kenya transaction closed in february 2016 and the ethiopia transaction is expected to close in the first quarter of 2016 .\nsee item 8 .\nfinancial statements and supplementary data - note 5 to the consolidated financial statements for additional information about this disposition .\nnet undeveloped acres expiring year ended december 31 .\nThe u.s . of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 68, 89, 128. The e.g . of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 2014, 92, 36. The other africa of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 189, 4352, 854. The total africa of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 189, 4444, 890. The other international of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 2014, 2014, 2014. The total of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 257, 4533, 1018.\n.",
+        },
+        {
+            "role": "User",
+            "message": "what percentage of undeveloped acres were in the us in 2018?",
+        },
+        {"role": "Chatbot", "message": "divide(128, 1018)"},
+        # {"role": "User", "message": "what was the total african and us net undeveloped acres expiring in 2016?"}, # this is input as the main query above
+        # {"role": "Chatbot", "message": "add(189, 68)"}, # this is the ground truth answer
+    ],
+    model=cfqa_finetune.finetuned_model.id + "-ft",
 )
 print("#### Model response ####")
 print(response.text)
@@ -230,15 +272,21 @@ The response object is described in detail [here](https://docs.cohere.com/refere
 
 ```python
 base_response = co.chat(
-  message="what was the total african and us net undeveloped acres expiring in 2016?",
-  chat_history=[
-    {"role": "System", "message": "in the ordinary course of business , based on our evaluations of certain geologic trends and prospective economics , we have allowed certain lease acreage to expire and may allow additional acreage to expire in the future .\nif production is not established or we take no other action to extend the terms of the leases , licenses or concessions , undeveloped acreage listed in the table below will expire over the next three years .\nwe plan to continue the terms of certain of these licenses and concession areas or retain leases through operational or administrative actions ; however , the majority of the undeveloped acres associated with other africa as listed in the table below pertains to our licenses in ethiopia and kenya , for which we executed agreements in 2015 to sell .\nthe kenya transaction closed in february 2016 and the ethiopia transaction is expected to close in the first quarter of 2016 .\nsee item 8 .\nfinancial statements and supplementary data - note 5 to the consolidated financial statements for additional information about this disposition .\nnet undeveloped acres expiring year ended december 31 .\nThe u.s . of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 68, 89, 128. The e.g . of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 2014, 92, 36. The other africa of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 189, 4352, 854. The total africa of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 189, 4444, 890. The other international of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 2014, 2014, 2014. The total of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 257, 4533, 1018.\n."}, 
-    {"role": "User", "message": "what percentage of undeveloped acres were in the us in 2018?"}, 
-    {"role": "Chatbot", "message": "divide(128, 1018)"} 
-    # {"role": "User", "message": "what was the total african and us net undeveloped acres expiring in 2016?"}, # this is input as the main query above
-    # {"role": "Chatbot", "message": "add(189, 68)"}, # this is the ground truth answer
-  ],
-  model="command-r-08-2024"
+    message="what was the total african and us net undeveloped acres expiring in 2016?",
+    chat_history=[
+        {
+            "role": "System",
+            "message": "in the ordinary course of business , based on our evaluations of certain geologic trends and prospective economics , we have allowed certain lease acreage to expire and may allow additional acreage to expire in the future .\nif production is not established or we take no other action to extend the terms of the leases , licenses or concessions , undeveloped acreage listed in the table below will expire over the next three years .\nwe plan to continue the terms of certain of these licenses and concession areas or retain leases through operational or administrative actions ; however , the majority of the undeveloped acres associated with other africa as listed in the table below pertains to our licenses in ethiopia and kenya , for which we executed agreements in 2015 to sell .\nthe kenya transaction closed in february 2016 and the ethiopia transaction is expected to close in the first quarter of 2016 .\nsee item 8 .\nfinancial statements and supplementary data - note 5 to the consolidated financial statements for additional information about this disposition .\nnet undeveloped acres expiring year ended december 31 .\nThe u.s . of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 68, 89, 128. The e.g . of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 2014, 92, 36. The other africa of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 189, 4352, 854. The total africa of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 189, 4444, 890. The other international of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 2014, 2014, 2014. The total of net undeveloped acres expiring year ended december 31 , 2016, net undeveloped acres expiring year ended december 31 , 2017, net undeveloped acres expiring year ended december 31 , 2018 are 257, 4533, 1018.\n.",
+        },
+        {
+            "role": "User",
+            "message": "what percentage of undeveloped acres were in the us in 2018?",
+        },
+        {"role": "Chatbot", "message": "divide(128, 1018)"},
+        # {"role": "User", "message": "what was the total african and us net undeveloped acres expiring in 2016?"}, # this is input as the main query above
+        # {"role": "Chatbot", "message": "add(189, 68)"}, # this is the ground truth answer
+    ],
+    model="command-r-08-2024",
 )
 print("#### Model response ####")
 print(base_response.text)
