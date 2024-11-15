@@ -5885,7 +5885,7 @@ paths:
           required:
             - id
             - finish_reason
-            - messages
+            - message
           properties:
             id:
               type: string
@@ -5897,6 +5897,10 @@ paths:
               $ref: "#/components/schemas/AssistantMessageResponse"
             usage:
               $ref: "#/components/schemas/Usage"
+            logprobs:
+              type: array
+              items:
+                $ref: "#/components/schemas/LogprobItem"
         response-stream:
           description: StreamedChatResponse is returned in streaming mode (specified with
             `stream=True` in the request).
@@ -6042,6 +6046,10 @@ paths:
                   description: |
                     Ensures that only the most likely tokens, with total probability mass of `p`, are considered for generation at each step. If both `k` and `p` are enabled, `p` acts after `k`.
                     Defaults to `0.75`. min value of `0.01`, max value of `0.99`.
+                logprobs:
+                  type: boolean
+                  description: |
+                    Whether to return the log probabilities of the generated tokens. Defaults to false.
       responses:
         "200":
           description: OK
@@ -22940,11 +22948,32 @@ components:
               type: number
               description: |
                 The number of tokens produced by the model.
+    LogprobItem:
+      type: object
+      required:
+        - token
+        - token_ids
+        - logprob
+      properties:
+        text:
+          type: string
+          description: The text chunk for which the log probabilities was calculated.
+        token_ids:
+          type: array
+          description: The token ids of each token used to construct the text chunk.
+          items:
+            type: integer
+        logprobs:
+          type: array
+          description: The log probability of each token used to construct the text chunk.
+          items:
+            type: number
+            format: float
     ChatResponse:
       required:
         - id
         - finish_reason
-        - messages
+        - message
       properties:
         id:
           type: string
@@ -22956,6 +22985,10 @@ components:
           $ref: "#/components/schemas/AssistantMessageResponse"
         usage:
           $ref: "#/components/schemas/Usage"
+        logprobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/LogprobItem"
     ChatStreamEventType:
       description: The streamed event types
       required:
@@ -23038,6 +23071,8 @@ components:
                       properties:
                         text:
                           type: string
+            logprobs:
+              $ref: "#/components/schemas/LogprobItem"
     ChatContentEndEvent:
       description: A streamed delta event which signifies that the content block has ended.
       allOf:
