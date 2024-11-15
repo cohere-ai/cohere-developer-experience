@@ -89,7 +89,9 @@ algorithm_map = {
     "ap-south-1": f"arn:aws:sagemaker:ap-south-1:077584701553:algorithm/{cohere_package}",
 }
 if region not in algorithm_map.keys():
-    raise Exception(f"Current boto3 session region {region} is not supported.")
+    raise Exception(
+        f"Current boto3 session region {region} is not supported."
+    )
 
 arn = algorithm_map[region]
 ```
@@ -147,9 +149,13 @@ sess = sage.Session()
 # TODO[Optional]: change it to your data
 # You can download following example datasets from https://github.com/cohere-ai/notebooks/tree/main/notebooks/data and upload them
 # to the root of this juyter notebook
-train_dataset = S3Uploader.upload("./scienceQA_train.jsonl", s3_data_dir, sagemaker_session=sess)
+train_dataset = S3Uploader.upload(
+    "./scienceQA_train.jsonl", s3_data_dir, sagemaker_session=sess
+)
 # optional eval dataset
-eval_dataset = S3Uploader.upload("./scienceQA_eval.jsonl", s3_data_dir, sagemaker_session=sess)
+eval_dataset = S3Uploader.upload(
+    "./scienceQA_eval.jsonl", s3_data_dir, sagemaker_session=sess
+)
 print("traint_dataset", train_dataset)
 print("eval_dataset", eval_dataset)
 ```
@@ -166,7 +172,7 @@ Specify a directory on S3 where finetuned models should be stored. **Make sure y
 ```python
 # TODO update this with a custom S3 path
 # DO NOT add a trailing slash at the end
-s3_models_dir = f"s3://..."  
+s3_models_dir = f"s3://..."
 ```
 
 Create Cohere client:
@@ -230,7 +236,8 @@ Create fine-tuning jobs for the uploaded datasets. Add a field for `eval_data` i
 
 ```python
 finetune_name = "test-finetune"
-co.sagemaker_finetuning.create_finetune(arn=arn,
+co.sagemaker_finetuning.create_finetune(
+    arn=arn,
     name=finetune_name,
     train_data=train_dataset,
     eval_data=eval_dataset,
@@ -254,13 +261,14 @@ The Cohere AWS SDK provides a built-in method for creating an endpoint for infer
 
 
 ```python
-endpoint_name="test-finetune"
-co.sagemaker_finetuning.create_endpoint(arn=arn,
-        endpoint_name=endpoint_name,
-        s3_models_dir=s3_models_dir,
-        recreate=True,
-        instance_type="ml.p4de.24xlarge",
-        role="ServiceRoleSagemaker",
+endpoint_name = "test-finetune"
+co.sagemaker_finetuning.create_endpoint(
+    arn=arn,
+    endpoint_name=endpoint_name,
+    s3_models_dir=s3_models_dir,
+    recreate=True,
+    instance_type="ml.p4de.24xlarge",
+    role="ServiceRoleSagemaker",
 )
 
 # If the endpoint is already created, you just need to connect to it
@@ -285,16 +293,21 @@ print(result)
 ```python
 import json
 from tqdm import tqdm
+
 total = 0
 correct = 0
-for line in tqdm(open('./sample_finetune_scienceQA_eval.jsonl').readlines()):
+for line in tqdm(
+    open('./sample_finetune_scienceQA_eval.jsonl').readlines()
+):
     total += 1
     question_answer_json = json.loads(line)
     question = question_answer_json["messages"][0]["content"]
     answer = question_answer_json["messages"][1]["content"]
-    model_ans = co.sagemaker_finetuning.chat(message=question, temperature=0).text
+    model_ans = co.sagemaker_finetuning.chat(
+        message=question, temperature=0
+    ).text
     if model_ans == answer:
-        correct +=1
+        correct += 1
 
 print(f"Accuracy of finetuned model is %.3f" % (correct / total))
 ```
