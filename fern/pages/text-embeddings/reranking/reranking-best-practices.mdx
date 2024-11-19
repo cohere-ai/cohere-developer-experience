@@ -13,6 +13,15 @@ updatedAt: 'Thu May 30 2024 15:16:00 GMT+0000 (Coordinated Universal Time)'
 
 In the following two tables, you'll find recommendations for getting the best Rerank performance, organized by model family.
 
+### Rerank-v3.5
+
+| Constraint                    | Minimum | Maximum                                                                                                 | Default Value |
+| ----------------------------- | ------- | ------------------------------------------------------------------------------------------------------- | :------------ |
+| Number of Documents           | 1       | 10,000                                                                                                  | N/A           |
+| Max Number of Chunks          | 1       | N/A                                                                                                     | 4000          |
+| Number of Tokens per Document | 1       | N/A (see [below ](/docs/reranking-best-practices#document-chunking)for more info) 						| N/A           | 
+| Number of Tokens per Query    | 1       | 2048                                                                                                    | N/A           |
+
 ### Rerank-v3.0
 
 | Constraint                    | Minimum | Maximum                                                                                                 | Default Value |
@@ -33,11 +42,11 @@ In the following two tables, you'll find recommendations for getting the best Re
 
 ## Document Chunking
 
-For `rerank-v3.0`, the model breaks documents into 4094 token chunks. For example, if your query is 100 tokens and your document is 10,000 tokens, your document will be broken into the following chunks:
+For rerank-v3.0 and rerank-v3.5, the model breaks documents into 4096 token chunks. For example, if your query is 100 tokens and your document is 10,000 tokens, your document will be broken into the following chunks:
 
 1. `relevance_score_1 = <query[0,99], document[0,3994]>`
-2. `relevance_score_2 = <query[0,99], document[3995,7989]>`
-3. `relevance_score_3 = <query[0,99],document[7990,9999]>`
+2. `relevance_score_2 = <query[0,99], document[3995,7991]>`
+3. `relevance_score_3 = <query[0,99], document[7992,9999]>`
 4. `relevance_score = max(relevance_score_1, relevance_score_2, relevance_score_3)`
 
 If you would like more control over how chunking is done, we recommend that you chunk your documents yourself.
@@ -54,15 +63,15 @@ If `Number of documents * max_chunks_per_doc` exceeds `1000`, the endpoint will 
 
 When using `rerank-v2.0`, the endpoint will throw an error if the user tries to pass more than 10,000 documents at a time. The maximum number of documents that can be passed to the endpoint is calculated with the following inequality: `Number of documents * max_chunks_per_doc >10,000`.
 
-If `Number of documents * max_chunks_per_doc` exceeds `10,000`, the endpoint will return an error. By default, the `max_chunks_per_doc` is set to `10` for `rerank-v2.0` models; given that the model has a context length of 512, the maximum number of tokens for each call would be 5,120,000.
+If `Number of documents * max_chunks_per_doc` exceeds `1000`, the endpoint will return an error. By default, the `max_chunks_per_doc` is set to `1` for `rerank-v3.0` models; given that the model has a context length of 4096, the maximum number of tokens for each call would be 4,096,000.
 
 ## Queries
 
-Our `rerank-v3.0` models are trained with a context length of 4096 tokens. The model takes into account both the input from the query and document. If your query is larger than 2048 tokens, it will be truncated to the first 2048 tokens. For v2.0 models, if your query is larger than 256 tokens, it will be truncated to the first 256 tokens.
+Our `rerank-v3.0` and `rerank-v3.5` models are trained with a context length of 4096 tokens. The model takes into account both the input from the query and document. If your query is larger than 2048 tokens, it will be truncated to the first 2048 tokens. For `rerank-v2.0` models, if your query is larger than 256 tokens, it will be truncated to the first 256 tokens
 
 ## Semi-Structured Data Support
 
-Our `rerank-v3.0` models support semi-structured data reranking through a list of JSON objects. The `rank_fields` parameter  will default to a field parameter called `text` unless otherwise specified. If the `rank_fields` parameter is unspecified _and_ none of your JSON objects have a `text` field, the endpoint will return an error.
+Our rerank-v3.0 models support semi-structured data reranking through a list of JSON objects. The rank_fields parameter will default to a field parameter called text unless otherwise specified. If the rank_fields parameter is unspecified and none of your JSON objects have a text field, the endpoint will return an error.
 
 ```json JSON
 [
