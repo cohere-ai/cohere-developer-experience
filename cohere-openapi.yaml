@@ -16064,11 +16064,11 @@ paths:
                 		context.TODO(),
                 		&cohere.RerankRequest{
                 			Query: "What is the capital of the United States?",
-                			Documents: []*cohere.RerankRequestDocumentsItem{
-                				{String: "Carson City is the capital city of the American state of Nevada."},
-                				{String: "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan."},
-                				{String: "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages."},
-                				{String: "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district."},
+                			Documents: []string{
+                				"Carson City is the capital city of the American state of Nevada.",
+                				"The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.",
+                				"Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.",
+                				"Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
                 			},
                 			Model: cohere.String("rerank-english-v3.0"),
                 		},
@@ -16092,19 +16092,11 @@ paths:
                 (async () => {
                   const rerank = await cohere.rerank({
                     documents: [
-                      { text: 'Carson City is the capital city of the American state of Nevada.' },
-                      {
-                        text: 'The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.',
-                      },
-                      {
-                        text: 'Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.',
-                      },
-                      {
-                        text: 'Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.',
-                      },
-                      {
-                        text: 'Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.',
-                      },
+                      'Carson City is the capital city of the American state of Nevada.',
+                      'The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.',
+                      'Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.',
+                      'Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.',
+                      'Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.'
                     ],
                     query: 'What is the capital of the United States?',
                     topN: 3,
@@ -16252,18 +16244,11 @@ paths:
                   }'
           request:
             documents:
-              - text: Carson City is the capital city of the American state of Nevada.
-              - text: The Commonwealth of the Northern Mariana Islands is a group of islands in
-                  the Pacific Ocean. Its capital is Saipan.
-              - text: Capitalization or capitalisation in English grammar is the use of a
-                  capital letter at the start of a word. English usage varies
-                  from capitalization in other languages.
-              - text: Washington, D.C. (also known as simply Washington or D.C., and officially
-                  as the District of Columbia) is the capital of the United
-                  States. It is a federal district.
-              - text: Capital punishment (the death penalty) has existed in the United States
-                  since beforethe United States was a country. As of 2017,
-                  capital punishment is legal in 30 of the 50 states.
+              - "Carson City is the capital city of the American state of Nevada."
+              - "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan"
+              - "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages."
+              - "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district."
+              - "Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states."
             query: What is the capital of the United States?
             top_n: 3
             model: rerank-english-v3.0
@@ -16396,67 +16381,44 @@ paths:
                   type: string
                   x-fern-audiences:
                     - public
-                  description: "The identifier of the model to use, one of :
-                    `rerank-english-v3.0`, `rerank-multilingual-v3.0`,
-                    `rerank-english-v2.0`, `rerank-multilingual-v2.0`"
+                  description: |-
+                    Identifier of the model to use.
+                    Supported models:
+                    - `rerank-english-v3.0`
+                    - `rerank-multilingual-v3.0`
+                    - `rerank-english-v2.0`
+                    - `rerank-multilingual-v2.0`
                 query:
                   type: string
                   x-fern-audiences:
                     - public
-                  description: The search query
+                  description: |-
+                    The search query to rerank documents against.
+                    Maximum length is 500 tokens. Follow the [tokenization guide](https://google.com) to learn more about counting tokens.
                 documents:
                   type: array
                   x-fern-audiences:
                     - public
                   description: |-
-                    A list of document objects or strings to rerank.
-                    If a document is provided the text fields is required and all other fields will be preserved in the response.
+                    A list of texts that will be compared to the `query`.
+                    For optimal performance we recommend against sending more than 1,000 documents in a single request.
 
-                    The total max chunks (length of documents * max_chunks_per_doc) must be less than 10000.
-
-                    We recommend a maximum of 1,000 documents for optimal endpoint performance.
+                    **Note**: long documents will automatically be truncated to the value of `max_document_length`.
+                    **Note**: structured data should be formatted as YAML strings for best performance.  
                   items:
-                    oneOf:
-                      - type: string
-                      - $ref: "#/components/schemas/RerankDocument"
+                    type: string
                 top_n:
                   type: integer
                   x-fern-audiences:
                     - public
                   minimum: 1
-                  description: The number of most relevant documents or indices to return,
-                    defaults to the length of the documents
-                rank_fields:
-                  type: array
-                  x-fern-audiences:
-                    - public
-                  items:
-                    type: string
-                    x-fern-audiences:
-                      - public
-                  description: If a JSON object is provided, you can specify which keys you would
-                    like to have considered for reranking. The model will rerank
-                    based on order of the fields passed in (i.e.
-                    rank_fields=['title','author','text'] will rerank using the
-                    values in title, author, text  sequentially. If the length
-                    of title, author, and text exceeds the context length of the
-                    model, the chunking will not re-consider earlier fields). If
-                    not provided, the model will use the default text field for
-                    ranking.
-                return_documents:
-                  type: boolean
-                  x-fern-audiences:
-                    - public
-                  default: false
-                  description: |-
-                    - If false, returns results without the doc text - the api will return a list of {index, relevance score} where index is inferred from the list passed into the request.
-                    - If true, returns results with the doc text passed in - the api will return an ordered list of {index, text, relevance score} where index + text refers to the list passed into the request.
-                max_chunks_per_doc:
+                  description: Limits the returned number of rerank results to the specified number. If not specified, the ranking for each document will be returned.
+                max_document_length:
                   type: integer
                   x-fern-audiences:
                     - public
-                  description: The maximum number of chunks to produce internally from a document
-                  default: 10
+                  description: Documents longer than `max_document_length` will be automatically truncated. 
+                  default: 4096
               required:
                 - query
                 - documents
