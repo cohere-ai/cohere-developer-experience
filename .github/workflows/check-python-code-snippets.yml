@@ -1,0 +1,35 @@
+name: check-mdx-snippets
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'fern/pages/**/*.mdx'
+      - 'fern/pages/**/**/*.mdx'
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions: write-all
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python Dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install black
+
+      - name: Run Python MDX Snippet Formatter
+        shell: bash
+        env:
+          CI: true
+        run: python .github/scripts/check_python_code_snippets.py fern/pages
