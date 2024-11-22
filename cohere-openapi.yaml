@@ -5914,6 +5914,7 @@ paths:
             - $ref: "#/components/schemas/ChatToolCallDeltaEvent"
             - $ref: "#/components/schemas/ChatToolCallEndEvent"
             - $ref: "#/components/schemas/ChatMessageEndEvent"
+            - $ref: "#/components/schemas/ChatDebugEvent"
           discriminator:
             propertyName: type
             mapping:
@@ -5928,6 +5929,7 @@ paths:
               citation-start: "#/components/schemas/CitationStartEvent"
               citation-end: "#/components/schemas/CitationEndEvent"
               message-end: "#/components/schemas/ChatMessageEndEvent"
+              debug: "#/components/schemas/ChatDebugEvent"
       description: |
         Generates a text response to a user message and streams it down, token by token. To learn how to use the Chat API with streaming follow our [Text Generation guides](https://docs.cohere.com/v2/docs/chat-api).
 
@@ -15326,18 +15328,12 @@ paths:
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.embedjobs.requests.CreateEmbedJobRequest;
-
+                import com.cohere.api.resources.embedjobs.requests.CreateEmbedJobRequest;
                 import com.cohere.api.types.CreateEmbedJobResponse;
-
                 import com.cohere.api.types.EmbedInputType;
-
 
                 public class EmbedJobsPost {
                   public static void main(String[] args) {
@@ -16396,9 +16392,13 @@ paths:
                   type: string
                   x-fern-audiences:
                     - public
-                  description: "The identifier of the model to use, one of :
-                    `rerank-english-v3.0`, `rerank-multilingual-v3.0`,
-                    `rerank-english-v2.0`, `rerank-multilingual-v2.0`"
+                  description: |-
+                    The identifier of the model to use. 
+                    Supported models:
+                      - `rerank-english-v3.0`
+                      - `rerank-multilingual-v3.0`
+                      - `rerank-english-v2.0`
+                      - `rerank-multilingual-v2.0`
                 query:
                   type: string
                   x-fern-audiences:
@@ -16409,12 +16409,11 @@ paths:
                   x-fern-audiences:
                     - public
                   description: |-
-                    A list of document objects or strings to rerank.
-                    If a document is provided the text fields is required and all other fields will be preserved in the response.
+                    A list of texts that will be compared to the `query`.
+                    For optimal performance we recommend against sending more than 1,000 documents in a single request.
 
-                    The total max chunks (length of documents * max_chunks_per_doc) must be less than 10000.
-
-                    We recommend a maximum of 1,000 documents for optimal endpoint performance.
+                    **Note**: long documents will automatically be truncated to the value of `max_tokens_per_doc`.
+                    **Note**: structured data should be formatted as YAML strings for best performance.  
                   items:
                     oneOf:
                       - type: string
@@ -16424,25 +16423,9 @@ paths:
                   x-fern-audiences:
                     - public
                   minimum: 1
-                  description: The number of most relevant documents or indices to return,
-                    defaults to the length of the documents
-                rank_fields:
-                  type: array
-                  x-fern-audiences:
-                    - public
-                  items:
-                    type: string
-                    x-fern-audiences:
-                      - public
-                  description: If a JSON object is provided, you can specify which keys you would
-                    like to have considered for reranking. The model will rerank
-                    based on order of the fields passed in (i.e.
-                    rank_fields=['title','author','text'] will rerank using the
-                    values in title, author, text  sequentially. If the length
-                    of title, author, and text exceeds the context length of the
-                    model, the chunking will not re-consider earlier fields). If
-                    not provided, the model will use the default text field for
-                    ranking.
+                  description: Limits the returned number of rerank results to the specified
+                    value. If not passed, all the rerank results will be
+                    returned.
                 return_documents:
                   type: boolean
                   x-fern-audiences:
@@ -16451,12 +16434,12 @@ paths:
                   description: |-
                     - If false, returns results without the doc text - the api will return a list of {index, relevance score} where index is inferred from the list passed into the request.
                     - If true, returns results with the doc text passed in - the api will return an ordered list of {index, text, relevance score} where index + text refers to the list passed into the request.
-                max_chunks_per_doc:
+                max_tokens_per_doc:
                   type: integer
                   x-fern-audiences:
                     - public
-                  description: The maximum number of chunks to produce internally from a document
-                  default: 10
+                  description: Defaults to `4096`. Long documents will be automatically truncated
+                    to the specified number of tokens.
               required:
                 - query
                 - documents
@@ -17435,21 +17418,13 @@ paths:
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.datasets.requests.DatasetsCreateRequest;
-
-                import
-                com.cohere.api.resources.datasets.types.DatasetsCreateResponse;
-
+                import com.cohere.api.resources.datasets.requests.DatasetsCreateRequest;
+                import com.cohere.api.resources.datasets.types.DatasetsCreateResponse;
                 import com.cohere.api.types.DatasetType;
-
                 import java.util.Optional;
-
 
                 public class DatasetPost {
                   public static void main(String[] args) {
@@ -17787,14 +17762,10 @@ paths:
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.datasets.types.DatasetsGetUsageResponse;
-
+                import com.cohere.api.resources.datasets.types.DatasetsGetUsageResponse;
 
                 public class DatasetUsageGet {
                   public static void main(String[] args) {
@@ -19321,16 +19292,11 @@ paths:
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.connectors.requests.CreateConnectorRequest;
-
+                import com.cohere.api.resources.connectors.requests.CreateConnectorRequest;
                 import com.cohere.api.types.CreateConnectorResponse;
-
 
                 public class ConnectorCreate {
                   public static void main(String[] args) {
@@ -19643,14 +19609,10 @@ paths:
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.connectors.requests.UpdateConnectorRequest;
-
+                import com.cohere.api.resources.connectors.requests.UpdateConnectorRequest;
 
                 public class ConnectorPatch {
                   public static void main(String[] args) {
@@ -19957,16 +19919,11 @@ paths:
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.connectors.requests.ConnectorsOAuthAuthorizeRequest;
-
+                import com.cohere.api.resources.connectors.requests.ConnectorsOAuthAuthorizeRequest;
                 import com.cohere.api.types.OAuthAuthorizeResponse;
-
 
                 public class ConnectorsIdOauthAuthorizePost {
                   public static void main(String[] args) {
@@ -20403,17 +20360,12 @@ paths:
         - code-samples:
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 package finetuning;
 
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.ListFinetunedModelsResponse;
-
+                import com.cohere.api.resources.finetuning.finetuning.types.ListFinetunedModelsResponse;
 
                 public class ListFinetunedModels {
                   public static void main(String[] args) {
@@ -20854,29 +20806,16 @@ paths:
         - code-samples:
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 package finetuning;
 
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.BaseModel;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.BaseType;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.Settings;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.UpdateFinetunedModelResponse;
-
-                import
-                com.cohere.api.resources.finetuning.requests.FinetuningUpdateFinetunedModelRequest;
-
+                import com.cohere.api.resources.finetuning.finetuning.types.BaseModel;
+                import com.cohere.api.resources.finetuning.finetuning.types.BaseType;
+                import com.cohere.api.resources.finetuning.finetuning.types.Settings;
+                import com.cohere.api.resources.finetuning.finetuning.types.UpdateFinetunedModelResponse;
+                import com.cohere.api.resources.finetuning.requests.FinetuningUpdateFinetunedModelRequest;
 
                 public class UpdateFinetunedModel {
                   public static void main(String[] args) {
@@ -21081,17 +21020,12 @@ paths:
         - code-samples:
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 package finetuning;
 
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.GetFinetunedModelResponse;
-
+                import com.cohere.api.resources.finetuning.finetuning.types.GetFinetunedModelResponse;
 
                 public class GetFinetunedModel {
                   public static void main(String[] args) {
@@ -21419,17 +21353,12 @@ paths:
         - code-samples:
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 package finetuning;
 
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.ListEventsResponse;
-
+                import com.cohere.api.resources.finetuning.finetuning.types.ListEventsResponse;
 
                 public class ListEvents {
                   public static void main(String[] args) {
@@ -21614,17 +21543,12 @@ paths:
         - code-samples:
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 package finetuning;
 
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.ListTrainingStepMetricsResponse;
-
+                import com.cohere.api.resources.finetuning.finetuning.types.ListTrainingStepMetricsResponse;
 
                 public class ListTrainingStepMetrics {
                   public static void main(String[] args) {
@@ -23200,6 +23124,7 @@ components:
         - $ref: "#/components/schemas/ChatToolCallDeltaEvent"
         - $ref: "#/components/schemas/ChatToolCallEndEvent"
         - $ref: "#/components/schemas/ChatMessageEndEvent"
+        - $ref: "#/components/schemas/ChatDebugEvent"
       discriminator:
         propertyName: type
         mapping:
@@ -23214,6 +23139,7 @@ components:
           citation-start: "#/components/schemas/CitationStartEvent"
           citation-end: "#/components/schemas/CitationEndEvent"
           message-end: "#/components/schemas/ChatMessageEndEvent"
+          debug: "#/components/schemas/ChatDebugEvent"
     SingleGeneration:
       type: object
       properties:
