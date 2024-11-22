@@ -1,5 +1,5 @@
 ---
-title: "Structured Generations (JSON)"
+title: "Structured Outputs"
 slug: "v2/docs/structured-outputs-json"
 
 hidden: false
@@ -12,33 +12,55 @@ createdAt: "Thu Jun 06 2024 05:37:56 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Tue Jun 11 2024 02:43:00 GMT+0000 (Coordinated Universal Time)"
 ---
 
-Cohere models such as [Command R](https://docs.cohere.com/docs/command-r) and [Command R+](https://docs.cohere.com/docs/command-r-plus) are great at producing structured outputs in formats such as JSON.
 
-## Why generate JSON Objects using an LLM?
+## Overview
 
-JSON is a lightweight format that is easy for humans to read and write and is also easy for machines to parse. By generating JSON objects, you can structure and organize the model's responses in a way that can be used in downstream applications. This is particularly useful when you want to extract specific information from the responses, perform data analysis, or integrate the responses into your applications seamlessly.
+Structured Outputs is a feature for formatting an LLM's response to follow a specific format. It enforces the output to follow a specified format 100% of the time. This increases the reliability of LLM in enterprise applications.
 
-## How to use the `response_format` parameter
+By using Structured Outputs, you are assured that the model's response will always adhere to the specified schema. This is especially important when integrating the output into downstream applications or performing data analysis, as it ensures data consistency and reliability.
 
-When making an API request, you can specify the `response_format` parameter to indicate that you want the response in a JSON object format.
+By providing a structured schema, the model is guided to produce responses that adhere to the specified format and content, eliminating hallucinations.
 
-```python
+Compatible models:
+- Command R 08 2024
+- Command R
+- Command R+ 08 2024
+- Command R+
+
+## How to Use Structured Outputs
+
+There are two ways to use Structured Outputs:
+- **Structured Outputs (JSON)**. This is primarily used in text generation use cases.
+- **Structured Outputs (Tools)**. This is primarily used in tool use and agents use cases via function calling.
+
+However, note that Structured Outputs (Tools) is only supported in the v2 API (not v1).
+
+### Structured Outputs (JSON)
+
+Here, you can call the Chat API to generate Structured Outputs in JSON format. JSON is a lightweight format that is easy for humans to read and write and is also easy for machines to parse. 
+
+This is particularly useful in text generation use cases, for example, when you want to extract specific information from the responses, perform data analysis, or integrate the responses into your applications seamlessly.
+
+There are two ways of specifying the JSON output:
+- JSON mode
+- JSON Schema mode
+
+#### JSON mode
+In JSON mode, when making an API request, you can specify the `response_format` parameter to indicate that you want the response in a JSON object format.
+
+
+```python PYTHON
 import cohere
-
 co = cohere.ClientV2(api_key="YOUR API KEY")
 
 res = co.chat(
-    model="command-r-plus-08-2024",
-    messages=[
-        {
-            "role": "user",
-            "content": "Generate a JSON describing a person, with the fields 'name' and 'age'",
-        }
-    ],
-    response_format={"type": "json_object"}
+  model="command-r-plus-08-2024",
+  messages=[{"role": "user", "content": "Generate a JSON describing a person, with the fields 'name' and 'age'"}],
+  response_format={ "type": "json_object" }
 )
 
 print(res.message.content[0].text)
+
 ```
 By setting the `response_format` type to `"json_object"` in the Chat API, the output of the model is guaranteed to be a valid JSON object.
 
@@ -53,18 +75,23 @@ By setting the `response_format` type to `"json_object"` in the Chat API, the ou
 ```
 
 <Info title="Important"> 
- When using  `{ "type": "json_object" }` your `message` should always explicitly instruct the model to generate a JSON (eg: _"Generate a JSON ..."_) . Otherwise the model may end up getting stuck generating an infinite stream of characters and eventually run out of context length.
+When using  `{ "type": "json_object" }` your `message` should always explicitly instruct the model to generate a JSON (eg: _"Generate a JSON ..."_) . Otherwise the model may end up getting stuck generating an infinite stream of characters and eventually run out of context length.
 </Info>
 
-## Specifying a schema (beta)
+<Note title="Note"> 
+This feature is currently not supported in RAG mode.
+</Note>
 
-The `response_format` parameter also allows you to define a schema for the generated JSON object. A [JSON Schema](https://json-schema.org/specification) is a way to describe the structure of the JSON object you want the LLM to generate. This is optional, but it gives you more control over the response format. 
+#### JSON Schema mode
+In JSON Schema mode, you can optionally define a schema as part of the `response_format`  parameter. A [JSON Schema](https://json-schema.org/specification) is a way to describe the structure of the JSON object you want the LLM to generate. 
+
+This forces the LLM to stick to this schema, thus giving you greater control over the output.
 
 For example, let's say you want the LLM to generate a JSON object with specific keys for a book, such as "title," "author," and "publication_year." Your API request might look like this:
 
-```python
-import cohere
 
+```python PYTHON
+import cohere
 co = cohere.ClientV2(api_key="YOUR API KEY")
 
 res = co.chat(
@@ -79,20 +106,20 @@ res = co.chat(
         "type": "json_object",
         "schema": {
             "type": "object",
-            "required": ["title", "author", "publication_year"],
             "properties": {
                 "title": {"type": "string"},
                 "author": {"type": "string"},
                 "publication_year": {"type": "integer"},
             },
+            "required": ["title", "author", "publication_year"],
         },
-    }
+    },
 )
 
 print(res.message.content[0].text)
 ```
 
-In this schema, we defined three keys ("title," "author," "publication_year") and their expected data types ("string" and "number"). The LLM will generate a JSON object that adheres to this structure.
+In this schema, we defined three keys ("title," "author," "publication_year") and their expected data types ("string" and "integer"). The LLM will generate a JSON object that adheres to this structure.
 
 ```
 # Example response
@@ -106,12 +133,78 @@ In this schema, we defined three keys ("title," "author," "publication_year") an
 ```
 
 <Info title="Important"> 
-Specifying a `json_schema` adds even more latency, proportional to the complexity of the schema. This parameter is in **beta**, and will continue seeing performance improvements.
+Note: Each schema provided (in both JSON and Tools modes) will incur a latency overhead required for processing the schema. This is only applicable for the first few requests.
 </Info>
+
+### Structured Outputs (Tools)
+When you use the Chat API in tool use mode, setting the `strict_tools` parameter to True will enforce each tool call to follow the specified tool schema.
+
+<Note title="Experimental"> 
+`strict_tools` is currently an experimental parameter.
+</Note>
+
+Here, the API will ensure that the tool names and tool parameters are generated according to the tool specifications. This eliminates tool name and parameter hallucinations, ensures that each parameter matches the specified data type, and that all required parameters are included in the model response.
+
+Besides, this results in faster development. You don’t need to spend a lot of time prompt engineering the model to avoid hallucinations.
+
+For example, here we create a tool that can retrieve sales data for a given day. It specifies that a function call must call the function `query_daily_sales_report` which contains a parameter called `day`. The Structured Outputs feature ensures that the tool call will always follow the tool definitions.
+
+When the strict_tools parameter is set to True, you can define a maximum of 200 fields across all tools being passed to an API call.
+
+```python PYTHON {26}
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "query_daily_sales_report",
+            "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "day": {
+                        "type": "string",
+                        "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
+                    }
+                },
+                "required": ["day"],
+            },
+        },
+    }
+]
+
+message = "What was the total sales for 2024-01-01?"
+
+response = co.chat(model="command-r-plus-08-2024",
+                   messages=[{"role": "user", "content": message}],
+                   tools=tools,
+                   strict_tools=True)
+
+print(response.message.tool_calls)
+```
+
+
+<Info title="Important"> 
+Structured Outputs (Tools) does NOT support this scenario: when a tool is defined with one or more parameters but there is no parameter set as `required`. There must be at least one `required` parameter.
+</Info>
+
+### When to Use Structured Outputs (JSON) vs. Structured Outputs (Tools)
+
+Structured Outputs (JSON) are ideal for text generation use cases where you want to format the model's responses to users in a specific way. 
+
+For example, when building a travel planner application, you might want the LLM to generate itineraries in a specific JSON format, allowing the application to use the output in the other parts of the application.
+
+Structured Outputs (Tools) are ideal for function calling, tool use or agents use cases where you need the model to interact with external data or services. For instance, you can grant the model access to functions that interact with databases or other APIs.
+
+In summary, opt for:
+- Structured Outputs (JSON) when you need the model's response to follow a specific structure.
+-Structured Outputs (Tools) when you need the model to interact with external data or services.
+
+
+## Specifying a schema
 
 ### Generating nested objects
 
-By setting `response_format={ "type": "json_object" }`the model can be configured to output objects with up to 5 levels of nesting. When a `schema` is specified, there are no limitations on the levels of nesting. 
+The model can be configured to output objects with up to 5 levels of nesting. When a `schema` is specified, there are no limitations on the levels of nesting.
 
 ### Schema constraints
 
@@ -139,3 +232,6 @@ We do not support the entirety of the [JSON Schema specification](https://json-s
     - `uuid`
     - `date`
     - `time`
+- Others:
+    - `uniqueItems`
+    - `additionalProperties`
