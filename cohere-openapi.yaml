@@ -53,6 +53,10 @@ paths:
       summary: Chat
       operationId: chat
       x-fern-streaming:
+        stream-description: |
+          Generates a streamed text response to a user message.
+
+          To learn how to use the Chat API and RAG follow our [Text Generation guides](https://docs.cohere.com/docs/chat-api).
         stream-condition: $request.stream
         response:
           required:
@@ -151,6 +155,7 @@ paths:
             - $ref: "#/components/schemas/ChatToolCallsGenerationEvent"
             - $ref: "#/components/schemas/ChatStreamEndEvent"
             - $ref: "#/components/schemas/ChatToolCallsChunkEvent"
+            - $ref: "#/components/schemas/ChatDebugEvent"
           discriminator:
             propertyName: event_type
             mapping:
@@ -162,6 +167,7 @@ paths:
               tool-calls-generation: "#/components/schemas/ChatToolCallsGenerationEvent"
               stream-end: "#/components/schemas/ChatStreamEndEvent"
               tool-calls-chunk: "#/components/schemas/ChatToolCallsChunkEvent"
+              debug: "#/components/schemas/ChatDebugEvent"
       x-fern-examples:
         - code-samples:
             - sdk: go
@@ -180,7 +186,7 @@ paths:
 
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Chat(
                 		context.TODO(),
@@ -217,9 +223,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -261,7 +265,7 @@ paths:
 
                 public class Default {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     NonStreamedChatResponse response =
                         cohere.chat(
@@ -291,7 +295,7 @@ paths:
                 import cohere
 
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
 
                 response = co.chat(
@@ -317,7 +321,7 @@ paths:
                 import asyncio
 
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
 
@@ -334,6 +338,7 @@ paths:
                         # perform web search before answering the question. You can also use your own custom connector.
                         connectors=[{"id": "web-search"}],
                     )
+
 
                 asyncio.run(main())
             - sdk: curl
@@ -4300,7 +4305,7 @@ paths:
 
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.ChatStream(
                 		context.TODO(),
@@ -4354,9 +4359,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -4409,7 +4412,7 @@ paths:
 
                 public class Documents {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     NonStreamedChatResponse response =
                         cohere.chat(
@@ -4552,7 +4555,7 @@ paths:
                 import cohere
 
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
 
                 response = co.chat(
@@ -4560,22 +4563,24 @@ paths:
                     message="Who is more popular: Nsync or Backstreet Boys?",
                     documents=[
                         {
-                          "title": "CSPC: Backstreet Boys Popularity Analysis - ChartMasters",
-                          "snippet": "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: Backstreet Boys Popularity Analysis\n\nHernán Lopez Posted on February 9, 2017 Posted in CSPC 72 Comments Tagged with Backstreet Boys, Boy band\n\nAt one point, Backstreet Boys defined success: massive albums sales across the globe, great singles sales, plenty of chart topping releases, hugely hyped tours and tremendous media coverage.\n\nIt is true that they benefited from extraordinarily good market conditions in all markets. After all, the all-time record year for the music business, as far as revenues in billion dollars are concerned, was actually 1999. That is, back when this five men group was at its peak."
+                            "title": "CSPC: Backstreet Boys Popularity Analysis - ChartMasters",
+                            "snippet": "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: Backstreet Boys Popularity Analysis\n\nHernán Lopez Posted on February 9, 2017 Posted in CSPC 72 Comments Tagged with Backstreet Boys, Boy band\n\nAt one point, Backstreet Boys defined success: massive albums sales across the globe, great singles sales, plenty of chart topping releases, hugely hyped tours and tremendous media coverage.\n\nIt is true that they benefited from extraordinarily good market conditions in all markets. After all, the all-time record year for the music business, as far as revenues in billion dollars are concerned, was actually 1999. That is, back when this five men group was at its peak.",
                         },
                         {
                             "title": "CSPC: NSYNC Popularity Analysis - ChartMasters",
-                            "snippet": "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: NSYNC Popularity Analysis\n\nMJD Posted on February 9, 2018 Posted in CSPC 27 Comments Tagged with Boy band, N'Sync\n\nAt the turn of the millennium three teen acts were huge in the US, the Backstreet Boys, Britney Spears and NSYNC. The latter is the only one we haven’t study so far. It took 15 years and Adele to break their record of 2,4 million units sold of No Strings Attached in its first week alone.\n\nIt wasn’t a fluke, as the second fastest selling album of the Soundscan era prior 2015, was also theirs since Celebrity debuted with 1,88 million units sold."
+                            "snippet": "↓ Skip to Main Content\n\nMusic industry – One step closer to being accurate\n\nCSPC: NSYNC Popularity Analysis\n\nMJD Posted on February 9, 2018 Posted in CSPC 27 Comments Tagged with Boy band, N'Sync\n\nAt the turn of the millennium three teen acts were huge in the US, the Backstreet Boys, Britney Spears and NSYNC. The latter is the only one we haven’t study so far. It took 15 years and Adele to break their record of 2,4 million units sold of No Strings Attached in its first week alone.\n\nIt wasn’t a fluke, as the second fastest selling album of the Soundscan era prior 2015, was also theirs since Celebrity debuted with 1,88 million units sold.",
                         },
                         {
                             "title": "CSPC: Backstreet Boys Popularity Analysis - ChartMasters",
-                            "snippet": " 1997, 1998, 2000 and 2001 also rank amongst some of the very best years.\n\nYet the way many music consumers – especially teenagers and young women’s – embraced their output deserves its own chapter. If Jonas Brothers and more recently One Direction reached a great level of popularity during the past decade, the type of success achieved by Backstreet Boys is in a completely different level as they really dominated the business for a few years all over the world, including in some countries that were traditionally hard to penetrate for Western artists.\n\nWe will try to analyze the extent of that hegemony with this new article with final results which will more than surprise many readers."
+                            "snippet": " 1997, 1998, 2000 and 2001 also rank amongst some of the very best years.\n\nYet the way many music consumers – especially teenagers and young women’s – embraced their output deserves its own chapter. If Jonas Brothers and more recently One Direction reached a great level of popularity during the past decade, the type of success achieved by Backstreet Boys is in a completely different level as they really dominated the business for a few years all over the world, including in some countries that were traditionally hard to penetrate for Western artists.\n\nWe will try to analyze the extent of that hegemony with this new article with final results which will more than surprise many readers.",
                         },
                         {
                             "title": "CSPC: NSYNC Popularity Analysis - ChartMasters",
-                            "snippet": " Was the teen group led by Justin Timberlake really that big? Was it only in the US where they found success? Or were they a global phenomenon?\n\nAs usual, I’ll be using the Commensurate Sales to Popularity Concept in order to relevantly gauge their results. This concept will not only bring you sales information for all NSYNC‘s albums, physical and download singles, as well as audio and video streaming, but it will also determine their true popularity. If you are not yet familiar with the CSPC method, the next page explains it with a short video. I fully recommend watching the video before getting into the sales figures."
-                        }
-                    ])
+                            "snippet": " Was the teen group led by Justin Timberlake really that big? Was it only in the US where they found success? Or were they a global phenomenon?\n\nAs usual, I’ll be using the Commensurate Sales to Popularity Concept in order to relevantly gauge their results. This concept will not only bring you sales information for all NSYNC‘s albums, physical and download singles, as well as audio and video streaming, but it will also determine their true popularity. If you are not yet familiar with the CSPC method, the next page explains it with a short video. I fully recommend watching the video before getting into the sales figures.",
+                        },
+                    ],
+                )
+
 
                 print(response)
             - sdk: curl
@@ -4888,7 +4893,7 @@ paths:
 
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.ChatStream(
                 		context.TODO(),
@@ -4942,9 +4947,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -4992,7 +4995,7 @@ paths:
 
                 public class Stream {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     Iterable<StreamedChatResponse> response =
                         cohere.chatStream(
@@ -5029,7 +5032,7 @@ paths:
                 import cohere
 
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
 
                 response = co.chat_stream(
@@ -5048,7 +5051,7 @@ paths:
 
                 for event in response:
                     if event.event_type == "text-generation":
-                        print(event.text, end='')
+                        print(event.text, end="")
             - sdk: curl
               name: Streaming
               code: >-
@@ -5138,7 +5141,7 @@ paths:
 
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Chat(
                 		context.TODO(),
@@ -5183,9 +5186,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -5247,7 +5248,7 @@ paths:
 
                 public class Tools {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     NonStreamedChatResponse response =
                         cohere.chat(
@@ -5318,7 +5319,7 @@ paths:
                 import cohere
 
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
 
                 # tool descriptions that the model has access to
@@ -5331,9 +5332,9 @@ paths:
                             "day": {
                                 "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
                                 "type": "str",
-                                "required": True
+                                "required": True,
                             }
-                        }
+                        },
                     },
                     {
                         "name": "query_product_catalog",
@@ -5342,10 +5343,10 @@ paths:
                             "category": {
                                 "description": "Retrieves product information data for all products in this category.",
                                 "type": "str",
-                                "required": True
+                                "required": True,
                             }
-                        }
-                    }
+                        },
+                    },
                 ]
 
 
@@ -5824,12 +5825,12 @@ paths:
                     - STRICT
                     - NONE
                   description: |
-                    Used to select the [safety instruction](/docs/safety-modes) inserted into the prompt. Defaults to `CONTEXTUAL`.
+                    Used to select the [safety instruction](https://docs.cohere.com/docs/safety-modes) inserted into the prompt. Defaults to `CONTEXTUAL`.
                     When `NONE` is specified, the safety instruction will be omitted.
 
                     Safety modes are not yet configurable in combination with `tools`, `tool_results` and `documents` parameters.
 
-                    **Note**: This parameter is only compatible with models [Command R 08-2024](/docs/command-r#august-2024-release), [Command R+ 08-2024](/docs/command-r-plus#august-2024-release) and newer.
+                    **Note**: This parameter is only compatible with models [Command R 08-2024](https://docs.cohere.com/docs/command-r#august-2024-release), [Command R+ 08-2024](https://docs.cohere.com/docs/command-r-plus#august-2024-release) and newer.
 
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
       responses:
@@ -5876,11 +5877,15 @@ paths:
       x-fern-streaming:
         format: sse
         stream-condition: $request.stream
+        stream-description: |
+          Generates a text response to a user message. To learn how to use the Chat API and RAG follow our [Text Generation guides](https://docs.cohere.com/v2/docs/chat-api).
+
+          Follow the [Migration Guide](https://docs.cohere.com/v2/docs/migrating-v1-to-v2) for instructions on moving from API v1 to API v2.
         response:
           required:
             - id
             - finish_reason
-            - messages
+            - message
           properties:
             id:
               type: string
@@ -5892,6 +5897,10 @@ paths:
               $ref: "#/components/schemas/AssistantMessageResponse"
             usage:
               $ref: "#/components/schemas/Usage"
+            logprobs:
+              type: array
+              items:
+                $ref: "#/components/schemas/LogprobItem"
         response-stream:
           description: StreamedChatResponse is returned in streaming mode (specified with
             `stream=True` in the request).
@@ -5920,7 +5929,7 @@ paths:
               citation-end: "#/components/schemas/CitationEndEvent"
               message-end: "#/components/schemas/ChatMessageEndEvent"
       description: |
-        Generates a message from the model in response to a provided conversation. To learn more about the features of the Chat API follow our [Text Generation guides](https://docs.cohere.com/v2/docs/chat-api).
+        Generates a text response to a user message and streams it down, token by token. To learn how to use the Chat API with streaming follow our [Text Generation guides](https://docs.cohere.com/v2/docs/chat-api).
 
         Follow the [Migration Guide](https://docs.cohere.com/v2/docs/migrating-v1-to-v2) for instructions on moving from API v1 to API v2.
       parameters:
@@ -6026,7 +6035,7 @@ paths:
                   minimum: 0
                   maximum: 500
                   description: |
-                    Ensures only the top `k` most likely tokens are considered for generation at each step.
+                    Ensures that only the top `k` most likely tokens are considered for generation at each step. When `k` is set to `0`, k-sampling is disabled. 
                     Defaults to `0`, min value of `0`, max value of `500`.
                 p:
                   type: number
@@ -6037,6 +6046,10 @@ paths:
                   description: |
                     Ensures that only the most likely tokens, with total probability mass of `p`, are considered for generation at each step. If both `k` and `p` are enabled, `p` acts after `k`.
                     Defaults to `0.75`. min value of `0.01`, max value of `0.99`.
+                logprobs:
+                  type: boolean
+                  description: |
+                    Defaults to `false`. When set to `true`, the log probabilities of the generated tokens will be included in the response.
       responses:
         "200":
           description: OK
@@ -6077,9 +6090,7 @@ paths:
               code: |
                 const { CohereClientV2 } = require('cohere-ai');
 
-                const cohere = new CohereClientV2({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClientV2({});
 
                 (async () => {
                   const response = await cohere.chat({
@@ -6099,39 +6110,34 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.ClientV2("<<apiKey>>")
+                co = cohere.ClientV2()
 
                 response = co.chat(
                     model="command-r-plus-08-2024",
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": "hello world!"
-                        }
-                    ]
+                    messages=[{"role": "user", "content": "hello world!"}],
                 )
 
                 print(response)
             - sdk: python
               name: Async
-              code: |
+              code: >
                 import cohere
+
                 import asyncio
 
-                co = cohere.AsyncClientV2("<<apiKey>>")
+
+                co = cohere.AsyncClientV2()
+
 
 
                 async def main():
                     response = await co.chat(
                         model="command-r-plus-08-2024",
-                        messages=[
-                            cohere.UserChatMessageV2(
-                                content="hello world!"
-                            )
-                        ]
+                        messages=[cohere.UserChatMessageV2(content="hello world!")],
                     )
 
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: java
@@ -6153,7 +6159,7 @@ paths:
 
                 public class Default {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     ChatResponse response =
                         cohere
@@ -6189,7 +6195,7 @@ paths:
                 }
             - sdk: curl
               name: Default
-              code: |-
+              code: |
                 curl --request POST \
                   --url https://api.cohere.com/v2/chat \
                   --header 'accept: application/json' \
@@ -6200,9 +6206,9 @@ paths:
                     "messages": [
                       {
                         "role": "user",
-                        "message": "Hello world!"
+                        "content": "Hello world!"
                       }
-                    ],
+                    ]
                   }'
           request:
             model: "command-r"
@@ -6292,9 +6298,7 @@ paths:
               code: |
                 const { CohereClientV2 } = require('cohere-ai');
 
-                const cohere = new CohereClientV2({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClientV2({});
 
                 (async () => {
                   const response = await cohere.chat({
@@ -6316,18 +6320,15 @@ paths:
                 import cohere
 
 
-                co = cohere.ClientV2("<<apiKey>>")
+                co = cohere.ClientV2()
 
 
                 response = co.chat(
                     model="command-r-plus-08-2024",
-                    documents=[{'id': '1', 'data': {'text': 'Cohere is the best!', 'title': 'The best'}}],
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": "Who's the best?"
-                        }
-                    ]
+                    documents=[
+                        {"id": "1", "data": {"text": "Cohere is the best!", "title": "The best"}}
+                    ],
+                    messages=[{"role": "user", "content": "Who's the best?"}],
                 )
 
 
@@ -6354,7 +6355,7 @@ paths:
 
                 public class Documents {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     ChatResponse response =
                         cohere
@@ -6513,12 +6514,7 @@ paths:
                     "messages": [
                       {
                         "role": "user",
-                        "content": [
-                          {
-                            "type": "text",
-                            "text": "Who's the best?"
-                          }
-                        ]
+                        "content": "Who's the best?"
                       }
                     ]
                   }'
@@ -6995,9 +6991,7 @@ paths:
               code: |
                 const { CohereClientV2 } = require('cohere-ai');
 
-                const cohere = new CohereClientV2({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClientV2({});
 
                 (async () => {
                   const stream = await cohere.chatStream({
@@ -7021,21 +7015,16 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.ClientV2("<<apiKey>>")
+                co = cohere.ClientV2()
 
                 response = co.chat_stream(
                     model="command-r-plus-08-2024",
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": "hello world!"
-                        }
-                    ]
+                    messages=[{"role": "user", "content": "hello world!"}],
                 )
 
                 for event in response:
                     if event.type == "content-delta":
-                        print(event.delta.message.content.text, end='')
+                        print(event.delta.message.content.text, end="")
             - sdk: java
               name: Streaming
               code: >
@@ -7055,7 +7044,7 @@ paths:
 
                 public class Stream {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     Iterable<StreamedChatResponseV2> response =
                         cohere
@@ -7104,7 +7093,7 @@ paths:
                 }
             - sdk: curl
               name: Streaming
-              code: |-
+              code: |
                 curl --request POST \
                   --url https://api.cohere.com/v2/chat \
                   --header 'accept: application/json' \
@@ -7116,9 +7105,9 @@ paths:
                     "messages": [
                       {
                         "role": "user",
-                        "message": "Hello world!"
+                        "content": "Hello world!"
                       }
-                    ],
+                    ]
                   }'
           request:
             model: "command-r"
@@ -7245,9 +7234,7 @@ paths:
                 const { CohereClientV2 } = require('cohere-ai');
 
 
-                const cohere = new CohereClientV2({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClientV2({});
 
 
                 (async () => {
@@ -7307,45 +7294,51 @@ paths:
                 import cohere
 
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
 
                 response = co.chat(
                     model="command-r-plus-08-2024",
                     tools=[
-                        cohere.ToolV2(type='function', function={
-                            "name": "query_daily_sales_report",
-                            "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
-                            "parameters": {
-                                "type": "object",
-                                "properties": {
-                                    "day": {
-                                        "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        }),
-                        cohere.ToolV2(type='function', function={
-                            "name": "query_product_catalog",
-                            "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
-                            "parameters": {
-                                "type": "object",
-                                "properties": {
-                                    "category": {
-                                        "description": "Retrieves product information data for all products in this category.",
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        })
+                        cohere.ToolV2(
+                            type="function",
+                            function={
+                                "name": "query_daily_sales_report",
+                                "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+                                "parameters": {
+                                    "type": "object",
+                                    "properties": {
+                                        "day": {
+                                            "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
+                                            "type": "string",
+                                        }
+                                    },
+                                },
+                            },
+                        ),
+                        cohere.ToolV2(
+                            type="function",
+                            function={
+                                "name": "query_product_catalog",
+                                "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
+                                "parameters": {
+                                    "type": "object",
+                                    "properties": {
+                                        "category": {
+                                            "description": "Retrieves product information data for all products in this category.",
+                                            "type": "string",
+                                        }
+                                    },
+                                },
+                            },
+                        ),
                     ],
                     messages=[
                         {
                             "role": "user",
-                            "content": "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
+                            "content": "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
                         }
-                    ]
+                    ],
                 )
 
 
@@ -7371,7 +7364,7 @@ paths:
 
                 public class Tools {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     ChatResponse response =
                         cohere
@@ -7646,7 +7639,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.GenerateStream(
                 		context.TODO(),
@@ -7682,9 +7675,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   const generate = await cohere.generate({
@@ -7698,7 +7689,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
                 response = co.generate(
                     prompt="Please explain to me how LLMs work",
@@ -7710,7 +7701,7 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
@@ -7718,6 +7709,7 @@ paths:
                         prompt="Please explain to me how LLMs work",
                     )
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: java
@@ -7734,7 +7726,7 @@ paths:
 
                 public class GeneratePost {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     Generation response =
                         cohere.generate(
@@ -7872,7 +7864,7 @@ paths:
           $ref: "#/components/responses/GatewayTimeout"
       description: |
         <Warning>
-        This API is marked as "Legacy" and is no longer maintained. Follow the [migration guide](/docs/migrating-from-cogenerate-to-cochat) to start using the Chat API.
+        This API is marked as "Legacy" and is no longer maintained. Follow the [migration guide](https://docs.cohere.com/docs/migrating-from-cogenerate-to-cochat) to start using the Chat API.
         </Warning>
         Generates realistic text conditioned on a given input.
       requestBody:
@@ -7898,7 +7890,7 @@ paths:
                     - public
                   description: |-
                     The identifier of the model to generate with. Currently available models are `command` (default), `command-nightly` (experimental), `command-light`, and `command-light-nightly` (experimental).
-                    Smaller, "light" models are faster, while larger models will perform better. [Custom models](/docs/training-custom-models) can also be supplied with their full ID.
+                    Smaller, "light" models are faster, while larger models will perform better. [Custom models](https://docs.cohere.com/docs/training-custom-models) can also be supplied with their full ID.
                   writeOnly: true
                 num_generations:
                   type: integer
@@ -8109,7 +8101,7 @@ paths:
                 	contentType := resp.Header.Get("Content-Type")
                 	imageBase64 := fmt.Sprintf("data:%s;base64,%s", contentType, stringifiedBuffer)
 
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	embed, err := co.Embed(
                 		context.TODO(),
@@ -8133,9 +8125,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -8163,15 +8153,15 @@ paths:
                 import base64
 
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
 
                 image = requests.get("https://cohere.com/favicon-32x32.png")
 
                 stringified_buffer =
-                base64.b64encode(image.content).decode('utf-8')
+                base64.b64encode(image.content).decode("utf-8")
 
-                content_type = image.headers['Content-Type']
+                content_type = image.headers["Content-Type"]
 
                 image_base64 =
                 f"data:{content_type};base64,{stringified_buffer}"
@@ -8179,9 +8169,9 @@ paths:
 
                 response = co.embed(
                     model="embed-english-v3.0",
-                    input_type="image", 
+                    input_type="image",
                     embedding_types=["float"],
-                    images=[image_base64]
+                    images=[image_base64],
                 )
 
 
@@ -8217,7 +8207,7 @@ paths:
 
                 public class EmbedImagePost {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     URL url =
                         URI.toUrl(
@@ -9323,7 +9313,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Embed(
                 		context.TODO(),
@@ -9345,9 +9335,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   const embed = await cohere.embed({
@@ -9364,7 +9352,7 @@ paths:
                 import cohere
 
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
 
                 response = co.embed(
@@ -9374,21 +9362,21 @@ paths:
                 print(response)
             - sdk: python
               name: Texts (async)
-              code: >
+              code: |
                 import cohere
-
                 import asyncio
 
-
-                co = cohere.AsyncClient("<<apiKey>>")
-
+                co = cohere.AsyncClient()
 
 
                 async def main():
                     response = await co.embed(
-                        texts=["hello", "goodbye"], model="embed-english-v3.0", input_type="classification"
+                        texts=["hello", "goodbye"],
+                        model="embed-english-v3.0",
+                        input_type="classification",
                     )
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: java
@@ -9410,7 +9398,7 @@ paths:
 
                 public class EmbedPost {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     EmbedResponse response =
                         cohere.embed(
@@ -11553,7 +11541,7 @@ paths:
 
         Embeddings can be used to create classifiers as well as empower semantic search. To learn more about embeddings, see the embedding page.
 
-        If you want to learn more how to use the embedding model, have a look at the [Semantic Search Guide](/docs/semantic-search).
+        If you want to learn more how to use the embedding model, have a look at the [Semantic Search Guide](https://docs.cohere.com/docs/semantic-search).
       requestBody:
         content:
           application/json:
@@ -11599,7 +11587,7 @@ paths:
                   description: |-
                     Defaults to embed-english-v2.0
 
-                    The identifier of the model. Smaller "light" models are faster, while larger models will perform better. [Custom models](/docs/training-custom-models) can also be supplied with their full ID.
+                    The identifier of the model. Smaller "light" models are faster, while larger models will perform better. [Custom models](https://docs.cohere.com/docs/training-custom-models) can also be supplied with their full ID.
 
                     Available models and corresponding embedding dimensions:
 
@@ -11699,7 +11687,7 @@ paths:
                 	contentType := resp.Header.Get("Content-Type")
                 	imageBase64 := fmt.Sprintf("data:%s;base64,%s", contentType, stringifiedBuffer)
 
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	embed, err := co.V2.Embed(
                 		context.TODO(),
@@ -11723,9 +11711,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -11753,15 +11739,15 @@ paths:
                 import base64
 
 
-                co = cohere.ClientV2("<<apiKey>>")
+                co = cohere.ClientV2()
 
 
                 image = requests.get("https://cohere.com/favicon-32x32.png")
 
                 stringified_buffer =
-                base64.b64encode(image.content).decode('utf-8')
+                base64.b64encode(image.content).decode("utf-8")
 
-                content_type = image.headers['Content-Type']
+                content_type = image.headers["Content-Type"]
 
                 image_base64 =
                 f"data:{content_type};base64,{stringified_buffer}"
@@ -11769,9 +11755,9 @@ paths:
 
                 response = co.embed(
                     model="embed-english-v3.0",
-                    input_type="image", 
+                    input_type="image",
                     embedding_types=["float"],
-                    images=[image_base64]
+                    images=[image_base64],
                 )
 
 
@@ -11808,7 +11794,7 @@ paths:
 
                 public class EmbedImagePost {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     URL url =
                         URI.toUrl(
@@ -12917,7 +12903,7 @@ paths:
 
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.V2.Embed(
                 		context.TODO(),
@@ -12940,9 +12926,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   const embed = await cohere.v2.embed({
@@ -12955,35 +12939,35 @@ paths:
                 })();
             - sdk: python
               name: Texts
-              code: >
+              code: |
                 import cohere
 
-
-                co = cohere.ClientV2("<<apiKey>>")
-
+                co = cohere.ClientV2()
 
                 response = co.embed(
-                    texts=["hello", "goodbye"], model="embed-english-v3.0", input_type="classification", embedding_types=["float"]
+                    texts=["hello", "goodbye"],
+                    model="embed-english-v3.0",
+                    input_type="classification",
+                    embedding_types=["float"],
                 )
-
                 print(response)
             - sdk: python
               name: Texts (async)
-              code: >
+              code: |
                 import cohere
-
                 import asyncio
 
-
-                co = cohere.AsyncClient("<<apiKey>>")
-
+                co = cohere.AsyncClient()
 
 
                 async def main():
                     response = await co.embed(
-                        texts=["hello", "goodbye"], model="embed-english-v3.0", input_type="classification"
+                        texts=["hello", "goodbye"],
+                        model="embed-english-v3.0",
+                        input_type="classification",
                     )
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: java
@@ -13006,7 +12990,7 @@ paths:
 
                 public class EmbedPost {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     EmbedByTypeResponse response =
                         cohere
@@ -15151,7 +15135,7 @@ paths:
 
         Embeddings can be used to create text classifiers as well as empower semantic search. To learn more about embeddings, see the embedding page.
 
-        If you want to learn more how to use the embedding model, have a look at the [Semantic Search Guide](/docs/semantic-search).
+        If you want to learn more how to use the embedding model, have a look at the [Semantic Search Guide](https://docs.cohere.com/docs/semantic-search).
       requestBody:
         content:
           application/json:
@@ -15201,7 +15185,7 @@ paths:
                   description: |-
                     Defaults to embed-english-v2.0
 
-                    The identifier of the model. Smaller "light" models are faster, while larger models will perform better. [Custom models](/docs/training-custom-models) can also be supplied with their full ID.
+                    The identifier of the model. Smaller "light" models are faster, while larger models will perform better. [Custom models](https://docs.cohere.com/docs/training-custom-models) can also be supplied with their full ID.
 
                     Available models and corresponding embedding dimensions:
 
@@ -15278,7 +15262,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.EmbedJobs.Create(
                 		context.TODO(),
@@ -15300,7 +15284,7 @@ paths:
                 import cohere
 
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
 
                 # start an embed job
@@ -15318,20 +15302,19 @@ paths:
                 print(response)
             - sdk: python
               name: Async
-              code: >
+              code: |
                 import cohere
-
                 import asyncio
 
-
-                co = cohere.AsyncClient("<<apiKey>>")
-
+                co = cohere.AsyncClient()
 
 
                 async def main():
                     # start an embed job
                     job = await co.embed_jobs.create(
-                        dataset_id="my-dataset-id", input_type="search_document", model="embed-english-v3.0"
+                        dataset_id="my-dataset-id",
+                        input_type="search_document",
+                        model="embed-english-v3.0",
                     )
 
                     # poll the server until the job is complete
@@ -15339,25 +15322,20 @@ paths:
 
                     print(response)
 
+
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.embedjobs.requests.CreateEmbedJobRequest;
-
+                import com.cohere.api.resources.embedjobs.requests.CreateEmbedJobRequest;
                 import com.cohere.api.types.CreateEmbedJobResponse;
-
                 import com.cohere.api.types.EmbedInputType;
-
 
                 public class EmbedJobsPost {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     CreateEmbedJobResponse response =
                         cohere
@@ -15377,9 +15355,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   const embedJob = await cohere.embedJobs.create({
@@ -15476,7 +15452,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.EmbedJobs.Get(context.TODO(), "embed_job_id")
 
@@ -15491,7 +15467,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
                 # list embed jobs
                 response = co.embed_jobs.list()
@@ -15503,13 +15479,14 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
                     response = await co.embed_jobs.list()
 
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: java
@@ -15524,7 +15501,7 @@ paths:
 
                 public class EmbedJobsGet {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     ListEmbedJobResponse response = cohere.embedJobs().list();
 
@@ -15536,9 +15513,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   const embedJobs = await cohere.embedJobs.list();
@@ -15627,7 +15602,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.EmbedJobs.List(context.TODO())
 
@@ -15642,7 +15617,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
                 # get embed job
                 response = co.embed_jobs.get("job_id")
@@ -15654,13 +15629,14 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
                     response = await co.embed_jobs.get("job_id")
 
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: java
@@ -15675,7 +15651,7 @@ paths:
 
                 public class EmbedJobsGet {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     ListEmbedJobResponse response = cohere.embedJobs().list();
 
@@ -15687,9 +15663,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   const embedJob = await cohere.embedJobs.get('job_id');
@@ -15778,7 +15752,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	err := co.EmbedJobs.Cancel(context.TODO(), "embed_job_id")
 
@@ -15792,7 +15766,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
                 # cancel an embed job
                 co.embed_jobs.cancel("job_id")
@@ -15802,7 +15776,7 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
@@ -15817,7 +15791,7 @@ paths:
 
                 public class EmbedJobsCancel {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     cohere.embedJobs().cancel("job_id");
                   }
@@ -15827,9 +15801,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   const embedJob = await cohere.embedJobs.cancel('job_id');
@@ -16080,7 +16052,7 @@ paths:
 
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Rerank(
                 		context.TODO(),
@@ -16108,9 +16080,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -16143,7 +16113,7 @@ paths:
                 import cohere
 
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
 
                 docs = [
@@ -16171,7 +16141,7 @@ paths:
                 import asyncio
 
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 docs = [
@@ -16193,6 +16163,7 @@ paths:
                     )
                     print(response)
 
+
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
@@ -16212,7 +16183,7 @@ paths:
 
                 public class RerankPost {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     RerankResponse response =
                         cohere.rerank(
@@ -16419,9 +16390,13 @@ paths:
                   type: string
                   x-fern-audiences:
                     - public
-                  description: "The identifier of the model to use, one of :
-                    `rerank-english-v3.0`, `rerank-multilingual-v3.0`,
-                    `rerank-english-v2.0`, `rerank-multilingual-v2.0`"
+                  description: |-
+                    The identifier of the model to use. 
+                    Supported models:
+                      - `rerank-english-v3.0`
+                      - `rerank-multilingual-v3.0`
+                      - `rerank-english-v2.0`
+                      - `rerank-multilingual-v2.0`
                 query:
                   type: string
                   x-fern-audiences:
@@ -16432,12 +16407,11 @@ paths:
                   x-fern-audiences:
                     - public
                   description: |-
-                    A list of document objects or strings to rerank.
-                    If a document is provided the text fields is required and all other fields will be preserved in the response.
+                    A list of texts that will be compared to the `query`.
+                    For optimal performance we recommend against sending more than 1,000 documents in a single request.
 
-                    The total max chunks (length of documents * max_chunks_per_doc) must be less than 10000.
-
-                    We recommend a maximum of 1,000 documents for optimal endpoint performance.
+                    **Note**: long documents will automatically be truncated to the value of `max_tokens_per_doc`.
+                    **Note**: structured data should be formatted as YAML strings for best performance.  
                   items:
                     oneOf:
                       - type: string
@@ -16447,25 +16421,9 @@ paths:
                   x-fern-audiences:
                     - public
                   minimum: 1
-                  description: The number of most relevant documents or indices to return,
-                    defaults to the length of the documents
-                rank_fields:
-                  type: array
-                  x-fern-audiences:
-                    - public
-                  items:
-                    type: string
-                    x-fern-audiences:
-                      - public
-                  description: If a JSON object is provided, you can specify which keys you would
-                    like to have considered for reranking. The model will rerank
-                    based on order of the fields passed in (i.e.
-                    rank_fields=['title','author','text'] will rerank using the
-                    values in title, author, text  sequentially. If the length
-                    of title, author, and text exceeds the context length of the
-                    model, the chunking will not re-consider earlier fields). If
-                    not provided, the model will use the default text field for
-                    ranking.
+                  description: Limits the returned number of rerank results to the specified
+                    value. If not passed, all the rerank results will be
+                    returned.
                 return_documents:
                   type: boolean
                   x-fern-audiences:
@@ -16474,12 +16432,12 @@ paths:
                   description: |-
                     - If false, returns results without the doc text - the api will return a list of {index, relevance score} where index is inferred from the list passed into the request.
                     - If true, returns results with the doc text passed in - the api will return an ordered list of {index, text, relevance score} where index + text refers to the list passed into the request.
-                max_chunks_per_doc:
+                max_tokens_per_doc:
                   type: integer
                   x-fern-audiences:
                     - public
-                  description: The maximum number of chunks to produce internally from a document
-                  default: 10
+                  description: Defaults to `4096`. Long documents will be automatically truncated
+                    to the specified number of tokens.
               required:
                 - query
                 - documents
@@ -16495,9 +16453,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -16530,7 +16486,7 @@ paths:
                 import cohere
 
 
-                co = cohere.ClientV2("<<apiKey>>")
+                co = cohere.ClientV2()
 
 
                 docs = [
@@ -16558,7 +16514,7 @@ paths:
                 import asyncio
 
 
-                co = cohere.AsyncClientV2("<<apiKey>>")
+                co = cohere.AsyncClientV2()
 
 
                 docs = [
@@ -16580,6 +16536,7 @@ paths:
                     )
                     print(response)
 
+
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
@@ -16600,7 +16557,7 @@ paths:
 
                 public class RerankV2Post {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     V2RerankResponse response =
                         cohere
@@ -16729,7 +16686,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Classify(
                 		context.TODO(),
@@ -16768,9 +16725,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -16800,23 +16755,20 @@ paths:
                 from cohere import ClassifyExample
 
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
                 examples = [
                     ClassifyExample(text="Dermatologists don't like her!", label="Spam"),
                     ClassifyExample(text="'Hello, open to this?'", label="Spam"),
-                    ClassifyExample(
-                        text="I need help please wire me $1000 right now", label="Spam"),
+                    ClassifyExample(text="I need help please wire me $1000 right now", label="Spam"),
                     ClassifyExample(text="Nice to know you ;)", label="Spam"),
                     ClassifyExample(text="Please help me?", label="Spam"),
-                    ClassifyExample(text="Your parcel will be delivered today",
-                                    label="Not spam"),
+                    ClassifyExample(text="Your parcel will be delivered today", label="Not spam"),
                     ClassifyExample(
                         text="Review changes to our Terms and Conditions", label="Not spam"
                     ),
                     ClassifyExample(text="Weekly sync notes", label="Not spam"),
-                    ClassifyExample(text="'Re: Follow up from today's meeting'",
-                                    label="Not spam"),
+                    ClassifyExample(text="'Re: Follow up from today's meeting'", label="Not spam"),
                     ClassifyExample(text="Pre-read for tomorrow", label="Not spam"),
                 ]
 
@@ -16841,23 +16793,20 @@ paths:
                 from cohere import ClassifyExample
 
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
                 examples = [
                     ClassifyExample(text="Dermatologists don't like her!", label="Spam"),
                     ClassifyExample(text="'Hello, open to this?'", label="Spam"),
-                    ClassifyExample(
-                        text="I need help please wire me $1000 right now", label="Spam"),
+                    ClassifyExample(text="I need help please wire me $1000 right now", label="Spam"),
                     ClassifyExample(text="Nice to know you ;)", label="Spam"),
                     ClassifyExample(text="Please help me?", label="Spam"),
-                    ClassifyExample(text="Your parcel will be delivered today",
-                                    label="Not spam"),
+                    ClassifyExample(text="Your parcel will be delivered today", label="Not spam"),
                     ClassifyExample(
                         text="Review changes to our Terms and Conditions", label="Not spam"
                     ),
                     ClassifyExample(text="Weekly sync notes", label="Not spam"),
-                    ClassifyExample(text="'Re: Follow up from today's meeting'",
-                                    label="Not spam"),
+                    ClassifyExample(text="'Re: Follow up from today's meeting'", label="Not spam"),
                     ClassifyExample(text="Pre-read for tomorrow", label="Not spam"),
                 ]
 
@@ -16874,6 +16823,7 @@ paths:
                         examples=examples,
                     )
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: java
@@ -16894,7 +16844,7 @@ paths:
 
                 public class ClassifyPost {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     ClassifyResponse response =
                         cohere.classify(
@@ -17404,7 +17354,7 @@ paths:
 
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Datasets.Create(
                 		context.TODO(),
@@ -17427,7 +17377,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
                 # upload a dataset
                 my_dataset = co.datasets.create(
@@ -17446,11 +17396,10 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
-
                     # upload a dataset
                     response = await co.datasets.create(
                         name="chat-dataset",
@@ -17463,28 +17412,21 @@ paths:
 
                     print(response)
 
+
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.datasets.requests.DatasetsCreateRequest;
-
-                import
-                com.cohere.api.resources.datasets.types.DatasetsCreateResponse;
-
+                import com.cohere.api.resources.datasets.requests.DatasetsCreateRequest;
+                import com.cohere.api.resources.datasets.types.DatasetsCreateResponse;
                 import com.cohere.api.types.DatasetType;
-
                 import java.util.Optional;
-
 
                 public class DatasetPost {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     DatasetsCreateResponse response =
                         cohere
@@ -17508,9 +17450,7 @@ paths:
                 const fs = require('fs');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -17636,7 +17576,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Datasets.Get(context.TODO(), "dataset_id")
 
@@ -17651,7 +17591,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
                 # get dataset
                 response = co.datasets.get(id="<<datasetId>>")
@@ -17663,13 +17603,14 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
                     response = await co.datasets.get(id="<<datasetId>>")
 
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: java
@@ -17685,7 +17626,7 @@ paths:
 
                 public class DatasetGet {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     DatasetsGetResponse response = cohere.datasets().get("dataset_id");
 
@@ -17697,9 +17638,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   const datasets = await cohere.datasets.get('<<datasetId>>');
@@ -17782,7 +17721,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Datasets.GetUsage(context.TODO())
 
@@ -17797,7 +17736,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
                 # get usage
                 response = co.datasets.get_usage()
@@ -17809,7 +17748,7 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
@@ -17817,21 +17756,18 @@ paths:
 
                     print(response)
 
+
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.datasets.types.DatasetsGetUsageResponse;
-
+                import com.cohere.api.resources.datasets.types.DatasetsGetUsageResponse;
 
                 public class DatasetUsageGet {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     DatasetsGetUsageResponse response = cohere.datasets().getUsage();
 
@@ -17843,9 +17779,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   const usage = await cohere.datasets.getUsage('id');
@@ -17937,7 +17871,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Datasets.Get(context.TODO(), "dataset_id")
 
@@ -17952,7 +17886,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
                 # get dataset
                 response = co.datasets.get(id="<<datasetId>>")
@@ -17964,13 +17898,14 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
                     response = await co.datasets.get(id="<<datasetId>>")
 
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: java
@@ -17986,7 +17921,7 @@ paths:
 
                 public class DatasetGet {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     DatasetsGetResponse response = cohere.datasets().get("dataset_id");
 
@@ -17998,9 +17933,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   const datasets = await cohere.datasets.get('<<datasetId>>');
@@ -18088,7 +18021,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	_, err := co.Datasets.Delete(context.TODO(), "dataset_id")
 
@@ -18102,7 +18035,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
                 # delete dataset
                 co.datasets.delete("id")
@@ -18112,11 +18045,12 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
                     await co.delete_dataset("id")
+
 
                 asyncio.run(main())
             - sdk: java
@@ -18129,7 +18063,7 @@ paths:
 
                 public class DatasetDelete {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     cohere.datasets().delete("id");
                   }
@@ -18201,7 +18135,7 @@ paths:
 
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Summarize(
                 		context.TODO(),
@@ -18222,9 +18156,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -18260,7 +18192,7 @@ paths:
                 import cohere
 
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
 
                 text = (
@@ -18300,7 +18232,7 @@ paths:
                 import asyncio
 
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 text = (
@@ -18334,6 +18266,7 @@ paths:
                     )
                     print(response)
 
+
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
@@ -18349,7 +18282,7 @@ paths:
 
                 public class SummarizePost {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     SummarizeResponse response =
                         cohere.summarize(
@@ -18490,7 +18423,7 @@ paths:
           $ref: "#/components/responses/GatewayTimeout"
       description: |
         <Warning>
-        This API is marked as "Legacy" and is no longer maintained. Follow the [migration guide](/docs/migrating-from-cogenerate-to-cochat) to start using the Chat API.
+        This API is marked as "Legacy" and is no longer maintained. Follow the [migration guide](https://docs.cohere.com/docs/migrating-from-cogenerate-to-cochat) to start using the Chat API.
         </Warning>
         Generates a summary in English for a given text.
       requestBody:
@@ -18611,7 +18544,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Tokenize(
                 		context.TODO(),
@@ -18640,16 +18573,14 @@ paths:
                 })();
             - sdk: python
               name: Sync
-              code: >
+              code: |
                 import cohere
 
+                co = cohere.Client()
 
-                co = cohere.Client("<<apiKey>>")
-
-
-                response = co.tokenize(text="tokenize me! :D",
-                model="command-r-plus-08-2024")  # optional
-
+                response = co.tokenize(
+                    text="tokenize me! :D", model="command-r-plus-08-2024"
+                )  # optional
                 print(response)
             - sdk: python
               name: Async
@@ -18659,13 +18590,14 @@ paths:
                 import asyncio
 
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
 
                 async def main():
                     response = await co.tokenize(text="tokenize me! :D", model="command-r-plus-08-2024")
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: java
@@ -18682,7 +18614,7 @@ paths:
 
                 public class TokenizePost {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     TokenizeResponse response =
                         cohere.tokenize(
@@ -18881,7 +18813,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Detokenize(
                 		context.TODO(),
@@ -18901,9 +18833,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   const detokenize = await cohere.detokenize({
@@ -18919,7 +18849,7 @@ paths:
                 import cohere
 
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
 
                 response = co.detokenize(
@@ -18929,21 +18859,20 @@ paths:
                 print(response)
             - sdk: python
               name: Async
-              code: >
+              code: |
                 import cohere
-
                 import asyncio
 
-
-                co = cohere.AsyncClient("<<apiKey>>")
-
+                co = cohere.AsyncClient()
 
 
                 async def main():
                     response = await co.detokenize(
-                        tokens=[8466, 5169, 2594, 8, 2792, 43], model="command-r-plus-08-2024"  # optional
+                        tokens=[8466, 5169, 2594, 8, 2792, 43],
+                        model="command-r-plus-08-2024",  # optional
                     )
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: java
@@ -18962,7 +18891,7 @@ paths:
 
                 public class DetokenizePost {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     DetokenizeResponse response =
                         cohere.detokenize(
@@ -19168,7 +19097,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Connectors.List(
                 		context.TODO(),
@@ -19185,7 +19114,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
                 response = co.connectors.list()
                 print(response)
             - sdk: python
@@ -19194,12 +19123,13 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
                     response = await co.connectors.list()
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: java
@@ -19214,7 +19144,7 @@ paths:
 
                 public class ConnectorsList {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     ListConnectorsResponse list = cohere.connectors().list();
 
@@ -19226,9 +19156,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   const connectors = await cohere.connectors.list();
@@ -19311,7 +19239,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Connectors.Create(
                 		context.TODO(),
@@ -19336,7 +19264,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
                 response = co.connectors.create(
                     name="Example connector",
                     url="https://connector-example.com/search",
@@ -19348,7 +19276,7 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
@@ -19358,23 +19286,19 @@ paths:
                     )
                     print(response)
 
+
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.connectors.requests.CreateConnectorRequest;
-
+                import com.cohere.api.resources.connectors.requests.CreateConnectorRequest;
                 import com.cohere.api.types.CreateConnectorResponse;
-
 
                 public class ConnectorCreate {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     CreateConnectorResponse response =
                         cohere
@@ -19393,9 +19317,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   const connector = await cohere.connectors.create({
@@ -19487,7 +19409,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Connectors.Get(context.TODO(), "connector_id")
 
@@ -19502,7 +19424,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
                 response = co.connectors.get("test-id")
                 print(response)
             - sdk: python
@@ -19511,12 +19433,13 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
                     response = await co.connectors.get("test-id")
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: java
@@ -19531,7 +19454,7 @@ paths:
 
                 public class ConnectorGet {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     GetConnectorResponse response = cohere.connectors().get("test-id");
 
@@ -19543,9 +19466,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   const connector = await cohere.connectors.get('connector-id');
@@ -19635,7 +19556,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Connectors.Update(
                 		context.TODO(),
@@ -19657,7 +19578,7 @@ paths:
                 import cohere
 
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
                 response = co.connectors.update(
                     connector_id="test-id", name="new name", url="https://example.com/search"
@@ -19672,7 +19593,7 @@ paths:
                 import asyncio
 
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
 
@@ -19682,21 +19603,18 @@ paths:
                     )
                     print(response)
 
+
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.connectors.requests.UpdateConnectorRequest;
-
+                import com.cohere.api.resources.connectors.requests.UpdateConnectorRequest;
 
                 public class ConnectorPatch {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     cohere
                         .connectors()
@@ -19714,9 +19632,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -19809,7 +19725,7 @@ paths:
 
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Connectors.Delete(context.TODO(), "connector_id")
 
@@ -19824,9 +19740,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   await cohere.connectors.delete('connector-id');
@@ -19836,7 +19750,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
                 co.connectors.delete("test-id")
             - sdk: python
               name: Async
@@ -19844,11 +19758,12 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
                     await co.connectors.delete("test-id")
+
 
                 asyncio.run(main())
             - sdk: java
@@ -19861,7 +19776,7 @@ paths:
 
                 public class ConnectorDelete {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     cohere.connectors().delete("test-id");
                   }
@@ -19951,7 +19866,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Connectors.OAuthAuthorize(
                 		context.TODO(),
@@ -19973,7 +19888,7 @@ paths:
                 import cohere
 
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
                 response = co.connectors.o_auth_authorize(
                     connector_id="test-id", after_token_redirect="https://test.com"
@@ -19988,7 +19903,7 @@ paths:
                 import asyncio
 
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
 
@@ -19998,23 +19913,19 @@ paths:
                     )
                     print(response)
 
+
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.connectors.requests.ConnectorsOAuthAuthorizeRequest;
-
+                import com.cohere.api.resources.connectors.requests.ConnectorsOAuthAuthorizeRequest;
                 import com.cohere.api.types.OAuthAuthorizeResponse;
-
 
                 public class ConnectorsIdOauthAuthorizePost {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     OAuthAuthorizeResponse response =
                         cohere
@@ -20034,9 +19945,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -20197,7 +20106,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
                 response = co.models.list()
                 print(response)
             - sdk: python
@@ -20206,12 +20115,13 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
                     response = await co.models.list()
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: java
@@ -20226,7 +20136,7 @@ paths:
 
                 public class ModelsListGet {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     ListModelsResponse response = cohere.models().list();
 
@@ -20245,9 +20155,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   const models = await cohere.models.list();
@@ -20270,7 +20178,7 @@ paths:
 
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Models.List(context.TODO(), &cohere.ModelsListRequest{})
 
@@ -20450,21 +20358,16 @@ paths:
         - code-samples:
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 package finetuning;
 
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.ListFinetunedModelsResponse;
-
+                import com.cohere.api.resources.finetuning.finetuning.types.ListFinetunedModelsResponse;
 
                 public class ListFinetunedModels {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     ListFinetunedModelsResponse response = cohere.finetuning().listFinetunedModels();
 
@@ -20486,7 +20389,7 @@ paths:
 
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Finetuning.ListFinetunedModels(context.TODO(), nil)
                 	if err != nil {
@@ -20501,9 +20404,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -20516,7 +20417,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
                 response = co.finetuning.list_finetuned_models()
                 print(response)
             - sdk: python
@@ -20525,12 +20426,13 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
                     response = await co.finetuning.list_finetuned_models()
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: curl
@@ -20626,7 +20528,7 @@ paths:
 
                 public class CreateFinetunedModel {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     CreateFinetunedModelResponse response =
                         cohere
@@ -20659,7 +20561,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Finetuning.CreateFinetunedModel(
                 		context.TODO(),
@@ -20685,9 +20587,7 @@ paths:
                 const { Cohere, CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -20711,11 +20611,11 @@ paths:
                     FinetunedModel,
                     Hyperparameters,
                     Settings,
-                    WandbConfig
+                    WandbConfig,
                 )
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
                 hp = Hyperparameters(
                     early_stopping_patience=10,
                     early_stopping_threshold=0.001,
@@ -20753,7 +20653,7 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
@@ -20769,6 +20669,7 @@ paths:
                         )
                     )
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: curl
@@ -20891,7 +20792,8 @@ paths:
                 last_used:
                   type: string
                   format: date-time
-                  description: Timestamp for the latest request to this fine-tuned model.
+                  description: "Deprecated: Timestamp for the latest request to this fine-tuned
+                    model."
                   readOnly: true
               title: Information about the fine-tuned model. Must contain name and settings.
               required:
@@ -20902,33 +20804,20 @@ paths:
         - code-samples:
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 package finetuning;
 
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.BaseModel;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.BaseType;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.Settings;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.UpdateFinetunedModelResponse;
-
-                import
-                com.cohere.api.resources.finetuning.requests.FinetuningUpdateFinetunedModelRequest;
-
+                import com.cohere.api.resources.finetuning.finetuning.types.BaseModel;
+                import com.cohere.api.resources.finetuning.finetuning.types.BaseType;
+                import com.cohere.api.resources.finetuning.finetuning.types.Settings;
+                import com.cohere.api.resources.finetuning.finetuning.types.UpdateFinetunedModelResponse;
+                import com.cohere.api.resources.finetuning.requests.FinetuningUpdateFinetunedModelRequest;
 
                 public class UpdateFinetunedModel {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     UpdateFinetunedModelResponse response =
                         cohere
@@ -20962,7 +20851,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Finetuning.UpdateFinetunedModel(
                 		context.TODO(),
@@ -20983,9 +20872,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -21004,7 +20891,7 @@ paths:
                 )
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
                 finetuned_model = co.finetuning.update_finetuned_model(
                     id="test-id",
                     name="new name",
@@ -21012,7 +20899,8 @@ paths:
                         base_model=BaseModel(
                             base_type="BASE_TYPE_CHAT",
                         ),
-                        dataset_id="my-dataset-id",)
+                        dataset_id="my-dataset-id",
+                    ),
                 )
 
                 print(finetuned_model)
@@ -21024,13 +20912,14 @@ paths:
                 import asyncio
 
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
 
                 async def main():
                     response = await co.finetuning.update_finetuned_model(id="test-id", name="new name")
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: curl
@@ -21129,21 +21018,16 @@ paths:
         - code-samples:
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 package finetuning;
 
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.GetFinetunedModelResponse;
-
+                import com.cohere.api.resources.finetuning.finetuning.types.GetFinetunedModelResponse;
 
                 public class GetFinetunedModel {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     GetFinetunedModelResponse response = cohere.finetuning().getFinetunedModel("test-id");
 
@@ -21165,7 +21049,7 @@ paths:
 
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Finetuning.GetFinetunedModel(context.TODO(), "test-id")
                 	if err != nil {
@@ -21180,9 +21064,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -21195,7 +21077,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
                 response = co.finetuning.get_finetuned_model("test-id")
                 print(response)
             - sdk: python
@@ -21206,13 +21088,14 @@ paths:
                 import asyncio
 
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
 
                 async def main():
                     response = await co.finetuning.get_finetuned_model("test-id")
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: curl
@@ -21297,7 +21180,7 @@ paths:
 
                 public class DeleteFinetunedModel {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     cohere.finetuning().deleteFinetunedModel("test-id");
                   }
@@ -21317,7 +21200,7 @@ paths:
 
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	_, err := co.Finetuning.DeleteFinetunedModel(context.TODO(), "test-id")
                 	if err != nil {
@@ -21329,9 +21212,7 @@ paths:
               code: |
                 const { CohereClient } = require('cohere-ai');
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
                 (async () => {
                   await cohere.finetuning.deleteFinetunedModel('test-id');
@@ -21341,7 +21222,7 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
                 co.finetuning.delete_finetuned_model("test-id")
             - sdk: python
               name: Async
@@ -21349,11 +21230,12 @@ paths:
                 import cohere
                 import asyncio
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
                 async def main():
                     await co.finetuning.delete_finetuned_model("test-id")
+
 
                 asyncio.run(main())
             - sdk: curl
@@ -21469,21 +21351,16 @@ paths:
         - code-samples:
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 package finetuning;
 
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.ListEventsResponse;
-
+                import com.cohere.api.resources.finetuning.finetuning.types.ListEventsResponse;
 
                 public class ListEvents {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     ListEventsResponse response = cohere.finetuning().listEvents("test-id");
 
@@ -21503,7 +21380,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Finetuning.ListEvents(
                 		context.TODO(),
@@ -21522,9 +21399,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -21538,7 +21413,7 @@ paths:
                 import cohere
 
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
 
                 response =
                 co.finetuning.list_events(finetuned_model_id="test-id")
@@ -21552,13 +21427,14 @@ paths:
                 import asyncio
 
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
 
                 async def main():
                     response = await co.finetuning.list_events(finetuned_model_id="test-id")
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: curl
@@ -21665,21 +21541,16 @@ paths:
         - code-samples:
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 package finetuning;
 
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.ListTrainingStepMetricsResponse;
-
+                import com.cohere.api.resources.finetuning.finetuning.types.ListTrainingStepMetricsResponse;
 
                 public class ListTrainingStepMetrics {
                   public static void main(String[] args) {
-                    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
                     ListTrainingStepMetricsResponse response =
                         cohere.finetuning().listTrainingStepMetrics("test-id");
@@ -21700,7 +21571,7 @@ paths:
                 )
 
                 func main() {
-                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+                	co := client.NewClient()
 
                 	resp, err := co.Finetuning.ListTrainingStepMetrics(
                 		context.TODO(),
@@ -21719,9 +21590,7 @@ paths:
                 const { CohereClient } = require('cohere-ai');
 
 
-                const cohere = new CohereClient({
-                  token: '<<apiKey>>',
-                });
+                const cohere = new CohereClient({});
 
 
                 (async () => {
@@ -21736,9 +21605,10 @@ paths:
               code: |
                 import cohere
 
-                co = cohere.Client("<<apiKey>>")
+                co = cohere.Client()
                 train_step_metrics = co.finetuning.list_training_step_metrics(
-                    finetuned_model_id="test-id")
+                    finetuned_model_id="test-id"
+                )
                 print(train_step_metrics)
             - sdk: python
               name: Async
@@ -21748,13 +21618,14 @@ paths:
                 import asyncio
 
 
-                co = cohere.AsyncClient("<<apiKey>>")
+                co = cohere.AsyncClient()
 
 
 
                 async def main():
                     response = await co.finetuning.list_train_step_metrics(finetuned_model_id="test-id")
                     print(response)
+
 
                 asyncio.run(main())
             - sdk: curl
@@ -22012,7 +21883,7 @@ components:
         schema:
           x-fern-availability: beta
           description: |
-            A JSON schema object that the output will adhere to. There are some restrictions we have on the schema, refer to [our guide](/docs/structured-outputs-json#schema-constraints) for more information.
+            A JSON schema object that the output will adhere to. There are some restrictions we have on the schema, refer to [our guide](https://docs.cohere.com/docs/structured-outputs-json#schema-constraints) for more information.
             Example (required name and age object):
             ```json
             {
@@ -22351,6 +22222,7 @@ components:
             - text-generation
             - citation-generation
             - stream-end
+            - debug
     ChatStreamStartEvent:
       allOf:
         - $ref: "#/components/schemas/ChatStreamEvent"
@@ -22525,6 +22397,15 @@ components:
               type: string
               x-fern-audiences:
                 - public
+    ChatDebugEvent:
+      allOf:
+        - $ref: "#/components/schemas/ChatStreamEvent"
+        - type: object
+          properties:
+            prompt:
+              type: string
+              x-fern-audiences:
+                - public
     StreamedChatResponse:
       description: StreamedChatResponse is returned in streaming mode (specified with
         `stream=True` in the request).
@@ -22538,6 +22419,7 @@ components:
         - $ref: "#/components/schemas/ChatToolCallsGenerationEvent"
         - $ref: "#/components/schemas/ChatStreamEndEvent"
         - $ref: "#/components/schemas/ChatToolCallsChunkEvent"
+        - $ref: "#/components/schemas/ChatDebugEvent"
       discriminator:
         propertyName: event_type
         mapping:
@@ -22549,6 +22431,7 @@ components:
           tool-calls-generation: "#/components/schemas/ChatToolCallsGenerationEvent"
           stream-end: "#/components/schemas/ChatStreamEndEvent"
           tool-calls-chunk: "#/components/schemas/ChatToolCallsChunkEvent"
+          debug: "#/components/schemas/ChatDebugEvent"
     TextContent:
       type: object
       description: Text content of the message.
@@ -22869,7 +22752,7 @@ components:
           $ref: "#/components/schemas/ResponseFormatTypeV2"
         json_schema:
           description: |
-            A [JSON schema](https://json-schema.org/overview/what-is-jsonschema) object that the output will adhere to. There are some restrictions we have on the schema, refer to [our guide](/docs/structured-outputs-json#schema-constraints) for more information.
+            A [JSON schema](https://json-schema.org/overview/what-is-jsonschema) object that the output will adhere to. There are some restrictions we have on the schema, refer to [our guide](https://docs.cohere.com/docs/structured-outputs-json#schema-constraints) for more information.
             Example (required name and age object):
             ```json
             {
@@ -22988,11 +22871,32 @@ components:
               type: number
               description: |
                 The number of tokens produced by the model.
+    LogprobItem:
+      type: object
+      required:
+        - token
+        - token_ids
+        - logprob
+      properties:
+        text:
+          type: string
+          description: The text chunk for which the log probabilities was calculated.
+        token_ids:
+          type: array
+          description: The token ids of each token used to construct the text chunk.
+          items:
+            type: integer
+        logprobs:
+          type: array
+          description: The log probability of each token used to construct the text chunk.
+          items:
+            type: number
+            format: float
     ChatResponse:
       required:
         - id
         - finish_reason
-        - messages
+        - message
       properties:
         id:
           type: string
@@ -23004,6 +22908,10 @@ components:
           $ref: "#/components/schemas/AssistantMessageResponse"
         usage:
           $ref: "#/components/schemas/Usage"
+        logprobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/LogprobItem"
     ChatStreamEventType:
       description: The streamed event types
       required:
@@ -23086,6 +22994,8 @@ components:
                       properties:
                         text:
                           type: string
+            logprobs:
+              $ref: "#/components/schemas/LogprobItem"
     ChatContentEndEvent:
       description: A streamed delta event which signifies that the content block has ended.
       allOf:
@@ -23255,9 +23165,10 @@ components:
             `ALL`. The likelihood refers to the average log-likelihood of the
             entire specified string, which is useful for [evaluating the
             performance of your model](likelihood-eval), especially if you've
-            created a [custom model](/docs/training-custom-models). Individual
-            token likelihoods provide the log-likelihood of each token. The
-            first token will not have a likelihood.
+            created a [custom
+            model](https://docs.cohere.com/docs/training-custom-models).
+            Individual token likelihoods provide the log-likelihood of each
+            token. The first token will not have a likelihood.
           items:
             type: object
             x-fern-audiences:
@@ -27192,7 +27103,7 @@ components:
 
          - STRATEGY_UNSPECIFIED: Unspecified strategy.
          - STRATEGY_VANILLA: Deprecated: Serve the fine-tuned model on a dedicated GPU.
-         - STRATEGY_TFEW: Serve the fine-tuned model on a shared GPU.
+         - STRATEGY_TFEW: Deprecated: Serve the fine-tuned model on a shared GPU.
       x-fern-sdk-group-name:
         - finetuning
         - finetuning
@@ -27346,12 +27257,12 @@ components:
 
          - STATUS_UNSPECIFIED: Unspecified status.
          - STATUS_FINETUNING: The fine-tuned model is being fine-tuned.
-         - STATUS_DEPLOYING_API: The fine-tuned model is being deployed.
+         - STATUS_DEPLOYING_API: Deprecated: The fine-tuned model is being deployed.
          - STATUS_READY: The fine-tuned model is ready to receive requests.
          - STATUS_FAILED: The fine-tuned model failed.
          - STATUS_DELETED: The fine-tuned model was deleted.
-         - STATUS_TEMPORARILY_OFFLINE: The fine-tuned model is temporarily unavailable.
-         - STATUS_PAUSED: The fine-tuned model is paused (Vanilla only).
+         - STATUS_TEMPORARILY_OFFLINE: Deprecated: The fine-tuned model is temporarily unavailable.
+         - STATUS_PAUSED: Deprecated: The fine-tuned model is paused (Vanilla only).
          - STATUS_QUEUED: The fine-tuned model is queued for training.
       x-fern-sdk-group-name:
         - finetuning
@@ -27399,7 +27310,8 @@ components:
         last_used:
           type: string
           format: date-time
-          description: read-only. Timestamp for the latest request to this fine-tuned model.
+          description: "read-only. Deprecated: Timestamp for the latest request to this
+            fine-tuned model."
           readOnly: true
       description: This resource represents a fine-tuned model.
       required:

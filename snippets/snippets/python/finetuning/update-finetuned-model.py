@@ -12,7 +12,8 @@ finetuned_model = co.finetuning.update_finetuned_model(
         base_model=BaseModel(
             base_type="BASE_TYPE_CHAT",
         ),
-        dataset_id="my-dataset-id",)
+        dataset_id="my-dataset-id",
+    ),
 )
 
 print(finetuned_model)

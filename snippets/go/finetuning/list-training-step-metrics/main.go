@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	co := client.NewClient()
+	co := client.NewClient(client.WithToken("<<apiKey>>"))
 
 	resp, err := co.Finetuning.ListTrainingStepMetrics(
 		context.TODO(),

@@ -11,9 +11,9 @@ tools = [
             "day": {
                 "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
                 "type": "str",
-                "required": True
+                "required": True,
             }
-        }
+        },
     },
     {
         "name": "query_product_catalog",
@@ -22,10 +22,10 @@ tools = [
             "category": {
                 "description": "Retrieves product information data for all products in this category.",
                 "type": "str",
-                "required": True
+                "required": True,
             }
-        }
-    }
+        },
+    },
 ]
 
 

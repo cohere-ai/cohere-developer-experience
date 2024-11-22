@@ -1,6 +1,6 @@
 import cohere
 
-co = cohere.Client()
+co = cohere.Client("<<apiKey>>")
 
 # start an embed job
 job = co.embed_jobs.create(

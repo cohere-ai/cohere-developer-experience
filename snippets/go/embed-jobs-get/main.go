@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	co := client.NewClient()
+	co := client.NewClient(client.WithToken("<<apiKey>>"))
 
 	resp, err := co.EmbedJobs.Get(context.TODO(), "embed_job_id")
 

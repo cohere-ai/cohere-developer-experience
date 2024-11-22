@@ -1,6 +1,6 @@
 import cohere
 
-co = cohere.Client()
+co = cohere.Client("<<apiKey>>")
 
 # get usage
 response = co.datasets.get_usage()

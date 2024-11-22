@@ -1,8 +1,6 @@
 const { CohereClient } = require('cohere-ai');
 
-const cohere = new CohereClient({
-  
-});
+const cohere = new CohereClient({});
 
 (async () => {
   const generate = await cohere.generate({

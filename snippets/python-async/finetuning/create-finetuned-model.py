@@ -7,7 +7,7 @@ from cohere.finetuning import (
 import cohere
 import asyncio
 
-co = cohere.AsyncClient()
+co = cohere.AsyncClient("<<apiKey>>")
 
 
 async def main():

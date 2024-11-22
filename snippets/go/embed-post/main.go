@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	co := client.NewClient()
+	co := client.NewClient(client.WithToken("<<apiKey>>"))
 
 	resp, err := co.Embed(
 		context.TODO(),

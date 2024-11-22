@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	co := client.NewClient()
+	co := client.NewClient(client.WithToken("<<apiKey>>"))
 
 	resp, err := co.Connectors.Get(context.TODO(), "connector_id")
 

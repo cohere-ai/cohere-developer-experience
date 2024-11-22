@@ -1,17 +1,14 @@
-/* (C)2024 */
 import com.cohere.api.Cohere;
 import com.cohere.api.requests.SummarizeRequest;
 import com.cohere.api.types.SummarizeResponse;
 
+
 public class SummarizePost {
     public static void main(String[] args) {
-        Cohere cohere = Cohere.builder().clientName("snippet").build();
+        Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
 
-        SummarizeResponse response =
-                cohere.summarize(
-                        SummarizeRequest.builder()
-                                .text(
-                                        """
+        SummarizeResponse response = cohere.summarize(SummarizeRequest.builder().text(
+                """
                               Ice cream is a sweetened frozen food typically eaten as a snack or dessert.\s
                               It may be made from milk or cream and is flavoured with a sweetener,\s
                               either sugar or an alternative, and a spice, such as cocoa or vanilla,\s
@@ -32,8 +29,8 @@ public class SummarizePost {
                               such as goat's or sheep's milk, or milk substitutes\s
                               (e.g., soy, cashew, coconut, almond milk or tofu), are available for those who are\s
                               lactose intolerant, allergic to dairy protein or vegan.
-                        """)
-                                .build());
+                        """
+        ).build());
 
         System.out.println(response);
     }

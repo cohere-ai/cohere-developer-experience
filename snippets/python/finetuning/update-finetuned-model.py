@@ -4,7 +4,7 @@ from cohere.finetuning import (
 )
 import cohere
 
-co = cohere.Client()
+co = cohere.Client("<<apiKey>>")
 finetuned_model = co.finetuning.update_finetuned_model(
     id="test-id",
     name="new name",

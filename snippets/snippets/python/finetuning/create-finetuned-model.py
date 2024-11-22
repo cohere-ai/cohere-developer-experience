@@ -3,7 +3,7 @@ from cohere.finetuning import (
     FinetunedModel,
     Hyperparameters,
     Settings,
-    WandbConfig
+    WandbConfig,
 )
 import cohere
 

@@ -17,4 +17,4 @@ response = co.chat_stream(
 
 for event in response:
     if event.event_type == "text-generation":
-        print(event.text, end='')
+        print(event.text, end="")

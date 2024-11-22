@@ -5,7 +5,6 @@ co = cohere.AsyncClient()
 
 
 async def main():
-
     # upload a dataset
     response = await co.datasets.create(
         name="chat-dataset",
@@ -17,5 +16,6 @@ async def main():
     response = await co.wait(response)
 
     print(response)
+
 
 asyncio.run(main())

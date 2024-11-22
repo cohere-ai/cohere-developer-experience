@@ -100,7 +100,9 @@ Finally, you need to set all the following variables using your own information.
 region = "<region>"
 
 # Get the arn of the bring your own finetuning algorithm by region
-cohere_package = "cohere-command-r-v2-byoft-8370167e649c32a1a5f00267cd334c2c"
+cohere_package = (
+    "cohere-command-r-v2-byoft-8370167e649c32a1a5f00267cd334c2c"
+)
 algorithm_map = {
     "us-east-1": f"arn:aws:sagemaker:us-east-1:865070037744:algorithm/{cohere_package}",
     "us-east-2": f"arn:aws:sagemaker:us-east-2:057799348421:algorithm/{cohere_package}",
@@ -150,12 +152,18 @@ from peft import PeftModel
 from transformers import CohereForCausalLM
 
 
-def load_and_merge_model(base_model_name_or_path: str, adapter_weights_dir: str):
+def load_and_merge_model(
+    base_model_name_or_path: str, adapter_weights_dir: str
+):
     """
     Load the base model and the model finetuned by PEFT, and merge the adapter weights to the base weights to get a model with merged weights
     """
-    base_model = CohereForCausalLM.from_pretrained(base_model_name_or_path)
-    peft_model = PeftModel.from_pretrained(base_model, adapter_weights_dir)
+    base_model = CohereForCausalLM.from_pretrained(
+        base_model_name_or_path
+    )
+    peft_model = PeftModel.from_pretrained(
+        base_model, adapter_weights_dir
+    )
     merged_model = peft_model.merge_and_unload()
     return merged_model
 
@@ -165,17 +173,23 @@ def save_hf_model(output_dir: str, model, tokenizer=None, args=None):
     Save a HuggingFace model (and optionally tokenizer as well as additional args) to a local directory
     """
     os.makedirs(output_dir, exist_ok=True)
-    model.save_pretrained(output_dir, state_dict=None, safe_serialization=True)
+    model.save_pretrained(
+        output_dir, state_dict=None, safe_serialization=True
+    )
     if tokenizer is not None:
         tokenizer.save_pretrained(output_dir)
     if args is not None:
-        torch.save(args, os.path.join(output_dir, "training_args.bin"))
+        torch.save(
+            args, os.path.join(output_dir, "training_args.bin")
+        )
 ```
 
 
 ```python
 # Get the merged model from adapter weights
-merged_model = load_and_merge_model("CohereForAI/c4ai-command-r-08-2024", adapter_weights_dir)
+merged_model = load_and_merge_model(
+    "CohereForAI/c4ai-command-r-08-2024", adapter_weights_dir
+)
 
 # Save the merged weights to your local directory
 save_hf_model(merged_weights_dir, merged_model)
@@ -237,7 +251,9 @@ Now, you can perform real-time inference by calling the endpoint you just deploy
 
 ```python
 # If the endpoint is already deployed, you can directly connect to it
-co.sagemaker_finetuning.connect_to_endpoint(endpoint_name=endpoint_name)
+co.sagemaker_finetuning.connect_to_endpoint(
+    endpoint_name=endpoint_name
+)
 
 message = "Classify the following text as either very negative, negative, neutral, positive or very positive: mr. deeds is , as comedy goes , very silly -- and in the best way."
 result = co.sagemaker_finetuning.chat(message=message)
@@ -260,7 +276,9 @@ for line in tqdm(open(eval_data_path).readlines()):
     question_answer_json = json.loads(line)
     question = question_answer_json["messages"][0]["content"]
     answer = question_answer_json["messages"][1]["content"]
-    model_ans = co.sagemaker_finetuning.chat(message=question, temperature=0).text
+    model_ans = co.sagemaker_finetuning.chat(
+        message=question, temperature=0
+    ).text
     if model_ans == answer:
         correct += 1
 

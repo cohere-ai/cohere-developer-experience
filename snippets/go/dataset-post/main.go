@@ -20,7 +20,7 @@ func (m *MyReader) Name() string {
 }
 
 func main() {
-	co := client.NewClient()
+	co := client.NewClient(client.WithToken("<<apiKey>>"))
 
 	resp, err := co.Datasets.Create(
 		context.TODO(),

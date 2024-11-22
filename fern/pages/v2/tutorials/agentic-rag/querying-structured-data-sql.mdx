@@ -1,0 +1,408 @@
+---
+title: Querying Structured Data (SQL)
+slug: /v2/docs/querying-structured-data-sql
+
+description: "Build an agentic RAG system that can query structured data (SQL)."
+image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, RAG, agents, function calling,tool use"
+---
+
+<a target="_blank" href="https://colab.research.google.com/github/cohere-ai/notebooks/blob/main/notebooks/guides/agentic-rag/agentic_rag_pt6_structured_data_SQL.ipynb">Open in Colab</a>
+
+
+In the previous tutorial, we explored how agentic RAG can handle complex queries on structured data in the form of tables using pandas. Now, we'll see how we can do the same for SQL databases.
+
+Consider a scenario similar to the previous tutorial where we have evaluation results for an LLM application. However, instead of a CSV file, this data is now stored in a SQLite database. Users might still ask questions like "What's the average score for a specific use case?" or "Which configuration has the lowest latency?", but now we'll answer these using SQL queries instead of pandas operations.
+
+In this tutorial, we'll cover:
+- Setting up a SQLite database
+- Creating a function to execute SQL queries
+- Building an agent for querying SQL databases
+- Running the agent with various types of queries
+
+By implementing these techniques, we'll expand our agentic RAG system to handle structured data in SQL databases, complementing our previous work with tabular data in pandas.
+
+## Setup
+
+To get started, first we need to install the `cohere` library and create a Cohere client.
+
+
+```python PYTHON
+import json
+import os
+import cohere
+import sqlite3
+import pandas as pd
+
+co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
+```
+
+## Creating a SQLite database
+
+Next, we'll create a SQLite database to store our evaluation results. SQLite is a lightweight, serverless database engine that's perfect for small to medium-sized applications. Here's what we're going to do:
+
+1. Create a new SQLite database file named `evaluation_results.db`.
+2. Create a table called `evaluation_results` with columns for `usecase`, `run`, `score`, `temperature`, `tokens`, and `latency`.
+3. Insert sample data into the table to simulate our evaluation results.
+
+
+```python PYTHON
+
+# Create a connection to a new SQLite database (or connect to an existing one)
+conn = sqlite3.connect('evaluation_results.db')
+cursor = conn.cursor()
+
+# Execute the CREATE TABLE command
+cursor.execute('''
+CREATE TABLE evaluation_results (
+    usecase TEXT,
+    run TEXT,
+    score FLOAT,
+    temperature FLOAT,
+    tokens INTEGER,
+    latency FLOAT
+)
+''')
+
+# Execute the INSERT commands
+data = [
+    ('extract_names', 'A', 0.5, 0.3, 103, 1.12),
+    ('draft_email', 'A', 0.6, 0.3, 252, 2.5),
+    ('summarize_article', 'A', 0.8, 0.3, 350, 4.2),
+    ('extract_names', 'B', 0.2, 0.3, 101, 2.85),
+    ('draft_email', 'B', 0.4, 0.3, 230, 3.2),
+    ('summarize_article', 'B', 0.6, 0.3, 370, 4.2),
+    ('extract_names', 'C', 0.7, 0.3, 101, 2.22),
+    ('draft_email', 'C', 0.5, 0.3, 221, 2.5),
+    ('summarize_article', 'C', 0.1, 0.3, 361, 3.9),
+    ('extract_names', 'D', 0.7, 0.5, 120, 3.2),
+    ('draft_email', 'D', 0.8, 0.5, 280, 3.4),
+    ('summarize_article', 'D', 0.9, 0.5, 342, 4.8)
+]
+
+cursor.executemany('INSERT INTO evaluation_results VALUES (?,?,?,?,?,?)', data)
+
+# Commit the changes and close the connection
+conn.commit()
+conn.close()
+```
+
+## Creating a function to query a SQL database
+
+Next, we'll define a function called `sql_table_query` that allows us to execute SQL queries on our evaluation_results database.
+
+This function will enable us to retrieve and analyze data from our evaluation_results table, allowing for dynamic querying based on our specific needs.
+
+
+
+```python PYTHON
+def sql_table_query(query: str) -> dict:
+    """
+    Execute an SQL query on the evaluation_results table and return the result as a dictionary.
+    
+    Args:
+    query (str): SQL query to execute on the evaluation_results table
+    
+    Returns:
+    dict: Result of the SQL query
+    """
+    try:
+        # Connect to the SQLite database
+        conn = sqlite3.connect('evaluation_results.db')
+        
+        # Execute the query and fetch the results into a DataFrame
+        df = pd.read_sql_query(query, conn)
+        
+        # Close the connection
+        conn.close()
+        
+        # Convert DataFrame to dictionary
+        result_dict = df.to_dict(orient='records')
+        
+        return result_dict
+    
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+        return str(e)
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return str(e)
+    
+functions_map = {
+    "sql_table_query": sql_table_query
+}
+```
+
+We can test the function by running a simple query:
+
+
+```python PYTHON
+result = sql_table_query("SELECT * FROM evaluation_results WHERE usecase = 'extract_names'")
+print(result)
+```
+```
+  [{'usecase': 'extract_names', 'run': 'A', 'score': 0.5, 'temperature': 0.3, 'tokens': 103, 'latency': 1.12}, {'usecase': 'extract_names', 'run': 'B', 'score': 0.2, 'temperature': 0.3, 'tokens': 101, 'latency': 2.85}, {'usecase': 'extract_names', 'run': 'C', 'score': 0.7, 'temperature': 0.3, 'tokens': 101, 'latency': 2.22}, {'usecase': 'extract_names', 'run': 'D', 'score': 0.7, 'temperature': 0.5, 'tokens': 120, 'latency': 3.2}]
+```
+
+## Setting up a tool to interact with the database
+
+Next, we'll create a tool that will allow the agent to interact with the SQLite database containing our evaluation results.
+
+
+```python PYTHON
+sql_table_query_tool = {
+        "type": "function",
+        "function": {
+            "name": "sql_table_query",
+            "description": "Execute an SQL query on the evaluation_results table in the SQLite database. The table has columns 'usecase', 'run', 'score', 'temperature', 'tokens', and 'latency'.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "SQL query to execute on the evaluation_results table"
+                    }
+                },
+                "required": ["query"]
+            }
+        }
+}
+
+tools = [sql_table_query_tool]
+```
+
+## Building an agent for querying SQL data
+
+Next, let's create a `run_agent` function to run the agentic RAG workflow, the same as in Part 1.
+
+The only change we are making here is to make the system message more specific and describe the database schema to the agent.
+
+
+
+
+```python PYTHON
+system_message="""## Task and Context
+You are an assistant who helps developers analyze LLM application evaluation results from a SQLite database. The database contains a table named 'evaluation_results' with the following schema:
+
+- usecase (TEXT): The type of task being evaluated
+- run (TEXT): The identifier for a specific evaluation run
+- score (REAL): The performance score of the run
+- temperature (REAL): The temperature setting used for the LLM
+- tokens (INTEGER): The number of tokens used in the run
+- latency (REAL): The time taken for the run in seconds
+
+You can use SQL queries to analyze this data and provide insights to the developers."""
+```
+
+
+```python PYTHON
+model = "command-r-plus-08-2024"
+
+def run_agent(query, messages=None):
+    if messages is None:
+        messages = []
+        
+    if "system" not in {m.get("role") for m in messages}:
+        messages.append({"role": "system", "content": system_message})
+    
+    # Step 1: get user message
+    print(f"Question:\n{query}")
+    print("="*50)
+    
+    messages.append({"role": "user", "content": query})
+
+    # Step 2: Generate tool calls (if any)
+    response = co.chat(
+        model=model,
+        messages=messages,
+        tools=tools,
+        temperature=0.1
+    )
+
+    while response.message.tool_calls:
+        
+        print("Tool plan:")
+        print(response.message.tool_plan,"\n")
+        print("Tool calls:")
+        for tc in response.message.tool_calls:
+            # print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
+            if tc.function.name == "analyze_evaluation_results":
+                print(f"Tool name: {tc.function.name}")
+                tool_call_prettified = print("\n".join(f"  {line}" for line_num, line in enumerate(json.loads(tc.function.arguments)["code"].splitlines())))
+                print(tool_call_prettified)
+            else:
+                print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
+        print("="*50)
+
+        messages.append({"role": "assistant", "tool_calls": response.message.tool_calls, "tool_plan": response.message.tool_plan})        
+        
+        # Step 3: Get tool results
+        for tc in response.message.tool_calls:
+            tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
+            tool_content = [({"type": "document", "document": {"data": json.dumps(tool_result)}})]
+                
+            messages.append({"role": "tool", "tool_call_id": tc.id, "content": tool_content})
+        
+        # Step 4: Generate response and citations 
+        response = co.chat(
+            model=model,
+            messages=messages,
+            tools=tools,
+            temperature=0.1
+        )
+    
+    messages.append({"role": "assistant", "content": response.message.content[0].text})
+        
+    # Print final response
+    print("Response:")
+    print(response.message.content[0].text)
+    print("="*50)
+    
+    # Print citations (if any)
+    verbose_source = False # Change to True to display the contents of a source
+    if response.message.citations:
+        print("CITATIONS:\n")
+        for citation in response.message.citations:
+            print(f"Start: {citation.start}| End:{citation.end}| Text:'{citation.text}' ")
+            print("Sources:")
+            for idx, source in enumerate(citation.sources):
+                print(f"{idx+1}. {source.id}")
+                if verbose_source:
+                    print(f"{source.tool_output}")
+            print("\n")
+    
+    return messages
+```
+
+## Running the agent
+
+Let's now ask the agent the same set of questions we asked in the previous chapter. While the previous chapter translates the questions into pandas Python code, this time the agent will be using SQL queries.
+
+
+```python PYTHON
+messages = run_agent("What's the average evaluation score in run A")
+# Answer: 0.63
+```
+```
+Question:
+What's the average evaluation score in run A
+==================================================
+Tool plan:
+I will write a SQL query to find the average evaluation score in run A. 
+
+Tool calls:
+Tool name: sql_table_query | Parameters: {"query":"SELECT AVG(score) FROM evaluation_results WHERE run = 'A'"}
+==================================================
+Response:
+The average evaluation score in run A is **0.63**.
+==================================================
+CITATIONS:
+
+Start: 43| End:47| Text:'0.63' 
+Sources:
+1. sql_table_query_jm4e5yp0ptad:0
+```
+    
+
+
+
+```python PYTHON
+messages = run_agent("What's the latency of the highest-scoring run for the summarize_article use case?")
+# Answer: 4.8
+```
+```
+Question:
+What's the latency of the highest-scoring run for the summarize_article use case?
+==================================================
+Tool plan:
+I will write and execute a SQL query to find the latency of the highest-scoring run for the summarize_article use case. 
+
+Tool calls:
+Tool name: sql_table_query | Parameters: {"query":"SELECT latency FROM evaluation_results WHERE usecase = 'summarize_article' ORDER BY score DESC LIMIT 1"}
+==================================================
+Response:
+The latency of the highest-scoring run for the summarize_article use case is 4.8 seconds.
+==================================================
+CITATIONS:
+
+Start: 77| End:89| Text:'4.8 seconds.' 
+Sources:
+1. sql_table_query_mxyzvcnsgdab:0
+```
+    
+
+
+
+```python PYTHON
+messages = run_agent("Which use case uses the least amount of tokens on average? Show the comparison of all use cases in a markdown table.")
+# Answer: extract_names (106.25), draft_email (245.75), summarize_article (355.75)
+```
+```
+Question:
+Which use case uses the least amount of tokens on average? Show the comparison of all use cases in a markdown table.
+==================================================
+Tool plan:
+I will use the SQL tool to query the database for the average number of tokens used for each use case. I will then use the directly_answer tool to present the results in a markdown table. 
+
+Tool calls:
+Tool name: sql_table_query | Parameters: {"query":"SELECT usecase, AVG(tokens) as avg_tokens FROM evaluation_results GROUP BY usecase ORDER BY avg_tokens ASC"}
+==================================================
+Response:
+The use case that uses the least amount of tokens on average is `extract_names`, with an average of 106.25 tokens. Here's a table comparing the average number of tokens used for all use cases:
+
+| Use Case | Average Tokens |
+|---|---|
+| `extract_names` | 106.25 |
+| `draft_email` | 245.75 |
+| `summarize_article` | 355.75 |
+==================================================
+CITATIONS:
+
+Start: 64| End:114| Text:'`extract_names`, with an average of 106.25 tokens.' 
+Sources:
+1. sql_table_query_2qyr8vpqrf2v:0
+
+
+Start: 236| End:250| Text:'`extract_names' 
+Sources:
+1. sql_table_query_2qyr8vpqrf2v:0
+
+
+Start: 254| End:260| Text:'106.25' 
+Sources:
+1. sql_table_query_2qyr8vpqrf2v:0
+
+
+Start: 265| End:277| Text:'`draft_email' 
+Sources:
+1. sql_table_query_2qyr8vpqrf2v:0
+
+
+Start: 281| End:287| Text:'245.75' 
+Sources:
+1. sql_table_query_2qyr8vpqrf2v:0
+
+
+Start: 292| End:310| Text:'`summarize_article' 
+Sources:
+1. sql_table_query_2qyr8vpqrf2v:0
+
+
+Start: 314| End:320| Text:'355.75' 
+Sources:
+1. sql_table_query_2qyr8vpqrf2v:0
+```
+    
+
+
+## Summary
+
+In this tutorial, we learned about:
+- How to set up a SQLite database for structured data
+- How to create a function to execute SQL queries
+- How to build an agent for querying the database
+- How to run the agent
+
+By implementing these techniques, we've further expanded our agentic RAG system to handle structured data in the form of SQL databases. This allows for more powerful and flexible querying capabilities, especially when dealing with large datasets or complex relationships between data.
+
+This tutorial completes our exploration of structured data handling in the agentic RAG system, covering both tabular data (using pandas) and relational databases (using SQL). These capabilities significantly enhance the system's ability to work with diverse data formats and structures.

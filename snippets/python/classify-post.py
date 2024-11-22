@@ -1,7 +1,7 @@
 import cohere
 from cohere import ClassifyExample
 
-co = cohere.Client()
+co = cohere.Client("<<apiKey>>")
 examples = [
     ClassifyExample(text="Dermatologists don't like her!", label="Spam"),
     ClassifyExample(text="'Hello, open to this?'", label="Spam"),
