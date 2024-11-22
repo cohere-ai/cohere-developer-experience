@@ -43,39 +43,41 @@ Import dependencies and set up the Cohere client.
 
 ```python PYTHON
 import cohere
-co = cohere.Client(api_key='Your API key')
+
+co = cohere.Client(api_key="Your API key")
 ```
 
 (All the rest of the examples on this page will be in Python, but you can find more detailed instructions for getting set up by checking out the Github repositories for [Python](https://github.com/cohere-ai/cohere-python), [Typescript](https://github.com/cohere-ai/cohere-typescript), and [Go](https://github.com/cohere-ai/cohere-go).)
 
 ### Dataset Creation
 
-Datasets are created by uploading files, specifying both a `name` for the dataset and the `dataset_type`.
+Datasets are created by uploading files, specifying both a `name` for the dataset and the dataset `type`.
 
-The file extension and file contents have to match the requirements for the selected `dataset_type`. See the table below to learn more about the supported dataset types. 
+The file extension and file contents have to match the requirements for the selected dataset `type`. See the [table below](#supported-dataset-types) to learn more about the supported dataset types. 
 
 The dataset `name` is useful when browsing the datasets you've uploaded. In addition to its name, each dataset will also be assigned a unique `id` when it's created.
 
-Here is an example code snippet illustrating the process of creating a dataset, with both the `name` and the `dataset_type` specified.
+Here is an example code snippet illustrating the process of creating a dataset, with both the `name` and the dataset `type` specified.
 
 ```python PYTHON
 my_dataset = co.datasets.create(
-	name="shakespeare",
-	data=open("./shakespeare.jsonl", "rb"),
-	dataset_type="chat-finetune-input")
+    name="shakespeare",
+    data=open("./shakespeare.jsonl", "rb"),
+    type="chat-finetune-input",
+)
 
 print(my_dataset.id)
 ```
 
 ### Dataset Validation
 
-Whenever a dataset is created, the data is validated asynchronously against the rules for the specified `dataset_type` . This validation is kicked off automatically on the backend, and must be completed before a dataset can be used with other endpoints.
+Whenever a dataset is created, the data is validated asynchronously against the rules for the specified dataset `type` . This validation is kicked off automatically on the backend, and must be completed before a dataset can be used with other endpoints.
 
 Here's a code snippet showing how to check the validation status of a dataset you've created.
 
 ```python PYTHON
 ds = co.wait(my_dataset)
-print(ds.validation_status)
+print(ds.dataset.validation_status)
 ```
 
 To help you interpret the results, here's a table specifying all the possible API error messages and what they mean:
@@ -101,7 +103,7 @@ The Dataset API will preserve metadata if specified at time of upload. During th
 
 #### Sample Dataset Input Format
 
-```json JSON
+```text JSONL
 {"wiki_id": 69407798, "url": "https://en.wikipedia.org/wiki?curid=69407798", "views": 5674.4492597435465, "langs": 38, "title": "Deaths in 2022", "text": "The following notable deaths occurred in 2022. Names are reported under the date of death, in alphabetical order. A typical entry reports information in the following sequence:", "paragraph_id": 0, "id": 0}
 {"wiki_id": 3524766, "url": "https://en.wikipedia.org/wiki?curid=3524766", "views": 5409.5609619796405, "title": "YouTube", "text": "YouTube is a global online video sharing and social media platform headquartered in San Bruno, California. It was launched on February 14, 2005, by Steve Chen, Chad Hurley, and Jawed Karim. It is owned by Google, and is the second most visited website, after Google Search. YouTube has more than 2.5 billion monthly users who collectively watch more than one billion hours of videos each day. , videos were being uploaded at a rate of more than 500 hours of content per minute.", "paragraph_id": 0, "id": 1}
 ```
@@ -110,15 +112,14 @@ As seen in the above example, the following would be a valid `create_dataset` ca
 
 ```python PYTHON
 # Upload a dataset for embed jobs
-ds=co.datasets.create(
-	name='sample_file',
-	# insert your file path here - you can upload it on the right - we accept .csv and jsonl files
-	data=open('embed_jobs_sample_data.jsonl', 'rb'),
-	keep_fields=['wiki_id','url','views','title']
-	optional_fields=['langs']
-	dataset_type="embed-input",
-  embedding_types=['float']
-	)
+ds = co.datasets.create(
+    name="sample_file",
+    # insert your file path here - you can upload it on the right - we accept .csv and jsonl files
+    data=open("embed_jobs_sample_data.jsonl", "rb"),
+    keep_fields=["wiki_id", "url", "views", "title"],
+    optional_fields=["langs"],
+    type="embed-input",
+)
 
 # wait for the dataset to finish validation
 print(co.wait(ds))
@@ -133,19 +134,26 @@ In the example below, we will create a new dataset and upload an evaluation set 
 ```python PYTHON
 # create a dataset
 my_dataset = co.datasets.create(
-	name="shakespeare",
-	dataset_type="chat-finetune-input",
-	data=open("./shakespeare.csv", "rb"),
-  eval_data=open("./shakespeare-eval.csv", "rb")
+    name="shakespeare",
+    type="chat-finetune-input",
+    data=open("./shakespeare.jsonl", "rb"),
+    eval_data=open("./shakespeare-eval.jsonl", "rb"),
 )
 
 co.wait(my_dataset)
 
 # start training a custom model using the dataset
 co.finetuning.create_finetuned_model(
-	name="shakespearean-model", 
-	model_type="GENERATIVE", 
-	dataset=my_dataset)
+    request=FinetunedModel(
+        name="shakespearean-model",
+        settings=Settings(
+            base_model=BaseModel(
+                base_type="BASE_TYPE_CHAT",
+            ),
+            dataset_id=my_dataset.id,
+        ),
+    )
+)
 ```
 
 ### Dataset Types
@@ -169,11 +177,13 @@ Datasets of type `chat-finetune-input`, for example, are expected to have a json
       "role": "Chatbot",
       "content": "Time magazines top 10 cover stories in the last 10 years were:\\n\\n1. Volodymyr Zelenskyy\\n2. Elon Musk\\n3. Martin Luther King Jr.\\n4. How Earth Survived\\n5. Her Lasting Impact\\n6. Nothing to See Here\\n7. Meltdown\\n8. Deal With It\\n9. The Top of America\\n10. Bitter Pill"
     }
+  ]
 }
 ```
 
 The following table describes the types of datasets supported by the Dataset API:
 
+#### Supported Dataset Types
 | Dataset Type                           | Description                                                                                                                                                                     | Schema                                                                                     | Rules                                                                                                                                                                      | Task Type                   | Status                    | File Types Supported           | Are Metadata Fields Supported? | Sample File                                                                                                                                                                               |
 |----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------|---------------------------|--------------------------------|--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `single-label-classification-finetune-input` | A file containing text and a single label (class) for each text                                                                                                                 | `text:string  label:string`                                                              | You must include 40 valid train examples, with five examples per label. A label cannot be present in all examples  There must be 24 valid evaluation examples.        | Classification Fine-tuning  | Supported                 | `csv` and `jsonl`               | No                             | [Art classification file](https://drive.google.com/file/d/15-CchSiALUQwto4b-yAMWhdUqz8vfwQ1/view?usp=drive_link)                                                                          |
@@ -192,16 +202,21 @@ Here is an example code snippet showing how to fetch a dataset by its unique `id
 
 ```python PYTHON
 # fetch the dataset by ID
-my_dataset = co.datasets.get(id="<DATASET_ID>")
+my_dataset_response = co.datasets.get(id="<DATASET_ID>")
+my_dataset = my_dataset_response.dataset
 
 # print each entry in the dataset
-for record in my_dataset.open():
-  print(record)
+for record in my_dataset:
+    print(record)
 
 # save the dataset as jsonl
-co.utils.save_dataset(dataset=my_dataset, filepath='./path/to/new/file.jsonl')
+co.utils.save_dataset(
+    dataset=my_dataset, filepath="./path/to/new/file.jsonl"
+)
 # or save the dataset as csv
-co.utils.save_dataset(dataset=my_dataset, filepath='./path/to/new/file.csv')
+co.utils.save_dataset(
+    dataset=my_dataset, filepath="./path/to/new/file.csv"
+)
 ```
 
 ### Deleting a dataset

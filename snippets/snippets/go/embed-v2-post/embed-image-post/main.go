@@ -32,7 +32,7 @@ func main() {
 	contentType := resp.Header.Get("Content-Type")
 	imageBase64 := fmt.Sprintf("data:%s;base64,%s", contentType, stringifiedBuffer)
 
-	co := client.NewClient(client.WithToken("<<apiKey>>"))
+	co := client.NewClient()
 
 	embed, err := co.V2.Embed(
 		context.TODO(),
