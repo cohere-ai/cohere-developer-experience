@@ -71,8 +71,8 @@ To subscribe to the algorithm:
 Install the Python packages you will use below and import them. For example, you can run the command below to install `cohere` if you haven't done so.
 
 
-```python
-!pip install "cohere>=5.11.0"
+```sh
+pip install "cohere>=5.11.0"
 ```
 
 
@@ -200,9 +200,10 @@ save_hf_model(merged_weights_dir, merged_model)
 
 
 ```python
-%%time
 sess = sage.Session()
-merged_weights = S3Uploader.upload(merged_weights_dir, s3_checkpoint_dir, sagemaker_session=sess)
+merged_weights = S3Uploader.upload(
+    merged_weights_dir, s3_checkpoint_dir, sagemaker_session=sess
+)
 print("merged_weights", merged_weights)
 ```
 
@@ -213,7 +214,6 @@ Create Cohere client and use it to export the merged weights to the TensorRT-LLM
 
 
 ```python
-%%time
 co = cohere.SagemakerClient(aws_region=region)
 co.sagemaker_finetuning.export_finetune(
     arn=arn,
@@ -232,7 +232,6 @@ The Cohere client provides a built-in method to create an endpoint for inference
 
 
 ```python
-%%time
 co.sagemaker_finetuning.create_endpoint(
     arn=arn,
     endpoint_name=endpoint_name,
