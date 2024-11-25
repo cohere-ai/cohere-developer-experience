@@ -11,36 +11,34 @@ updatedAt: 'Mon Nov 25 2024 15:16:00 GMT+0000 (Coordinated Universal Time)'
 ---
 ## Document Chunking
 
-The `rerank-v3.0` model breaks documents into 4094 token chunks. For example, if your query is 100 tokens and your document is 10,000 tokens, your document will be broken into the following chunks:
+Under the hood, the Rerank API turns user input into text chunks. Every chunk will include the `query` and a portion of the document text. Chunk size depends on the model.
 
-1. `relevance_score_1 = <query[0,99], document[0,3994]>`
-2. `relevance_score_2 = <query[0,99], document[3995,7989]>`
-3. `relevance_score_3 = <query[0,99],document[7990,9999]>`
-4. `relevance_score = max(relevance_score_1, relevance_score_2, relevance_score_3)`
+For example, if
+- the selected model is `rerank-english-v3.0`, which has context length (aka max chunk size) of 4096 tokens
+- the query is 100 tokens
+- there is one document and it is 10,000 tokens long
+- document truncation is disabled by setting `max_tokens_per_doc` parameter to 10,000 tokens
+
+Then the document will be broken into the following three chunks:
+
+1. `relevance_score_1 = <2 (padding_tokens, query[0,99], document[0,3994]>`
+1. `relevance_score_2 = <padding_tokens, query[0,99], document[3995,7989]>`
+1. `relevance_score_3 = <padding_tokens, query[0,99],document[7990,9999]>`
+
+And the final relevance score for that document will be computed as the highest score among those chunks:
+```python
+relevance_score = max(relevance_score_1, relevance_score_2, relevance_score_3)
+```
 
 If you would like more control over how chunking is done, we recommend that you chunk your documents yourself.
 
-## Max Number of Documents
-
-### Rerank-v3.0 Models
-
-When using `rerank-v3.0` models, the endpoint will throw an error if the user tries to pass more than 1000 documents at a time. The maximum number of documents that can be passed to the endpoint is calculated with the following inequality: `Number of documents * max_chunks_per_doc >1000`.
-
-If `Number of documents * max_chunks_per_doc` exceeds `1000`, the endpoint will return an error. By default, the `max_chunks_per_doc` is set to `1` for `rerank-v3.0` models; given that the model has a context length of 4096, the maximum number of tokens for each call would be 4,096,000. 
-
-### Rerank-v2.0 Models
-
-When using `rerank-v2.0`, the endpoint will throw an error if the user tries to pass more than 10,000 documents at a time. The maximum number of documents that can be passed to the endpoint is calculated with the following inequality: `Number of documents * max_chunks_per_doc >10,000`.
-
-If `Number of documents * max_chunks_per_doc` exceeds `10,000`, the endpoint will return an error. By default, the `max_chunks_per_doc` is set to `10` for `rerank-v2.0` models; given that the model has a context length of 512, the maximum number of tokens for each call would be 5,120,000.
-
 ## Queries
 
-Our `rerank-v3.0` models are trained with a context length of 4096 tokens. The model takes into account both the input from the query and document. If your query is larger than 2048 tokens, it will be truncated to the first 2048 tokens. For v2.0 models, if your query is larger than 256 tokens, it will be truncated to the first 256 tokens.
+Our `rerank-v3.0` models are trained with a context length of 4096 tokens. The model takes into account both the input from the query and documents. If your query is larger than 2048 tokens, it will be truncated to the first 2048 tokens. For v2.0 models, if your query is larger than 256 tokens, it will be truncated to the first 256 tokens.
 
 ## Structured Data Support
 
-Our `rerank-v3.0` models support reranking structured data formatted as a list of YAML strings. Note that since long document strings get truncated, the order of the keys is especially important. When constructing the YAML string from a dictionary, make sure to maintain the order.
+Our `rerank-v3.0` models support reranking structured data formatted as a list of YAML strings. Note that since long document strings get truncated, the order of the keys is especially important. When constructing the YAML string from a dictionary, make sure to maintain the order. In Python that is done by setting `sort_keys=False` when using `yaml.dump`.
 
 Example:
 ```python
@@ -77,6 +75,6 @@ Relevance scores are normalized to be in the range `[0, 1]`. Scores close to `1`
 
 - Select a set of 30-50 representative queries `Q=[q_0, … q_n]` from your domain.
 - For each query provide a document that is considered borderline relevant to the query for your specific use case, and create a list of (query, document) pairs: `sample_inputs=[(q_0, d_0), …, (q_n, d_n)]` .
-- Pass all tuples in `sample_inputs` through the rerank endpoint in a loop, and gather relevance scores `sample_scores=[s0, ..., s_n]` .
+- Pass all tuples in `sample_inputs` through the rerank endpoint in a loop, and gather relevance scores `sample_scores=[s0, ..., s_n]`.
 
 The average of `sample_scores` can then be used as a reference when deciding a threshold for filtering out irrelevant documents.
