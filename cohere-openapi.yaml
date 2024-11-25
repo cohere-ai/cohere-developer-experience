@@ -8211,9 +8211,7 @@ paths:
                   public static void main(String[] args) {
                     Cohere cohere = Cohere.builder().clientName("snippet").build();
 
-                    URL url =
-                        URI.toUrl(
-                            "https://cohere.com/favicon-32x32.png");
+                    URL url = URI.toUrl("https://cohere.com/favicon-32x32.png");
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.connect();
 
@@ -11770,6 +11768,16 @@ paths:
                 package embedv2post; /* (C)2024 */
 
 
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.resources.v2.requests.V2EmbedRequest;
+
+                import com.cohere.api.types.EmbedByTypeResponse;
+
+                import com.cohere.api.types.EmbedInputType;
+
+                import com.cohere.api.types.EmbeddingType;
+
                 import java.io.InputStream;
 
                 import java.net.HttpURLConnection;
@@ -11783,24 +11791,11 @@ paths:
                 import java.util.List;
 
 
-                import com.cohere.api.Cohere;
-
-                import com.cohere.api.resources.v2.requests.V2EmbedRequest;
-
-                import com.cohere.api.types.EmbedByTypeResponse;
-
-                import com.cohere.api.types.EmbedInputType;
-
-                import com.cohere.api.types.EmbeddingType;
-
-
                 public class EmbedImagePost {
                   public static void main(String[] args) {
                     Cohere cohere = Cohere.builder().clientName("snippet").build();
 
-                    URL url =
-                        URI.toUrl(
-                            "https://cohere.com/favicon-32x32.png");
+                    URL url = URI.toUrl("https://cohere.com/favicon-32x32.png");
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.connect();
 
@@ -12978,9 +12973,6 @@ paths:
                 package embedv2post; /* (C)2024 */
 
 
-                import java.util.List;
-
-
                 import com.cohere.api.Cohere;
 
                 import com.cohere.api.resources.v2.requests.V2EmbedRequest;
@@ -12988,6 +12980,8 @@ paths:
                 import com.cohere.api.types.EmbedByTypeResponse;
 
                 import com.cohere.api.types.EmbedInputType;
+
+                import java.util.List;
 
 
                 public class EmbedPost {
@@ -16312,20 +16306,6 @@ paths:
                       x-fern-audiences:
                         - public
                       properties:
-                        document:
-                          type: object
-                          x-fern-audiences:
-                            - public
-                          description: If `return_documents` is set as `false` this will return none, if
-                            `true` it will return the documents passed in
-                          properties:
-                            text:
-                              type: string
-                              x-fern-audiences:
-                                - public
-                              description: The text of the document to rerank
-                          required:
-                            - text
                         index:
                           type: integer
                           x-fern-audiences:
@@ -16393,7 +16373,8 @@ paths:
                   x-fern-audiences:
                     - public
                   description: |-
-                    The identifier of the model to use. 
+                    The identifier of the model to use.
+
                     Supported models:
                       - `rerank-english-v3.0`
                       - `rerank-multilingual-v3.0`
@@ -16413,27 +16394,18 @@ paths:
                     For optimal performance we recommend against sending more than 1,000 documents in a single request.
 
                     **Note**: long documents will automatically be truncated to the value of `max_tokens_per_doc`.
+
                     **Note**: structured data should be formatted as YAML strings for best performance.  
                   items:
-                    oneOf:
-                      - type: string
-                      - $ref: "#/components/schemas/RerankDocument"
+                    type: string
                 top_n:
                   type: integer
                   x-fern-audiences:
                     - public
                   minimum: 1
-                  description: Limits the returned number of rerank results to the specified
+                  description: Limits the number of returned rerank results to the specified
                     value. If not passed, all the rerank results will be
                     returned.
-                return_documents:
-                  type: boolean
-                  x-fern-audiences:
-                    - public
-                  default: false
-                  description: |-
-                    - If false, returns results without the doc text - the api will return a list of {index, relevance score} where index is inferred from the list passed into the request.
-                    - If true, returns results with the doc text passed in - the api will return an ordered list of {index, text, relevance score} where index + text refers to the list passed into the request.
                 max_tokens_per_doc:
                   type: integer
                   x-fern-audiences:
@@ -16461,19 +16433,11 @@ paths:
                 (async () => {
                   const rerank = await cohere.v2.rerank({
                     documents: [
-                      { text: 'Carson City is the capital city of the American state of Nevada.' },
-                      {
-                        text: 'The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.',
-                      },
-                      {
-                        text: 'Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.',
-                      },
-                      {
-                        text: 'Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.',
-                      },
-                      {
-                        text: 'Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.',
-                      },
+                      'Carson City is the capital city of the American state of Nevada.',
+                      'The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.',
+                      'Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.',
+                      'Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.',
+                      'Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.',
                     ],
                     query: 'What is the capital of the United States?',
                     topN: 3,
@@ -16496,7 +16460,7 @@ paths:
                     "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.",
                     "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.",
                     "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
-                    "Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
+                    "Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
                 ]
 
 
@@ -16524,7 +16488,7 @@ paths:
                     "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.",
                     "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.",
                     "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
-                    "Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
+                    "Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
                 ]
 
 
@@ -16549,9 +16513,6 @@ paths:
 
                 import com.cohere.api.resources.v2.requests.V2RerankRequest;
 
-                import
-                com.cohere.api.resources.v2.types.V2RerankRequestDocumentsItem;
-
                 import com.cohere.api.resources.v2.types.V2RerankResponse;
 
                 import java.util.List;
@@ -16570,40 +16531,18 @@ paths:
                                     .query("What is the capital of the United States?")
                                     .documents(
                                         List.of(
-                                            V2RerankRequestDocumentsItem.of(
-                                                "Carson City is the capital city of"
-                                                    + " the American state of"
-                                                    + " Nevada."),
-                                            V2RerankRequestDocumentsItem.of(
-                                                "The Commonwealth of the Northern"
-                                                    + " Mariana Islands is a group"
-                                                    + " of islands in the Pacific"
-                                                    + " Ocean. Its capital is"
-                                                    + " Saipan."),
-                                            V2RerankRequestDocumentsItem.of(
-                                                "Capitalization or capitalisation"
-                                                    + " in English grammar is the"
-                                                    + " use of a capital letter at"
-                                                    + " the start of a word."
-                                                    + " English usage varies from"
-                                                    + " capitalization in other"
-                                                    + " languages."),
-                                            V2RerankRequestDocumentsItem.of(
-                                                "Washington, D.C. (also known as"
-                                                    + " simply Washington or D.C.,"
-                                                    + " and officially as the"
-                                                    + " District of Columbia) is"
-                                                    + " the capital of the United"
-                                                    + " States. It is a federal"
-                                                    + " district."),
-                                            V2RerankRequestDocumentsItem.of(
-                                                "Capital punishment (the death"
-                                                    + " penalty) has existed in the"
-                                                    + " United States since"
-                                                    + " beforethe United States was"
-                                                    + " a country. As of 2017,"
-                                                    + " capital punishment is legal"
-                                                    + " in 30 of the 50 states.")))
+                                            "Carson City is the capital city of the American state of Nevada.",
+                                            "The Commonwealth of the Northern Mariana Islands is a group of islands"
+                                                + " in the Pacific Ocean. Its capital is Saipan.",
+                                            "Capitalization or capitalisation in English grammar is the use of a"
+                                                + " capital letter at the start of a word. English usage varies"
+                                                + " from capitalization in other languages.",
+                                            "Washington, D.C. (also known as simply Washington or D.C., and"
+                                                + " officially as the District of Columbia) is the capital of the"
+                                                + " United States. It is a federal district.",
+                                            "Capital punishment has existed in the United States since before the"
+                                                + " United States was a country. As of 2017, capital punishment is"
+                                                + " legal in 30 of the 50 states."))
                                     .topN(3)
                                     .build());
 
@@ -16626,22 +16565,22 @@ paths:
                                   "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.",
                                   "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
                                   "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.",
-                                  "Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states."]
+                                  "Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states."]
                   }'
           request:
             documents:
-              - text: Carson City is the capital city of the American state of Nevada.
-              - text: The Commonwealth of the Northern Mariana Islands is a group of islands in
-                  the Pacific Ocean. Its capital is Saipan.
-              - text: Capitalization or capitalisation in English grammar is the use of a
-                  capital letter at the start of a word. English usage varies
-                  from capitalization in other languages.
-              - text: Washington, D.C. (also known as simply Washington or D.C., and officially
-                  as the District of Columbia) is the capital of the United
-                  States. It is a federal district.
-              - text: Capital punishment (the death penalty) has existed in the United States
-                  since beforethe United States was a country. As of 2017,
-                  capital punishment is legal in 30 of the 50 states.
+              - Carson City is the capital city of the American state of Nevada.
+              - The Commonwealth of the Northern Mariana Islands is a group of
+                islands in the Pacific Ocean. Its capital is Saipan.
+              - Capitalization or capitalisation in English grammar is the use
+                of a capital letter at the start of a word. English usage varies
+                from capitalization in other languages.
+              - Washington, D.C. (also known as simply Washington or D.C., and
+                officially as the District of Columbia) is the capital of the
+                United States. It is a federal district.
+              - Capital punishment (the death penalty) has existed in the United
+                States since beforethe United States was a country. As of 2017,
+                capital punishment is legal in 30 of the 50 states.
             query: What is the capital of the United States?
             top_n: 3
             model: rerank-english-v3.0
@@ -16658,10 +16597,7 @@ paths:
               meta:
                 api_version:
                   version: '2'
-                  is_experimental: true
-                warnings:
-                  - You are using an experimental version, for more information
-                    please refer to https://docs.cohere.com/versioning-reference
+                  is_experimental: false
                 billed_units:
                   search_units: 1
   /v1/classify:
