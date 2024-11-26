@@ -15,11 +15,7 @@ updatedAt: "Tue Jun 11 2024 02:43:00 GMT+0000 (Coordinated Universal Time)"
 
 ## Overview
 
-Structured Outputs is a feature for formatting an LLM's response to follow a specific format. It enforces the output to follow a specified format 100% of the time. This increases the reliability of LLM in enterprise applications.
-
-By using Structured Outputs, you are assured that the model's response will always adhere to the specified schema. This is especially important when integrating the output into downstream applications or performing data analysis, as it ensures data consistency and reliability.
-
-By providing a structured schema, the model is guided to produce responses that adhere to the specified format and content, eliminating hallucinations.
+Structured Outputs is a feature for forcing the LLM's output to follow a specified format 100% of the time. This increases the reliability of LLM in enterprise applications where downstream applications expect the LLM output to be correctly formatted. By forcing the model to follow a structured schema, hallucinated fields and entries in structured data can be reliably eliminated.
 
 Compatible models:
 - Command R 08 2024
@@ -154,32 +150,32 @@ With `strict_tools` enabled, the API will ensure that the tool names and tool pa
 
 Additionally, this results in faster development. You don’t need to spend a lot of time prompt engineering the model to avoid hallucinations.
 
-In the example below, we create a tool that can retrieve sales data for a given day. The tool is a function `query_daily_sales_report` which contains a parameter called `day`. We then invoke the Chat API with `strict_tools` set to `true` to ensure that the generated Tool Calls always include the correct function and parameter names.
+In the example below, we create a tool that can retrieve weather data for a given location. The tool is called`get_weather` which contains a parameter called `location`. We then invoke the Chat API with `strict_tools` set to `true` to ensure that the generated tool calls always include the correct function and parameter names.
 
-When the strict_tools parameter is set to True, you can define a maximum of 200 fields across all tools being passed to an API call.
+When the `strict_tools` parameter is set to `true`, you can define a maximum of 200 fields across all tools being passed to an API call.
 
 ```python PYTHON {26}
 tools = [
     {
-        "type": "function",
-        "function": {
-            "name": "query_daily_sales_report",
-            "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+    "type": "function",
+    "function": {
+            "name": "get_weather",
+            "description" : "Gets the weather of a given location",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "day": {
-                        "type": "string",
-                        "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
-                    }
+                "location": {
+                    "type" : "string",
+                    "description": "The location to get weather."
+                }
                 },
-                "required": ["day"],
-            },
-        },
-    }
+                "required": ["location"]
+            }
+            }
+    },
 ]
 
-message = "What was the total sales for 2024-01-01?"
+message = "What's the weather in Toronto?"
 
 response = co.chat(model="command-r-plus-08-2024",
                    messages=[{"role": "user", "content": message}],
@@ -191,7 +187,7 @@ print(response.message.tool_calls)
 
 
 <Info title="Important"> 
-When `strict_tools` is enabled, tool definitions that have optional parameters must specify at least one `required` parameter as well. Tools with only optional parameters are not supported in this mod.
+When `strict_tools` is enabled, tool definitions that have optional parameters must specify at least one `required` parameter as well. Tools with only optional parameters are not supported in this mode.
 </Info>
 
 ### When to Use Structured Outputs (JSON) vs. Structured Outputs (Tools)
