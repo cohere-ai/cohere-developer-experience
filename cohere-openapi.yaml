@@ -5945,7 +5945,21 @@ paths:
                 - messages
                 - model
               properties:
+                stream:
+                  description: |
+                    Defaults to `false`.
+
+                    When `true`, the response will be a SSE stream of events. The final event will contain the complete response, and will have an `event_type` of `"stream-end"`.
+
+                    Streaming is beneficial for user interfaces that render the contents of the response piece by piece, as it gets generated.
+
+                    Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
+                  type: boolean
+                  x-fern-audiences:
+                    - public
                 model:
+                  x-fern-audiences:
+                    - public
                   type: string
                   description: The name of a compatible [Cohere
                     model](https://docs.cohere.com/v2/docs/models) (such as
@@ -5953,8 +5967,12 @@ paths:
                     [fine-tuned](https://docs.cohere.com/v2/docs/chat-fine-tuning)
                     model.
                 messages:
+                  x-fern-audiences:
+                    - public
                   $ref: "#/components/schemas/ChatMessages"
                 tools:
+                  x-fern-audiences:
+                    - public
                   type: array
                   items:
                     $ref: "#/components/schemas/ToolV2"
@@ -5972,6 +5990,8 @@ paths:
 
                     **Note**: The first few requests with a new set of tools will take longer to process.
                 documents:
+                  x-fern-audiences:
+                    - public
                   type: array
                   items:
                     oneOf:
@@ -5980,10 +6000,16 @@ paths:
                   description: |
                     A list of relevant documents that the model can cite to generate a more accurate reply. Each document is either a string or document object with content and metadata.
                 citation_options:
+                  x-fern-audiences:
+                    - public
                   $ref: "#/components/schemas/CitationOptions"
                 response_format:
+                  x-fern-audiences:
+                    - public
                   $ref: "#/components/schemas/ResponseFormatV2"
                 safety_mode:
+                  x-fern-audiences:
+                    - public
                   enum:
                     - CONTEXTUAL
                     - STRICT
@@ -5996,18 +6022,24 @@ paths:
 
                     **Note**: This parameter is only compatible with models [Command R 08-2024](https://docs.cohere.com/v2/docs/command-r#august-2024-release), [Command R+ 08-2024](https://docs.cohere.com/v2/docs/command-r-plus#august-2024-release) and newer.
                 max_tokens:
+                  x-fern-audiences:
+                    - public
                   type: integer
                   description: |
                     The maximum number of tokens the model will generate as part of the response.
 
                     **Note**: Setting a low value may result in incomplete generations.
                 stop_sequences:
+                  x-fern-audiences:
+                    - public
                   type: array
                   items:
                     type: string
                   description: |
                     A list of up to 5 strings that the model will use to stop generation. If the model generates a string that matches any of the strings in the list, it will stop generating tokens and return the generated text up to that point not including the stop sequence.
                 temperature:
+                  x-fern-audiences:
+                    - public
                   type: number
                   format: float
                   minimum: 0
@@ -6019,6 +6051,8 @@ paths:
 
                     Randomness can be further maximized by increasing the  value of the `p` parameter.
                 seed:
+                  x-fern-audiences:
+                    - public
                   type: integer
                   minimum: 0
                   maximum: 18446744073709552000
@@ -6028,18 +6062,24 @@ paths:
                     seed and parameters should return the same result. However,
                     determinism cannot be totally guaranteed.
                 frequency_penalty:
+                  x-fern-audiences:
+                    - public
                   type: number
                   format: float
                   description: |
                     Defaults to `0.0`, min value of `0.0`, max value of `1.0`.
                     Used to reduce repetitiveness of generated tokens. The higher the value, the stronger a penalty is applied to previously present tokens, proportional to how many times they have already appeared in the prompt or prior generation.
                 presence_penalty:
+                  x-fern-audiences:
+                    - public
                   type: number
                   format: float
                   description: |
                     Defaults to `0.0`, min value of `0.0`, max value of `1.0`.
                     Used to reduce repetitiveness of generated tokens. Similar to `frequency_penalty`, except that this penalty is applied equally to all tokens that have already appeared, regardless of their exact frequencies.
                 k:
+                  x-fern-audiences:
+                    - public
                   type: number
                   format: float
                   default: 0
@@ -6049,6 +6089,8 @@ paths:
                     Ensures that only the top `k` most likely tokens are considered for generation at each step. When `k` is set to `0`, k-sampling is disabled.
                     Defaults to `0`, min value of `0`, max value of `500`.
                 p:
+                  x-fern-audiences:
+                    - public
                   type: number
                   format: float
                   default: 0.75
@@ -6058,6 +6100,8 @@ paths:
                     Ensures that only the most likely tokens, with total probability mass of `p`, are considered for generation at each step. If both `k` and `p` are enabled, `p` acts after `k`.
                     Defaults to `0.75`. min value of `0.01`, max value of `0.99`.
                 logprobs:
+                  x-fern-audiences:
+                    - public
                   type: boolean
                   description: |
                     Defaults to `false`. When set to `true`, the log probabilities of the generated tokens will be included in the response.
@@ -15214,7 +15258,7 @@ paths:
                   items:
                     $ref: "#/components/schemas/EmbeddingType"
                   description: |-
-                    Specifies the types of embeddings you want to get back. Not required and default is None, which returns the Embed Floats response type. Can be one or more of the following types.
+                    Specifies the types of embeddings you want to get back. Can be one or more of the following types.
 
                     * `"float"`: Use this when you want to get back the default float embeddings. Valid for all models.
                     * `"int8"`: Use this when you want to get back signed int8 embeddings. Valid for only v3 models.
