@@ -1,11 +1,10 @@
 package embedv2post; /* (C)2024 */
 
-import java.util.List;
-
 import com.cohere.api.Cohere;
 import com.cohere.api.resources.v2.requests.V2EmbedRequest;
 import com.cohere.api.types.EmbedByTypeResponse;
 import com.cohere.api.types.EmbedInputType;
+import java.util.List;
 
 public class EmbedPost {
   public static void main(String[] args) {

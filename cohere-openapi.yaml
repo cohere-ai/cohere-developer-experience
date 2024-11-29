@@ -5914,6 +5914,7 @@ paths:
             - $ref: "#/components/schemas/ChatToolCallDeltaEvent"
             - $ref: "#/components/schemas/ChatToolCallEndEvent"
             - $ref: "#/components/schemas/ChatMessageEndEvent"
+            - $ref: "#/components/schemas/ChatDebugEvent"
           discriminator:
             propertyName: type
             mapping:
@@ -5928,6 +5929,7 @@ paths:
               citation-start: "#/components/schemas/CitationStartEvent"
               citation-end: "#/components/schemas/CitationEndEvent"
               message-end: "#/components/schemas/ChatMessageEndEvent"
+              debug: "#/components/schemas/ChatDebugEvent"
       description: |
         Generates a text response to a user message and streams it down, token by token. To learn how to use the Chat API with streaming follow our [Text Generation guides](https://docs.cohere.com/v2/docs/chat-api).
 
@@ -5943,7 +5945,21 @@ paths:
                 - messages
                 - model
               properties:
+                stream:
+                  description: |
+                    Defaults to `false`.
+
+                    When `true`, the response will be a SSE stream of events. The final event will contain the complete response, and will have an `event_type` of `"stream-end"`.
+
+                    Streaming is beneficial for user interfaces that render the contents of the response piece by piece, as it gets generated.
+
+                    Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
+                  type: boolean
+                  x-fern-audiences:
+                    - public
                 model:
+                  x-fern-audiences:
+                    - public
                   type: string
                   description: The name of a compatible [Cohere
                     model](https://docs.cohere.com/v2/docs/models) (such as
@@ -5951,8 +5967,12 @@ paths:
                     [fine-tuned](https://docs.cohere.com/v2/docs/chat-fine-tuning)
                     model.
                 messages:
+                  x-fern-audiences:
+                    - public
                   $ref: "#/components/schemas/ChatMessages"
                 tools:
+                  x-fern-audiences:
+                    - public
                   type: array
                   items:
                     $ref: "#/components/schemas/ToolV2"
@@ -5960,7 +5980,18 @@ paths:
                     A list of available tools (functions) that the model may suggest invoking before producing a text response.
 
                     When `tools` is passed (without `tool_results`), the `text` content in the response will be empty and the `tool_calls` field in the response will be populated with a list of tool calls that need to be made. If no calls need to be made, the `tool_calls` array will be empty.
+                strict_tools:
+                  x-fern-audiences:
+                    - public
+                  x-fern-availability: beta
+                  type: boolean
+                  description: |
+                    When set to `true`, tool calls in the Assistant message will be forced to follow the tool definition strictly. Learn more in the [Strict Tools guide](https://docs.cohere.com/docs/structured-outputs-json#structured-outputs-tools).
+
+                    **Note**: The first few requests with a new set of tools will take longer to process.
                 documents:
+                  x-fern-audiences:
+                    - public
                   type: array
                   items:
                     oneOf:
@@ -5969,10 +6000,16 @@ paths:
                   description: |
                     A list of relevant documents that the model can cite to generate a more accurate reply. Each document is either a string or document object with content and metadata.
                 citation_options:
+                  x-fern-audiences:
+                    - public
                   $ref: "#/components/schemas/CitationOptions"
                 response_format:
+                  x-fern-audiences:
+                    - public
                   $ref: "#/components/schemas/ResponseFormatV2"
                 safety_mode:
+                  x-fern-audiences:
+                    - public
                   enum:
                     - CONTEXTUAL
                     - STRICT
@@ -5985,18 +6022,24 @@ paths:
 
                     **Note**: This parameter is only compatible with models [Command R 08-2024](https://docs.cohere.com/v2/docs/command-r#august-2024-release), [Command R+ 08-2024](https://docs.cohere.com/v2/docs/command-r-plus#august-2024-release) and newer.
                 max_tokens:
+                  x-fern-audiences:
+                    - public
                   type: integer
                   description: |
                     The maximum number of tokens the model will generate as part of the response.
 
                     **Note**: Setting a low value may result in incomplete generations.
                 stop_sequences:
+                  x-fern-audiences:
+                    - public
                   type: array
                   items:
                     type: string
                   description: |
                     A list of up to 5 strings that the model will use to stop generation. If the model generates a string that matches any of the strings in the list, it will stop generating tokens and return the generated text up to that point not including the stop sequence.
                 temperature:
+                  x-fern-audiences:
+                    - public
                   type: number
                   format: float
                   minimum: 0
@@ -6008,6 +6051,8 @@ paths:
 
                     Randomness can be further maximized by increasing the  value of the `p` parameter.
                 seed:
+                  x-fern-audiences:
+                    - public
                   type: integer
                   minimum: 0
                   maximum: 18446744073709552000
@@ -6017,27 +6062,35 @@ paths:
                     seed and parameters should return the same result. However,
                     determinism cannot be totally guaranteed.
                 frequency_penalty:
+                  x-fern-audiences:
+                    - public
                   type: number
                   format: float
                   description: |
                     Defaults to `0.0`, min value of `0.0`, max value of `1.0`.
                     Used to reduce repetitiveness of generated tokens. The higher the value, the stronger a penalty is applied to previously present tokens, proportional to how many times they have already appeared in the prompt or prior generation.
                 presence_penalty:
+                  x-fern-audiences:
+                    - public
                   type: number
                   format: float
                   description: |
                     Defaults to `0.0`, min value of `0.0`, max value of `1.0`.
                     Used to reduce repetitiveness of generated tokens. Similar to `frequency_penalty`, except that this penalty is applied equally to all tokens that have already appeared, regardless of their exact frequencies.
                 k:
+                  x-fern-audiences:
+                    - public
                   type: number
                   format: float
                   default: 0
                   minimum: 0
                   maximum: 500
                   description: |
-                    Ensures that only the top `k` most likely tokens are considered for generation at each step. When `k` is set to `0`, k-sampling is disabled. 
+                    Ensures that only the top `k` most likely tokens are considered for generation at each step. When `k` is set to `0`, k-sampling is disabled.
                     Defaults to `0`, min value of `0`, max value of `500`.
                 p:
+                  x-fern-audiences:
+                    - public
                   type: number
                   format: float
                   default: 0.75
@@ -6047,6 +6100,8 @@ paths:
                     Ensures that only the most likely tokens, with total probability mass of `p`, are considered for generation at each step. If both `k` and `p` are enabled, `p` acts after `k`.
                     Defaults to `0.75`. min value of `0.01`, max value of `0.99`.
                 logprobs:
+                  x-fern-audiences:
+                    - public
                   type: boolean
                   description: |
                     Defaults to `false`. When set to `true`, the log probabilities of the generated tokens will be included in the response.
@@ -6195,7 +6250,7 @@ paths:
                 }
             - sdk: curl
               name: Default
-              code: |-
+              code: |
                 curl --request POST \
                   --url https://api.cohere.com/v2/chat \
                   --header 'accept: application/json' \
@@ -6208,7 +6263,7 @@ paths:
                         "role": "user",
                         "content": "Hello world!"
                       }
-                    ],
+                    ]
                   }'
           request:
             model: "command-r"
@@ -7093,7 +7148,7 @@ paths:
                 }
             - sdk: curl
               name: Streaming
-              code: |-
+              code: |
                 curl --request POST \
                   --url https://api.cohere.com/v2/chat \
                   --header 'accept: application/json' \
@@ -7107,7 +7162,7 @@ paths:
                         "role": "user",
                         "content": "Hello world!"
                       }
-                    ],
+                    ]
                   }'
           request:
             model: "command-r"
@@ -7833,11 +7888,7 @@ paths:
                 $ref: "#/components/schemas/GenerateStreamedResponse"
           headers:
             X-API-Warning:
-              schema:
-                type: string
-                x-fern-audiences:
-                  - public
-              description: Warning description for incorrect usage of the API
+              $ref: "#/components/headers/ApiWarning"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -8209,9 +8260,7 @@ paths:
                   public static void main(String[] args) {
                     Cohere cohere = Cohere.builder().clientName("snippet").build();
 
-                    URL url =
-                        URI.toUrl(
-                            "https://cohere.com/favicon-32x32.png");
+                    URL url = URI.toUrl("https://cohere.com/favicon-32x32.png");
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.connect();
 
@@ -11507,11 +11556,7 @@ paths:
                     embeddings_by_type: "#/components/schemas/EmbedByTypeResponse"
           headers:
             X-API-Warning:
-              schema:
-                type: string
-                x-fern-audiences:
-                  - public
-              description: Warning description for incorrect usage of the API
+              $ref: "#/components/headers/ApiWarning"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -11768,6 +11813,16 @@ paths:
                 package embedv2post; /* (C)2024 */
 
 
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.resources.v2.requests.V2EmbedRequest;
+
+                import com.cohere.api.types.EmbedByTypeResponse;
+
+                import com.cohere.api.types.EmbedInputType;
+
+                import com.cohere.api.types.EmbeddingType;
+
                 import java.io.InputStream;
 
                 import java.net.HttpURLConnection;
@@ -11781,24 +11836,11 @@ paths:
                 import java.util.List;
 
 
-                import com.cohere.api.Cohere;
-
-                import com.cohere.api.resources.v2.requests.V2EmbedRequest;
-
-                import com.cohere.api.types.EmbedByTypeResponse;
-
-                import com.cohere.api.types.EmbedInputType;
-
-                import com.cohere.api.types.EmbeddingType;
-
-
                 public class EmbedImagePost {
                   public static void main(String[] args) {
                     Cohere cohere = Cohere.builder().clientName("snippet").build();
 
-                    URL url =
-                        URI.toUrl(
-                            "https://cohere.com/favicon-32x32.png");
+                    URL url = URI.toUrl("https://cohere.com/favicon-32x32.png");
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.connect();
 
@@ -12976,9 +13018,6 @@ paths:
                 package embedv2post; /* (C)2024 */
 
 
-                import java.util.List;
-
-
                 import com.cohere.api.Cohere;
 
                 import com.cohere.api.resources.v2.requests.V2EmbedRequest;
@@ -12986,6 +13025,8 @@ paths:
                 import com.cohere.api.types.EmbedByTypeResponse;
 
                 import com.cohere.api.types.EmbedInputType;
+
+                import java.util.List;
 
 
                 public class EmbedPost {
@@ -15101,11 +15142,7 @@ paths:
                 $ref: "#/components/schemas/EmbedByTypeResponse"
           headers:
             X-API-Warning:
-              schema:
-                type: string
-                x-fern-audiences:
-                  - public
-              description: Warning description for incorrect usage of the API
+              $ref: "#/components/headers/ApiWarning"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -15209,7 +15246,7 @@ paths:
                   items:
                     $ref: "#/components/schemas/EmbeddingType"
                   description: |-
-                    Specifies the types of embeddings you want to get back. Not required and default is None, which returns the Embed Floats response type. Can be one or more of the following types.
+                    Specifies the types of embeddings you want to get back. Can be one or more of the following types.
 
                     * `"float"`: Use this when you want to get back the default float embeddings. Valid for all models.
                     * `"int8"`: Use this when you want to get back signed int8 embeddings. Valid for only v3 models.
@@ -15326,18 +15363,12 @@ paths:
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.embedjobs.requests.CreateEmbedJobRequest;
-
+                import com.cohere.api.resources.embedjobs.requests.CreateEmbedJobRequest;
                 import com.cohere.api.types.CreateEmbedJobResponse;
-
                 import com.cohere.api.types.EmbedInputType;
-
 
                 public class EmbedJobsPost {
                   public static void main(String[] args) {
@@ -15393,11 +15424,7 @@ paths:
                 $ref: "#/components/schemas/CreateEmbedJobResponse"
           headers:
             X-API-Warning:
-              schema:
-                type: string
-                x-fern-audiences:
-                  - public
-              description: Warning description for incorrect usage of the API
+              $ref: "#/components/headers/ApiWarning"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -15542,11 +15569,7 @@ paths:
                 $ref: "#/components/schemas/ListEmbedJobResponse"
           headers:
             X-API-Warning:
-              schema:
-                type: string
-                x-fern-audiences:
-                  - public
-              description: Warning description for incorrect usage of the API
+              $ref: "#/components/headers/ApiWarning"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -15692,11 +15715,7 @@ paths:
                 $ref: "#/components/schemas/EmbedJob"
           headers:
             X-API-Warning:
-              schema:
-                type: string
-                x-fern-audiences:
-                  - public
-              description: Warning message for potentially incorrect usage of the API
+              $ref: "#/components/headers/ApiWarning"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -15827,11 +15846,7 @@ paths:
           description: OK
           headers:
             X-API-Warning:
-              schema:
-                type: string
-                x-fern-audiences:
-                  - public
-              description: Warning description for incorrect usage of the API
+              $ref: "#/components/headers/ApiWarning"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -16316,20 +16331,6 @@ paths:
                       x-fern-audiences:
                         - public
                       properties:
-                        document:
-                          type: object
-                          x-fern-audiences:
-                            - public
-                          description: If `return_documents` is set as `false` this will return none, if
-                            `true` it will return the documents passed in
-                          properties:
-                            text:
-                              type: string
-                              x-fern-audiences:
-                                - public
-                              description: The text of the document to rerank
-                          required:
-                            - text
                         index:
                           type: integer
                           x-fern-audiences:
@@ -16396,9 +16397,14 @@ paths:
                   type: string
                   x-fern-audiences:
                     - public
-                  description: "The identifier of the model to use, one of :
-                    `rerank-english-v3.0`, `rerank-multilingual-v3.0`,
-                    `rerank-english-v2.0`, `rerank-multilingual-v2.0`"
+                  description: |-
+                    The identifier of the model to use.
+
+                    Supported models:
+                      - `rerank-english-v3.0`
+                      - `rerank-multilingual-v3.0`
+                      - `rerank-english-v2.0`
+                      - `rerank-multilingual-v2.0`
                 query:
                   type: string
                   x-fern-audiences:
@@ -16409,54 +16415,28 @@ paths:
                   x-fern-audiences:
                     - public
                   description: |-
-                    A list of document objects or strings to rerank.
-                    If a document is provided the text fields is required and all other fields will be preserved in the response.
+                    A list of texts that will be compared to the `query`.
+                    For optimal performance we recommend against sending more than 1,000 documents in a single request.
 
-                    The total max chunks (length of documents * max_chunks_per_doc) must be less than 10000.
+                    **Note**: long documents will automatically be truncated to the value of `max_tokens_per_doc`.
 
-                    We recommend a maximum of 1,000 documents for optimal endpoint performance.
+                    **Note**: structured data should be formatted as YAML strings for best performance.  
                   items:
-                    oneOf:
-                      - type: string
-                      - $ref: "#/components/schemas/RerankDocument"
+                    type: string
                 top_n:
                   type: integer
                   x-fern-audiences:
                     - public
                   minimum: 1
-                  description: The number of most relevant documents or indices to return,
-                    defaults to the length of the documents
-                rank_fields:
-                  type: array
-                  x-fern-audiences:
-                    - public
-                  items:
-                    type: string
-                    x-fern-audiences:
-                      - public
-                  description: If a JSON object is provided, you can specify which keys you would
-                    like to have considered for reranking. The model will rerank
-                    based on order of the fields passed in (i.e.
-                    rank_fields=['title','author','text'] will rerank using the
-                    values in title, author, text  sequentially. If the length
-                    of title, author, and text exceeds the context length of the
-                    model, the chunking will not re-consider earlier fields). If
-                    not provided, the model will use the default text field for
-                    ranking.
-                return_documents:
-                  type: boolean
-                  x-fern-audiences:
-                    - public
-                  default: false
-                  description: |-
-                    - If false, returns results without the doc text - the api will return a list of {index, relevance score} where index is inferred from the list passed into the request.
-                    - If true, returns results with the doc text passed in - the api will return an ordered list of {index, text, relevance score} where index + text refers to the list passed into the request.
-                max_chunks_per_doc:
+                  description: Limits the number of returned rerank results to the specified
+                    value. If not passed, all the rerank results will be
+                    returned.
+                max_tokens_per_doc:
                   type: integer
                   x-fern-audiences:
                     - public
-                  description: The maximum number of chunks to produce internally from a document
-                  default: 10
+                  description: Defaults to `4096`. Long documents will be automatically truncated
+                    to the specified number of tokens.
               required:
                 - query
                 - documents
@@ -16478,19 +16458,11 @@ paths:
                 (async () => {
                   const rerank = await cohere.v2.rerank({
                     documents: [
-                      { text: 'Carson City is the capital city of the American state of Nevada.' },
-                      {
-                        text: 'The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.',
-                      },
-                      {
-                        text: 'Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.',
-                      },
-                      {
-                        text: 'Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.',
-                      },
-                      {
-                        text: 'Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.',
-                      },
+                      'Carson City is the capital city of the American state of Nevada.',
+                      'The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.',
+                      'Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.',
+                      'Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.',
+                      'Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.',
                     ],
                     query: 'What is the capital of the United States?',
                     topN: 3,
@@ -16513,7 +16485,7 @@ paths:
                     "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.",
                     "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.",
                     "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
-                    "Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
+                    "Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
                 ]
 
 
@@ -16541,7 +16513,7 @@ paths:
                     "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.",
                     "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.",
                     "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
-                    "Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
+                    "Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
                 ]
 
 
@@ -16566,9 +16538,6 @@ paths:
 
                 import com.cohere.api.resources.v2.requests.V2RerankRequest;
 
-                import
-                com.cohere.api.resources.v2.types.V2RerankRequestDocumentsItem;
-
                 import com.cohere.api.resources.v2.types.V2RerankResponse;
 
                 import java.util.List;
@@ -16587,40 +16556,18 @@ paths:
                                     .query("What is the capital of the United States?")
                                     .documents(
                                         List.of(
-                                            V2RerankRequestDocumentsItem.of(
-                                                "Carson City is the capital city of"
-                                                    + " the American state of"
-                                                    + " Nevada."),
-                                            V2RerankRequestDocumentsItem.of(
-                                                "The Commonwealth of the Northern"
-                                                    + " Mariana Islands is a group"
-                                                    + " of islands in the Pacific"
-                                                    + " Ocean. Its capital is"
-                                                    + " Saipan."),
-                                            V2RerankRequestDocumentsItem.of(
-                                                "Capitalization or capitalisation"
-                                                    + " in English grammar is the"
-                                                    + " use of a capital letter at"
-                                                    + " the start of a word."
-                                                    + " English usage varies from"
-                                                    + " capitalization in other"
-                                                    + " languages."),
-                                            V2RerankRequestDocumentsItem.of(
-                                                "Washington, D.C. (also known as"
-                                                    + " simply Washington or D.C.,"
-                                                    + " and officially as the"
-                                                    + " District of Columbia) is"
-                                                    + " the capital of the United"
-                                                    + " States. It is a federal"
-                                                    + " district."),
-                                            V2RerankRequestDocumentsItem.of(
-                                                "Capital punishment (the death"
-                                                    + " penalty) has existed in the"
-                                                    + " United States since"
-                                                    + " beforethe United States was"
-                                                    + " a country. As of 2017,"
-                                                    + " capital punishment is legal"
-                                                    + " in 30 of the 50 states.")))
+                                            "Carson City is the capital city of the American state of Nevada.",
+                                            "The Commonwealth of the Northern Mariana Islands is a group of islands"
+                                                + " in the Pacific Ocean. Its capital is Saipan.",
+                                            "Capitalization or capitalisation in English grammar is the use of a"
+                                                + " capital letter at the start of a word. English usage varies"
+                                                + " from capitalization in other languages.",
+                                            "Washington, D.C. (also known as simply Washington or D.C., and"
+                                                + " officially as the District of Columbia) is the capital of the"
+                                                + " United States. It is a federal district.",
+                                            "Capital punishment has existed in the United States since before the"
+                                                + " United States was a country. As of 2017, capital punishment is"
+                                                + " legal in 30 of the 50 states."))
                                     .topN(3)
                                     .build());
 
@@ -16643,22 +16590,22 @@ paths:
                                   "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.",
                                   "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
                                   "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.",
-                                  "Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states."]
+                                  "Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states."]
                   }'
           request:
             documents:
-              - text: Carson City is the capital city of the American state of Nevada.
-              - text: The Commonwealth of the Northern Mariana Islands is a group of islands in
-                  the Pacific Ocean. Its capital is Saipan.
-              - text: Capitalization or capitalisation in English grammar is the use of a
-                  capital letter at the start of a word. English usage varies
-                  from capitalization in other languages.
-              - text: Washington, D.C. (also known as simply Washington or D.C., and officially
-                  as the District of Columbia) is the capital of the United
-                  States. It is a federal district.
-              - text: Capital punishment (the death penalty) has existed in the United States
-                  since beforethe United States was a country. As of 2017,
-                  capital punishment is legal in 30 of the 50 states.
+              - Carson City is the capital city of the American state of Nevada.
+              - The Commonwealth of the Northern Mariana Islands is a group of
+                islands in the Pacific Ocean. Its capital is Saipan.
+              - Capitalization or capitalisation in English grammar is the use
+                of a capital letter at the start of a word. English usage varies
+                from capitalization in other languages.
+              - Washington, D.C. (also known as simply Washington or D.C., and
+                officially as the District of Columbia) is the capital of the
+                United States. It is a federal district.
+              - Capital punishment (the death penalty) has existed in the United
+                States since beforethe United States was a country. As of 2017,
+                capital punishment is legal in 30 of the 50 states.
             query: What is the capital of the United States?
             top_n: 3
             model: rerank-english-v3.0
@@ -16675,10 +16622,7 @@ paths:
               meta:
                 api_version:
                   version: '2'
-                  is_experimental: true
-                warnings:
-                  - You are using an experimental version, for more information
-                    please refer to https://docs.cohere.com/versioning-reference
+                  is_experimental: false
                 billed_units:
                   search_units: 1
   /v1/classify:
@@ -17435,21 +17379,13 @@ paths:
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.datasets.requests.DatasetsCreateRequest;
-
-                import
-                com.cohere.api.resources.datasets.types.DatasetsCreateResponse;
-
+                import com.cohere.api.resources.datasets.requests.DatasetsCreateRequest;
+                import com.cohere.api.resources.datasets.types.DatasetsCreateResponse;
                 import com.cohere.api.types.DatasetType;
-
                 import java.util.Optional;
-
 
                 public class DatasetPost {
                   public static void main(String[] args) {
@@ -17787,14 +17723,10 @@ paths:
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.datasets.types.DatasetsGetUsageResponse;
-
+                import com.cohere.api.resources.datasets.types.DatasetsGetUsageResponse;
 
                 public class DatasetUsageGet {
                   public static void main(String[] args) {
@@ -18402,11 +18334,7 @@ paths:
           description: OK
           headers:
             X-API-Warning:
-              schema:
-                type: string
-                x-fern-audiences:
-                  - public
-              description: Warning description for incorrect usage of the API
+              $ref: "#/components/headers/ApiWarning"
           content:
             application/json:
               schema:
@@ -18704,11 +18632,7 @@ paths:
           description: OK
           headers:
             X-API-Warning:
-              schema:
-                type: string
-                x-fern-audiences:
-                  - public
-              description: Warning description for incorrect usage of the API
+              $ref: "#/components/headers/ApiWarning"
           content:
             application/json:
               schema:
@@ -18966,11 +18890,7 @@ paths:
           description: OK
           headers:
             X-API-Warning:
-              schema:
-                type: string
-                x-fern-audiences:
-                  - public
-              description: Warning description for incorrect usage of the API
+              $ref: "#/components/headers/ApiWarning"
           content:
             application/json:
               schema:
@@ -19321,16 +19241,11 @@ paths:
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.connectors.requests.CreateConnectorRequest;
-
+                import com.cohere.api.resources.connectors.requests.CreateConnectorRequest;
                 import com.cohere.api.types.CreateConnectorResponse;
-
 
                 public class ConnectorCreate {
                   public static void main(String[] args) {
@@ -19643,14 +19558,10 @@ paths:
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.connectors.requests.UpdateConnectorRequest;
-
+                import com.cohere.api.resources.connectors.requests.UpdateConnectorRequest;
 
                 public class ConnectorPatch {
                   public static void main(String[] args) {
@@ -19957,16 +19868,11 @@ paths:
                 asyncio.run(main())
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.connectors.requests.ConnectorsOAuthAuthorizeRequest;
-
+                import com.cohere.api.resources.connectors.requests.ConnectorsOAuthAuthorizeRequest;
                 import com.cohere.api.types.OAuthAuthorizeResponse;
-
 
                 public class ConnectorsIdOauthAuthorizePost {
                   public static void main(String[] args) {
@@ -20037,11 +19943,7 @@ paths:
                 $ref: "#/components/schemas/GetModelResponse"
           headers:
             X-API-Warning:
-              schema:
-                type: string
-                x-fern-audiences:
-                  - public
-              description: Warning description for incorrect usage of the API
+              $ref: "#/components/headers/ApiWarning"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -20403,17 +20305,12 @@ paths:
         - code-samples:
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 package finetuning;
 
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.ListFinetunedModelsResponse;
-
+                import com.cohere.api.resources.finetuning.finetuning.types.ListFinetunedModelsResponse;
 
                 public class ListFinetunedModels {
                   public static void main(String[] args) {
@@ -20854,29 +20751,16 @@ paths:
         - code-samples:
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 package finetuning;
 
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.BaseModel;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.BaseType;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.Settings;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.UpdateFinetunedModelResponse;
-
-                import
-                com.cohere.api.resources.finetuning.requests.FinetuningUpdateFinetunedModelRequest;
-
+                import com.cohere.api.resources.finetuning.finetuning.types.BaseModel;
+                import com.cohere.api.resources.finetuning.finetuning.types.BaseType;
+                import com.cohere.api.resources.finetuning.finetuning.types.Settings;
+                import com.cohere.api.resources.finetuning.finetuning.types.UpdateFinetunedModelResponse;
+                import com.cohere.api.resources.finetuning.requests.FinetuningUpdateFinetunedModelRequest;
 
                 public class UpdateFinetunedModel {
                   public static void main(String[] args) {
@@ -21081,17 +20965,12 @@ paths:
         - code-samples:
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 package finetuning;
 
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.GetFinetunedModelResponse;
-
+                import com.cohere.api.resources.finetuning.finetuning.types.GetFinetunedModelResponse;
 
                 public class GetFinetunedModel {
                   public static void main(String[] args) {
@@ -21419,17 +21298,12 @@ paths:
         - code-samples:
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 package finetuning;
 
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.ListEventsResponse;
-
+                import com.cohere.api.resources.finetuning.finetuning.types.ListEventsResponse;
 
                 public class ListEvents {
                   public static void main(String[] args) {
@@ -21614,17 +21488,12 @@ paths:
         - code-samples:
             - sdk: java
               name: Cohere java SDK
-              code: >
+              code: |
                 /* (C)2024 */
-
                 package finetuning;
 
-
                 import com.cohere.api.Cohere;
-
-                import
-                com.cohere.api.resources.finetuning.finetuning.types.ListTrainingStepMetricsResponse;
-
+                import com.cohere.api.resources.finetuning.finetuning.types.ListTrainingStepMetricsResponse;
 
                 public class ListTrainingStepMetrics {
                   public static void main(String[] args) {
@@ -23200,6 +23069,7 @@ components:
         - $ref: "#/components/schemas/ChatToolCallDeltaEvent"
         - $ref: "#/components/schemas/ChatToolCallEndEvent"
         - $ref: "#/components/schemas/ChatMessageEndEvent"
+        - $ref: "#/components/schemas/ChatDebugEvent"
       discriminator:
         propertyName: type
         mapping:
@@ -23214,6 +23084,7 @@ components:
           citation-start: "#/components/schemas/CitationStartEvent"
           citation-end: "#/components/schemas/CitationEndEvent"
           message-end: "#/components/schemas/ChatMessageEndEvent"
+          debug: "#/components/schemas/ChatDebugEvent"
     SingleGeneration:
       type: object
       properties:
@@ -27681,3 +27552,13 @@ components:
             properties:
               data:
                 type: string
+  headers:
+    ApiWarning:
+      description: The name of the project that is making the request.
+      x-fern-audiences:
+        - public
+      schema:
+        type: string
+      required: false
+      example: Parameter xyz is deprecated, for more information please refer to
+        https://docs.cohere.com/versioning-reference
