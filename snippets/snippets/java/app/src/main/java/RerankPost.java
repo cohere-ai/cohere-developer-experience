@@ -37,7 +37,7 @@ public class RerankPost {
                                 + " capital of the United States. It is"
                                 + " a federal district."),
                         RerankRequestDocumentsItem.of(
-                            "Capital punishment (the death penalty) has"
+                            "Capital punishment has"
                                 + " existed in the United States since"
                                 + " beforethe United States was a"
                                 + " country. As of 2017, capital"
