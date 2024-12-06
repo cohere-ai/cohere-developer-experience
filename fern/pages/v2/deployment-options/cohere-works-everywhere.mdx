@@ -12,10 +12,6 @@ createdAt: "Thu Jun 06 2024 10:53:49 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Tue Jun 18 2024 16:38:28 GMT+0000 (Coordinated Universal Time)"
 ---
 
-<Note title="Note"> 
-The code examples in this section use the Cohere v1 API. The v2 API is not yet supported for cloud deployments and will be coming soon.
-</Note>
-
 To maximize convenience in building on and switching between Cohere-supported environments, we have developed SDKs that seamlessly support whichever backend you choose. This allows you to start developing your project with one backend while maintaining the flexibility to switch, should the need arise.
 
 Note that the code snippets presented in this document should be more than enough to get you started, but if you end up switching from one environment to another there will be some small changes you need to make to how you import and initialize the SDK.
@@ -24,12 +20,16 @@ Note that the code snippets presented in this document should be more than enoug
 
 The table below summarizes the environments in which Cohere models can be deployed. You'll notice it contains many links; the links in the "sdk" column take you to Github pages with more information on Cohere's language-specific SDKs, while all the others take you to relevant sections in this document.
 
+<Note title="Note"> 
+The Cohere v2 API is not yet supported for cloud deployments (Bedrock, SageMaker, Azure, and OCI) and will be coming soon. The code examples shown for these cloud deployments use the v1 API.
+</Note>
+
 | sdk                                                          | [Cohere platform](/reference/about) | [Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-cohere.html) | Sagemaker                       | Azure                       | OCI                        | Private Deployment                 |
 | ------------------------------------------------------------ | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------- | --------------------------- | -------------------------- | ------------------------------ |
-| [Typescript](https://github.com/cohere-ai/cohere-typescript) | [✅ docs](#cohere-platform)                             | [✅ docs](#bedrock)                                                                | [✅ docs](#sagemaker) | [✅ docs](#azure) | [🟠 soon]() | [✅ docs](#cohere-platform) |
-| [Python](https://github.com/cohere-ai/cohere-python)         | [✅ docs](#cohere-platform)                                 | [✅ docs](#bedrock)                                                                    | [✅ docs](#sagemaker)     | [✅ docs](#azure)     | [🟠 soon]()     | [✅ docs](#cohere-platform)     |
-| [Go](https://github.com/cohere-ai/cohere-go)                 | [✅ docs](#cohere-platform)                                     | [🟠 soon](#bedrock)                                                                       | [🟠 soon](#sagemaker)        | [✅ docs](#azure)         | [🟠 soon](#)         | [✅ docs](#cohere-platform)         |
-| [Java](https://github.com/cohere-ai/cohere-java)             | [✅ docs](#cohere-platform)                                   | [🟠 soon](#bedrock)                                                                     | [🟠 soon](#sagemaker)      | [✅ docs](#azure)       | [🟠 soon]()       | [✅ docs](#cohere-platform)       |
+| [Typescript](https://github.com/cohere-ai/cohere-typescript) | [✅ docs](#cohere-platform)                             | [✅ docs](#bedrock)                                                                | [✅ docs](#sagemaker) | [✅ docs](#azure) | [🟠 soon]() | [✅ docs](#private-deployment) |
+| [Python](https://github.com/cohere-ai/cohere-python)         | [✅ docs](#cohere-platform)                                 | [✅ docs](#bedrock)                                                                    | [✅ docs](#sagemaker)     | [✅ docs](#azure)     | [🟠 soon]()     | [✅ docs](#private-deployment)     |
+| [Go](https://github.com/cohere-ai/cohere-go)                 | [✅ docs](#cohere-platform)                                     | [🟠 soon](#bedrock)                                                                       | [🟠 soon](#sagemaker)        | [✅ docs](#azure)         | [🟠 soon](#)         | [✅ docs](#private-deployment)         |
+| [Java](https://github.com/cohere-ai/cohere-java)             | [✅ docs](#cohere-platform)                                   | [🟠 soon](#bedrock)                                                                     | [🟠 soon](#sagemaker)      | [✅ docs](#azure)       | [🟠 soon]()       | [✅ docs](#private-deployment)       |
 
 ## Feature support
 
@@ -153,6 +153,125 @@ public class ChatPost {
         Cohere cohere = Cohere.builder().token("Your API key").clientName("snippet").build();
 
         NonStreamedChatResponse response = cohere.chat(
+                ChatRequest.builder()
+                        .message("What year was he born?")
+                        .chatHistory(
+                                List.of(Message.user(ChatMessage.builder().message("Who discovered gravity?").build()),
+                                        Message.chatbot(ChatMessage.builder().message("The man who is widely credited with discovering gravity is Sir Isaac Newton").build()))).build());
+
+        System.out.println(response);
+    }
+}
+```
+</CodeBlocks>
+
+#### Private Deployment
+
+<CodeBlocks>
+```typescript TS 
+const { CohereClient } = require('cohere-ai');
+
+const cohere = new CohereClientV2({
+  token: '',
+  base_url='<YOUR_DEPLOYMENT_URL>'
+});
+
+(async () => {
+  const response = await cohere.chat({
+    chatHistory: [
+      { role: 'USER', message: 'Who discovered gravity?' },
+      {
+        role: 'CHATBOT',
+        message: 'The man who is widely credited with discovering gravity is Sir Isaac Newton',
+      },
+    ],
+    message: 'What year was he born?',
+    // perform web search before answering the question. You can also use your own custom connector.
+    connectors: [{ id: 'web-search' }],
+  });
+
+  console.log(response);
+})();
+```
+```python PYTHON
+import cohere
+
+co = cohere.ClientV2(api_key="",
+                     base_url="<YOUR_DEPLOYMENT_URL>")
+
+response = co.chat(
+    chat_history=[
+        {"role": "USER", "message": "Who discovered gravity?"},
+        {
+            "role": "CHATBOT",
+            "message": "The man who is widely credited with discovering gravity is Sir Isaac Newton",
+        },
+    ],
+    message="What year was he born?",
+    # perform web search before answering the question. You can also use your own custom connector.
+    connectors=[{"id": "web-search"}],
+)
+
+print(response)
+```
+```go GO
+package main
+
+import (
+	"context"
+	"log"
+
+	cohere "github.com/cohere-ai/cohere-go/v2"
+	client "github.com/cohere-ai/cohere-go/v2/client"
+)
+
+func main() {
+  co := client.NewClient(
+			  client.WithBaseURL("<YOUR_DEPLOYMENT_URL>"),
+		)
+
+	resp, err := co.V2.Chat(
+		context.TODO(),
+		&cohere.ChatRequest{
+			ChatHistory: []*cohere.ChatMessage{
+				{
+					Role:    cohere.ChatMessageRoleUser,
+					Message: "Who discovered gravity?",
+				},
+				{
+					Role:    cohere.ChatMessageRoleChatbot,
+					Message: "The man who is widely credited with discovering gravity is Sir Isaac Newton",
+				}},
+			Message: "What year was he born?",
+			Connectors: []*cohere.ChatConnector{
+				{Id: "web-search"},
+			},
+		},
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("%+v", resp)
+}
+```
+```java JAVA
+import com.cohere.api.Cohere;
+import com.cohere.api.requests.ChatRequest;
+import com.cohere.api.types.ChatMessage;
+import com.cohere.api.types.Message;
+import com.cohere.api.types.NonStreamedChatResponse;
+
+import java.util.List;
+
+
+public class ChatPost {
+    public static void main(String[] args) {
+        Cohere cohere = Cohere.builder().token("Your API key").clientName("snippet").build();
+        Cohere cohere = Cohere.builder().environment(Environment.custom("<YOUR_DEPLOYMENT_URL>")).clientName("snippet").build();
+
+        NonStreamedChatResponse response = cohere.v2.chat(
                 ChatRequest.builder()
                         .message("What year was he born?")
                         .chatHistory(
