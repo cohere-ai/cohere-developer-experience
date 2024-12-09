@@ -1,7 +1,6 @@
 name: snippet-ci
 
 on:
-  pull_request: {}
   push:
     branches:
       - main
@@ -38,3 +37,12 @@ jobs:
         env:
           CO_API_KEY: ${{ secrets.COHERE_TOKEN }}
         run: pnpm run --filter snippet-tester test
+
+      - name: "Notify Slack"
+        if: failure()
+        uses: slackapi/slack-github-action@fcfb566f8b0aab22203f066d80ca1d7e4b5d05b3 # v1.27.1
+        with:
+          channel-id: "#endpoints-operations"
+          slack-message: "🚨 Snippets regression detected! see <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|job>."
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_DEPLOY_NOTIFIER_BOT_TOKEN }}
