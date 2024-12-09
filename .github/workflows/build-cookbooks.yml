@@ -1,0 +1,72 @@
+name: generate-mdx-files
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to run the workflow on'
+        required: true
+        default: 'main'
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Clone Notebooks Repository
+        shell: bash
+        run: |
+          git clone git@github.com:cohere-ai/notebooks.git notebooks
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        shell: bash
+        run: |
+          pip install poetry  # Using pip to install Poetry
+
+      - name: Install Project Dependencies with Poetry
+        shell: bash
+        run: |
+          poetry install
+
+      - name: Build MDX Files
+        shell: bash
+        run: poetry run python .github/scripts/build_cookbooks.py
+
+      - name: Check for Changes in build-mdx Folder
+        id: check_changes
+        shell: bash
+        run: |
+          git add fern/pages/cookbooks*  # Ensure this path is correct
+          git diff --cached --exit-code || echo "::set-output name=changes_detected::true"
+        continue-on-error: true
+
+      - name: Commit and Push Changes
+        if: steps.check_changes.outputs.changes_detected == 'true'
+        shell: bash
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git commit -m "Update cookbooks"
+          git push origin HEAD
+
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.changes_detected == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update Cookbooks files"
+          branch: "update-mdx-from-cookbooks"
+          title: "Update Cookbooks"
+          body: "This PR updates the Cookbooks MDX files generated from the latest notebooks."
