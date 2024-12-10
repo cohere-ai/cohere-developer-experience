@@ -1,0 +1,86 @@
+---
+title: Rerank Best Practices
+slug: docs/reranking-best-practices
+hidden: false
+description: >-
+  Tips for optimal endpoint performance, including constraints on the number of documents, tokens per document, and tokens per query.
+image: ../../../../assets/images/b75cfed-cohere_docs_preview_image_1200x630_copy.jpg
+keywords: 'rerank, natural language processing'
+createdAt: 'Mon Nov 25 2024 16:58:46 GMT+0000 (Coordinated Universal Time)'
+updatedAt: 'Mon Nov 25 2024 15:16:00 GMT+0000 (Coordinated Universal Time)'
+---
+## Document Chunking
+
+Under the hood, the Rerank API turns user input into text chunks. Every chunk will include the `query` and a portion of the document text. Chunk size depends on the model.
+
+For example, if
+- the selected model is `rerank-v3.5`, which has context length (aka max chunk size) of 4096 tokens
+- the query is 100 tokens
+- there is one document and it is 10,000 tokens long
+- document truncation is disabled by setting `max_tokens_per_doc` parameter to 10,000 tokens
+
+Then the document will be broken into the following three chunks:
+
+```
+relevance_score_1 = <padding_tokens, query[0,99], document[0,3992]>
+relevance_score_2 = <padding_tokens, query[0,99], document[3993,7985]>
+relevance_score_3 = <padding_tokens, query[0,99], document[7986,9999]>
+```
+
+And the final relevance score for that document will be computed as the highest score among those chunks:
+```python
+relevance_score = max(
+    relevance_score_1, relevance_score_2, relevance_score_3
+)
+```
+
+If you would like more control over how chunking is done, we recommend that you chunk your documents yourself.
+
+## Queries
+
+Our Rerank models (`rerank-v3.0` and `rerank-v3.5`) are trained with a context length of 4096 tokens. The model takes into account both the input from the query and documents. If your query is larger than 2048 tokens, it will be truncated to the first 2048 tokens.
+
+## Structured Data Support
+
+Our Rerank models support reranking structured data formatted as a list of YAML strings. Note that since long document strings get truncated, the order of the keys is especially important. When constructing the YAML string from a dictionary, make sure to maintain the order. In Python that is done by setting `sort_keys=False` when using `yaml.dump`.
+
+Example:
+```python
+import yaml
+
+docs = [
+    {
+        "Title": "How to fix a dishwasher",
+        "Author": "John Smith",
+        "Date": "August 1st 2023",
+        "Content": "Fixing a dishwasher depends on the specific problem you're facing. Here are some common issues and their potential solutions:....",
+    },
+    {
+        "Title": "How to fix a leaky sink",
+        "Date": "July 25th 2024",
+        "Content": "Fixing a leaky sink will depend on the source of the leak. Here are general steps you can take to address common types of sink leaks:.....",
+    },
+]
+
+yaml_docs = [yaml.dump(doc, sort_keys=False) for doc in docs]
+```
+
+## Interpreting Results
+
+The most important output from the [Rerank API endpoint](/reference/rerank-1) is the absolute rank exposed in the response object. The score is query dependent, and could be higher or lower depending on the query and passages sent in. In the example below, what matters is that Ottawa is more relevant than Toronto, but the user should not assume that Ottawa is two times more relevant than Ontario.
+
+```
+[
+	RerankResult<text: Ottawa, index: 1, relevance_score: 0.9109375>,
+	RerankResult<text: Toronto, index: 2, relevance_score: 0.7128906>,
+	RerankResult<text: Ontario, index: 3, relevance_score: 0.04421997>
+]
+```
+
+Relevance scores are normalized to be in the range `[0, 1]`. Scores close to `1` indicate a high relevance to the query, and scores closer to `0` indicate low relevance. To find a threshold on the scores to determine whether a document is relevant or not, we recommend going through the following process:
+
+- Select a set of 30-50 representative queries `Q=[q_0, … q_n]` from your domain.
+- For each query provide a document that is considered borderline relevant to the query for your specific use case, and create a list of (query, document) pairs: `sample_inputs=[(q_0, d_0), …, (q_n, d_n)]` .
+- Pass all tuples in `sample_inputs` through the rerank endpoint in a loop, and gather relevance scores `sample_scores=[s0, ..., s_n]`.
+
+The average of `sample_scores` can then be used as a reference when deciding a threshold for filtering out irrelevant documents.

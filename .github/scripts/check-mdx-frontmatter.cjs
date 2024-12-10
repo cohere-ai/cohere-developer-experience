@@ -10,6 +10,9 @@ let totalFilesChecked = 0;
 let totalFilesValid = 0;
 let totalFilesInvalid = 0;
 
+// List of validators to run
+const validators = [checkDescriptionLength, checkTitleLength];
+
 // List of folders to exclude (relative to mdxDir)
 const excludedFolders = ["-ARCHIVE-", "api-reference", "llm-university"];
 
@@ -31,28 +34,60 @@ async function shouldExcludeFile(filePath) {
 }
 
 async function checkDescriptionLength(filePath) {
-  totalFilesChecked++;
   const fileContent = await fs.readFile(filePath, "utf8");
   const { data } = matter(fileContent);
+  const minDescriptionLength = 50;
+  const maxDescriptionLength = 160;
 
   if (!data.description) {
-    console.log(`File "${filePath}" is missing a description.`);
-    totalFilesInvalid++;
+    console.error(`File "${filePath}" is missing a description.`);
     return false;
   }
 
   const descriptionLength = data.description.length;
 
-  if (descriptionLength < 50 || descriptionLength > 160) {
-    console.log(
-      `File "${filePath}" has an invalid description length: ${descriptionLength} characters.`
+  if (descriptionLength < minDescriptionLength || descriptionLength > maxDescriptionLength) {
+    console.error(
+      `File "${filePath}" has an invalid description length: ${descriptionLength} characters. ` +
+      `Description should be between ${minDescriptionLength}-${maxDescriptionLength} characters.`
     );
-    totalFilesInvalid++;
     return false;
   }
 
-  totalFilesValid++;
   return true;
+}
+
+
+async function checkTitleLength(filePath) {
+    // these two files are layout files 
+    // and we don't expect to have title in them
+    const filesToExclude = ["index.mdx", "cookbooks.mdx"];
+    
+    const fileContent = await fs.readFile(filePath, "utf8");
+    const { data } = matter(fileContent);
+    const minTitleLength = 30;
+    const maxTitleLength = 60;
+
+    filePath = path.relative(mdxDir, filePath);
+
+    if (!data.title) {
+        if (filesToExclude.includes(filePath)) {
+            return true;
+        }
+        console.error(`File "${filePath}" is missing a title.`);
+        return false;
+    }
+
+    const titleLength = data.title.length;
+    if (titleLength < minTitleLength || titleLength > maxTitleLength) {
+        console.warn(
+            `File "${filePath}" has an invalid title length: ${titleLength} characters. ` +
+            `Title should be between ${minTitleLength}-${maxTitleLength} characters.`
+        );
+        return true;
+    }
+
+    return true;
 }
 
 async function checkMDXFiles(dirPath) {
@@ -77,9 +112,22 @@ async function checkMDXFiles(dirPath) {
         console.log(`Skipping excluded file: ${fullPath}`);
         continue;
       }
-      const isValid = await checkDescriptionLength(fullPath);
+      let isValid = true;
+
+      for (const validate of validators) {
+        const fileIsValid = await validate(fullPath);
+        if (!fileIsValid) {
+            isValid = false; 
+        }
+      }
+      
+      totalFilesChecked++;
       if (!isValid) {
         allFilesValid = false;
+        totalFilesInvalid++;
+      }
+      else {
+        totalFilesValid++;
       }
     }
   }
@@ -98,12 +146,12 @@ async function checkMDXFiles(dirPath) {
 
   if (!allFilesValid) {
     console.error(
-      "Some files have invalid or missing descriptions. Meta description needing to be 50-160 characters"
+      "Some files have invalid or missing content."
     );
     process.exit(1); // Fail if any file is invalid
   } else {
     console.log(
-      "All files have a valid description length in the frontmatter."
+      "All files a valid for frontmatter."
     );
   }
 })();
