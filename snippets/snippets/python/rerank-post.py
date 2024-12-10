@@ -11,7 +11,7 @@ docs = [
 ]
 
 response = co.rerank(
-    model="rerank-english-v3.0",
+    model="rerank-v3.5",
     query="What is the capital of the United States?",
     documents=docs,
     top_n=3,
