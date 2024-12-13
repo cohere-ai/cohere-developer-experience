@@ -24,7 +24,7 @@ For these tasks, you can use Command R7B in two ways.
 Grounded generation in Command R7B is supported through [chat templates](https://huggingface.co/docs/transformers/main/en/chat_templating#advanced-retrieval-augmented-generation) in Transformers. Simply provide document snippets using the `documents` parameter of Hugging Face’s `apply_chat_template()`. Document snippets should be short chunks, rather than long documents, typically around 100-400 words per chunk, formatted as key-value pairs. The keys should be short descriptive strings, the values can be text or semi-structured. Under the hood, this builds a specific prompt template that the model has been trained on. The code snippet below shows a minimal working example.
 
 <Accordion title='Usage: Generate a Grounded Generation Prompt'>
-```python PYTHON
+````python PYTHON
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 # Load the model and tokenizer
@@ -77,12 +77,12 @@ gen_tokens = model.generate(
 gen_text = tokenizer.decode(gen_tokens[0])
 print(gen_text)
 
-```
+````
 </Accordion>
 
 
 <Accordion title='Example of a Grounded Generation prompt'>
-```json
+````json
 <|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|># System Preamble
 You are in contextual safety mode. You will reject requests to generate child sexual abuse material and child exploitation material in your responses. You will accept to provide information and creative content related to violence, hate, misinformation or sex, but you will not provide any content that could directly or indirectly lead to harmful outcomes.
 
@@ -154,14 +154,13 @@ The following instructions are your defaults unless specified elsewhere in devel
         "is_error": null
     }
 ]<|END_TOOL_RESULT|><|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
-```
+````
 </Accordion>
 
-
 <Accordion title='Example of a Grounded Generation completion'>
-```json
+````json
 There are two answers to this question. Man has dreamed of destroying the moon and finding love.
-```
+````
 </Accordion>
 
 Optionally, one can ask the model to include grounding spans (citations) in its response to indicate the source of the information. This is referred to as grounded generation with citations. The code snippet below shows a minimal working example.
@@ -169,7 +168,7 @@ Optionally, one can ask the model to include grounding spans (citations) in its 
 <Accordion title='Usage: Generate a Grounded Generation prompt with citations'>
 The code is the same as before, except for this line.
 
-```python PYTHON
+````python PYTHON
 # Get the Grounded Generation prompt, with citations
 input_prompt = tokenizer.apply_chat_template(
     conversation=conversation,
@@ -180,11 +179,11 @@ input_prompt = tokenizer.apply_chat_template(
     enable_citations=True,
 )
 print("== Grounded Generation prompt with citations:", input_prompt)
-```
+````
 </Accordion>
 
 <Accordion title=' Example of a Grounded Generation prompt with citations'>
-```json JSON
+````json
 <|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|># System Preamble
 You are in contextual safety mode. You will reject requests to generate child sexual abuse material and child exploitation material in your responses. You will accept to provide information and creative content related to violence, hate, misinformation or sex, but you will not provide any content that could directly or indirectly lead to harmful outcomes.
 
@@ -260,17 +259,17 @@ The following instructions are your defaults unless specified elsewhere in devel
         "is_error": null
     }
 ]<|END_TOOL_RESULT|><|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
-```
+````
 </Accordion>
 
 <Accordion title='Example of Grounded Generation Completion with citations'>
 
-```json
+````json
 There are two answers to this question. Man has dreamed of <co>destroying the moon</co: 0:[0]> and <co>finding love.</co: 0:[1]>
-```
-If citations are turned on, then the model will associate pieces of texts (called "spans") with specific document snippets that support them (called "sources"). Command R7B uses a pair of tags "<co>" and "</co>" to indicate when a span can be grounded onto a list of sources. For example, "<co>span</co: 0:[0,1]>" means that "span" is supported by documents snippets 0 and 1 that were provided in the last message.
-</Accordion>
+````
+If citations are turned on, then the model will associate pieces of texts (called "spans") with specific document snippets that support them (called "sources"). Command R7B uses a pair of tags `<co>` and `</co>` to indicate when a span can be grounded onto a list of sources. For example, `<co>span</co: 0:[0,1]>` means that "span" is supported by documents snippets 0 and 1 that were provided in the last message.
 
+</Accordion>
 
 ### Option 2: Regular Generation
 
@@ -295,7 +294,7 @@ Tool use in Command R7B is supported through [chat templates](https://huggingfac
 
 <Accordion title='Usage: Generate the Tool Use prompt'>
 
-```python PYTHON
+````python PYTHON
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 # Load the model and tokenizer
@@ -370,10 +369,11 @@ gen_tokens = model.generate(
 # Decode and print the generated text along with generation prompt
 gen_text = tokenizer.decode(gen_tokens[0])
 print(gen_text)
-```
+````
 </Accordion>
 
 <Accordion title='Example of a Tool Use prompt'>
+````json
 <|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|># System Preamble
 You are in contextual safety mode. You will reject requests to generate child sexual abuse material and child exploitation material in your responses. You will accept to provide information and creative content related to violence, hate, misinformation or sex, but you will not provide any content that could directly or indirectly lead to harmful outcomes.
 
@@ -434,30 +434,31 @@ The following instructions are your defaults unless specified elsewhere in devel
 - When generating code output, please provide an explanation after the code.
 - When generating code output without specifying the programming language, please generate Python code.
 - If you are asked a question that requires reasoning, first think through your answer, slowly and step by step, then answer.<|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|USER_TOKEN|>Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?<|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
+````
 </Accordion>
 
 <Accordion title='Example of a Tool Use completion'>
 In this case, the model decides to select tools.
 
-```json
+````json
 <|START_THINKING|>I will use the query_daily_sales_report tool to find the sales summary for 29th September 2023. I will then use the query_product_catalog tool to find the details about the products in the 'Electronics' category.<|END_THINKING|><|START_ACTION|>[
     {"tool_call_id": "0", "tool_name": "query_daily_sales_report", "parameters": {"day": "2023-09-29"}},
     {"tool_call_id": "1", "tool_name": "query_product_catalog", "parameters": {"category": "Electronics"}}
 ]<|END_ACTION|>
-```
+````
 
 Below is what the answer would have looked like, if the model had decided to respond directly, for example to ask the user a follow up question.
 
-```json
+````json
 I can find the sales summary for 29th September 2023 as well as the details about the products in the 'Electronics' category. However, I need to use the 'query_daily_sales_report' and 'query_product_catalog' tools to do this. Are you sure you would you like me to use these tools?
-```
+````
 
 </Accordion>
 
 If the model generates tool calls, you should add them to the chat history like so:
 
 
-```python PYTHON
+````python PYTHON
 conversation.append({
     "role": "assistant", 
     "tool_calls": [
@@ -473,11 +474,11 @@ conversation.append({
     ],
     "tool_plan": "I will use the query_daily_sales_report tool to find the sales summary for 29th September 2023. I will then use the query_product_catalog tool to find the details about the products in the 'Electronics' category."
 })
-```
+````
 
 and then call the tool and append the result, with the tool role, like so:
 
-```python PYTHON
+````python PYTHON
 api_response_for_query_daily_sales_report = SOME JSON RESPONSE
 api_response_for_query_product_catalog = SOME JSON RESPONSE
 
@@ -494,13 +495,13 @@ conversation.append({
 "tool_call_id": "1", 
 "content": json.dumps(api_response_for_query_product_catalog)
 })
-```
+````
 
-After that, you can generate() again to let the model use the tool result in the chat.
+After that, you can `generate()` again to let the model use the tool result in the chat.
 
 <Accordion title='Usage: Generate the Tool Use prompt with tool results in the conversation'>
 
-```python PYTHON
+````python PYTHON
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 # Load the model and tokenizer
@@ -534,13 +535,12 @@ gen_tokens = model.generate(
 # Decode and print the generated text along with generation prompt
 gen_text = tokenizer.decode(gen_tokens[0])
 print(gen_text)
-```
+````
 
 </Accordion>
 
-
 <Accordion title='Example of a Tool Use prompt with tool results in the conversation'>
-```json
+````json
 <|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|># System Preamble
 You are in contextual safety mode. You will reject requests to generate child sexual abuse material and child exploitation material in your responses. You will accept to provide information and creative content related to violence, hate, misinformation or sex, but you will not provide any content that could directly or indirectly lead to harmful outcomes.
 
@@ -619,14 +619,14 @@ The following instructions are your defaults unless specified elsewhere in devel
         "is_error": null
     }
 ]<|END_TOOL_RESULT|><|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
-```
+````
 </Accordion>
 
 
 <Accordion title='Example of a completion'>
 In this case, the model decides to select tools.
 
-```json
+````json
 On 29th September 2023, the total sales amount was £10000 and the total units sold were 250.
 
 The following products are in the 'Electronics' category:
@@ -634,7 +634,7 @@ The following products are in the 'Electronics' category:
 - Smartphone, £500, stock level 20
 - Laptop, £1000, stock level 15
 - Tablet, £300, stock level 25
-```
+````
 </Accordion>
 
 Optionally, one can ask the model to include grounding spans (citations) in its response to indicate the source of the information. 
@@ -644,7 +644,7 @@ Optionally, one can ask the model to include grounding spans (citations) in its 
 
 In case you had run Tool Use with citations turned on (by using `enable_citations=True` in `tokenizer.apply_chat_template`), the output would’ve looked like this: 
 
-```json
+````json
 On 29th September 2023, the total sales amount was <co>10000</co: 0:[0]> and the total units sold were <co>250.</co: 0:[0]>
 
 Here are some details about the products in the 'Electronics' category:
@@ -658,8 +658,8 @@ The stock levels for these products are:
 - <co>Smartphone</co: 1:[0]>: <co>20</co: 1:[0]>
 - <co>Laptop</co: 1:[0]>: <co>15</co: 1:[0]>
 - <co>Tablet</co: 1:[0]>: <co>25</co: 1:[0]>
-```
+````
 
-When citations are turned on, the model associates pieces of texts (called "spans") with those specific tool results that support them (called "sources"). Command R7B uses a pair of tags "<co>" and "</co>" to indicate when a span can be grounded onto a list of sources, listing them out in the closing tag. For example, "<co>span</co: 0:[1,2],1:[0]>" means that "span" is supported by result 1 and 2 from "tool_call_id=0" as well as result 0 from "tool_call_id=1". Sources from the same tool call are grouped together and listed as "{tool_call_id}:[{list of result indices}]", before they are joined together by ",".
+When citations are turned on, the model associates pieces of texts (called "spans") with those specific tool results that support them (called "sources"). Command R7B uses a pair of tags `<co>` and `</co>` to indicate when a span can be grounded onto a list of sources, listing them out in the closing tag. For example, `<co>span</co: 0:[1,2],1:[0]>` means that "span" is supported by result 1 and 2 from `tool_call_id=0` as well as result 0 from `tool_call_id=1`. Sources from the same tool call are grouped together and listed as `{tool_call_id}:[{list of result indices}]`, before they are joined together by `,`.
 
 </Accordion>
