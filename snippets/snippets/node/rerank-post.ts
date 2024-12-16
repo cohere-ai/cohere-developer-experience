@@ -16,12 +16,12 @@ const cohere = new CohereClient({});
         text: 'Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.',
       },
       {
-        text: 'Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.',
+        text: 'Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.',
       },
     ],
     query: 'What is the capital of the United States?',
     topN: 3,
-    model: 'rerank-english-v3.0',
+    model: 'rerank-v3.5',
   });
 
   console.log(rerank);

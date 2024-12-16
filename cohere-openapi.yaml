@@ -5588,7 +5588,7 @@ paths:
 
                     With `prompt_truncation` set to "OFF", no elements will be dropped. If the sum of the inputs exceeds the model's context length limit, a `TooManyTokens` error will be returned.
 
-                    Compatible Deployments: 
+                    Compatible Deployments:
                      - AUTO: Cohere Platform Only
                      - AUTO_PRESERVE_ORDER: Azure, AWS Sagemaker/Bedrock, Private Deployments
                 connectors:
@@ -5832,6 +5832,8 @@ paths:
 
                     **Note**: This parameter is only compatible with models [Command R 08-2024](https://docs.cohere.com/docs/command-r#august-2024-release), [Command R+ 08-2024](https://docs.cohere.com/docs/command-r-plus#august-2024-release) and newer.
 
+                    **Note**: `command-r7b-12-2024` only supports `"CONTEXTUAL"` and `"STRICT"` modes.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
       responses:
         "200":
@@ -5986,7 +5988,7 @@ paths:
                   x-fern-availability: beta
                   type: boolean
                   description: |
-                    When set to `true`, tool calls in the Assistant message will be forced to follow the tool definition strictly. Learn more in the [Strict Tools guide](https://docs.cohere.com/docs/structured-outputs-json#structured-outputs-tools).
+                    When set to `true`, tool calls in the Assistant message will be forced to follow the tool definition strictly. Learn more in the [Structured Outputs (Tools) guide](https://docs.cohere.com/docs/structured-outputs-json#structured-outputs-tools).
 
                     **Note**: The first few requests with a new set of tools will take longer to process.
                 documents:
@@ -6021,6 +6023,8 @@ paths:
                     Safety modes are not yet configurable in combination with `tools`, `tool_results` and `documents` parameters.
 
                     **Note**: This parameter is only compatible with models [Command R 08-2024](https://docs.cohere.com/v2/docs/command-r#august-2024-release), [Command R+ 08-2024](https://docs.cohere.com/v2/docs/command-r-plus#august-2024-release) and newer.
+
+                    **Note**: `command-r7b-12-2024` only supports `"CONTEXTUAL"` and `"STRICT"` modes.
                 max_tokens:
                   x-fern-audiences:
                     - public
@@ -7349,7 +7353,7 @@ paths:
                 import cohere
 
 
-                co = cohere.Client()
+                co = cohere.ClientV2()
 
 
                 response = co.chat(
@@ -15988,9 +15992,7 @@ paths:
                   type: string
                   x-fern-audiences:
                     - public
-                  description: "The identifier of the model to use, one of :
-                    `rerank-english-v3.0`, `rerank-multilingual-v3.0`,
-                    `rerank-english-v2.0`, `rerank-multilingual-v2.0`"
+                  description: The identifier of the model to use, eg `rerank-v3.5`.
                 query:
                   type: string
                   x-fern-audiences:
@@ -16085,7 +16087,7 @@ paths:
                 				{String: "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages."},
                 				{String: "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district."},
                 			},
-                			Model: cohere.String("rerank-english-v3.0"),
+                			Model: cohere.String("rerank-v3.5"),
                 		},
                 	)
 
@@ -16118,12 +16120,12 @@ paths:
                         text: 'Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.',
                       },
                       {
-                        text: 'Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.',
+                        text: 'Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.',
                       },
                     ],
                     query: 'What is the capital of the United States?',
                     topN: 3,
-                    model: 'rerank-english-v3.0',
+                    model: 'rerank-v3.5',
                   });
 
                   console.log(rerank);
@@ -16142,12 +16144,12 @@ paths:
                     "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.",
                     "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.",
                     "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
-                    "Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
+                    "Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
                 ]
 
 
                 response = co.rerank(
-                    model="rerank-english-v3.0",
+                    model="rerank-v3.5",
                     query="What is the capital of the United States?",
                     documents=docs,
                     top_n=3,
@@ -16165,25 +16167,20 @@ paths:
                 co = cohere.AsyncClient()
 
 
-                docs = [
-                    "Carson City is the capital city of the American state of Nevada.",
-                    "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.",
-                    "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.",
-                    "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
-                    "Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
-                ]
-
-
-
                 async def main():
                     response = await co.rerank(
-                        model="rerank-english-v2.0",
+                        model="rerank-v3.5",
                         query="What is the capital of the United States?",
-                        documents=docs,
+                        documents=[
+                            "Carson City is the capital city of the American state of Nevada.",
+                            "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.",
+                            "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.",
+                            "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
+                            "Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
+                        ],
                         top_n=3,
                     )
                     print(response)
-
 
                 asyncio.run(main())
             - sdk: java
@@ -16234,13 +16231,13 @@ paths:
                                                 + " capital of the United States. It is"
                                                 + " a federal district."),
                                         RerankRequestDocumentsItem.of(
-                                            "Capital punishment (the death penalty) has"
+                                            "Capital punishment has"
                                                 + " existed in the United States since"
                                                 + " beforethe United States was a"
                                                 + " country. As of 2017, capital"
                                                 + " punishment is legal in 30 of the 50"
                                                 + " states.")))
-                                .model("rerank-english-v3.0")
+                                .model("rerank-english-v3.5")
                                 .topN(3)
                                 .build());
 
@@ -16256,14 +16253,14 @@ paths:
                   --header 'content-type: application/json' \
                   --header "Authorization: bearer $CO_API_KEY" \
                   --data '{
-                    "model": "rerank-english-v3.0",
+                    "model": "rerank-v3.5",
                     "query": "What is the capital of the United States?",
                     "top_n": 3,
                     "documents": ["Carson City is the capital city of the American state of Nevada.",
                                   "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.",
                                   "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
                                   "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.",
-                                  "Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states."]
+                                  "Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states."]
                   }'
           request:
             documents:
@@ -16276,12 +16273,12 @@ paths:
               - text: Washington, D.C. (also known as simply Washington or D.C., and officially
                   as the District of Columbia) is the capital of the United
                   States. It is a federal district.
-              - text: Capital punishment (the death penalty) has existed in the United States
-                  since beforethe United States was a country. As of 2017,
-                  capital punishment is legal in 30 of the 50 states.
+              - text: Capital punishment has existed in the United States since beforethe United
+                  States was a country. As of 2017, capital punishment is legal
+                  in 30 of the 50 states.
             query: What is the capital of the United States?
             top_n: 3
-            model: rerank-english-v3.0
+            model: rerank-v3.5
           response:
             body:
               id: 8bc745a3-7871-4597-822e-18c95d5df48c
@@ -16397,14 +16394,7 @@ paths:
                   type: string
                   x-fern-audiences:
                     - public
-                  description: |-
-                    The identifier of the model to use.
-
-                    Supported models:
-                      - `rerank-english-v3.0`
-                      - `rerank-multilingual-v3.0`
-                      - `rerank-english-v2.0`
-                      - `rerank-multilingual-v2.0`
+                  description: The identifier of the model to use, eg `rerank-v3.5`.
                 query:
                   type: string
                   x-fern-audiences:
@@ -16466,7 +16456,7 @@ paths:
                     ],
                     query: 'What is the capital of the United States?',
                     topN: 3,
-                    model: 'rerank-english-v3.0',
+                    model: 'rerank-v3.5',
                   });
 
                   console.log(rerank);
@@ -16490,7 +16480,7 @@ paths:
 
 
                 response = co.rerank(
-                    model="rerank-english-v3.0",
+                    model="rerank-v3.5",
                     query="What is the capital of the United States?",
                     documents=docs,
                     top_n=3,
@@ -16508,22 +16498,18 @@ paths:
                 co = cohere.AsyncClientV2()
 
 
-                docs = [
-                    "Carson City is the capital city of the American state of Nevada.",
-                    "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.",
-                    "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.",
-                    "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
-                    "Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
-                ]
-
-
-
                 async def main():
                     response = await co.rerank(
-                        model="rerank-english-v2.0",
+                        model="rerank-v3.5",
                         query="What is the capital of the United States?",
-                        documents=docs,
-                        top_n=3,
+                        documents=[
+                            "Carson City is the capital city of the American state of Nevada.",
+                            "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.",
+                            "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.",
+                            "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
+                            "Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
+                        ],
+                        top_n=3
                     )
                     print(response)
 
@@ -16552,7 +16538,7 @@ paths:
                             .v2()
                             .rerank(
                                 V2RerankRequest.builder()
-                                    .model("rerank-english-v3.0")
+                                    .model("rerank-v3.5")
                                     .query("What is the capital of the United States?")
                                     .documents(
                                         List.of(
@@ -16583,7 +16569,7 @@ paths:
                   --header 'content-type: application/json' \
                   --header "Authorization: bearer $CO_API_KEY" \
                   --data '{
-                    "model": "rerank-english-v3.0",
+                    "model": "rerank-v3.5",
                     "query": "What is the capital of the United States?",
                     "top_n": 3,
                     "documents": ["Carson City is the capital city of the American state of Nevada.",
@@ -16603,12 +16589,12 @@ paths:
               - Washington, D.C. (also known as simply Washington or D.C., and
                 officially as the District of Columbia) is the capital of the
                 United States. It is a federal district.
-              - Capital punishment (the death penalty) has existed in the United
-                States since beforethe United States was a country. As of 2017,
-                capital punishment is legal in 30 of the 50 states.
+              - Capital punishment has existed in the United States since
+                beforethe United States was a country. As of 2017, capital
+                punishment is legal in 30 of the 50 states.
             query: What is the capital of the United States?
             top_n: 3
-            model: rerank-english-v3.0
+            model: rerank-v3.5
           response:
             body:
               id: 07734bd2-2473-4f07-94e1-0d9f0e6843cf
@@ -22670,6 +22656,8 @@ components:
           description: |
             Defaults to `"accurate"`.
             Dictates the approach taken to generating citations as part of the RAG flow by allowing the user to specify whether they want `"accurate"` results, `"fast"` results or no results.
+
+            **Note**: `command-r7b-12-2024` only supports `"fast"` and `"off"` modes. Its default is `"fast"`.
     ResponseFormatTypeV2:
       x-fern-audiences:
         - public

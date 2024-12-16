@@ -1,11 +1,11 @@
 ---
 title: "Rerank Overview"
-slug: "docs/overview"
+slug: "docs/rerank-overview"
 
 hidden: false
 
-description: "This page describes how Cohere's ReRank models work."
-image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+description: "This page describes how Cohere's Rerank models work."
+image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "Cohere, reranking models, large language models"
 
 createdAt: "Thu May 23 2024 04:39:27 GMT+0000 (Coordinated Universal Time)"
@@ -13,13 +13,13 @@ updatedAt: "Thu May 30 2024 15:15:29 GMT+0000 (Coordinated Universal Time)"
 ---
 ## How Rerank Works
 
-The [Rerank API endpoint](/reference/rerank-1), powered by the [Rerank models](/docs/rerank-2), is a simple and very powerful tool for semantic search. Given a `query` and a list of `documents`, Rerank indexes the documents from most to least semantically relevant to the query. 
+The [Rerank API endpoint](/reference/rerank-1), powered by the [Rerank models](/docs/rerank-2), is a simple and very powerful tool for semantic search. Given a `query` and a list of `documents`, Rerank indexes the documents from most to least semantically relevant to the query.
 
 ## Get Started
 
 ### Example with Texts
 
-In the example below, we use the [Rerank API endpoint](/reference/rerank-1) to index the list of `docs` from most to least relevant to the query ` What is the capital of the United States?`.
+In the example below, we use the [Rerank API endpoint](/reference/rerank-1) to index the list of `documents` from most to least relevant to the query ` What is the capital of the United States?`.
 
 **Request**
 
@@ -35,8 +35,8 @@ docs = [
     "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean that are a political division controlled by the United States. Its capital is Saipan.",
     "Charlotte Amalie is the capital and largest city of the United States Virgin Islands. It has about 20,000 people. The city is on the island of Saint Thomas.",
     "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district. The President of the USA and many major national government offices are in the territory. This makes it the political center of the United States of America.",
-    "Capital punishment (the death penalty) has existed in the United States since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) also uses capital punishment."]
-results = co.rerank(model="rerank-english-v3.0", query=query, documents=docs, top_n=5, return_documents=True)
+    "Capital punishment has existed in the United States since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) also uses capital punishment."]
+results = co.rerank(model="rerank-v3.5", query=query, documents=docs, top_n=5, return_documents=True)
 ```
 
 **Response**
@@ -54,7 +54,7 @@ results = co.rerank(model="rerank-english-v3.0", query=query, documents=docs, to
 		},
 		{
 			"document": {
-				"text": "Capital punishment (the death penalty) has existed in the United States since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) also uses capital punishment."
+				"text": "Capital punishment has existed in the United States since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) also uses capital punishment."
 			},
 			"index": 4,
 			"relevance_score": 0.7516481
@@ -102,77 +102,108 @@ Alternatively, you can pass in a JSON object and specify the fields you'd like t
 ```python PYTHON
 query = "What is the capital of the United States?"
 docs = [
-  {"Title":"Facts about Carson City","Content":"Carson City is the capital city of the American state of Nevada. At the 2010 United States Census, Carson City had a population of 55,274."},
-  {"Title":"The Commonwealth of Northern Mariana Islands","Content":"The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean that are a political division controlled by the United States. Its capital is Saipan."},
-  {"Title":"The Capital of United States Virgin Islands","Content":"Charlotte Amalie is the capital and largest city of the United States Virgin Islands. It has about 20,000 people. The city is on the island of Saint Thomas."},
-  {"Title":"Washington D.C.","Content":"Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district. The President of the USA and many major national government offices are in the territory. This makes it the political center of the United States of America."},
-	{"Title":"Capital Punishment in the US","Content":"Capital punishment (the death penalty) has existed in the United States since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) also uses capital punishment."}]
-results = co.rerank(model="rerank-english-v3.0", query=query, documents=docs, rank_fields=['Title','Content'],top_n=5, return_documents=True)
+	{"Title": "Facts about Carson City","Content": "Carson City is the capital city of the American state of Nevada. At the 2010 United States Census, Carson City had a population of 55,274."},
+	{"Title": "The Commonwealth of Northern Mariana Islands","Content": "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean that are a political division controlled by the United States. Its capital is Saipan."},
+	{"Title": "The Capital of United States Virgin Islands","Content": "Charlotte Amalie is the capital and largest city of the United States Virgin Islands. It has about 20,000 people. The city is on the island of Saint Thomas."},
+	{"Title": "Washington D.C.","Content":"Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district. The President of the USA and many major national government offices are in the territory. This makes it the political center of the United States of America."},
+	{"Title": "Capital Punishment in the US","Content": "Capital punishment has existed in the United States since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) also uses capital punishment."}
+	]
+results = co.rerank(model="rerank-v3.5", query=query, documents=docs, rank_fields=['Title','Content'],top_n=5, return_documents=True)
 
 ```
 
-In the `docs` parameter, we are passing in a list of objects which have the key values: `[Title ,Content]`. As part of the Rerank call, we are specifying which keys to rank over, as well as the order in which the key value pairs should be considered. 
+In the `docs` parameter, we are passing in a list of objects which have the key values: `['Title' ,'Content']`. As part of the Rerank call, we are specifying which keys to rank over, as well as the order in which the key value pairs should be considered.
 
 ```python PYTHON
 {
-	"id": "75a94aa7-6761-4a64-a2ae-4bc0a62bc601",
-	"results": [
-		{
-			"document": {
-				"Content": "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district. The President of the USA and many major national government offices are in the territory. This makes it the political center of the United States of America.",
-				"Title": "Washington D.C."
-			},
-			"index": 3,
-			"relevance_score": 0.9987405
-		},
-		{
-			"document": {
-				"Content": "Capital punishment (the death penalty) has existed in the United States since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) also uses capital punishment.",
-				"Title": "Capital Punishment in the US"
-			},
-			"index": 4,
-			"relevance_score": 0.5011778
-		},
-		{
-			"document": {
-				"Content": "Charlotte Amalie is the capital and largest city of the United States Virgin Islands. It has about 20,000 people. The city is on the island of Saint Thomas.",
-				"Title": "The Capital of United States Virgin Islands"
-			},
-			"index": 2,
-			"relevance_score": 0.10070161
-		},
-		{
-			"document": {
-				"Content": "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean that are a political division controlled by the United States. Its capital is Saipan.",
-				"Title": "The Commonwealth of Northern Mariana Islands"
-			},
-			"index": 1,
-			"relevance_score": 0.03197956
-		},
-		{
-			"document": {
-				"Content": "Carson City is the capital city of the American state of Nevada. At the 2010 United States Census, Carson City had a population of 55,274.",
-				"Title": "Facts about Carson City"
-			},
-			"index": 0,
-			"relevance_score": 0.019456575
-		}
-	],
-	"meta": {
-		"api_version": {
-			"version": "2022-12-06"
-		},
-		"billed_units": {
-			"search_units": 1
-		}
-	}
+	id='e8f55f3f-d86e-47d7-9b24-7feb18286505',
+    results=[
+        RerankResponseResultsItem(
+            document=RerankResponseResultsItemDocument(
+                text=None,
+                Content=(
+                    'Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) '
+                    'is the capital of the United States. It is a federal district. The President of the USA and many major '
+                    'national government offices are in the territory. This makes it the political center of the United States of America.'
+                ),
+                Title='Washington D.C.'
+            ),
+            index=3,
+            relevance_score=0.8914433
+        ),
+        RerankResponseResultsItem(
+            document=RerankResponseResultsItemDocument(
+                text=None,
+                Content=(
+                    'Charlotte Amalie is the capital and largest city of the United States Virgin Islands. '
+                    'It has about 20,000 people. The city is on the island of Saint Thomas.'
+                ),
+                Title='The Capital of United States Virgin Islands'
+            ),
+            index=2,
+            relevance_score=0.40344992
+        ),
+        RerankResponseResultsItem(
+            document=RerankResponseResultsItemDocument(
+                text=None,
+                Content=(
+                    'Carson City is the capital city of the American state of Nevada. At the 2010 United States Census, '
+                    'Carson City had a population of 55,274.'
+                ),
+                Title='Facts about Carson City'
+            ),
+            index=0,
+            relevance_score=0.23343581
+        ),
+        RerankResponseResultsItem(
+            document=RerankResponseResultsItemDocument(
+                text=None,
+                Content=(
+                    'The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean that '
+                    'are a political division controlled by the United States. Its capital is Saipan.'
+                ),
+                Title='The Commonwealth of Northern Mariana Islands'
+            ),
+            index=1,
+            relevance_score=0.15964958
+        ),
+        RerankResponseResultsItem(
+            document=RerankResponseResultsItemDocument(
+                text=None,
+                Content=(
+                    'Capital punishment has existed in the United States since before the United States was a country. '
+                    'As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) '
+                    'also uses capital punishment.'
+                ),
+                Title='Capital Punishment in the US'
+            ),
+            index=4,
+            relevance_score=0.10465127
+        ),
+    ],
+    meta=ApiMeta(
+        api_version=ApiMetaApiVersion(
+            version='1',
+            is_deprecated=None,
+            is_experimental=None
+        ),
+        billed_units=ApiMetaBilledUnits(
+            images=None,
+            input_tokens=None,
+            output_tokens=None,
+            search_units=1.0,
+            classifications=None
+        ),
+        tokens=None,
+        warnings=None
+    )
 }
 
 ```
 
 ## Multilingual Reranking
 
-Cohere offers a multilingual model,  `rerank-multilingual-v3.0`. Please note that performance may vary across languages. The model is trained on the following languages:
+Cohere's `rerank-v3.5` and `rerank-multilingual-v3.0` models have been trained for performance across a variety of languages. Please note that performance may vary across languages. The model is trained on the following languages:
 
 | ISO Code | Language Name  |
 | -------- | -------------- |
