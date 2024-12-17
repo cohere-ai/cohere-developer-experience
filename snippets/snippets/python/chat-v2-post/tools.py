@@ -1,6 +1,6 @@
 import cohere
 
-co = cohere.Client()
+co = cohere.ClientV2()
 
 response = co.chat(
     model="command-r-plus-08-2024",
