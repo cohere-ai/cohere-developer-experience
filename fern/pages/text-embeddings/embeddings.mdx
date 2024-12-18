@@ -26,22 +26,26 @@ co = cohere.Client(api_key="YOUR_API_KEY")
 # get the embeddings
 phrases = ["i love soup", "soup is my favorite", "london is far away"]
 
-model="embed-english-v3.0"
-input_type="search_query"
+model = "embed-english-v3.0"
+input_type = "search_query"
 
-res = co.embed(texts=phrases,
-                model=model,
-                input_type=input_type,
-                embedding_types=['float'])
+res = co.embed(
+    texts=phrases,
+    model=model,
+    input_type=input_type,
+    embedding_types=["float"],
+)
 
 (soup1, soup2, london) = res.embeddings.float
 
+
 # compare them
 def calculate_similarity(a, b):
-  return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-calculate_similarity(soup1, soup2) # 0.85 - very similar!
-calculate_similarity(soup1, london) # 0.16 - not similar!
+
+calculate_similarity(soup1, soup2)  # 0.85 - very similar!
+calculate_similarity(soup1, london)  # 0.16 - not similar!
 ```
 
 ## The `input_type` parameter
@@ -58,24 +62,31 @@ Cohere embeddings are optimized for different types of inputs.
 In addition to `embed-english-v3.0` we offer a best-in-class multilingual model [embed-multilingual-v3.0](/docs/embed-2#multi-lingual-models)  with support for over 100 languages, including Chinese, Spanish, and French. This model can be used with the Embed API, just like its English counterpart:
 
 ```python PYTHON
-import cohere  
+import cohere
+
 co = cohere.Client(api_key="<YOUR API KEY>")
 
-texts = [  
-   'Hello from Cohere!', 'مرحبًا من كوهير!', 'Hallo von Cohere!',  
-   'Bonjour de Cohere!', '¡Hola desde Cohere!', 'Olá do Cohere!',  
-   'Ciao da Cohere!', '您好，来自 Cohere！', 'कोहेरे से नमस्ते!'  
-]  
+texts = [
+    "Hello from Cohere!",
+    "مرحبًا من كوهير!",
+    "Hallo von Cohere!",
+    "Bonjour de Cohere!",
+    "¡Hola desde Cohere!",
+    "Olá do Cohere!",
+    "Ciao da Cohere!",
+    "您好，来自 Cohere！",
+    "कोहेरे से नमस्ते!",
+]
 
 response = co.embed(
-  model='embed-multilingual-v3.0',
-  texts=texts, 
-  input_type='classification',
-  embedding_types=['float']) 
+    model="embed-multilingual-v3.0",
+    texts=texts,
+    input_type="classification",
+    embedding_types=["float"],
+)
 
-embeddings = response.embeddings.float # All text embeddings 
-print(embeddings[0][:5]) # Print embeddings for the first text
-
+embeddings = response.embeddings.float  # All text embeddings
+print(embeddings[0][:5])  # Print embeddings for the first text
 ```
 
 ## Image Embeddings
@@ -96,11 +107,12 @@ Be aware that image embedding has the following restrictions:
 import cohere
 from PIL import Image
 from io import BytesIO
-import base64 
+import base64
 
 co = cohere.Client(api_key="<YOUR API KEY>")
 
 # The model accepts input in base64 as a Data URL
+
 
 def image_to_base64_data_url(image_path):
     # Open the image file
@@ -110,19 +122,23 @@ def image_to_base64_data_url(image_path):
         # Save the image as PNG to the BytesIO object
         img.save(buffered, format="PNG")
         # Encode the image data in base64
-        img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
-        
+        img_base64 = base64.b64encode(buffered.getvalue()).decode(
+            "utf-8"
+        )
+
     # Create the Data URL and assumes the original image file type was png
     data_url = f"data:image/png;base64,{img_base64}"
     return data_url
-    
+
+
 processed_image = image_to_base64_data_url("<PATH_TO_IMAGE>")
-  
+
 ret = co.embed(
-							 images=[processed_image],
-               model='embed-english-v3.0',
-               embedding_types= ["float"],
-               input_type='image')
+    images=[processed_image],
+    model="embed-english-v3.0",
+    embedding_types=["float"],
+    input_type="image",
+)
 
 ret.embeddings.float
 ```
@@ -142,39 +158,41 @@ The following embedding types are supported:
 The parameter defaults to `float`, so if you pass in no argument you'll get back `float` embeddings:
 
 ```python PYTHON
-ret = co.embed(texts=phrases,
-               model=model,
-               input_type=input_type)
+ret = co.embed(texts=phrases, model=model, input_type=input_type)
 
-ret.embeddings # This contains the float embeddings
+ret.embeddings  # This contains the float embeddings
 ```
 
 However we recommend being explicit about the `embedding type(s)`. To specify an embedding types, pass one of the types from the list above in as list containing a string:
 
 ```python PYTHON
-ret = co.embed(texts=phrases,
-               model=model,
-               input_type=input_type,
-               embedding_types=['int8'])
+ret = co.embed(
+    texts=phrases,
+    model=model,
+    input_type=input_type,
+    embedding_types=["int8"],
+)
 
-ret.embeddings.int8 # This contains your int8 embeddings
-ret.embeddings.float # This will be empty
-ret.embeddings.uint8 # This will be empty
-ret.embeddings.ubinary # This will be empty
-ret.embeddings.binary # This will be empty
+ret.embeddings.int8  # This contains your int8 embeddings
+ret.embeddings.float  # This will be empty
+ret.embeddings.uint8  # This will be empty
+ret.embeddings.ubinary  # This will be empty
+ret.embeddings.binary  # This will be empty
 ```
 
 Finally, you can also pass several `embedding types` in as a list, in which case the endpoint will return a dictionary with both types available:
 
 ```python PYTHON
-ret = co.embed(texts=phrases,
-               model=model,
-               input_type=input_type,
-               embedding_types=['int8', 'float'])
+ret = co.embed(
+    texts=phrases,
+    model=model,
+    input_type=input_type,
+    embedding_types=["int8", "float"],
+)
 
-ret.embeddings.int8 # This contains your int8 embeddings
-ret.embeddings.float # This contains your float embeddings
-ret.embeddings.uint8 # This will be empty
-ret.embeddings.ubinary # This will be empty
-ret.embeddings.binary # This will be empty
+ret.embeddings.int8  # This contains your int8 embeddings
+ret.embeddings.float  # This contains your float embeddings
+ret.embeddings.uint8  # This will be empty
+ret.embeddings.ubinary  # This will be empty
+ret.embeddings.binary  # This will be empty
 ```
