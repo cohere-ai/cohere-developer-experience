@@ -14,14 +14,16 @@ The Chat API endpoint is used to generate text with Cohere LLMs. This endpoint f
 <CodeBlocks>
 ```python PYTHON
 import cohere
+
 co = cohere.Client(api_key="<YOUR API KEY>")
 
 response = co.chat(
-  model="command-r-plus-08-2024",
-  message="Write a title for a blog post about API design. Only output the title text."
+    model="command-r-plus-08-2024",
+    message="Write a title for a blog post about API design. Only output the title text.",
 )
 
-print(response.text) # "The Art of API Design: Crafting Elegant and Powerful Interfaces"
+print(response.text)
+# "The Art of API Design: Crafting Elegant and Powerful Interfaces"
 ```
 ```java JAVA
 public class ChatPost {
@@ -106,20 +108,24 @@ The user message in the Chat request can be sent together with a `chat_history` 
 
 ```python PYTHON
 import cohere
+
 co = cohere.Client(api_key="<YOUR API KEY>")
 
 message = "Can you tell me about LLMs?"
 
 response = co.chat(
-  model="command-r-plus-08-2024",
-	chat_history=[
-    {"role": "USER", "text": "Hey, my name is Michael!"},
-    {"role": "CHATBOT", "text": "Hey Michael! How can I help you today?"},
-  ],
-  message=message
+    model="command-r-plus-08-2024",
+    chat_history=[
+        {"role": "USER", "text": "Hey, my name is Michael!"},
+        {
+            "role": "CHATBOT",
+            "text": "Hey Michael! How can I help you today?",
+        },
+    ],
+    message=message,
 )
 
-print(response.text) # "Sure thing Michael, LLMs are ..."
+print(response.text)  # "Sure thing Michael, LLMs are ..."
 ```
 
 Instead of manually building the chat_history, we can grab it from the response of the previous turn.
@@ -129,22 +135,21 @@ chat_history = []
 max_turns = 10
 
 for _ in range(max_turns):
-	# get user input
-	message = input("Send the model a message: ")
-	
-	# generate a response with the current chat history
-	response = co.chat(
-    model="command-r-plus-08-2024",
-		message=message,
-		chat_history=chat_history
-	)
-  
-  # print the model's response on this turn  
-	print(response.text)
-  
-	# set the chat history for next turn
-	chat_history = response.chat_history 
+    # get user input
+    message = input("Send the model a message: ")
 
+    # generate a response with the current chat history
+    response = co.chat(
+        model="command-r-plus-08-2024",
+        message=message,
+        chat_history=chat_history,
+    )
+
+    # print the model's response on this turn
+    print(response.text)
+
+    # set the chat history for next turn
+    chat_history = response.chat_history
 ```
 
 ### Using `conversation_id` to Save Chat History
@@ -153,12 +158,13 @@ Providing the model with the conversation history is one way to have a multi-tur
 
 ```python PYTHON
 import cohere
+
 co = cohere.Client("<YOUR API KEY>")
 
 response = co.chat(
-	model="command-r-plus-08-2024",
-	message="The secret word is 'fish', remember that.",
-	conversation_id='user_defined_id_1',
+    model="command-r-plus-08-2024",
+    message="The secret word is 'fish', remember that.",
+    conversation_id="user_defined_id_1",
 )
 
 answer = response.text
@@ -168,12 +174,12 @@ Then, if you wanted to continue the conversation, you could do so like this (kee
 
 ```python PYTHON
 response2 = co.chat(
-	model="command-r-plus-08-2024",
-	message="What is the secret word?",
-	conversation_id='user_defined_id_1'
+    model="command-r-plus-08-2024",
+    message="What is the secret word?",
+    conversation_id="user_defined_id_1",
 )
 
-print(response2.text) # "The secret word is 'fish'"
+print(response2.text)  # "The secret word is 'fish'"
 ```
 
 Note that the `conversation_id` should not be used in conjunction with the `chat_history`. They are mutually exclusive.
