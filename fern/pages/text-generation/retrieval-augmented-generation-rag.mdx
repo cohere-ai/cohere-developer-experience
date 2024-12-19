@@ -281,6 +281,74 @@ LLMs come with limitations; specifically, they can only handle so much text as i
 
 For more information, check out our dedicated doc on [prompt truncation](/docs/prompt-truncation).
 
+### Citation modes
+
+When using Retrieval Augmented Generation (RAG) in streaming mode, it’s possible to configure how citations are generated and presented. You can choose between fast citations or accurate citations, depending on your latency and precision needs:
+
+- Accurate citations: The model produces its answer first, and then, after the entire response is generated, it provides citations that map to specific segments of the response text. This approach may incur slightly higher latency, but it ensures the citation indices are more precisely aligned with the final text segments of the model’s answer. This is the default option, though you can explicitly specify it by adding the `citation_quality="accurate"` argument in the API call.
+
+- Fast citations: The model generates citations inline, as the response is being produced. In streaming mode, you will see citations injected at the exact moment the model uses a particular piece of external context. This approach provides immediate traceability at the expense of slightly less precision in citation relevance. You can specify it by adding the `citation_quality="fast"` argument in the API call.
+
+Below are example code snippets demonstrating both approaches.
+
+<Accordion title='Accurate citations'>
+
+```python PYTHON
+documents = [
+    {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
+    {"text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."}
+]
+
+message = "Are there fitness-related benefits?"
+
+response = co.chat_stream(model="command-r-plus-08-2024",
+                           message=message,
+                           documents=documents,
+                           citation_quality="accurate")
+
+for chunk in response:
+    if chunk.event_type == "text-generation":
+        print(chunk.text, end="")
+    if chunk.event_type == "citation-generation":
+        for citation in chunk.citations:
+            print("", citation.document_ids, end="")
+```
+Example response:
+```mdx wordWrap
+Yes, we offer gym memberships, on-site yoga classes, and comprehensive health insurance. ['doc_1']
+```
+
+</Accordion>
+
+<Accordion title='Fast citations'>
+
+```python PYTHON
+documents = [
+    {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
+    {"text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."}
+]
+
+message = "Are there fitness-related benefits?"
+
+response = co.chat_stream(model="command-r-plus-08-2024",
+                           message=message,
+                           documents=documents,
+                           citation_quality="fast")
+
+for chunk in response:
+    if chunk.event_type == "text-generation":
+        print(chunk.text, end="")
+    if chunk.event_type == "citation-generation":
+        for citation in chunk.citations:
+            print("", citation.document_ids, end="")
+```
+Example response:
+```mdx wordWrap
+Yes, we offer gym memberships, ['doc_1'] on-site yoga classes, ['doc_1'] and comprehensive health insurance. ['doc_1']
+```
+
+</Accordion>
+
 ### Caveats
 
 It’s worth underscoring that RAG does not guarantee accuracy. It involves giving a model context which informs its replies, but if the provided documents are themselves out-of-date, inaccurate, or biased, whatever the model generates might be as well. What’s more, RAG doesn’t guarantee that a model won’t hallucinate. It greatly reduces the risk, but doesn’t necessarily eliminate it altogether. This is why we put an emphasis on including inline citations, which allow users to verify the information.
