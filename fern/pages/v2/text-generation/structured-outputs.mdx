@@ -135,6 +135,55 @@ In this schema, we defined three keys ("title," "author," "publication_year") an
 
 ```
 
+### Nested Array Schema Json Example
+
+Here's an example of a nested array. Note that the top level json structure must always be a json object.
+
+```py
+cohere_api_key = os.getenv('cohere_api_key')
+co = cohere.ClientV2(cohere_api_key)
+response = co.chat(
+    response_format={
+      "type": "json_object",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "actions": {
+            "type": "array",          
+            "items": {
+              "type": "object",          
+              "properties": {
+                "japanese": {"type": "string"},
+                "romaji": {"type": "string"},
+                "english": {"type": "string"}
+              },
+              "required": ["japanese", "romaji", "english"]
+            },
+          }
+        },
+        "required": ["actions"]
+      }
+    },
+    model="command-r",
+    messages=[
+      {"role": "user", "content": "Generate a JSON array of objects with the following fields: japanese, romaji, english. These actions should be japanese verbs provided in the dictionary form.},
+    ]
+)  
+return json.loads(response.message.content[0].text)
+```
+
+The output for this example would be:
+
+```json
+{"actions": [
+  {"japanese": "いこう", "romaji": "ikou", "english": "onward"},
+  {"japanese": "探す", "romaji": "sagasu", "english": "search"},
+  {"japanese": "話す", "romaji": "hanasu", "english": "talk"}
+]
+```
+
+
+
 <Info title="Important"> 
 Note: Each schema provided (in both JSON and Tools modes) will incur a latency overhead required for processing the schema. This is only applicable for the first few requests.
 </Info>
