@@ -1,0 +1,310 @@
+---
+title: Tool Use & Agents
+slug: /docs/cohere-on-azure/azure-ai-tool-use
+
+description: "A guide for using tool use and building agents with Cohere's Command models on Azure AI Foundry (API v1)."
+image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, tool use, agents, chatbot, Command models, Azure AI Foundry"
+---
+
+Tool use enhances retrieval-augmented generation (RAG) capabilities by enabling applications to both answer questions and automate tasks.
+
+Tools provide a broader access to external systems compared to traditional RAG. This approach leverages LLMs' inherent ability to reason and make decisions. By incorporating tools, developers can create agent-like applications that interact with external systems through both read and write operations.
+
+In this chapter, we'll explore how to build an agentic application by building an agent that can answer questions and automate tasks, enabled by a number of tools.
+
+## Setup
+
+First, you will need to deploy the Command model on Azure via Azure AI Foundry. The deployment will create a serverless API with pay-as-you-go token based billing. You can find more information on how to deploy models in the [Azure documentation](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-serverless?tabs=azure-ai-studio).
+
+In the example below, we are deploying the Command R+ (August 2024) model.
+
+Once the model is deployed, you can access it via Cohere's Python SDK. Let's now install the Cohere SDK and set up our client.
+
+To create a client, you need to provide the API key and the model's base URL for the Azure endpoint. You can get these information from the Azure AI Foundry platform where you deployed the model.
+
+
+```python PYTHON
+# ! pip install cohere
+
+api_key_chat = "AZURE_API_KEY_CHAT"
+endpoint_chat = "AZURE_ENDPOINT_CHAT" # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
+```
+
+
+```python PYTHON
+import cohere
+
+co = cohere.Client(
+    api_key=api_key_chat,
+    base_url=endpoint_chat,
+)
+```
+
+## Create tools
+
+The pre-requisite, before we can run a tool use workflow, is to set up the tools. Let's create three tools:
+
+- `search_faqs`: A tool for searching the FAQs of a company. For simplicity, we'll not implement any retrieval logic, but we'll simply pass a list of three predefined documents. In practice, we would set up a retrieval system as we did in Chapters 4, 5, and 6.
+- `search_emails`: A tool for searching the emails. Same as above, we'll simply pass a list of predefined emails.
+- `create_calendar_event`: A tool for creating new calendar events. Again, for simplicity, we'll only return mock successful event creations without actual implementation. In practice, we can connect to a calendar service API and implement all the necessary logic here.
+
+Here, we are defining a Python function for each tool, but more broadly, the tool can be any function or service that can receive and send objects.
+
+
+```python PYTHON
+def search_faqs(query):
+    faqs = [
+    {"text" : "Submitting Travel Expenses:\nSubmit your expenses through our user-friendly finance tool."},
+    {"text" : "Side Projects Policy:\nWe encourage you to explore your passions! Just ensure there's no conflict of interest with our business."},
+    {"text" : "Wellness Benefits:\nTo promote a healthy lifestyle, we provide gym memberships, on-site yoga classes, and health insurance."}
+    ]
+    return  {"faqs" : faqs}
+
+def search_emails(query):
+    emails = [
+    {"from": "hr@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "A Warm Welcome to Co1t, David!", "text": "We are delighted to have you on board. Please find attached your first week's agenda."},
+    {"from": "it@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "Instructions for IT Setup", "text": "Welcome, David! To get you started, please follow the attached guide to set up your work accounts."},
+    {"from": "john@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "First Week Check-In", "text": "Hi David, let's chat briefly tomorrow to discuss your first week. Also, come join us for lunch this Thursday at noon to meet everyone!"},
+    ]
+    return  {"emails" : emails}
+    
+def create_calendar_event(date: str, time: str, duration: int):
+    # You can implement any logic here
+    return {"is_success": True,
+            "message": f"Created a {duration} hour long event at {time} on {date}"}
+    
+functions_map = {
+    "search_faqs": search_faqs,
+    "search_emails": search_emails,
+    "create_calendar_event": create_calendar_event
+}
+```
+
+## Define tool schemas
+
+The next step is to define the tool schemas in a format that can be accepted by the Chat endpoint. The schema must contain the following fields: `name`, `description`, and `parameter_definitions`.
+
+This schema informs the LLM about what the tool does, and the LLM decides whether to use a particular tool based on it. Therefore, the more descriptive and specific the schema, the more likely the LLM will make the right tool call decisions.   
+
+
+```python PYTHON
+tools = [
+    {
+      "name": "search_faqs",
+      "description": "Given a user query, searches a company's frequently asked questions (FAQs) list and returns the most relevant matches to the query.",
+      "parameter_definitions": {
+        "query": {
+          "description": "The query from the user",
+          "type": "str",
+          "required": True
+        }
+      }
+    }, 
+    {
+      "name": "search_emails",
+      "description": "Given a user query, searches a person's emails and returns the most relevant matches to the query.",
+      "parameter_definitions": {
+        "query": {
+          "description": "The query from the user",
+          "type": "str",
+          "required": True
+        }
+      }
+    }, 
+    {
+      "name": "create_calendar_event",
+      "description": "Creates a new calendar event of the specified duration at the specified time and date. A new event cannot be created on the same time as an existing event.",
+      "parameter_definitions": {
+        "date": {
+          "description": "the date on which the event starts, formatted as mm/dd/yy",
+          "type": "str",
+          "required": True
+        },
+        "time": {
+          "description": "the time of the event, formatted using 24h military time formatting",
+          "type": "str",
+          "required": True
+        },
+        "duration": {
+          "description": "the number of hours the event lasts for",
+          "type": "float",
+          "required": True
+        }
+      }
+    }
+]
+```
+
+## Run agent
+
+Now, let's set up the agent using Cohere's tool use feature. We can think of a tool use system as consisting of four components:
+
+- The user
+- The application
+- The LLM
+- The tools
+
+At its most basic, these four components interact in a workflow through four steps:
+
+- Step 1: Get user message. The LLM gets the user message (via the application).
+- Step 2: Generate tool calls. The LLM makes a decision on the tools to call (if any) and generates the tool calls.
+- Step 3: Get tool results. The application executes the tools and sends the tool results to the LLM.
+- Step 4: Generate response and citations. The LLM generates the response and citations and sends them back to the user.
+
+Let's create a function called `run_assistant` to implement these steps and print out the key events and messages along the way. This function also optionally accepts the chat history as an argument to keep the state in a multi-turn conversation.
+
+
+```python PYTHON
+preamble="""## Task and Context
+You are an assistant who assist new employees of Co1t with their first week. You respond to their questions and assist them with their needs. Today is Monday, June 24, 2024"""
+
+def run_assistant(message, chat_history=None):
+    
+    if chat_history is None:
+        chat_history = []
+    
+    # Step 1: get user message
+    print(f"Question:\n{message}")
+    print("="*50)
+
+    # Step 2: Generate tool calls (if any)    
+    response = co.chat(
+        message=message,
+        preamble=preamble,
+        tools=tools,
+        chat_history=chat_history,
+        force_single_step=False,
+        max_tokens=500
+    )
+
+    while response.tool_calls:
+        tool_calls = response.tool_calls
+        
+        if response.text:
+            print("Tool plan:")
+            print(response.text,"\n")
+        print("Tool calls:")
+        for call in tool_calls:
+            print(f"Tool name: {call.name} | Parameters: {call.parameters}")
+        print("="*50)
+        
+        # Step 3: Get tool results
+        tool_results = []
+        for tc in tool_calls:
+            tool_call = {"name": tc.name, "parameters": tc.parameters}
+            tool_output = functions_map[tc.name](**tc.parameters)
+            tool_results.append({"call": tool_call, "outputs": [tool_output]})
+        
+        # Step 4: Generate response and citations
+        print("="*30)
+        print("PRE")
+        for item in response.chat_history:
+            print(item)
+            print("-"*30)
+        
+        print("TOOL RESULTS")
+        print(tool_results)     
+        response = co.chat(
+            message="",
+            preamble=preamble,
+            tools=tools,
+            tool_results=tool_results,
+            chat_history=response.chat_history,
+            force_single_step=False,
+            max_tokens=500
+        )
+
+        chat_history = response.chat_history
+        
+        print("="*30)
+        print("POST")
+        for item in chat_history:
+            print(item)
+            print("-"*30)
+        
+    # Print final response
+    print("RESPONSE:\n")
+    print(response.text)
+    print("="*50)
+    
+    # Print citations (if any)
+    if response.citations:
+        print("\nCITATIONS:\n")
+        for citation in response.citations:
+            print(citation)
+
+        print("\nCITED REFERENCES:\n")
+        for document in response.documents:
+            print(document)
+                
+    return chat_history
+```
+
+Let’s now run the agent. We'll use an example of a new hire asking about IT access and the travel expense process.
+
+Given three tools to choose from, the model is able to pick the right tools (in this case, `search_faqs` and `search_emails`) based on what the user is asking for.
+
+Also, notice that the model first generates a plan about what it should do ("I will ...") before actually generating the tool call(s).
+
+Additionally, the model also generates fine-grained citations in tool use mode based on the tool results it receives, the same way we saw with RAG.
+
+
+```python PYTHON
+chat_history = run_assistant("Any doc on how do I submit travel expenses? Also, any emails about setting up IT access?")
+```
+```mdx
+Question:
+Any doc on how do I submit travel expenses? Also, any emails about setting up IT access?
+==================================================
+Tool plan:
+I will search for a document on how to submit travel expenses and emails about setting up IT access. 
+
+Tool calls:
+Tool name: search_faqs | Parameters: {'query': 'how to submit travel expenses'}
+Tool name: search_emails | Parameters: {'query': 'setting up IT access'}
+==================================================
+==============================
+PRE
+role='USER' message='Any doc on how do I submit travel expenses? Also, any emails about setting up IT access?' tool_calls=None
+------------------------------
+role='CHATBOT' message='I will search for a document on how to submit travel expenses and emails about setting up IT access.' tool_calls=[ToolCall(name='search_faqs', parameters={'query': 'how to submit travel expenses'}), ToolCall(name='search_emails', parameters={'query': 'setting up IT access'})]
+------------------------------
+TOOL RESULTS
+[{'call': {'name': 'search_faqs', 'parameters': {'query': 'how to submit travel expenses'}}, 'outputs': [{'faqs': [{'text': 'Submitting Travel Expenses:\nSubmit your expenses through our user-friendly finance tool.'}, {'text': "Side Projects Policy:\nWe encourage you to explore your passions! Just ensure there's no conflict of interest with our business."}, {'text': 'Wellness Benefits:\nTo promote a healthy lifestyle, we provide gym memberships, on-site yoga classes, and health insurance.'}]}]}, {'call': {'name': 'search_emails', 'parameters': {'query': 'setting up IT access'}}, 'outputs': [{'emails': [{'from': 'hr@co1t.com', 'to': 'david@co1t.com', 'date': '2024-06-24', 'subject': 'A Warm Welcome to Co1t, David!', 'text': "We are delighted to have you on board. Please find attached your first week's agenda."}, {'from': 'it@co1t.com', 'to': 'david@co1t.com', 'date': '2024-06-24', 'subject': 'Instructions for IT Setup', 'text': 'Welcome, David! To get you started, please follow the attached guide to set up your work accounts.'}, {'from': 'john@co1t.com', 'to': 'david@co1t.com', 'date': '2024-06-24', 'subject': 'First Week Check-In', 'text': "Hi David, let's chat briefly tomorrow to discuss your first week. Also, come join us for lunch this Thursday at noon to meet everyone!"}]}]}]
+==============================
+POST
+role='USER' message='Any doc on how do I submit travel expenses? Also, any emails about setting up IT access?' tool_calls=None
+------------------------------
+role='CHATBOT' message='I will search for a document on how to submit travel expenses and emails about setting up IT access.' tool_calls=[ToolCall(name='search_faqs', parameters={'query': 'how to submit travel expenses'}), ToolCall(name='search_emails', parameters={'query': 'setting up IT access'})]
+------------------------------
+role='TOOL' tool_results=[ToolResult(call=ToolCall(name='search_faqs', parameters={'query': 'how to submit travel expenses'}), outputs=[{'faqs': [{'text': 'Submitting Travel Expenses:\nSubmit your expenses through our user-friendly finance tool.'}, {'text': "Side Projects Policy:\nWe encourage you to explore your passions! Just ensure there's no conflict of interest with our business."}, {'text': 'Wellness Benefits:\nTo promote a healthy lifestyle, we provide gym memberships, on-site yoga classes, and health insurance.'}]}]), ToolResult(call=ToolCall(name='search_emails', parameters={'query': 'setting up IT access'}), outputs=[{'emails': [{'date': '2024-06-24', 'from': 'hr@co1t.com', 'subject': 'A Warm Welcome to Co1t, David!', 'text': "We are delighted to have you on board. Please find attached your first week's agenda.", 'to': 'david@co1t.com'}, {'date': '2024-06-24', 'from': 'it@co1t.com', 'subject': 'Instructions for IT Setup', 'text': 'Welcome, David! To get you started, please follow the attached guide to set up your work accounts.', 'to': 'david@co1t.com'}, {'date': '2024-06-24', 'from': 'john@co1t.com', 'subject': 'First Week Check-In', 'text': "Hi David, let's chat briefly tomorrow to discuss your first week. Also, come join us for lunch this Thursday at noon to meet everyone!", 'to': 'david@co1t.com'}]}])]
+------------------------------
+role='CHATBOT' message='You can submit your travel expenses through the user-friendly finance tool.\n\nThere is an email from IT with instructions for setting up your IT access.' tool_calls=None
+------------------------------
+RESPONSE:
+
+You can submit your travel expenses through the user-friendly finance tool.
+
+There is an email from IT with instructions for setting up your IT access.
+==================================================
+
+CITATIONS:
+
+start=48 end=75 text='user-friendly finance tool.' document_ids=['search_faqs:0:2:0']
+start=89 end=102 text='email from IT' document_ids=['search_emails:1:2:0']
+start=108 end=151 text='instructions for setting up your IT access.' document_ids=['search_emails:1:2:0']
+
+CITED REFERENCES:
+
+{'faqs': '[{"text":"Submitting Travel Expenses:\\nSubmit your expenses through our user-friendly finance tool."},{"text":"Side Projects Policy:\\nWe encourage you to explore your passions! Just ensure there\'s no conflict of interest with our business."},{"text":"Wellness Benefits:\\nTo promote a healthy lifestyle, we provide gym memberships, on-site yoga classes, and health insurance."}]', 'id': 'search_faqs:0:2:0', 'tool_name': 'search_faqs'}
+{'emails': '[{"date":"2024-06-24","from":"hr@co1t.com","subject":"A Warm Welcome to Co1t, David!","text":"We are delighted to have you on board. Please find attached your first week\'s agenda.","to":"david@co1t.com"},{"date":"2024-06-24","from":"it@co1t.com","subject":"Instructions for IT Setup","text":"Welcome, David! To get you started, please follow the attached guide to set up your work accounts.","to":"david@co1t.com"},{"date":"2024-06-24","from":"john@co1t.com","subject":"First Week Check-In","text":"Hi David, let\'s chat briefly tomorrow to discuss your first week. Also, come join us for lunch this Thursday at noon to meet everyone!","to":"david@co1t.com"}]', 'id': 'search_emails:1:2:0', 'tool_name': 'search_emails'}
+```
+
+## Conclusion
+
+In this tutorial, we learned about:
+- How to set up tools with parameter definitions for the Cohere chat API
+- How to define tools for building agentic applications
+- How to set up the agent
+- How to run a tool use workflow involving the user, the application, the LLM, and the tools
