@@ -1,0 +1,300 @@
+---
+title: Semantic Search
+slug: /docs/sem-search-quickstart
+
+description: "A quickstart guide for performing text semantic search with Cohere's Embed models."
+image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, semantic search, text embeddings, embed models"
+---
+
+Semantic search, powered by text embeddings, enables applications to perform information retrieval based on the context or meaning in textual documents.
+
+<Steps>
+### Setup
+This quickstart example uses the `cohere` Python SDK. Install with the following command:
+
+```bash
+pip install -U cohere
+```
+
+Next, import the library and create a client.
+
+<Tabs>
+<Tab title="Cohere Platform">
+
+```python PYTHON
+import cohere
+
+co = cohere.Client(os.getenv("COHERE_API_KEY")) # Get your free API key here: https://dashboard.cohere.com/api-keys
+```
+
+</Tab>
+<Tab title="Private Deployment">
+
+```python PYTHON
+import cohere
+
+co = cohere.Client(api_key="", # Leave this blank
+                   base_url="<YOUR_DEPLOYMENT_URL>")
+```
+
+</Tab>
+
+<Tab title="Bedrock">
+
+```python PYTHON
+import cohere
+
+co = cohere.BedrockClient(
+    aws_region="AWS_REGION",
+    aws_access_key="AWS_ACCESS_KEY_ID",
+    aws_secret_key="AWS_SECRET_ACCESS_KEY",
+    aws_session_token="AWS_SESSION_TOKEN",
+)
+
+# Get the model name: https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
+```
+</Tab>
+
+<Tab title="SageMaker">
+
+```python PYTHON
+import cohere
+
+co = cohere.SagemakerClient(
+    aws_region="AWS_REGION",
+    aws_access_key="AWS_ACCESS_KEY_ID",
+    aws_secret_key="AWS_SECRET_ACCESS_KEY",
+    aws_session_token="AWS_SESSION_TOKEN",
+)
+```
+</Tab>
+
+<Tab title="Azure AI">
+
+```python PYTHON
+import cohere
+
+co = cohere.Client(
+    api_key="AZURE_API_KEY_COMMAND",
+    base_url="AZURE_ENDPOINT_COMMAND"
+)
+```
+</Tab>
+
+</Tabs>
+
+### Document Embeddings
+First, embed the list of available documents using the Embed endpoint by specifying the `input_type` as `search_document`.
+
+<Tabs>
+<Tab title="Cohere Platform">
+```python PYTHON
+# Define the documents
+documents = [
+    {"text": "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged."},
+    {"text": "Finding Coffee Spots: For your caffeine fix, head to the break room's coffee machine or cross the street to the café for artisan coffee."},
+    {"text": "Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!"},
+    {"text": "Working Hours Flexibility: We prioritize work-life balance. While our core hours are 9 AM to 5 PM, we offer flexibility to adjust as needed."},
+    {"text": "Side Projects Policy: We encourage you to pursue your passions. Just be mindful of any potential conflicts of interest with our business."}
+]
+
+# Embed the documents
+doc_emb = co.embed(
+    model="embed-english-v3.0",
+    input_type="search_document",
+    texts=[doc['text'] for doc in documents],
+    embedding_types=["float"]
+).embeddings.float
+```
+</Tab>
+
+<Tab title="Private Deployment">
+```python PYTHON
+# Define the documents
+documents = [
+    {"text": "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged."},
+    {"text": "Finding Coffee Spots: For your caffeine fix, head to the break room's coffee machine or cross the street to the café for artisan coffee."},
+    {"text": "Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!"},
+    {"text": "Working Hours Flexibility: We prioritize work-life balance. While our core hours are 9 AM to 5 PM, we offer flexibility to adjust as needed."},
+    {"text": "Side Projects Policy: We encourage you to pursue your passions. Just be mindful of any potential conflicts of interest with our business."}
+]
+
+# Embed the documents
+doc_emb = co.embed(
+    input_type="search_document",
+    texts=[doc['text'] for doc in documents],
+    embedding_types=["float"]
+).embeddings.float
+```
+</Tab>
+
+<Tab title="AWS Bedrock">
+```python PYTHON
+# Define the documents
+documents = [
+    {"text": "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged."},
+    {"text": "Finding Coffee Spots: For your caffeine fix, head to the break room's coffee machine or cross the street to the café for artisan coffee."},
+    {"text": "Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!"},
+    {"text": "Working Hours Flexibility: We prioritize work-life balance. While our core hours are 9 AM to 5 PM, we offer flexibility to adjust as needed."},
+    {"text": "Side Projects Policy: We encourage you to pursue your passions. Just be mindful of any potential conflicts of interest with our business."}
+]
+
+# Embed the documents
+doc_emb = co.embed(
+    model="YOUR_MODEL_NAME",
+    input_type="search_document",
+    texts=[doc['text'] for doc in documents],
+    embedding_types=["float"]
+).embeddings.float
+```
+</Tab>
+
+<Tab title="SageMaker">
+```python PYTHON
+# Define the documents
+documents = [
+    {"text": "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged."},
+    {"text": "Finding Coffee Spots: For your caffeine fix, head to the break room's coffee machine or cross the street to the café for artisan coffee."},
+    {"text": "Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!"},
+    {"text": "Working Hours Flexibility: We prioritize work-life balance. While our core hours are 9 AM to 5 PM, we offer flexibility to adjust as needed."},
+    {"text": "Side Projects Policy: We encourage you to pursue your passions. Just be mindful of any potential conflicts of interest with our business."}
+]
+
+# Embed the documents
+doc_emb = co.embed(
+    model="YOUR_ENDPOINT_NAME",
+    input_type="search_document",
+    texts=[doc['text'] for doc in documents],
+    embedding_types=["float"]
+).embeddings.float
+```
+</Tab>
+
+<Tab title="Azure AI">
+```python PYTHON
+# Define the documents
+documents = [
+    {"text": "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged."},
+    {"text": "Finding Coffee Spots: For your caffeine fix, head to the break room's coffee machine or cross the street to the café for artisan coffee."},
+    {"text": "Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!"},
+    {"text": "Working Hours Flexibility: We prioritize work-life balance. While our core hours are 9 AM to 5 PM, we offer flexibility to adjust as needed."},
+    {"text": "Side Projects Policy: We encourage you to pursue your passions. Just be mindful of any potential conflicts of interest with our business."}
+]
+
+# Embed the documents
+doc_emb = co.embed(
+    input_type="search_document",
+    texts=[doc['text'] for doc in documents],
+    embedding_types=["float"]
+).embeddings.float
+```
+</Tab>
+</Tabs>
+
+### Query Embedding
+Next, embed the user query using the Embed endpoint by specifying the `input_type` as `search_query`.
+
+<Tabs>
+<Tab title="Cohere Platform">
+```python PYTHON
+# Add the user query
+query = "Ways to connect with my teammates"
+
+# Embed the query
+query_emb = co.embed(
+    model="embed-english-v3.0",
+    input_type="search_query",
+    texts=[query],
+    embedding_types=["float"]
+).embeddings.float
+```
+</Tab>
+
+<Tab title="Private Deployment">
+```python PYTHON
+# Add the user query
+query = "Ways to connect with my teammates"
+
+# Embed the query
+query_emb = co.embed(
+    input_type="search_query",
+    texts=[query],
+    embedding_types=["float"]
+).embeddings.float
+```
+</Tab>
+
+<Tab title="AWS Bedrock">
+```python PYTHON
+# Add the user query
+query = "Ways to connect with my teammates"
+
+# Embed the query
+query_emb = co.embed(
+    model="YOUR_MODEL_NAME",
+    input_type="search_query",
+    texts=[query],
+    embedding_types=["float"]
+).embeddings.float
+```
+</Tab>
+
+<Tab title="SageMaker">
+```python PYTHON
+# Add the user query
+query = "Ways to connect with my teammates"
+
+# Embed the query
+query_emb = co.embed(
+    model="YOUR_ENDPOINT_NAME",
+    input_type="search_query",
+    texts=[query],
+    embedding_types=["float"]
+).embeddings.float
+```
+</Tab>
+
+<Tab title="Azure AI">
+```python PYTHON
+# Add the user query
+query = "Ways to connect with my teammates"
+
+# Embed the query
+query_emb = co.embed(
+    input_type="search_query",
+    texts=[query],
+    embedding_types=["float"]
+).embeddings.float
+```
+</Tab>
+</Tabs>
+
+### Semantic Search
+
+Then, perform semantic search by computing the similarity between the query embedding and the document embeddings, and then returning the most similar documents.
+
+```python PYTHON
+# Compute dot product similarity and display results
+def return_results(query_emb, doc_emb, documents):
+    n = 2 # customize your top N results
+    scores = np.dot(query_emb, np.transpose(doc_emb))[0]
+    max_idx = np.argsort(-scores)[:n]
+        
+    for rank, idx in enumerate(max_idx):
+        print(f"Rank: {rank+1}")
+        print(f"Score: {scores[idx]}")
+        print(f"Document: {documents[idx]}\n")
+        
+return_results(query_emb, doc_emb, documents)
+```
+```mdx wordWrap
+Rank: 1
+Score: 0.38769877295611255
+Document: {'text': 'Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!'}
+
+Rank: 2
+Score: 0.27258348836836654
+Document: {'text': 'Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.'}
+```
+</Steps>

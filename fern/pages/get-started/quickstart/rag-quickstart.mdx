@@ -1,0 +1,197 @@
+---
+title: Retrieval Augmented Generation (RAG)
+slug: /docs/rag-quickstart
+
+description: "A quickstart guide for performing retrieval augmented generation (RAG) with Cohere's Command models."
+image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, RAG, retrieval augmented generation, chatbot, command models"
+---
+RAG enables a model to utilize information from external documents, thereby improving the accuracy of its responses and minimizing hallucinations.
+
+<Steps>
+### Setup
+This quickstart example uses the `cohere` Python SDK. Install with the following command:
+
+```bash
+pip install -U cohere
+```
+
+Next, import the library and create a client.
+
+<Tabs>
+<Tab title="Cohere Platform">
+
+```python PYTHON
+import cohere
+
+co = cohere.Client(os.getenv("COHERE_API_KEY")) # Get your free API key here: https://dashboard.cohere.com/api-keys
+```
+
+</Tab>
+<Tab title="Private Deployment">
+
+```python PYTHON
+import cohere
+
+co = cohere.Client(api_key="", # Leave this blank
+                   base_url="<YOUR_DEPLOYMENT_URL>")
+```
+
+</Tab>
+
+<Tab title="Bedrock">
+
+```python PYTHON
+import cohere
+
+co = cohere.BedrockClient(
+    aws_region="AWS_REGION",
+    aws_access_key="AWS_ACCESS_KEY_ID",
+    aws_secret_key="AWS_SECRET_ACCESS_KEY",
+    aws_session_token="AWS_SESSION_TOKEN",
+)
+
+# Get the model name: https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
+```
+</Tab>
+
+<Tab title="SageMaker">
+
+```python PYTHON
+import cohere
+
+co = cohere.SagemakerClient(
+    aws_region="AWS_REGION",
+    aws_access_key="AWS_ACCESS_KEY_ID",
+    aws_secret_key="AWS_SECRET_ACCESS_KEY",
+    aws_session_token="AWS_SESSION_TOKEN",
+)
+```
+</Tab>
+
+<Tab title="Azure AI">
+
+```python PYTHON
+import cohere
+
+co = cohere.Client(
+    api_key="AZURE_API_KEY",
+    base_url="AZURE_ENDPOINT",
+)
+```
+</Tab>
+
+</Tabs>
+
+### Documents
+
+First, define the documents that will passed as the context for RAG. These documents are typically retrieved from sources such as vector databases via semantic search, or any system that can retrieve unstructured data given a user query.
+
+Each document can take any number of fields e.g. `title`, `url`, `text`, etc.
+
+```python PYTHON
+documents = [
+    {
+        "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+    },
+    {
+        "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+    },
+]
+```
+### Response Generation
+
+Next, call the Chat API by passing the documents in the `documents` parameter. This tells the model to run in RAG-mode and use these documents as the context in its response.
+
+<Tabs>
+<Tab title="Cohere Platform">
+```python PYTHON
+message = "Are there fitness-related benefits?"
+
+response = co.chat(
+    model="command-r-plus-08-2024",
+    message=message,
+    documents=documents
+)
+
+print(response.text)
+```
+</Tab>
+
+<Tab title="Private Deployment">
+```python PYTHON
+message = "Are there fitness-related benefits?"
+
+response = co.chat(
+    message=message,
+    documents=documents
+)
+
+print(response.text)
+```
+</Tab>
+
+<Tab title="AWS Bedrock">
+```python PYTHON
+message = "Are there fitness-related benefits?"
+
+response = co.chat(
+    model="YOUR_MODEL_NAME",
+    message=message,
+    documents=documents
+)
+
+print(response.text)
+```
+</Tab>
+
+<Tab title="SageMaker">
+```python PYTHON
+message = "Are there fitness-related benefits?"
+
+response = co.chat(
+    model="YOUR_ENDPOINT_NAME",
+    message=message,
+    documents=documents
+)
+
+print(response.text)
+```
+</Tab>
+
+<Tab title="Azure AI">
+```python PYTHON
+message = "Are there fitness-related benefits?"
+
+response = co.chat(
+    message=message,
+    documents=documents,
+    max_tokens=1000
+)
+
+print(response.text)
+```
+</Tab>
+</Tabs>
+
+```mdx wordWrap
+Yes, we offer gym memberships, on-site yoga classes, and comprehensive health insurance.
+
+```
+
+### Citation Generation
+
+The response object contains a `citations` field, which contains specific text spans from the documents on which the response is grounded.
+
+```python PYTHON
+if response.citations:
+    for citation in response.citations:
+        print(citation, "\n")
+```
+
+```mdx wordWrap
+start=14 end=88 text='gym memberships, on-site yoga classes, and comprehensive health insurance.' document_ids=['doc_1'] 
+
+```
+
+</Steps>
