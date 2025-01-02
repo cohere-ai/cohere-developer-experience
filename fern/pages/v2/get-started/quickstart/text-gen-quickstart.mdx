@@ -2,7 +2,7 @@
 title: Text Generation
 slug: /docs/v2/text-gen-quickstart
 
-description: "A quickstart guide for performing text generation with Cohere's Command models."
+description: "A quickstart guide for performing text generation with Cohere's Command models (API v2)."
 image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"  
 keywords: "Cohere, text generation, chatbot, command models"
 ---
@@ -25,7 +25,7 @@ Next, import the library and create a client.
 ```python PYTHON
 import cohere
 
-co = cohere.Client(os.getenv("COHERE_API_KEY")) # Get your free API key here: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
 ```
 
 </Tab>
@@ -34,114 +34,51 @@ co = cohere.Client(os.getenv("COHERE_API_KEY")) # Get your free API key here: ht
 ```python PYTHON
 import cohere
 
-co = cohere.Client(api_key="", # Leave this blank
+co = cohere.ClientV2(api_key="", # Leave this blank
                    base_url="<YOUR_DEPLOYMENT_URL>")
 ```
 
-</Tab>
-
-<Tab title="Bedrock">
-
-```python PYTHON
-import cohere
-
-co = cohere.BedrockClient(
-    aws_region="AWS_REGION",
-    aws_access_key="AWS_ACCESS_KEY_ID",
-    aws_secret_key="AWS_SECRET_ACCESS_KEY",
-    aws_session_token="AWS_SESSION_TOKEN",
-)
-
-# Get the model name: https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
-```
-</Tab>
-
-<Tab title="SageMaker">
-
-```python PYTHON
-import cohere
-
-co = cohere.SagemakerClient(
-    aws_region="AWS_REGION",
-    aws_access_key="AWS_ACCESS_KEY_ID",
-    aws_secret_key="AWS_SECRET_ACCESS_KEY",
-    aws_session_token="AWS_SESSION_TOKEN",
-)
-```
-</Tab>
-
-<Tab title="Azure AI">
-
-```python PYTHON
-import cohere
-
-co = cohere.Client(
-    api_key="AZURE_API_KEY",
-    base_url="AZURE_ENDPOINT",
-)
-```
 </Tab>
 
 </Tabs>
 
 
 ### Basic Text Generation
-To perform a basic text generation, call the Chat endpoint by passing the `message` parameter containing the user message.
+To perform a basic text generation, call the Chat endpoint by passing the `messages` parameter containing the `user` message.
 
 <Tabs>
 <Tab title="Cohere Platform">
 ```python PYTHON
 response = co.chat(
     model="command-r-plus-08-2024",
-    message="I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates?"
+    messages=[
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        }
+    ],
 )
 
-print(response.text)
+print(response.message.content[0].text)
 ```
 </Tab>
 
 <Tab title="Private Deployment">
 ```python PYTHON
 response = co.chat(
-    message="I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates?"
+    messages=[
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        }
+    ],
 )
 
-print(response.text)
+print(response.message.content[0].text)
 ```
 </Tab>
 
-<Tab title="AWS Bedrock">
-```python PYTHON
-response = co.chat(
-    model="YOUR_MODEL_NAME",
-    message="I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates?"
-)
 
-print(response.text)
-```
-</Tab>
-
-<Tab title="SageMaker">
-```python PYTHON
-response = co.chat(
-    model="YOUR_ENDPOINT_NAME",
-    message="I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates?"
-)
-
-print(response.text)
-```
-</Tab>
-
-<Tab title="Azure AI">
-```python PYTHON
-response = co.chat(
-    message="I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates?",
-    max_tokens=1000
-)
-
-print(response.text)
-```
-</Tab>
 </Tabs>
 
 ```mdx wordWrap
@@ -149,117 +86,64 @@ print(response.text)
 ```
 
 ### State Management
-You can maintain the state of a conversation over multiple turns, such as for building chatbots. You can do this by appending a sequence of `user` and `chatbot` messages to the `chat_history` list. You can also include a `preamble` parameter, which will act as a system message to set the context of the conversation.
+To maintain the state of a conversation, such as for building chatbots, append a sequence of `user` and `assistant` messages to the `messages` list. You can also include a `system` message at the start of the list to set the context of the conversation.
 
 <Tabs>
   <Tab title="Cohere Platform">
     ```python PYTHON
     response = co.chat(
         model="command-r-plus-08-2024",
-        preamble="You respond in concise sentences.",
-        chat_history=[
+        messages=[
             {
-                "role": "user",
-                "message": "Hello"
+                "role": "system",
+                "content": "You respond in concise sentences."
             },
             {
-                "role": "chatbot",
-                "message": "Hi, how can I help you today?"
+                "role": "user",
+                "content": "Hello"
+            },
+            {
+                "role": "assistant",
+                "content": "Hi, how can I help you today?"
+            },
+            {
+                "role": "user",
+                "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
             }
-        ],
-        message="I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates?"
+        ]
     )
-    
-    print(response.text)
+
+    print(response.message.content[0].text)
     ```
   </Tab>
 
   <Tab title="Private Deployment">
     ```python PYTHON
     response = co.chat(
-        preamble="You respond in concise sentences.",
-        chat_history=[
+        messages=[
             {
-                "role": "user",
-                "message": "Hello"
+                "role": "system",
+                "content": "You respond in concise sentences."
             },
             {
-                "role": "chatbot",
-                "message": "Hi, how can I help you today?"
+                "role": "user",
+                "content": "Hello"
+            },
+            {
+                "role": "assistant",
+                "content": "Hi, how can I help you today?"
+            },
+            {
+                "role": "user",
+                "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
             }
-        ],
-        message="I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates?"
+        ]
     )
-    
-    print(response.text)
+
+    print(response.message.content[0].text)
     ```
   </Tab>
 
-  <Tab title="AWS Bedrock">
-    ```python PYTHON
-    response = co.chat(
-        model="YOUR_MODEL_NAME",
-        preamble="You respond in concise sentences.",
-        chat_history=[
-            {
-                "role": "user",
-                "message": "Hello"
-            },
-            {
-                "role": "chatbot",
-                "message": "Hi, how can I help you today?"
-            }
-        ],
-        message="I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates?"
-    )
-    
-    print(response.text)
-    ```
-  </Tab>
-
-  <Tab title="SageMaker">
-    ```python PYTHON
-    response = co.chat(
-        model="YOUR_ENDPOINT_NAME",
-        preamble="You respond in concise sentences.",
-        chat_history=[
-            {
-                "role": "user",
-                "message": "Hello"
-            },
-            {
-                "role": "chatbot",
-                "message": "Hi, how can I help you today?"
-            }
-        ],
-        message="I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates?"
-    )
-    
-    print(response.text)
-    ```
-  </Tab>
-
-  <Tab title="Azure AI">
-    ```python PYTHON
-    response = co.chat(
-        preamble="You respond in concise sentences.",
-        chat_history=[
-            {
-                "role": "user",
-                "message": "Hello"
-            },
-            {
-                "role": "chatbot",
-                "message": "Hi, how can I help you today?"
-            }
-        ],
-        message="I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates?",
-        max_tokens=1000
-    )
-    
-    print(response.text)
-    ```
-  </Tab>
 </Tabs>
 ```mdx wordWrap
 "Excited to join the team at Co1t, looking forward to contributing my skills and collaborating with everyone!"
@@ -267,82 +151,46 @@ You can maintain the state of a conversation over multiple turns, such as for bu
 
 ### Streaming
 
-To stream the generated text, call the Chat endpoint using `chat_stream` instead of `chat`. This returns a generator that yields `chunk` objects, which you can access the generated text from.
+To stream text generation, call the Chat endpoint using `chat_stream` instead of `chat`. This returns a generator that yields `chunk` objects, which you can access the generated text from.
 
 <Tabs>
 <Tab title="Cohere Platform">
 ```python PYTHON
-message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
-
-response = co.chat_stream(
-    model="command-r-plus-08-2024", 
-    message=message
+res = co.chat_stream(
+    model="command-r-plus-08-2024",
+    messages=[
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        }
+    ]
 )
 
-for chunk in response:
-    if chunk.event_type == "text-generation":
-        print(chunk.text, end="")
+for chunk in res:
+    if chunk:
+        if chunk.type == "content-delta":
+            print(chunk.delta.message.content.text, end="")
 ```
 </Tab>
 
 <Tab title="Private Deployment">
 ```python PYTHON
-message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
-
-response = co.chat_stream(
-    message=message
+res = co.chat_stream(
+    messages=[
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        }
+    ]
 )
 
-for chunk in response:
-    if chunk.event_type == "text-generation":
-        print(chunk.text, end="")
+for chunk in res:
+    if chunk:
+        if chunk.type == "content-delta":
+            print(chunk.delta.message.content.text, end="")
 ```
 </Tab>
 
-<Tab title="AWS Bedrock">
-```python PYTHON
-message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
-
-response = co.chat_stream(
-    model="YOUR_MODEL_NAME", 
-    message=message
-)
-
-for chunk in response:
-    if chunk.event_type == "text-generation":
-        print(chunk.text, end="")
-```
-</Tab>
-
-<Tab title="SageMaker">
-```python PYTHON
-message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
-
-response = co.chat_stream(
-    model="YOUR_ENDPOINT_NAME", 
-    message=message
-)
-
-for chunk in response:
-    if chunk.event_type == "text-generation":
-        print(chunk.text, end="")
-```
-</Tab>
-
-<Tab title="Azure AI">
-```python PYTHON
-message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
-
-response = co.chat_stream(
-    message=message,
-    max_tokens=1000
-)
-
-for chunk in response:
-    if chunk.event_type == "text-generation":
-        print(chunk.text, end="")
-```
-</Tab>
 </Tabs>
 ```mdx wordWrap
 "Excited to be part of the Co1t team, I'm [Your Name], a [Your Role/Position], looking forward to contributing my skills and collaborating with this talented group to drive innovation and success."
