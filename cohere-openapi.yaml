@@ -22951,8 +22951,11 @@ components:
             delta:
               type: object
               properties:
-                tool_plan:
-                  type: string
+                message:
+                  type: object
+                  properties:
+                    tool_plan:
+                      type: string
     ChatToolCallStartEvent:
       description: A streamed event delta which signifies a tool call has started streaming.
       allOf:
@@ -22964,22 +22967,11 @@ components:
             delta:
               type: object
               properties:
-                tool_call:
+                message:
                   type: object
                   properties:
-                    id:
-                      type: string
-                    type:
-                      type: string
-                      enum:
-                        - function
-                    function:
-                      type: object
-                      properties:
-                        name:
-                          type: string
-                        arguments:
-                          type: string
+                    tool_calls:
+                      $ref: "#/components/schemas/ToolCallV2"
     ChatToolCallDeltaEvent:
       description: A streamed event delta which signifies a delta in tool call arguments.
       allOf:
@@ -22991,14 +22983,17 @@ components:
             delta:
               type: object
               properties:
-                tool_call:
+                message:
                   type: object
                   properties:
-                    function:
+                    tool_calls:
                       type: object
                       properties:
-                        arguments:
-                          type: string
+                        function:
+                          type: object
+                          properties:
+                            arguments:
+                              type: string
     ChatToolCallEndEvent:
       description: A streamed event delta which signifies a tool call has finished
         streaming.
