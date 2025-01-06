@@ -40,37 +40,79 @@ co = cohere.ClientV2(api_key="", # Leave this blank
 
 </Tab>
 
+<Tab title="Bedrock">
+
+```python PYTHON
+import cohere
+
+co = cohere.BedrockClientV2(
+    aws_region="AWS_REGION",
+    aws_access_key="AWS_ACCESS_KEY_ID",
+    aws_secret_key="AWS_SECRET_ACCESS_KEY",
+    aws_session_token="AWS_SESSION_TOKEN",
+)
+
+# Get the model name: https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
+```
+</Tab>
+
+<Tab title="SageMaker">
+
+```python PYTHON
+import cohere
+
+co = cohere.SagemakerClientV2(
+    aws_region="AWS_REGION",
+    aws_access_key="AWS_ACCESS_KEY_ID",
+    aws_secret_key="AWS_SECRET_ACCESS_KEY",
+    aws_session_token="AWS_SESSION_TOKEN",
+)
+```
+</Tab>
+
+<Tab title="Azure AI">
+
+```python PYTHON
+import cohere
+
+co = cohere.ClientV2(
+    api_key="AZURE_API_KEY",
+    base_url="AZURE_ENDPOINT",
+)
+```
+</Tab>
+
 </Tabs>
 
 ### Retrieved Documents
 
-First, define the list of documents to be reranked. Each document can take any number of fields e.g. `title`, `url`, `text`, etc.
+First, define the list of documents to be reranked.
 
 ```python PYTHON
-emails = [
-    {"from": "hr@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "A Warm Welcome to Co1t!", "text": "We are delighted to welcome you to the team! As you embark on your journey with us, you'll find attached an agenda to guide you through your first week."},
-    {"from": "it@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "Setting Up Your IT Needs", "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts."},
-    {"from": "john@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "First Week Check-In", "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!"}
+documents = [
+    "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward.",
+    "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours.",
+    "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.",
+    "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year.",
 ]
 ```
 
 ### Reranking
 
-Then, perform reranking by passing the documents and the user query to the Rerank endpoint. We can also pass the `rank_fields` parameter. The model will rerank based on order of the fields passed in.
+Then, perform reranking by passing the documents and the user query to the Rerank endpoint.
 
 <Tabs>
 <Tab title="Cohere Platform">
 ```python PYTHON
 # Add the user query
-query = "Any email about check ins?"
+query = "Are there fitness-related perks?"
 
 # Rerank the documents
 results = co.rerank(
-    model='rerank-english-v3.0',
+    model="rerank-v3.5",
     query=query,
-    documents=emails,
-    top_n=2,
-    rank_fields=["from", "to", "date", "subject", "body"]
+    documents=documents,
+    top_n=2
 )
 
 for result in results.results:
@@ -81,14 +123,68 @@ for result in results.results:
 <Tab title="Private Deployment">
 ```python PYTHON
 # Add the user query
-query = "Any email about check ins?"
+query = "Are there fitness-related perks?"
 
 # Rerank the documents
 results = co.rerank(
+    model="model", # Pass a dummy string
     query=query,
-    documents=emails,
-    top_n=2,
-    rank_fields=["from", "to", "date", "subject", "body"]
+    documents=documents,
+    top_n=2
+)
+
+for result in results.results:
+    print(result)
+```
+</Tab>
+
+<Tab title="Bedrock">
+```python PYTHON
+# Add the user query
+query = "Are there fitness-related perks?"
+
+# Rerank the documents
+results = co.rerank(
+    model="YOUR_MODEL_NAME",
+    query=query,
+    documents=documents,
+    top_n=2
+)
+
+for result in results.results:
+    print(result)
+```
+</Tab>
+
+<Tab title="SageMaker">
+```python PYTHON
+# Add the user query
+query = "Are there fitness-related perks?"
+
+# Rerank the documents
+results = co.rerank(
+    model="YOUR_ENDPOINT_NAME",
+    query=query,
+    documents=documents,
+    top_n=2
+)
+
+for result in results.results:
+    print(result)
+```
+</Tab>
+
+<Tab title="Azure AI">
+```python PYTHON
+# Add the user query
+query = "Are there fitness-related perks?"
+
+# Rerank the documents
+results = co.rerank(
+    model="model", # Pass a dummy string
+    query=query,
+    documents=documents,
+    top_n=2
 )
 
 for result in results.results:

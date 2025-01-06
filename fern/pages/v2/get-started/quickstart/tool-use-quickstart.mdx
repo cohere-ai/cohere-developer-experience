@@ -40,6 +40,48 @@ co = cohere.ClientV2(api_key="", # Leave this blank
 
 </Tab>
 
+<Tab title="Bedrock">
+
+```python PYTHON
+import cohere
+
+co = cohere.BedrockClientV2(
+    aws_region="AWS_REGION",
+    aws_access_key="AWS_ACCESS_KEY_ID",
+    aws_secret_key="AWS_SECRET_ACCESS_KEY",
+    aws_session_token="AWS_SESSION_TOKEN",
+)
+
+# Get the model name: https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
+```
+</Tab>
+
+<Tab title="SageMaker">
+
+```python PYTHON
+import cohere
+
+co = cohere.SagemakerClientV2(
+    aws_region="AWS_REGION",
+    aws_access_key="AWS_ACCESS_KEY_ID",
+    aws_secret_key="AWS_SECRET_ACCESS_KEY",
+    aws_session_token="AWS_SESSION_TOKEN",
+)
+```
+</Tab>
+
+<Tab title="Azure AI">
+
+```python PYTHON
+import cohere
+
+co = cohere.ClientV2(
+    api_key="AZURE_API_KEY",
+    base_url="AZURE_ENDPOINT",
+)
+```
+</Tab>
+
 </Tabs>
 
 
@@ -51,8 +93,9 @@ We also need to define the tool schemas in a format that can be passed to the Ch
 
 ```python PYTHON
 def get_weather(location):
+    # Implement your tool calling logic here 
     return [{"temperature": "20C"}]
-    # You can return a list of objects e.g. [{"url": "abc.com", "text": "..."}, {"url": "xyz.com", "text": "..."}]
+    # Return a list of objects e.g. [{"url": "abc.com", "text": "..."}, {"url": "xyz.com", "text": "..."}]
 
 functions_map = {"get_weather": get_weather}
 
@@ -126,6 +169,71 @@ if response.message.tool_calls:
 ```
 </Tab>
 
+<Tab title="Bedrock">
+```python PYTHON
+messages = [{"role": "user", "content": "What's the weather in Toronto?"}]
+
+response = co.chat(
+    model="YOUR_MODEL_NAME",
+    messages=messages,
+    tools=tools
+)
+
+if response.message.tool_calls:
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_calls": response.message.tool_calls,
+            "tool_plan": response.message.tool_plan,
+        }
+    )
+    print(response.message.tool_calls)
+```
+</Tab>
+
+<Tab title="SageMaker">
+```python PYTHON
+messages = [{"role": "user", "content": "What's the weather in Toronto?"}]
+
+response = co.chat(
+    model="YOUR_ENDPOINT_NAME",
+    messages=messages,
+    tools=tools
+)
+
+if response.message.tool_calls:
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_calls": response.message.tool_calls,
+            "tool_plan": response.message.tool_plan,
+        }
+    )
+    print(response.message.tool_calls)
+```
+</Tab>
+
+<Tab title="Azure AI">
+```python PYTHON
+messages = [{"role": "user", "content": "What's the weather in Toronto?"}]
+
+response = co.chat(
+    model="model", # Pass a dummy string
+    messages=messages,
+    tools=tools
+)
+
+if response.message.tool_calls:
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_calls": response.message.tool_calls,
+            "tool_plan": response.message.tool_plan,
+        }
+    )
+    print(response.message.tool_calls)
+```
+</Tab>
 
 </Tabs>
 
@@ -171,6 +279,40 @@ print(response.message.content[0].text)
 <Tab title="Private Deployment">
 ```python PYTHON
 response = co.chat(
+    model="model", # Pass a dummy string
+    messages=messages,
+    tools=tools
+)
+print(response.message.content[0].text)
+```
+</Tab>
+
+<Tab title="Bedrock">
+```python PYTHON
+response = co.chat(
+    model="YOUR_MODEL_NAME",
+    messages=messages,
+    tools=tools
+)
+print(response.message.content[0].text)
+```
+</Tab>
+
+<Tab title="SageMaker">
+```python PYTHON
+response = co.chat(
+    model="YOUR_ENDPOINT_NAME",
+    messages=messages,
+    tools=tools
+)
+print(response.message.content[0].text)
+```
+</Tab>
+
+<Tab title="Azure AI">
+```python PYTHON
+response = co.chat(
+    model="model", # Pass a dummy string
     messages=messages,
     tools=tools
 )
