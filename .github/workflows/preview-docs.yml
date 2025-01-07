@@ -1,19 +1,27 @@
 name: preview-docs
 
 on:
-  pull_request:
+  pull_request_target:
     branches:
       - main
 
 jobs:
   run:
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      pull-requests: write  # Only for commenting
+      contents: read       # For checking out code
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         # with:
         #   ref: "${{ github.event.pull_request.merge_commit_sha }}"
+
+      - name: Checkout PR
+        if: github.event_name == 'pull_request_target'
+        run: |
+          git fetch origin pull/${{ github.event.pull_request.number }}/head:pr-${{ github.event.pull_request.number }}
+          git checkout pr-${{ github.event.pull_request.number }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
