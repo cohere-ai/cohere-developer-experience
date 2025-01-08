@@ -87,26 +87,30 @@ Here are some example code snippets for you to use.
 
 ```python PYTHON
 # create dataset
-rerank_dataset = co.datasets.create(name="rerank-dataset",
-                                    data=open("path/to/train.jsonl", "rb"),
-                                    type="reranker-finetune-input")
+rerank_dataset = co.datasets.create(
+    name="rerank-dataset",
+    data=open("path/to/train.jsonl", "rb"),
+    type="reranker-finetune-input",
+)
 print(co.wait(rerank_dataset))
-                                              
+
 # start the fine-tuning job using this dataset
 create_response = co.finetuning.create_finetuned_model(
-  request=FinetunedModel(
-    name="rerank-ft",
-    settings=Settings(
-      base_model=BaseModel(
-        name="english",
-        base_type="BASE_TYPE_RERANK",
-      ),
-      dataset_id=rerank_dataset.id,
-    ),
-  )
+    request=FinetunedModel(
+        name="rerank-ft",
+        settings=Settings(
+            base_model=BaseModel(
+                name="english",
+                base_type="BASE_TYPE_RERANK",
+            ),
+            dataset_id=rerank_dataset.id,
+        ),
+    )
 )
 
-print(f"fine-tuned model ID: {create_response.finetuned_model.id}, fine-tuned model status: {create_response.finetuned_model.status}")
+print(
+    f"fine-tuned model ID: {create_response.finetuned_model.id}, fine-tuned model status: {create_response.finetuned_model.status}"
+)
 ```
 
 ### Parameters:
@@ -121,14 +125,16 @@ Please see our API docs for the full documentation, for passing the request. For
 ```python PYTHON
 import cohere
 
-co = cohere.Client('Your API key')
+co = cohere.Client("Your API key")
 # get the fine-tuned model object
-get_response = co.finetuning.get_finetuned_model(create_response.finetuned_model.id)
+get_response = co.finetuning.get_finetuned_model(
+    create_response.finetuned_model.id
+)
 
 response = client.rerank(
     query="which one is the best doc?",
     documents=["this is the first doc", "this is the second doc"],
-    model=get_response.finetuned_model.id+"-ft",
+    model=get_response.finetuned_model.id + "-ft",
 )
 
 # Printing the model's response.
