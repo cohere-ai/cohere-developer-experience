@@ -9,12 +9,8 @@ keywords: 'Cohere on AWS, language models on AWS, Amazon Bedrock, Amazon SageMak
 createdAt: 'Thu Feb 01 2024 18:08:37 GMT+0000 (Coordinated Universal Time)'
 updatedAt: 'Thu May 30 2024 16:00:53 GMT+0000 (Coordinated Universal Time)'
 ---
-<Note title="Note"> 
-The code examples in this section use the Cohere v1 API. The v2 API is not yet supported for cloud deployments and will be coming soon.
-</Note>
-In an effort to make our language-model capabilities more widely available, we've partnered with a few major platforms to create hosted versions of our offerings. 
 
-Here, you'll learn how to use Amazon Bedrock to deploy both the Cohere Command and the Cohere Embed models on the AWS cloud computing platform. The following models are available on Bedrock:
+Here, you'll learn how to deploy the Command, Embed, and Rerank models on the Amazon Bedrock platform. The following models are available on Bedrock:
 
 - Command R
 - Command R+
@@ -22,15 +18,44 @@ Here, you'll learn how to use Amazon Bedrock to deploy both the Cohere Command a
 - Embed - Multilingual
 - Rerank v3.5
 
+<Info> Get the most updated list of models available (by region) on Bedrock [here](https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html).</Info>
+
 ## Prerequisites
 
-Here are the steps you'll need to get set up in advance of running Cohere models on Amazon Bedrock.
+To get started, follow the steps outlined on the [Bedrock page](https://docs.aws.amazon.com/bedrock/latest/userguide/setting-up.html), and in particular, be sure to do the following:
 
-- Subscribe to Cohere's models on Amazon Bedrock. For more details, [see here](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html).
-- You'll also need to install the AWS Python SDK and some related tooling. Run:
-  - `pip install cohere-aws` (or `pip install --upgrade cohere-aws` if you need to upgrade). You can also install from source with `python setup.py install`. 
-  - For more details, see this [GitHub repo](https://github.com/cohere-ai/cohere-aws/) and [related notebooks](https://github.com/cohere-ai/cohere-aws/tree/main/notebooks/bedrock).
-- Finally, you'll have to configure your authentication credentials for AWS. This [document](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html#configuration) has more information.
+- [Sign up for an AWS account](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#sign-up-for-aws)
+- [Create an administrative user](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#create-an-admin)
+- [Grant programmatic access](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#grant-program-access)
+- [Get console and playground access](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html#setting-up-console)
+- [Add model access](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)
+
+Finally, install the Cohere SDK:
+
+```bash
+pip install -U cohere
+```
+
+## Text Generation
+
+You can use this code to invoke either Command R (`cohere.command-r-v1:0`), Command R+ (`cohere.command-r-plus-v1:0`) on Amazon Bedrock:
+
+```python PYTHON
+import cohere
+
+co = cohere.BedrockClient(
+    aws_region="us-east-1",  # pick a region where the model is available
+    aws_access_key="...",
+    aws_secret_key="...",
+    aws_session_token="...",
+)
+
+result = co.chat(message="Write a LinkedIn post about starting a career in tech:",
+                 model='cohere.command-r-plus-v1:0' # or 'cohere.command-r-v1:0'
+                 )
+
+print(result)
+```
 
 ## Embeddings
 
@@ -40,7 +65,7 @@ You can use this code to invoke Cohere's Embed English v3 model (`cohere.embed-e
 import cohere
 
 co = cohere.BedrockClient(
-    aws_region="us-east-1",
+    aws_region="us-east-1",  # pick a region where the model is available
     aws_access_key="...",
     aws_secret_key="...",
     aws_session_token="...",
@@ -55,7 +80,6 @@ texts = ["Interesting (Non software) books?",
          "What kind of personal financial investment do you do?",
          "Should I quit the field of software development?"]
 input_type = "clustering"
-truncate = "NONE" # optional
 model_id = "cohere.embed-english-v3" # or "cohere.embed-multilingual-v3"
 
 
@@ -63,36 +87,15 @@ model_id = "cohere.embed-english-v3" # or "cohere.embed-multilingual-v3"
 result = co.embed(
 	model=model_id,
 	input_type=input_type,
-	texts=texts,
-	truncate=truncate) # aws_client.invoke_model(**params)
-
-print(result)
-```
-
-## Text Generation
-
-You can use this code to invoke either Command R (`cohere.command-r-v1:0`), Command R+ (`cohere.command-r-plus-v1:0`) on Amazon Bedrock:
-
-```python PYTHON
-import cohere
-
-co = cohere.BedrockClient(
-    aws_region="us-east-1",
-    aws_access_key="...",
-    aws_secret_key="...",
-    aws_session_token="...",
+	texts=texts
 )
-
-result = co.chat(message="Write a LinkedIn post about starting a career in tech:",
-                 model='cohere.command-r-plus-v1:0' # or 'cohere.command-r-v1:0'
-                 )
 
 print(result)
 ```
 
 ## Rerank
 
-You can use this code to invoke our latest Rerank models on Bedrock
+You can use this code to invoke our latest Rerank models on Amazon Bedrock:
 
 ```python PYTHON
 import cohere
@@ -121,3 +124,7 @@ response = co.rerank(
 
 print(response)
 ```
+
+To learn more about building applications with Cohere's models on Bedrock, check out our LLM University course on [Cohere on AWS](https://cohere.com/llmu#cohere-on-aws).
+
+If you have further questions about subscribing or configuring Cohere’s product offerings on Amazon Bedrock, please contact our team at [support+aws@cohere.com](mailto:support+aws@cohere.com).
