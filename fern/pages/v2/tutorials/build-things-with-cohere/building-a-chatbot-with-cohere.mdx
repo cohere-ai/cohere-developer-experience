@@ -30,7 +30,8 @@ To get started, first we need to install the `cohere` library and create a Coher
 
 import cohere
 
-co = cohere.ClientV2(api_key"COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
+# Get your free API key: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(api_key="COHERE_API_KEY")
 ```
 
 ## Creating a custom preamble
@@ -49,19 +50,20 @@ In the example below, the preamble provides context for the assistant's task (ta
 message = "I'm joining a new startup called Co1t today. Could you help me write a short introduction message to my teammates."
 
 # Create a custom system message
-system_message="""## Task and Context
+system_message = """## Task and Context
 You are an assistant who assist new employees of Co1t with their first week.
 
 ## Style Guide
 Try to speak in rhymes as much as possible. Be professional."""
 
 # Add the messages
-messages = [{"role": "system", "content": system_message},
-            {"role": "user", "content": message}]
+messages = [
+    {"role": "system", "content": system_message},
+    {"role": "user", "content": message},
+]
 
 # Generate the response
-response = co.chat(model="command-r-plus-08-2024",
-                   messages=messages)
+response = co.chat(model="command-r-plus-08-2024", messages=messages)
 
 print(response.message.content[0].text)
 ```
@@ -100,16 +102,17 @@ Here, we are also adding a custom preamble or system message for generating a co
 message = "I'm joining a new startup called Co1t today. Could you help me write a short introduction message to my teammates."
 
 # Create a custom system message
-system_message="""## Task and Context
+system_message = """## Task and Context
 Generate concise responses, with maximum one-sentence."""
 
 # Add the messages
-messages = [{"role": "system", "content": system_message},
-            {"role": "user", "content": message}]
+messages = [
+    {"role": "system", "content": system_message},
+    {"role": "user", "content": message},
+]
 
 # Generate the response
-response = co.chat(model="command-r-plus-08-2024",
-                   messages=messages)
+response = co.chat(model="command-r-plus-08-2024", messages=messages)
 
 print(response.message.content[0].text)
 ```
@@ -130,7 +133,9 @@ Looking at the response, we see that the model is able to get the context from t
 
 ```python PYTHON
 # Append the previous response
-messages.append({'role' : 'assistant', 'content': response.message.content[0].text})
+messages.append(
+    {"role": "assistant", "content": response.message.content[0].text}
+)
 
 # Add the user message
 message = "Make it more upbeat and conversational."
@@ -139,8 +144,7 @@ message = "Make it more upbeat and conversational."
 messages.append({"role": "user", "content": message})
 
 # Generate the response with the current chat history as the context
-response = co.chat(model="command-r-plus-08-2024",
-                   messages=messages)
+response = co.chat(model="command-r-plus-08-2024", messages=messages)
 
 print(response.message.content[0].text)
 ```
@@ -159,17 +163,20 @@ You can continue doing this for any number of turns by continuing to append the 
 
 ```python PYTHON
 # Append the previous response
-messages.append({"role": "assistant", "content": response.message.content[0].text})
+messages.append(
+    {"role": "assistant", "content": response.message.content[0].text}
+)
 
 # Add the user message
-message = "Thanks. Could you create another one for my DM to my manager."
+message = (
+    "Thanks. Could you create another one for my DM to my manager."
+)
 
 # Append the user message
 messages.append({"role": "user", "content": message})
 
 # Generate the response with the current chat history as the context
-response = co.chat(model="command-r-plus-08-2024",
-                   messages=messages)
+response = co.chat(model="command-r-plus-08-2024", messages=messages)
 
 print(response.message.content[0].text)
 ```
@@ -184,11 +191,13 @@ To look at the current chat history, you can print the `messages` list, which co
 
 ```python PYTHON
 # Append the previous response
-messages.append({"role": "assistant", "content": response.message.content[0].text})
+messages.append(
+    {"role": "assistant", "content": response.message.content[0].text}
+)
 
 # View the chat history
 for message in messages:
-    print(message,"\n")
+    print(message, "\n")
 ```
 ```
 {'role': 'system', 'content': '## Task and Context\nGenerate concise responses, with maximum one-sentence.'} 
