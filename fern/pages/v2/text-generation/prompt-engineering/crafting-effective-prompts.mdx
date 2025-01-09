@@ -30,6 +30,7 @@ Then use the Chat API to send a message to the model:
 
 ```python PYTHON
 import cohere
+
 co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
 message = """
@@ -42,9 +43,9 @@ Summarize the text below.
 
 # get model response
 response = co.chat(
-  messages=[{'role': 'user', 'content': message}],
-  model="command-r-plus-08-2024",
-  temperature=0.3
+    messages=[{"role": "user", "content": message}],
+    model="command-r-plus-08-2024",
+    temperature=0.3,
 )
 ```
 
@@ -77,21 +78,21 @@ For the example above, we can chunk a news article into different sections and a
 ```python PYTHON
 # Sections from the original news article
 document_chunked = [
-  {
-    "data": {
-      "text": "Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA)."
-    }
-  },
-  {
-    "data": {
-      "text": "“Rental is going back to ‘normal,’ but normal means that strategy matters again - geography matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you just showed up with equipment and you made money."
-    }
-  },
-  {
-    "data": {
-      "text": "“Everybody was breaking records, from the national rental chains to the smallest rental companies; everybody was having record years, and everybody was raising prices. The conversation was, ‘How much are you up?’ And now, the conversation is changing to ‘What’s my market like?’”"
-    }
-  }
+    {
+        "data": {
+            "text": "Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA)."
+        }
+    },
+    {
+        "data": {
+            "text": "“Rental is going back to ‘normal,’ but normal means that strategy matters again - geography matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you just showed up with equipment and you made money."
+        }
+    },
+    {
+        "data": {
+            "text": "“Everybody was breaking records, from the national rental chains to the smallest rental companies; everybody was having record years, and everybody was raising prices. The conversation was, ‘How much are you up?’ And now, the conversation is changing to ‘What’s my market like?’”"
+        }
+    },
 ]
 
 # Add a system message for additional context
@@ -101,10 +102,14 @@ You will receive a series of text fragments from a document that are presented i
 # Call the model
 message = f"Summarize this text in one sentence."
 
-response = co.chat(model="command-r-plus-08-2024",
-                   documents=document_chunked,
-                   messages=[{"role": "system", "content": system_message},
-                             {'role': 'user', "content": message}])
+response = co.chat(
+    model="command-r-plus-08-2024",
+    documents=document_chunked,
+    messages=[
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": message},
+    ],
+)
 
 response_text = response.message.content[0].text
 
@@ -136,21 +141,30 @@ These can easily be rendered into the text to show the source of each piece of i
 ```python PYTHON
 # Function to insert inline citations into the text
 def insert_inline_citations(text, citations):
-    sorted_citations = sorted(citations, key=lambda c: c.start, reverse=True)
-    
+    sorted_citations = sorted(
+        citations, key=lambda c: c.start, reverse=True
+    )
+
     for citation in sorted_citations:
-        source_ids = [source.id.split(':')[-1] for source in citation.sources]
+        source_ids = [
+            source.id.split(":")[-1] for source in citation.sources
+        ]
         citation_text = f"[{','.join(source_ids)}]"
-        text = text[:citation.end] + citation_text + text[citation.end:]
-    
+        text = (
+            text[: citation.end]
+            + citation_text
+            + text[citation.end :]
+        )
+
     return text
+
 
 # Function to list source documents
 def list_sources(citations):
     unique_sources = {}
     for citation in citations:
         for source in citation.sources:
-            source_id = source.id.split(':')[-1]
+            source_id = source.id.split(":")[-1]
             if source_id not in unique_sources:
                 unique_sources[source_id] = source.document
 
@@ -160,11 +174,14 @@ def list_sources(citations):
         for key, value in document.items():
             footnote += f"{key}: {value}, "
         footnotes.append(footnote.rstrip(", "))
-    
+
     return "\n".join(footnotes)
 
+
 # Use the functions
-cited_text = insert_inline_citations(response.message.content[0].text, response.message.citations)
+cited_text = insert_inline_citations(
+    response.message.content[0].text, response.message.citations
+)
 
 # Print the result with inline citations
 print(cited_text)
