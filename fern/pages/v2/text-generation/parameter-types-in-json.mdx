@@ -22,11 +22,12 @@ The examples on this page each provide a `response_format` schema and a `message
 
 ```python PYTHON
 import cohere
+
 co = cohere.ClientV2(api_key="YOUR API KEY")
 
 res = co.chat(
     # The model name. Example: command-r-plus-08-2024
-    model="MODEL_NAME",  
+    model="MODEL_NAME",
     # The user message. Optional - you can first add a `system_message` role
     messages=[
         {
@@ -37,7 +38,7 @@ res = co.chat(
     # The schema that you define
     response_format=response_format,
     # Typically, you'll need a low temperature for more deterministic outputs
-    temperature=0
+    temperature=0,
 )
 
 print(res.message.content[0].text)
@@ -49,7 +50,7 @@ print(res.message.content[0].text)
 ### String
 
 ```python PYTHON
-response_format={
+response_format = {
     "type": "json_object",
     "schema": {
         "type": "object",
@@ -76,7 +77,7 @@ Example output:
 ### Integer
 
 ```python PYTHON
-response_format={
+response_format = {
     "type": "json_object",
     "schema": {
         "type": "object",
@@ -105,7 +106,7 @@ Example output:
 ### Float
 
 ```python PYTHON
-response_format={
+response_format = {
     "type": "json_object",
     "schema": {
         "type": "object",
@@ -132,7 +133,7 @@ Example output:
 ### Boolean
 
 ```python PYTHON
-response_format={
+response_format = {
     "type": "json_object",
     "schema": {
         "type": "object",
@@ -161,7 +162,7 @@ Example output:
 ### With specific types
 
 ```python PYTHON
-response_format={
+response_format = {
     "type": "json_object",
     "schema": {
         "type": "object",
@@ -193,7 +194,7 @@ Example output:
 ### Without specific types
 
 ```python PYTHON
-response_format={
+response_format = {
     "type": "json_object",
     "schema": {
         "type": "object",
@@ -224,7 +225,7 @@ Example output:
 ### Lists of lists
 
 ```python PYTHON
-response_format={
+response_format = {
     "type": "json_object",
     "schema": {
         "type": "object",
@@ -234,7 +235,7 @@ response_format={
                 "items": {
                     "type": "array",
                     "items": {"type": "number"},
-                }
+                },
             }
         },
         "required": ["coordinates"],
@@ -313,14 +314,16 @@ Example output:
 ### Enums
 
 ```python PYTHON
-response_format={
+response_format = {
     "type": "json_object",
     "schema": {
         "type": "object",
         "properties": {
-            "genre": {"type": "string",
-                      "enum": ["historical fiction", "cozy mystery"]},
-            "title": {"type": "string"}
+            "genre": {
+                "type": "string",
+                "enum": ["historical fiction", "cozy mystery"],
+            },
+            "title": {"type": "string"},
         },
         "required": ["title", "genre"],
     },
@@ -341,20 +344,26 @@ Example output:
 ### Const
 
 ```python PYTHON
-response_format={
-    "type": "json_object", 
+response_format = {
+    "type": "json_object",
     "schema": {
         "type": "object",
         "properties": {
             "city": {
                 "type": "object",
                 "properties": {
-                    "country": {"type": "string", "const": "Thailand"},
+                    "country": {
+                        "type": "string",
+                        "const": "Thailand",
+                    },
                     "city_name": {"type": "string"},
                     "avg_temperature": {"type": "number"},
-                    
                 },
-                "required": ["country", "city_name", "avg_temperature"]
+                "required": [
+                    "country",
+                    "city_name",
+                    "avg_temperature",
+                ],
             }
         },
         "required": ["city"],
@@ -379,14 +388,14 @@ Example output:
 ### Pattern
 
 ```python PYTHON
-response_format={
-    "type": "json_object", 
+response_format = {
+    "type": "json_object",
     "schema": {
         "type": "object",
         "properties": {
             "product_sku": {
                 "type": "string",
-                "pattern": "[A-Z]{3}[0-9]{7}"
+                "pattern": "[A-Z]{3}[0-9]{7}",
             }
         },
         "required": ["product_sku"],
@@ -407,7 +416,7 @@ Example output:
 ### Format
 
 ```python PYTHON
-response_format={
+response_format = {
     "type": "json_object",
     "schema": {
         "type": "object",
@@ -418,19 +427,24 @@ response_format={
                     "type": "object",
                     "properties": {
                         "day_number": {"type": "integer"},
-                        "date": {"type": "string",
-                                 "format": "date"},
-                        "places_to_visit": {"type": "string"}
+                        "date": {"type": "string", "format": "date"},
+                        "places_to_visit": {"type": "string"},
                     },
-                    "required": ["day_number", "date", "places_to_visit"]
-                }
+                    "required": [
+                        "day_number",
+                        "date",
+                        "places_to_visit",
+                    ],
+                },
             }
         },
         "required": ["itinerary"],
     },
 }
 
-message = "Generate a JSON of a 3-day visit of Bali starting Jan 5 2025."
+message = (
+    "Generate a JSON of a 3-day visit of Bali starting Jan 5 2025."
+)
 ```
 
 Example output:
