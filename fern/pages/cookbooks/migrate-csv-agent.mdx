@@ -1,0 +1,430 @@
+---
+title: Migration guide for create_csv_agent in langchain-cohere
+slug: /page/csv-agent-cohere-langchain-migration
+
+description: "This page contains a tutorial on how to build CSV agent that can be used as a replacement for the create_csv_agent provided which is now sunset from the langchain-cohere package version 0.3.5 onwards."
+image: "../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, CSV, AI agents"
+---
+
+import { AuthorsContainer } from "../../components/authors-container";
+import { CookbookHeader } from "../../components/cookbook-header";
+
+<CookbookHeader href="https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/agents/csv-agent-migration/migrate_csv_agent.ipynb" />
+
+# How to use the CSV Agent with LangChain-Cohere
+
+The create_csv_agent abstraction offered by langchain-cohere is a powerful agent abstraction to seamlessly integrates natural language processing with CSV datasets.
+
+In this cookbook, we will explore how to build a similar CSV agent, without the create_csv_agent abstraction, that can be used as a replacement for the create_csv_agent provided which is now sunset from the langchain-cohere package version 0.3.5 onwards.
+
+## Building the CSV agent -- without the create_csv_agent abstraction
+
+
+```python
+!pip install langchain langchain-core langchain-experimental langchain-cohere pandas -qq
+```
+
+
+```python
+# Import packages
+from datetime import datetime
+from io import IOBase
+from typing import List, Optional, Union
+import pandas as pd
+from pydantic import BaseModel, Field
+
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_core.language_models import BaseLanguageModel
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    MessagesPlaceholder,
+)
+
+from langchain_core.tools import Tool, BaseTool
+from langchain_core.prompts.chat import (
+    BaseMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+)
+
+from langchain_experimental.tools.python.tool import PythonAstREPLTool
+from langchain_cohere.chat_models import ChatCohere
+
+```
+
+
+```python
+# Replace this cell with your actual cohere api key
+os.env["COHERE_API_KEY"] = "cohere_api_key"
+```
+
+
+```python
+# Define prompts that we want to use in the csv agent
+FUNCTIONS_WITH_DF = """
+This is the result of `print(df.head())`:
+{df_head}
+
+Do note that the above df isn't the complete df. It is only the first {number_of_head_rows} rows of the df.
+Use this as a sample to understand the structure of the df. However, donot use this to make any calculations directly!
+
+The complete path for the csv files are for the corresponding dataframe is:
+{csv_path}
+"""  # noqa E501
+
+FUNCTIONS_WITH_MULTI_DF = """
+This is the result of `print(df.head())` for each dataframe:
+{dfs_head}
+
+Do note that the above dfs aren't the complete df. It is only the first {number_of_head_rows} rows of the df.
+Use this as a sample to understand the structure of the df. However, donot use this to make any calculations directly!
+
+The complete path for the csv files are for the corresponding dataframes are:
+{csv_paths}
+"""  # noqa E501
+
+PREFIX_FUNCTIONS = """
+You are working with a pandas dataframe in Python. The name of the dataframe is `df`."""  # noqa E501
+
+MULTI_DF_PREFIX_FUNCTIONS = """
+You are working with {num_dfs} pandas dataframes in Python named df1, df2, etc."""  # noqa E501
+
+CSV_PREAMBLE = """## Task And Context
+You use your advanced complex reasoning capabilities to help people by answering their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You may need to use multiple tools in parallel or sequentially to complete your task. You should focus on serving the user's needs as best you can, which will be wide-ranging. The current date is {current_date}
+
+## Style Guide
+Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling
+"""  # noqa E501
+
+```
+
+### Define tools necessary for the agent
+The above cell introduces a suite of tools that are provided to the csv agent. These tools allow the agent to fcilitate meaningful interactions with uploaded files and providing Python code execution functionality. The toolkit comprises three main components:
+
+
+**File Peek Tool**: Offers a convenient way to inspect a CSV file by providing a quick preview of the first few rows in a Markdown format, making it easy to get a glimpse of the data.
+
+**File Read Tool**: Allows for a comprehensive exploration of the CSV file by reading and presenting its full contents in a user-friendly Markdown format.
+
+**Python Interpreter Tool**: Enables secure execution of Python code within a sandboxed environment, providing users with the output of the code execution.
+
+
+```python
+# Define tools that we want the csv agent to have access to
+
+def get_file_peek_tool() -> Tool:
+    def file_peek(filename: str, num_rows: int = 5) -> str:
+        """Returns the first textual contents of an uploaded file
+
+        Args:
+            table_path: the table path
+            num_rows: the number of rows of the table to preview.
+        """  # noqa E501
+        if ".csv" in filename:
+            return pd.read_csv(filename).head(num_rows).to_markdown()
+        else:
+            return "the table_path was not recognised"
+
+    class file_peek_inputs(BaseModel):
+        filename: str = Field(
+            description="The name of the attached file to show a peek preview."
+        )
+
+    file_peek_tool = Tool(
+        name="file_peek",
+        description="The name of the attached file to show a peek preview.",  # noqa E501
+        func=file_peek,
+        args_schema=file_peek_inputs,
+    )
+
+    return file_peek_tool
+
+
+def get_file_read_tool() -> Tool:
+    def file_read(filename: str) -> str:
+        """Returns the textual contents of an uploaded file, broken up in text chunks
+
+        Args:
+            filename (str): The name of the attached file to read.
+        """  # noqa E501
+        if ".csv" in filename:
+            return pd.read_csv(filename).to_markdown()
+        else:
+            return "the table_path was not recognised"
+
+    class file_read_inputs(BaseModel):
+        filename: str = Field(description="The name of the attached file to read.")
+
+    file_read_tool = Tool(
+        name="file_read",
+        description="Returns the textual contents of an uploaded file, broken up in text chunks",  # noqa E501
+        func=file_read,
+        args_schema=file_read_inputs,
+    )
+
+    return file_read_tool
+
+
+def get_python_tool() -> Tool:
+    """Returns a tool that will execute python code and return the output."""
+
+    def python_interpreter(code: str) -> str:
+        """A function that will return the output of the python code.
+
+        Args:
+            code: the python code to run.
+        """
+        return python_repl.run(code)
+
+    python_repl = PythonAstREPLTool()
+    python_tool = Tool(
+        name="python_interpreter",
+        description="Executes python code and returns the result. The code runs in a static sandbox without interactive mode, so print output or save output to a file.",  # noqa E501
+        func=python_interpreter,
+    )
+
+    class PythonToolInput(BaseModel):
+        code: str = Field(description="Python code to execute.")
+
+    python_tool.args_schema = PythonToolInput
+    return python_tool
+
+```
+
+### Create helper functions
+In the cell below, we will create some important helper functions that we can call to properly assemble the full prompt that the csv agent can utilize.
+
+
+```python
+def create_prompt(
+    system_message: Optional[BaseMessage] = SystemMessage(
+        content="You are a helpful AI assistant."
+    ),
+    extra_prompt_messages: Optional[List[BaseMessagePromptTemplate]] = None,
+) -> ChatPromptTemplate:
+    """Create prompt for this agent.
+
+    Args:
+        system_message: Message to use as the system message that will be the
+            first in the prompt.
+        extra_prompt_messages: Prompt messages that will be placed between the
+            system message and the new human input.
+
+    Returns:
+        A prompt template to pass into this agent.
+    """
+    _prompts = extra_prompt_messages or []
+    messages: List[Union[BaseMessagePromptTemplate, BaseMessage]]
+    if system_message:
+        messages = [system_message]
+    else:
+        messages = []
+
+    messages.extend(
+        [
+            *_prompts,
+            HumanMessagePromptTemplate.from_template("{input}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ]
+    )
+    return ChatPromptTemplate(messages=messages)
+
+
+def _get_csv_head_str(path: str, number_of_head_rows: int) -> str:
+    with open(path, "r") as file:
+        lines = []
+        for _ in range(number_of_head_rows):
+            lines.append(file.readline().strip("\n"))
+        # validate that the head contents are well formatted csv
+
+        return " ".join(lines)
+
+
+def _get_prompt(
+    path: Union[str, List[str]], number_of_head_rows: int
+) -> ChatPromptTemplate:
+    if isinstance(path, str):
+        lines = _get_csv_head_str(path, number_of_head_rows)
+        prompt_message = f"The user uploaded the following attachments:\nFilename: {path}\nWord Count: {count_words_in_file(path)}\nPreview: {lines}"  # noqa: E501
+
+    elif isinstance(path, list):
+        prompt_messages = []
+        for file_path in path:
+            lines = _get_csv_head_str(file_path, number_of_head_rows)
+            prompt_messages.append(
+                f"The user uploaded the following attachments:\nFilename: {file_path}\nWord Count: {count_words_in_file(file_path)}\nPreview: {lines}"  # noqa: E501
+            )
+        prompt_message = " ".join(prompt_messages)
+
+    prompt = create_prompt(system_message=HumanMessage(prompt_message))
+    return prompt
+
+
+def count_words_in_file(file_path: str) -> int:
+    try:
+        with open(file_path, "r") as file:
+            content = file.readlines()
+            words = [len(sentence.split()) for sentence in content]
+            return sum(words)
+    except FileNotFoundError:
+        print("File not found.")
+        return 0
+    except Exception as e:
+        print("An error occurred:", str(e))
+        return 0
+```
+
+### Build the core csv agent abstraction
+The cells below outline the assembly of the various components to build an agent abstraction tailored for intelligent CSV file interactions. We use langchain to provide the agent that has access to the tools declared above, along with additional capabilities to provide additional tools if needed, and put together an agentic abstraction using the prompts defined earlier to deliver an abstraction that can easily be called for natural language querying over csv files!
+
+
+```python
+# Build the agent abstraction itself
+def create_csv_agent(
+    llm: BaseLanguageModel,
+    path: Union[str, List[str]],
+    extra_tools: List[BaseTool] = [],
+    pandas_kwargs: Optional[dict] = None,
+    prompt: Optional[ChatPromptTemplate] = None,
+    number_of_head_rows: int = 5,
+    verbose: bool = True,
+    return_intermediate_steps: bool = True,
+) -> AgentExecutor:
+    """Create csv agent with the specified language model.
+
+    Args:
+        llm: Language model to use for the agent.
+        path: A string path, or a list of string paths
+            that can be read in as pandas DataFrames with pd.read_csv().
+        number_of_head_rows: Number of rows to display in the prompt for sample data
+        include_df_in_prompt: Display the DataFrame sample values in the prompt.
+        pandas_kwargs: Named arguments to pass to pd.read_csv().
+        prefix: Prompt prefix string.
+        suffix: Prompt suffix string.
+        prompt: Prompt to use for the agent. This takes precedence over the other prompt arguments, such as suffix and prefix.
+        temp_path_dir: Temporary directory to store the csv files in for the python repl.
+        delete_temp_path: Whether to delete the temporary directory after the agent is done. This only works if temp_path_dir is not provided.
+
+    Returns:
+        An AgentExecutor with the specified agent_type agent and access to
+        a PythonREPL and any user-provided extra_tools.
+
+    Example:
+        .. code-block:: python
+
+            from langchain_cohere import ChatCohere, create_csv_agent
+
+            llm = ChatCohere(model="command-r-plus", temperature=0)
+            agent_executor = create_csv_agent(
+                llm,
+                "titanic.csv"
+            )
+            resp = agent_executor.invoke({"input":"How many people were on the titanic?"})
+            print(resp.get("output"))
+    """  # noqa: E501
+    try:
+        import pandas as pd
+    except ImportError:
+        raise ImportError(
+            "pandas package not found, please install with `pip install pandas`."
+        )
+
+    _kwargs = pandas_kwargs or {}
+    if isinstance(path, (str)):
+        df = pd.read_csv(path, **_kwargs)
+
+    elif isinstance(path, list):
+        df = []
+        for item in path:
+            if not isinstance(item, (str, IOBase)):
+                raise ValueError(f"Expected str or file-like object, got {type(path)}")
+            df.append(pd.read_csv(item, **_kwargs))
+    else:
+        raise ValueError(f"Expected str, list, or file-like object, got {type(path)}")
+
+    if not prompt:
+        prompt = _get_prompt(path, number_of_head_rows)
+
+    final_tools = [
+        get_file_read_tool(),
+        get_file_peek_tool(),
+        get_python_tool(),
+    ] + extra_tools
+    if "preamble" in llm.__dict__ and not llm.__dict__.get("preamble"):
+        llm = ChatCohere(**llm.__dict__)
+        llm.preamble = CSV_PREAMBLE.format(
+            current_date=datetime.now().strftime("%A, %B %d, %Y %H:%M:%S")
+        )
+
+    agent = create_tool_calling_agent(llm=llm, tools=final_tools, prompt=prompt)
+    agent_executor = AgentExecutor(
+        agent=agent,
+        tools=final_tools,
+        verbose=verbose,
+        return_intermediate_steps=return_intermediate_steps,
+    )
+    return agent_executor
+
+```
+
+# Using the CSV agent
+
+Let's create a dummy CSV file for demo
+
+
+```python
+import csv
+
+# Data to be written to the CSV file
+data = [
+    ["movie", "name", "num_tickets"],
+    ["The Shawshank Redemption", "John", 2],
+    ["The Shawshank Redemption", "Jerry", 2],
+    ["The Shawshank Redemption", "Jack", 4],
+    ["The Shawshank Redemption", "Jeremy", 2],
+    ["Finding Nemo", "Darren", 3],
+    ["Finding Nemo", "Jones", 2],
+    ["Finding Nemo", "King", 1],
+    ["Finding Nemo", "Penelope", 5],
+]
+
+file_path = "movies_tickets.csv"
+
+with open(file_path, "w", newline="") as file:
+    writer = csv.writer(file)
+    writer.writerows(data)
+
+print(f"CSV file created successfully at {file_path}.")
+
+```
+
+    CSV file created successfully at movies_tickets.csv.
+
+
+Let's use our CSV Agent to interact with the CSV file
+
+
+```python
+# Try out an example
+llm = ChatCohere(model="command-r-plus", temperature=0)
+agent_executor = create_csv_agent(
+                llm,
+                "movies_tickets.csv")
+resp = agent_executor.invoke({"input":"Who all watched Shawshank redemption?"})
+print(resp.get("output"))
+```
+
+    
+    
+    [1m> Entering new AgentExecutor chain...[0m
+    [32;1m[1;3m
+    Invoking: `python_interpreter` with `{'code': 'import csv\n\nlines = csv.reader(open(\'movies_tickets.csv\', "r"))\n\nshawshank_redemption_watchers = []\n\nfor i, line in enumerate(lines):\n    if i == 0:\n        continue\n    if line[0] == \'The Shawshank Redemption\':\n        shawshank_redemption_watchers.append(line[1])\n\nprint(f"People who watched Shawshank Redemption: {shawshank_redemption_watchers}")'}`
+    responded: I will use Python to read the CSV file and find out who watched Shawshank Redemption.
+    
+    [0m[38;5;200m[1;3mPeople who watched Shawshank Redemption: ['John', 'Jerry', 'Jack', 'Jeremy']
+    [0m[32;1m[1;3mJohn, Jerry, Jack and Jeremy watched Shawshank Redemption.[0m
+    
+    [1m> Finished chain.[0m
+    John, Jerry, Jack and Jeremy watched Shawshank Redemption.
+
