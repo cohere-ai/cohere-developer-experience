@@ -1,5 +1,5 @@
 ---
-title: Summarizing Text
+title: Summarizing Text with the Chat Endpoint
 slug: "v2/docs/summarizing-text"
 
 hidden: false 
@@ -20,6 +20,7 @@ You can perform text summarization with a simple prompt asking the model to summ
 
 ```python PYTHON
 import cohere
+
 co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
 document = """Equipment rental in North America is predicted to “normalize” going into 2024,
@@ -40,7 +41,7 @@ message = f"Generate a concise summary of this text\n{document}"
 
 response = co.chat(
     model="command-r-plus-08-2024",
-    messages=[{"role": "user", "content": message}]
+    messages=[{"role": "user", "content": message}],
 )
 
 
@@ -68,7 +69,7 @@ message = f"Summarize this text in one sentence\n{document}"
 
 response = co.chat(
     model="command-r-plus-08-2024",
-    messages=[{"role": "user", "content": message}]
+    messages=[{"role": "user", "content": message}],
 )
 
 print(response.message.content[0].text)
@@ -89,7 +90,7 @@ message = f"Summarize this text in less than 10 words\n{document}"
 
 response = co.chat(
     model="command-r-plus-08-2024",
-    messages=[{"role": "user", "content": message}]
+    messages=[{"role": "user", "content": message}],
 )
 
 print(response.message.content[0].text)
@@ -110,7 +111,7 @@ message = f"Generate a concise summary of this text as bullet points\n{document}
 
 response = co.chat(
     model="command-r-plus-08-2024",
-    messages=[{"role": "user", "content": message}]
+    messages=[{"role": "user", "content": message}],
 )
 
 print(response.message.content[0].text)
@@ -161,7 +162,6 @@ It also helps to create a custom system message to prime the model about the tas
 ```python PYTHON
 system_message = """## Task and Context
 You will receive a series of text fragments from a document that are presented in chronological order. As the assistant, you must generate responses to user's requests based on the information given in the fragments. Ensure that your responses are accurate and truthful, and that you reference your sources where appropriate to answer the queries, regardless of their complexity."""
-
 ```
 Other than the custom system message, the only change to the Chat endpoint call is passing the document parameter containing the list of document chunks.
 
@@ -233,22 +233,23 @@ co.summarize(
 )
 
 # After
-co.summarize(
-    format="bullets",
-    length="short",
-    extractiveness="low",
-    text="""Equipment rental in North America is predicted to “normalize” going into 2024, according
-  to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA).
+message = """Write a short summary from the following text in bullet point format, in different words.
+  
+  Equipment rental in North America is predicted to “normalize” going into 2024, according to Josh
+  Nickell, vice president of equipment rental for the American Rental Association (ARA).
   “Rental is going back to ‘normal,’ but normal means that strategy matters again - geography
-  matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you
-  just showed up with equipment and you made money.
+  matters, fleet mix matters, customer type matters,” Nickell said. “In late 2020 to 2022, you just
+  showed up with equipment and you made money.
   “Everybody was breaking records, from the national rental chains to the smallest rental companies;
-  everybody was having record years, and everybody was raising prices. The conversation was, ‘How
-  much are you up?’ And now, the conversation is changing to ‘What’s my market like?’”
+  everybody was having record years, and everybody was raising prices. The conversation was,
+  ‘How much are you up?’ And now, the conversation is changing to ‘What’s my market like?’”
   Nickell stressed this shouldn’t be taken as a pessimistic viewpoint. It’s simply coming back
   down to Earth from unprecedented circumstances during the time of Covid. Rental companies are
   still seeing growth, but at a more moderate level.
-  """,
-)
+"""
 
+co.chat(
+    messages=[{"role": "user", "content": message}],
+    model="command-r-plus-08-2024",
+)
 ```
