@@ -7,7 +7,7 @@ image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "Cohere, language models, "
 ---
 
-<a target="_blank" href="https://colab.research.google.com/github/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/getting-started/v2/tutorial_pt4.ipynb">Open in Colab</a>
+<a target="_blank" href="https://colab.research.google.com/github/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/getting-started/v2/tutorial_pt4_v2.ipynb">Open in Colab</a>
 
 [Text embeddings](/v2/docs/embeddings) are lists of numbers that represent the context or meaning inside a piece of text. This is particularly useful in search or information retrieval applications. With text embeddings, this is called semantic search.
 
@@ -35,7 +35,8 @@ To get started, first we need to install the `cohere` library and create a Coher
 import cohere
 import numpy as np
 
-co = cohere.ClientV2(api_key="COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
+# Get your free API key: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(api_key="COHERE_API_KEY")
 ```
 
 ## Embedding the documents
@@ -56,24 +57,45 @@ Right now, we are doing the former. We call the Embed endpoint using `co.embed()
 ```python PYTHON
 # Define the documents
 faqs_long = [
-    {"text": "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged."},
-    {"text": "Finding Coffee Spots: For your caffeine fix, head to the break room's coffee machine or cross the street to the café for artisan coffee."},
-    {"text": "Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!"},
-    {"text": "Working Hours Flexibility: We prioritize work-life balance. While our core hours are 9 AM to 5 PM, we offer flexibility to adjust as needed."},
-    {"text": "Side Projects Policy: We encourage you to pursue your passions. Just be mindful of any potential conflicts of interest with our business."},
-    {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
-    {"text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."},
-    {"text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."},
-    {"text": "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year."},
-    {"text": "Proposing New Ideas: Innovation is welcomed! Share your brilliant ideas at our weekly team meetings or directly with your team lead."},
+    {
+        "text": "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged."
+    },
+    {
+        "text": "Finding Coffee Spots: For your caffeine fix, head to the break room's coffee machine or cross the street to the café for artisan coffee."
+    },
+    {
+        "text": "Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!"
+    },
+    {
+        "text": "Working Hours Flexibility: We prioritize work-life balance. While our core hours are 9 AM to 5 PM, we offer flexibility to adjust as needed."
+    },
+    {
+        "text": "Side Projects Policy: We encourage you to pursue your passions. Just be mindful of any potential conflicts of interest with our business."
+    },
+    {
+        "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+    },
+    {
+        "text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."
+    },
+    {
+        "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+    },
+    {
+        "text": "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year."
+    },
+    {
+        "text": "Proposing New Ideas: Innovation is welcomed! Share your brilliant ideas at our weekly team meetings or directly with your team lead."
+    },
 ]
 
 # Embed the documents
 doc_emb = co.embed(
-            model="embed-english-v3.0",
-            input_type="search_document",
-            texts=[doc['text'] for doc in faqs_long],
-            embedding_types=["float"]).embeddings.float
+    model="embed-english-v3.0",
+    input_type="search_document",
+    texts=[doc["text"] for doc in faqs_long],
+    embedding_types=["float"],
+).embeddings.float
 ```
 
 Further reading:
@@ -95,10 +117,11 @@ query = "Ways to connect with my teammates"
 
 # Embed the query
 query_emb = co.embed(
-            model="embed-english-v3.0",
-            input_type="search_query",
-            texts=[query],
-            embedding_types=["float"]).embeddings.float
+    model="embed-english-v3.0",
+    input_type="search_query",
+    texts=[query],
+    embedding_types=["float"],
+).embeddings.float
 ```
 
 ## Perfoming semantic search
@@ -115,15 +138,16 @@ Here, we show the most relevant documents with their similarity scores.
 ```python PYTHON
 # Compute dot product similarity and display results
 def return_results(query_emb, doc_emb, documents):
-    n = 2 # customize your top N results
+    n = 2  # customize your top N results
     scores = np.dot(query_emb, np.transpose(doc_emb))[0]
     max_idx = np.argsort(-scores)[:n]
-        
+
     for rank, idx in enumerate(max_idx):
         print(f"Rank: {rank+1}")
         print(f"Score: {scores[idx]}")
         print(f"Document: {documents[idx]}\n")
-        
+
+
 return_results(query_emb, doc_emb, faqs_long)
 ```
 ```
@@ -153,28 +177,38 @@ In the example below, we repeat the steps of performing semantic search with one
 ```python PYTHON
 # Define the documents
 faqs_short_fr = [
-    {"text" : "Remboursement des frais de voyage : Gérez facilement vos frais de voyage en les soumettant via notre outil financier. Les approbations sont rapides et simples."},
-    {"text" : "Travailler de l'étranger : Il est possible de travailler à distance depuis un autre pays. Il suffit de coordonner avec votre responsable et de vous assurer d'être disponible pendant les heures de travail."},
-    {"text" : "Avantages pour la santé et le bien-être : Nous nous soucions de votre bien-être et proposons des adhésions à des salles de sport, des cours de yoga sur site et une assurance santé complète."},
-    {"text" : "Fréquence des évaluations de performance : Nous organisons des bilans informels tous les trimestres et des évaluations formelles deux fois par an."}
+    {
+        "text": "Remboursement des frais de voyage : Gérez facilement vos frais de voyage en les soumettant via notre outil financier. Les approbations sont rapides et simples."
+    },
+    {
+        "text": "Travailler de l'étranger : Il est possible de travailler à distance depuis un autre pays. Il suffit de coordonner avec votre responsable et de vous assurer d'être disponible pendant les heures de travail."
+    },
+    {
+        "text": "Avantages pour la santé et le bien-être : Nous nous soucions de votre bien-être et proposons des adhésions à des salles de sport, des cours de yoga sur site et une assurance santé complète."
+    },
+    {
+        "text": "Fréquence des évaluations de performance : Nous organisons des bilans informels tous les trimestres et des évaluations formelles deux fois par an."
+    },
 ]
 
 # Embed the documents
 doc_emb = co.embed(
-            model="embed-multilingual-v3.0",
-            input_type="search_document",
-            texts=[doc['text'] for doc in faqs_short_fr],
-            embedding_types=["float"]).embeddings.float
+    model="embed-multilingual-v3.0",
+    input_type="search_document",
+    texts=[doc["text"] for doc in faqs_short_fr],
+    embedding_types=["float"],
+).embeddings.float
 
 # Add the user query
 query = "What's your remote-working policy?"
 
 # Embed the query
 query_emb = co.embed(
-            model="embed-multilingual-v3.0",
-            input_type="search_query",
-            texts=[query],
-            embedding_types=["float"]).embeddings.float
+    model="embed-multilingual-v3.0",
+    input_type="search_query",
+    texts=[query],
+    embedding_types=["float"],
+).embeddings.float
 
 # Compute dot product similarity and display results
 return_results(query_emb, doc_emb, faqs_short_fr)
@@ -209,20 +243,22 @@ In the example below, we embed the documents in two formats: `float` and `int8`.
 ```python PYTHON
 # Embed the documents with the given embedding types
 doc_emb = co.embed(
-            model="embed-english-v3.0",
-            input_type="search_document",
-            texts=[doc['text'] for doc in faqs_long],
-            embedding_types=["float","int8"]).embeddings
+    model="embed-english-v3.0",
+    input_type="search_document",
+    texts=[doc["text"] for doc in faqs_long],
+    embedding_types=["float", "int8"],
+).embeddings
 
 # Add the user query
 query = "Ways to connect with my teammates"
 
 # Embed the query
 query_emb = co.embed(
-            model="embed-english-v3.0",
-            input_type="search_query",
-            texts=[query],
-            embedding_types=["float","int8"]).embeddings
+    model="embed-english-v3.0",
+    input_type="search_query",
+    texts=[query],
+    embedding_types=["float", "int8"],
+).embeddings
 ```
 
 Here are the search results of using the `float` embeddings (same as the earlier example).

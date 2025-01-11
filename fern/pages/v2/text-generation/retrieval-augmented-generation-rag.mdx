@@ -127,7 +127,6 @@ There are different possible approaches to do this. In this example, we'll take 
 Here, we build a tool that takes a user query and returns a list of relevant document snippets for that query. The tool can generate zero, one or multiple search queries depending on the user query.
 
 ```python PYTHON
-
 message = "Who is more popular: Nsync or Backstreet Boys?"
 
 # Define the query generation tool
@@ -297,34 +296,38 @@ documents = [
         "data": {
             "title": "Tall penguins",
             "snippet": "Emperor penguins are the tallest.",
-            "doc_id": "100"
+            "doc_id": "100",
         }
     },
     {
         "data": {
             "title": "Penguin habitats",
             "snippet": "Emperor penguins only live in Antarctica.",
-            "doc_id": "101"
+            "doc_id": "101",
         }
-    }
+    },
 ]
 
-messages = [{"role": "user", "content": "Where do the tallest penguins live?"}]
+messages = [
+    {"role": "user", "content": "Where do the tallest penguins live?"}
+]
 
 response = co.chat_stream(
     model="command-r-plus-08-2024",
     messages=messages,
     documents=documents,
-    citation_options={"mode":"accurate"}
+    citation_options={"mode": "accurate"},
 )
 
 for chunk in response:
     if chunk:
         if chunk.type == "content-delta":
             print(chunk.delta.message.content.text, end="")
-        elif chunk.type == "citation-start":      
-            print(f" [{chunk.delta.message.citations.sources[0].document['doc_id']}]", end="")
-
+        elif chunk.type == "citation-start":
+            print(
+                f" [{chunk.delta.message.citations.sources[0].document['doc_id']}]",
+                end="",
+            )
 ```
 Example response:
 ```mdx wordWrap
@@ -341,33 +344,38 @@ documents = [
         "data": {
             "title": "Tall penguins",
             "snippet": "Emperor penguins are the tallest.",
-            "doc_id": "100"
+            "doc_id": "100",
         }
     },
     {
         "data": {
             "title": "Penguin habitats",
             "snippet": "Emperor penguins only live in Antarctica.",
-            "doc_id": "101"
+            "doc_id": "101",
         }
-    }
+    },
 ]
 
-messages = [{"role": "user", "content": "Where do the tallest penguins live?"}]
+messages = [
+    {"role": "user", "content": "Where do the tallest penguins live?"}
+]
 
 response = co.chat_stream(
     model="command-r-plus-08-2024",
     messages=messages,
     documents=documents,
-    citation_options={"mode":"fast"}
+    citation_options={"mode": "fast"},
 )
 
 for chunk in response:
     if chunk:
         if chunk.type == "content-delta":
             print(chunk.delta.message.content.text, end="")
-        elif chunk.type == "citation-start":      
-            print(f" [{chunk.delta.message.citations.sources[0].document['doc_id']}]", end="")
+        elif chunk.type == "citation-start":
+            print(
+                f" [{chunk.delta.message.citations.sources[0].document['doc_id']}]",
+                end="",
+            )
 ```
 Example response:
 ```mdx wordWrap
