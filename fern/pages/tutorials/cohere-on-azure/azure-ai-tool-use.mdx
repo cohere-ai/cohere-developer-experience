@@ -6,6 +6,7 @@ description: "A guide for using tool use and building agents with Cohere's Comma
 image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"  
 keywords: "Cohere, tool use, agents, chatbot, Command models, Azure AI Foundry"
 ---
+[Open in GitHub](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/cohere-on-azure/azure-ai-tool-use.ipynb)
 
 Tool use enhances retrieval-augmented generation (RAG) capabilities by enabling applications to both answer questions and automate tasks.
 
@@ -174,8 +175,7 @@ def run_assistant(message, chat_history=None):
         preamble=preamble,
         tools=tools,
         chat_history=chat_history,
-        force_single_step=False,
-        max_tokens=500
+        force_single_step=False
     )
 
     while response.tool_calls:
@@ -197,31 +197,16 @@ def run_assistant(message, chat_history=None):
             tool_results.append({"call": tool_call, "outputs": [tool_output]})
         
         # Step 4: Generate response and citations
-        print("="*30)
-        print("PRE")
-        for item in response.chat_history:
-            print(item)
-            print("-"*30)
-        
-        print("TOOL RESULTS")
-        print(tool_results)     
         response = co.chat(
             message="",
             preamble=preamble,
             tools=tools,
             tool_results=tool_results,
             chat_history=response.chat_history,
-            force_single_step=False,
-            max_tokens=500
+            force_single_step=False
         )
 
         chat_history = response.chat_history
-        
-        print("="*30)
-        print("POST")
-        for item in chat_history:
-            print(item)
-            print("-"*30)
         
     # Print final response
     print("RESPONSE:\n")
@@ -258,42 +243,26 @@ Question:
 Any doc on how do I submit travel expenses? Also, any emails about setting up IT access?
 ==================================================
 Tool plan:
-I will search for a document on how to submit travel expenses and emails about setting up IT access. 
+I will search for 'how to submit travel expenses' and 'setting up IT access'. 
 
 Tool calls:
 Tool name: search_faqs | Parameters: {'query': 'how to submit travel expenses'}
 Tool name: search_emails | Parameters: {'query': 'setting up IT access'}
 ==================================================
-==============================
-PRE
-role='USER' message='Any doc on how do I submit travel expenses? Also, any emails about setting up IT access?' tool_calls=None
-------------------------------
-role='CHATBOT' message='I will search for a document on how to submit travel expenses and emails about setting up IT access.' tool_calls=[ToolCall(name='search_faqs', parameters={'query': 'how to submit travel expenses'}), ToolCall(name='search_emails', parameters={'query': 'setting up IT access'})]
-------------------------------
-TOOL RESULTS
-[{'call': {'name': 'search_faqs', 'parameters': {'query': 'how to submit travel expenses'}}, 'outputs': [{'faqs': [{'text': 'Submitting Travel Expenses:\nSubmit your expenses through our user-friendly finance tool.'}, {'text': "Side Projects Policy:\nWe encourage you to explore your passions! Just ensure there's no conflict of interest with our business."}, {'text': 'Wellness Benefits:\nTo promote a healthy lifestyle, we provide gym memberships, on-site yoga classes, and health insurance.'}]}]}, {'call': {'name': 'search_emails', 'parameters': {'query': 'setting up IT access'}}, 'outputs': [{'emails': [{'from': 'hr@co1t.com', 'to': 'david@co1t.com', 'date': '2024-06-24', 'subject': 'A Warm Welcome to Co1t, David!', 'text': "We are delighted to have you on board. Please find attached your first week's agenda."}, {'from': 'it@co1t.com', 'to': 'david@co1t.com', 'date': '2024-06-24', 'subject': 'Instructions for IT Setup', 'text': 'Welcome, David! To get you started, please follow the attached guide to set up your work accounts.'}, {'from': 'john@co1t.com', 'to': 'david@co1t.com', 'date': '2024-06-24', 'subject': 'First Week Check-In', 'text': "Hi David, let's chat briefly tomorrow to discuss your first week. Also, come join us for lunch this Thursday at noon to meet everyone!"}]}]}]
-==============================
-POST
-role='USER' message='Any doc on how do I submit travel expenses? Also, any emails about setting up IT access?' tool_calls=None
-------------------------------
-role='CHATBOT' message='I will search for a document on how to submit travel expenses and emails about setting up IT access.' tool_calls=[ToolCall(name='search_faqs', parameters={'query': 'how to submit travel expenses'}), ToolCall(name='search_emails', parameters={'query': 'setting up IT access'})]
-------------------------------
-role='TOOL' tool_results=[ToolResult(call=ToolCall(name='search_faqs', parameters={'query': 'how to submit travel expenses'}), outputs=[{'faqs': [{'text': 'Submitting Travel Expenses:\nSubmit your expenses through our user-friendly finance tool.'}, {'text': "Side Projects Policy:\nWe encourage you to explore your passions! Just ensure there's no conflict of interest with our business."}, {'text': 'Wellness Benefits:\nTo promote a healthy lifestyle, we provide gym memberships, on-site yoga classes, and health insurance.'}]}]), ToolResult(call=ToolCall(name='search_emails', parameters={'query': 'setting up IT access'}), outputs=[{'emails': [{'date': '2024-06-24', 'from': 'hr@co1t.com', 'subject': 'A Warm Welcome to Co1t, David!', 'text': "We are delighted to have you on board. Please find attached your first week's agenda.", 'to': 'david@co1t.com'}, {'date': '2024-06-24', 'from': 'it@co1t.com', 'subject': 'Instructions for IT Setup', 'text': 'Welcome, David! To get you started, please follow the attached guide to set up your work accounts.', 'to': 'david@co1t.com'}, {'date': '2024-06-24', 'from': 'john@co1t.com', 'subject': 'First Week Check-In', 'text': "Hi David, let's chat briefly tomorrow to discuss your first week. Also, come join us for lunch this Thursday at noon to meet everyone!", 'to': 'david@co1t.com'}]}])]
-------------------------------
-role='CHATBOT' message='You can submit your travel expenses through the user-friendly finance tool.\n\nThere is an email from IT with instructions for setting up your IT access.' tool_calls=None
-------------------------------
 RESPONSE:
 
 You can submit your travel expenses through the user-friendly finance tool.
 
-There is an email from IT with instructions for setting up your IT access.
+There is an email from IT with the subject 'Instructions for IT Setup'. It says:
+> Welcome, David! To get you started, please follow the attached guide to set up your work accounts.
 ==================================================
 
 CITATIONS:
 
 start=48 end=75 text='user-friendly finance tool.' document_ids=['search_faqs:0:2:0']
-start=89 end=102 text='email from IT' document_ids=['search_emails:1:2:0']
-start=108 end=151 text='instructions for setting up your IT access.' document_ids=['search_emails:1:2:0']
+start=100 end=102 text='IT' document_ids=['search_emails:1:2:0']
+start=120 end=147 text="'Instructions for IT Setup'" document_ids=['search_emails:1:2:0']
+start=160 end=258 text='Welcome, David! To get you started, please follow the attached guide to set up your work accounts.' document_ids=['search_emails:1:2:0']
 
 CITED REFERENCES:
 

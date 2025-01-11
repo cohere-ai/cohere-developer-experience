@@ -6,6 +6,7 @@ description: "A guide for performing retrieval augmented generation (RAG) with C
 image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"  
 keywords: "Cohere, RAG, retrieval augmented generation, chatbot, Command models, Azure AI Foundry"
 ---
+[Open in GitHub](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/cohere-on-azure/azure-ai-rag.ipynb)
 
 Large Language Models (LLMs) excel at generating text and maintaining conversational context in chat applications. However, LLMs can sometimes hallucinate - producing responses that are factually incorrect. This is particularly important to mitigate in enterprise environments where organizations work with proprietary information that wasn't part of the model's training data.
 
@@ -34,33 +35,21 @@ To create a client, you need to provide the API key and the model's base URL for
 ```python PYTHON
 # ! pip install cohere hnswlib unstructured
 
-api_key_chat = "AZURE_API_KEY_CHAT"
-endpoint_chat = "AZURE_ENDPOINT_CHAT" # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
-
-api_key_embed = "AZURE_API_KEY_EMBED"
-endpoint_embed = "AZURE_ENDPOINT_EMBED" # example: "https://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/"
-
-api_key_rerank = "AZURE_API_KEY_RERANK"
-endpoint_rerank = "AZURE_ENDPOINT_RERANK" # example: "https://cohere-rerank-v3-multilingual-xyz.eastus.models.ai.azure.com/"
-```
-
-
-```python PYTHON
 import cohere
 
 co_chat = cohere.Client(
-    api_key=api_key_chat,
-    base_url=endpoint_chat,
+  api_key="AZURE_API_KEY_CHAT",
+  base_url="AZURE_ENDPOINT_CHAT" # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
 )
 
 co_embed = cohere.Client(
-    api_key=api_key_embed,
-    base_url=endpoint_embed,
+  api_key="AZURE_API_KEY_EMBED",
+  base_url="AZURE_ENDPOINT_EMBED" # example: "https://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/"
 )
 
 co_rerank = cohere.Client(
-    api_key=api_key_rerank,
-    base_url=endpoint_rerank,
+    api_key="AZURE_API_KEY_RERANK",
+    base_url="AZURE_ENDPOINT_RERANK" # example: "https://cohere-rerank-v3-multilingual-xyz.eastus.models.ai.azure.com/"
 )
 ```
 
@@ -95,8 +84,10 @@ The model leverages the provided documents as context for its response. Specific
 ```python PYTHON
 message = "What are the tallest living penguins?"
 
-response = co_chat.chat(message=message, 
-                        documents=documents)
+response = co_chat.chat(
+    message=message, 
+    documents=documents
+)
 
 print("\nRESPONSE:\n")
 print(response.text)
@@ -133,6 +124,7 @@ First, let’s import the necessary libraries for this project. This includes `h
 
 ```python PYTHON
 import uuid
+import yaml
 import hnswlib
 from typing import List, Dict
 from unstructured.partition.html import partition_html
@@ -217,8 +209,8 @@ class Vectorstore:
             batch = self.docs[i : min(i + batch_size, self.docs_len)]
             texts = [item["text"] for item in batch]
             docs_embs_batch = co_embed.embed(
-                                texts=texts,
-                                input_type="search_document"
+                texts=texts,
+                input_type="search_document"
             ).embeddings
             self.docs_embs.extend(docs_embs_batch)
 
@@ -247,22 +239,20 @@ class Vectorstore:
 
         # Dense retrieval
         query_emb = co_embed.embed(
-                        texts=[query],
-                        input_type="search_query"
+            texts=[query],
+            input_type="search_query"
         ).embeddings
         
         doc_ids = self.idx.knn_query(query_emb, k=self.retrieve_top_k)[0][0]
 
         # Reranking
-        rank_fields = ["title", "text"] # We'll use the title and text fields for reranking
-
         docs_to_rerank = [self.docs[doc_id] for doc_id in doc_ids]
+        yaml_docs = [yaml.dump(doc, sort_keys=False) for doc in docs_to_rerank] 
         rerank_results = co_rerank.rerank(
-                            query=query,
-                            documents=docs_to_rerank,
-                            top_n=self.rerank_top_k,
-                            rank_fields=rank_fields)
-
+            query=query,
+            documents=yaml_docs,
+            top_n=self.rerank_top_k
+        )
         doc_ids_reranked = [doc_ids[result.index] for result in rerank_results.results]
 
         docs_retrieved = []
@@ -291,7 +281,7 @@ vectorstore = Vectorstore(raw_documents)
 Loading documents...
 Embedding document chunks...
 Indexing document chunks...
-Indexing complete with 133 document chunks.
+Indexing complete with 137 document chunks.
 ```
 
 We can test if the retrieval is working by entering a search query.
@@ -328,17 +318,16 @@ Here's what happens inside the function:
 
 ```python PYTHON
 def run_chatbot(message, chat_history=None):
-    
-    max_tokens = 500
-    
+        
     if chat_history is None:
         chat_history = []
     
     # Generate search queries, if any        
-    response = co_chat.chat(message=message,
-                            search_queries_only=True,
-                            chat_history=chat_history,
-                            max_tokens=max_tokens)
+    response = co_chat.chat(
+        message=message,
+        search_queries_only=True,
+        chat_history=chat_history,
+    )
     
     search_queries = []
     for query in response.search_queries:
@@ -357,17 +346,16 @@ def run_chatbot(message, chat_history=None):
         response = co_chat.chat(
             message=message,
             documents=documents,
-            chat_history=chat_history,
-            max_tokens=max_tokens)
+            chat_history=chat_history
+        )
 
     else:
         response = co_chat.chat(
             message=message,
-            chat_history=chat_history,
-            max_tokens=max_tokens)
+            chat_history=chat_history
+        )
         
     # Print the chatbot response, citations, and documents
-    
     print("\nRESPONSE:\n")
     print(response.text)
         
@@ -382,7 +370,6 @@ def run_chatbot(message, chat_history=None):
     chat_history = response.chat_history
 
     return chat_history
-                
 ```
 
 Here is a sample conversation consisting of a few turns.

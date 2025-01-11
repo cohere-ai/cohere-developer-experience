@@ -7,6 +7,8 @@ image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "Cohere, text generation, chatbot, Command models, Azure AI Foundry"
 ---
 
+[Open in GitHub](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/cohere-on-azure/azure-ai-text-generation.ipynb)
+
 In this tutorial, we'll explore text generation using Cohere's Command model on Azure AI Foundry.
 
 Text generation is a fundamental capability that enables LLMs systems to generate text for various applications, such as providing detailed responses to questions, helping with writing and editing tasks, creating conversational responses, and assisting with code generation and documentation.
@@ -32,15 +34,12 @@ To create a client, you need to provide the API key and the model's base URL for
 
 ```python PYTHON
 # ! pip install cohere
-import cohere
-import os
 
-api_key_chat = "AZURE_API_KEY_CHAT"
-endpoint_chat = "AZURE_ENDPOINT_CHAT" # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
+import cohere
 
 co = cohere.Client(
-  api_key=api_key_chat,
-  base_url=endpoint_chat,
+  api_key="AZURE_API_KEY_CHAT",
+  base_url="AZURE_ENDPOINT_CHAT" # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
 )
 ```
 
@@ -96,13 +95,11 @@ Now, let's define a function to generate text using the Command R+ model on Bedr
 
 This function takes a user message and generates the response via the chat endpoint. Note that we don't need to specify the model as we have already set it up in the client.
 
-Let's also set the `max_tokens` parameter. This parameter controls the maximum number of tokens (words) the model can generate.
-
-
 ```python PYTHON
 def generate_text(message):
-    response = co.chat(message=message,
-                       max_tokens=1000)
+    response = co.chat(
+        message=message
+    )
     return response
 ```
 
@@ -232,10 +229,11 @@ def run_chatbot(message, chat_history=None):
     if chat_history is None:
         chat_history = []
         
-    response = co.chat(message=message,
-                       preamble=preamble,
-                       max_tokens=1000,
-                       chat_history=chat_history)
+    response = co.chat(
+        message=message,
+        preamble=preamble,
+        chat_history=chat_history
+    )
     
     print(response.text)
     

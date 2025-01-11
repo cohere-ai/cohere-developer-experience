@@ -6,6 +6,7 @@ description: "A guide for performing text semantic search with Cohere's Embed mo
 image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"  
 keywords: "Cohere, semantic search, text embeddings, Embed models, Azure AI Foundry"
 ---
+[Open in GitHub](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/cohere-on-azure/azure-ai-sem-search.ipynb)
 
 In this tutorial, we'll explore semantic search using Cohere's Embed modelon Azure AI Foundry.
 
@@ -36,20 +37,14 @@ To create a client, you need to provide the API key and the model's base URL for
 ```python PYTHON
 # ! pip install cohere hnswlib
 
-api_key_embed = "AZURE_API_KEY_EMBED"
-endpoint_embed = "AZURE_ENDPOINT_EMBED" # example: "https://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/"
-```
-
-
-```python PYTHON
 import pandas as pd
 import hnswlib
 import re
 import cohere
 
 co = cohere.Client(
-  api_key=api_key_embed,
-  base_url=endpoint_embed,
+  api_key="AZURE_API_KEY_EMBED",
+  base_url="AZURE_ENDPOINT_EMBED" # example: "https://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/"
 )
 ```
 
@@ -121,8 +116,10 @@ Finally, we'll build a search index with the `hnsw` vector library to store thes
 docs = top_80_df['text'].to_list()
 docs_lang = top_80_df['lang'].to_list()
 translated_docs = top_80_df['translation'].to_list() #for reference when returning non-English results
-doc_embs = co.embed(texts=docs,
-                    input_type='search_document').embeddings
+doc_embs = co.embed(
+    texts=docs,
+    input_type='search_document'
+).embeddings
 
 # Create a search index
 index = hnswlib.Index(space='ip', dim=1024)
@@ -139,8 +136,10 @@ Next, we build a function that takes a query as input, embeds it, and finds the 
 # Retrieval of 4 closest docs to query
 def retrieval(query):
     # Embed query and retrieve results
-    query_emb = co.embed(texts=[query],
-                         input_type="search_query").embeddings
+    query_emb = co.embed(
+        texts=[query],
+        input_type="search_query"
+    ).embeddings
     doc_ids = index.knn_query(query_emb, k=3)[0][0] # we will retrieve 3 closest neighbors
     
     # Print and append results

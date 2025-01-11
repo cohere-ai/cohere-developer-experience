@@ -6,6 +6,7 @@ description: "A guide for performing reranking with Cohere's Reranking models on
 image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"  
 keywords: "Cohere, reranking, semantic search, Rerank models, Azure AI Foundry"
 ---
+[Open in GitHub](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/cohere-on-azure/azure-ai-reranking.ipynb)
 
 In this tutorial, we'll explore reranking using Cohere's Rerank model on Azure AI Foundry.
 
@@ -80,16 +81,22 @@ Calling the Rerank endpoint requires the following arguments:
 - `documents`: The list of documents, which we defined in the previous section
 - `query`: The user query; we’ll use 'What emails have been about refunds?' as an example
 - `top_n`:  The number of documents we want to be returned, sorted from the most to the least relevant document
-- `rank_fields`: The list of fields that the data contains, which in our case are Title and Content
+
+When passing documents that contain multiple fields like in this case, for best performance we recommend formatting them as YAML strings.
 
 
 ```python PYTHON
+import yaml
+
+yaml_docs = [yaml.dump(doc, sort_keys=False) for doc in documents] 
+
 query = 'What emails have been about refunds?'
 
-results = co.rerank(documents=documents,
-                     query=query,
-                     rank_fields=["Title","Content"],
-                     top_n=3)
+results = co.rerank(
+    documents=yaml_docs,
+    query=query,
+    top_n=3
+)
 ```
 
 Since we set `top_n=3`, the response will return the three documents most relevant to our query. Each result includes both the document's original position (index) in our input list and a score indicating how well it matches the query.
@@ -132,8 +139,7 @@ The Rerank 3 model supports multi-aspect and semi-structured data like emails, i
 
 In the following example, we’ll use an email data example. It is a semi-stuctured data that contains a number of fields – from, to, date, subject, and text.
 
-The model will rerank based on order of the fields passed in. For example, given rank_fields=[‘title’,‘author’,‘text’], the model will rerank using the values in title, author, and text sequentially.
-
+The model will rerank based on order of the fields passed.
 
 ```python PYTHON
 # Define the documents
@@ -143,6 +149,7 @@ emails = [
     {"from": "john@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "First Week Check-In", "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!"}
 ]
 
+yaml_emails = [yaml.dump(doc, sort_keys=False) for doc in emails]
 ```
 
 
@@ -151,21 +158,35 @@ emails = [
 query = "Any email about check ins?"
 
 # Rerank the documents
-results = co.rerank(query=query,
-                    documents=emails,
-                    top_n=2,
-                    rank_fields=["from", "to", "date", "subject", "body"])
+results = co.rerank(
+    query=query,
+    documents=yaml_emails,
+    top_n=2,
+)
 
-return_results(results, emails)
+return_results(results, yaml_emails)
 ```
 ```mdx
 Rank: 1
-Score: 0.17147702
-Document: {'from': 'john@co1t.com', 'to': 'david@co1t.com', 'date': '2024-06-24', 'subject': 'First Week Check-In', 'text': "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!"}
+Score: 0.13454832
+Document: from: john@co1t.com
+to: david@co1t.com
+date: '2024-06-24'
+subject: First Week Check-In
+text: "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss\
+  \ how your first week has been going. Also, make sure to join us for a welcoming\
+  \ lunch this Thursday at noon\u2014it's a great opportunity to get to know your\
+  \ colleagues!"
+
 
 Rank: 2
-Score: 0.0019043302
-Document: {'from': 'hr@co1t.com', 'to': 'david@co1t.com', 'date': '2024-06-24', 'subject': 'A Warm Welcome to Co1t!', 'text': "We are delighted to welcome you to the team! As you embark on your journey with us, you'll find attached an agenda to guide you through your first week."}
+Score: 0.0010044164
+Document: from: it@co1t.com
+to: david@co1t.com
+date: '2024-06-24'
+subject: Setting Up Your IT Needs
+text: Greetings! To ensure a seamless start, please refer to the attached comprehensive
+  guide, which will assist you in setting up all your work accounts.
 ```
 
 
