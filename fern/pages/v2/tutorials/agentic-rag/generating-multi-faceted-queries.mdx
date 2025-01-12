@@ -7,7 +7,7 @@ image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "Cohere, RAG, agents, function calling,tool use"
 ---
 
-<a target="_blank" href="https://colab.research.google.com/github/cohere-ai/notebooks/blob/main/notebooks/guides/agentic-rag/agentic_rag_pt4_multi_faceted_queries.ipynb">Open in Colab</a>
+<a target="_blank" href="https://colab.research.google.com/github/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/agentic-rag/agentic_rag_pt4_multi_faceted_queries.ipynb">Open in Colab</a>
 
 Consider a RAG system that needs to search through a large database of code examples and tutorials. A user might ask for "Python examples using the chat endpoint" or "JavaScript tutorials for text summarization".
 
@@ -40,10 +40,11 @@ import json
 import os
 import cohere
 
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
+# Get your free API key: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2("COHERE_API_KEY")
 ```
 
-Important: the source code for tool definitions can be [found here](https://github.com/cohere-ai/notebooks/blob/main/notebooks/guides/agentic-rag/tool_def.py). Make sure to have the tool_def.py file in the same directory as this notebook for the imports to work correctly.
+Important: the source code for tool definitions can be [found here](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/agentic-rag/tool_def.py). Make sure to have the tool_def.py file in the same directory as this notebook for the imports to work correctly.
 
 ## Defining the function for data querying
 
@@ -69,7 +70,6 @@ from tool_def import (
 
 
 ```python PYTHON
-
 functions_map = {
     "search_code_examples_detailed": search_code_examples_detailed,
 }
@@ -123,7 +123,7 @@ The only change we are making here is to make the system message simpler and mor
 
 
 ```python PYTHON
-system_message="""## Task and Context
+system_message = """## Task and Context
 You are an assistant who helps developers find code examples and tutorials on using Cohere."""
 ```
 
@@ -131,75 +131,103 @@ You are an assistant who helps developers find code examples and tutorials on us
 ```python PYTHON
 model = "command-r-plus-08-2024"
 
+
 def run_agent(query, messages=None):
     if messages is None:
         messages = []
-        
+
     if "system" not in {m.get("role") for m in messages}:
         messages.append({"role": "system", "content": system_message})
-    
+
     # Step 1: get user message
     print(f"QUESTION:\n{query}")
-    print("="*50)
-    
+    print("=" * 50)
+
     messages.append({"role": "user", "content": query})
 
     # Step 2: Generate tool calls (if any)
     response = co.chat(
-        model=model,
-        messages=messages,
-        tools=tools,
-        temperature=0.1
+        model=model, messages=messages, tools=tools, temperature=0.1
     )
 
     while response.message.tool_calls:
-        
+
         print("TOOL PLAN:")
-        print(response.message.tool_plan,"\n")
+        print(response.message.tool_plan, "\n")
         print("TOOL CALLS:")
         for tc in response.message.tool_calls:
-            print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
-        print("="*50)
+            print(
+                f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}"
+            )
+        print("=" * 50)
 
-        messages.append({"role": "assistant", "tool_calls": response.message.tool_calls, "tool_plan": response.message.tool_plan})        
-        
+        messages.append(
+            {
+                "role": "assistant",
+                "tool_calls": response.message.tool_calls,
+                "tool_plan": response.message.tool_plan,
+            }
+        )
+
         # Step 3: Get tool results
         for tc in response.message.tool_calls:
-            tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
+            tool_result = functions_map[tc.function.name](
+                **json.loads(tc.function.arguments)
+            )
             tool_content = []
             for data in tool_result:
-                tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+                tool_content.append(
+                    {
+                        "type": "document",
+                        "document": {"data": json.dumps(data)},
+                    }
+                )
                 # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
-            messages.append({"role": "tool", "tool_call_id": tc.id, "content": tool_content})
-        
-        # Step 4: Generate response and citations 
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": tool_content,
+                }
+            )
+
+        # Step 4: Generate response and citations
         response = co.chat(
             model=model,
             messages=messages,
             tools=tools,
-            temperature=0.1
+            temperature=0.1,
         )
-    
-    messages.append({"role": "assistant", "content": response.message.content[0].text})
-        
+
+    messages.append(
+        {
+            "role": "assistant",
+            "content": response.message.content[0].text,
+        }
+    )
+
     # Print final response
     print("RESPONSE:")
     print(response.message.content[0].text)
-    print("="*50)
-    
+    print("=" * 50)
+
     # Print citations (if any)
-    verbose_source = False # Change to True to display the contents of a source
+    verbose_source = (
+        False  # Change to True to display the contents of a source
+    )
     if response.message.citations:
         print("CITATIONS:\n")
         for citation in response.message.citations:
-            print(f"Start: {citation.start}| End:{citation.end}| Text:'{citation.text}' ")
+            print(
+                f"Start: {citation.start}| End:{citation.end}| Text:'{citation.text}' "
+            )
             print("Sources:")
             for idx, source in enumerate(citation.sources):
                 print(f"{idx+1}. {source.id}")
                 if verbose_source:
                     print(f"{source.tool_output}")
             print("\n")
-                    
+
     return messages
 ```
 
@@ -275,7 +303,9 @@ And since we have set up the `endpoints` parameter to be an array, the agent is 
 
 
 ```python PYTHON
-messages = run_agent("Code examples of using embed and rerank endpoints.")
+messages = run_agent(
+    "Code examples of using embed and rerank endpoints."
+)
 
 # Tool name: search_code_examples | Parameters: {"endpoints":["embed","rerank"],"query":"..."}
 ```
@@ -322,7 +352,7 @@ And the agent correctly uses both parameters to query the code examples.
 ```python PYTHON
 messages = run_agent("Python examples of using the chat endpoint.")
 
-#Tool name: search_code_examples | Parameters: {"endpoints":["chat"],"programming_language":"py","query":"..."}
+# Tool name: search_code_examples | Parameters: {"endpoints":["chat"],"programming_language":"py","query":"..."}
 ```
 ```
 QUESTION:

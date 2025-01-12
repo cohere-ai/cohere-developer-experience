@@ -1,5 +1,5 @@
 ---
-title: Amazon Bedrock
+title: Cohere Models on Amazon Bedrock
 slug: v2/docs/amazon-bedrock
 hidden: false
 description: >-
@@ -18,10 +18,9 @@ Here, you'll learn how to use Amazon Bedrock to deploy both the Cohere Command a
 
 - Command R
 - Command R+
-- Command Light
-- Command
 - Embed - English
 - Embed - Multilingual
+- Rerank v3.5
 
 ## Prerequisites
 
@@ -62,17 +61,17 @@ model_id = "cohere.embed-english-v3" # or "cohere.embed-multilingual-v3"
 
 # Invoke the model and print the response
 result = co.embed(
-						model=model_id,
-  					input_type=input_type,
-  				  texts=texts,
-  					truncate=truncate) # aws_client.invoke_model(**params)
+	model=model_id,
+	input_type=input_type,
+	texts=texts,
+	truncate=truncate) # aws_client.invoke_model(**params)
 
 print(result)
 ```
 
 ## Text Generation
 
-You can use this code to invoke either Command R (`cohere.command-r-v1:0`), Command R+ (`cohere.command-r-plus-v1:0`), Command (`cohere.command-text-v14`), or Command light (`cohere.command-light-text-v14`) on Amazon Bedrock:
+You can use this code to invoke either Command R (`cohere.command-r-v1:0`), Command R+ (`cohere.command-r-plus-v1:0`) on Amazon Bedrock:
 
 ```python PYTHON
 import cohere
@@ -89,4 +88,36 @@ result = co.chat(message="Write a LinkedIn post about starting a career in tech:
                  )
 
 print(result)
+```
+
+## Rerank
+
+You can use this code to invoke our latest Rerank models on Bedrock
+
+```python PYTHON
+import cohere
+
+co = cohere.BedrockClientV2(
+    aws_region="us-west-2", # pick a region where the model is available
+    aws_access_key="...",
+    aws_secret_key="...",
+    aws_session_token="...",
+)
+
+docs = [
+    "Carson City is the capital city of the American state of Nevada.",
+    "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.",
+    "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.",
+    "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
+    "Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
+]
+
+response = co.rerank(
+    model="cohere.rerank-v3-5:0",
+    query="What is the capital of the United States?",
+    documents=docs,
+    top_n=3,
+)
+
+print(response)
 ```

@@ -1,5 +1,5 @@
 ---
-title: Connector Authentication
+title: How to Authenticate a Connector
 slug: docs/connector-authentication
 hidden: false
 description: >-
@@ -38,7 +38,8 @@ First, start by generating a secure token. Here’s a snippet of what generating
 
 ```python PYTHON
 # Generate a token
-import secrets  
+import secrets
+
 secrets.token_urlsafe(32)
 ```
 
@@ -55,7 +56,11 @@ curl --request POST
 ```
 ```python PYTHON
 import requests
-r = requests.post('{base_connector_url}/search', {'query': 'How do I expense a meal?'})
+
+r = requests.post(
+    "{base_connector_url}/search",
+    {"query": "How do I expense a meal?"},
+)
 ```
 ```typescript TYPESCRIPT
 const response = await fetch('{base_connector_url}/search'{
@@ -82,9 +87,12 @@ curl --request POST
 ```
 ```python PYTHON
 import requests
-r = requests.post('{base_connector_url}/search',
-                  data={'query': 'How do I expense a meal?'},
-                  headers={"Authorization":"Bearer {Connector API key}"})
+
+r = requests.post(
+    "{base_connector_url}/search",
+    data={"query": "How do I expense a meal?"},
+    headers={"Authorization": "Bearer {Connector API key}"},
+)
 ```
 ```typescript TYPESCRIPT
 const response = await fetch('{base_connector_url}/search'{
@@ -116,16 +124,17 @@ curl --request POST
   }'
 ```
 ```python PYTHON
-import cohere  
-co = cohere.Client('Your API key')
+import cohere
+
+co = cohere.Client("Your API key")
 created_connector = co.create_connector(
-            name="test-connector",
-            url="http://connector-example.com/search",
-            service_auth={
-                "type": "bearer",
-                "token": "{Connector API Key}",
-            },
-        )
+    name="test-connector",
+    url="http://connector-example.com/search",
+    service_auth={
+        "type": "bearer",
+        "token": "{Connector API Key}",
+    },
+)
 ```
 ```typescript TYPESCRIPT
 const { CohereClient } = require("cohere-ai");
@@ -164,12 +173,16 @@ curl --request PATCH
 ```
 ```python PYTHON
 import cohere
+
 # initialize the Cohere Client with an API Key
-co = cohere.Client('YOUR_API_KEY')
-connectors = co.update_connector(connector_id, service_auth={
-                "type": "bearer",
-                "token": "{Connector API Key}",
-            })
+co = cohere.Client("YOUR_API_KEY")
+connectors = co.update_connector(
+    connector_id,
+    service_auth={
+        "type": "bearer",
+        "token": "{Connector API Key}",
+    },
+)
 ```
 ```typescript TYPESCRIPT
 const { CohereClient } = require("cohere-ai");
@@ -215,9 +228,12 @@ curl --request POST
 ```
 ```python PYTHON
 import requests
-r = requests.post('http://connector-example.com/search',
-                  data={'query': 'How do I expense a meal?'},
-                  headers={"Authorization":"Bearer {Personal/Service API key}"})
+
+r = requests.post(
+    "http://connector-example.com/search",
+    data={"query": "How do I expense a meal?"},
+    headers={"Authorization": "Bearer {Personal/Service API key}"},
+)
 ```
 ```typescript TYPESCRIPT
 const response = await fetch('http://connector-example.com/search'{
@@ -265,19 +281,20 @@ curl --request POST
   }'
 ```
 ```python PYTHON
-import cohere  
-co = cohere.Client('Your API key')
+import cohere
+
+co = cohere.Client("Your API key")
 created_connector = co.create_connector(
-            name="test-connector",
-            url="http://connector-example.com/search",
-            oauth={  
-              "client_id": "xxx-yyy.apps.googleusercontent.com",  
-              "client_secret": "zzz-vvv",  
-              "authorize_url": "https://accounts.google.com/o/oauth2/auth",  
-              "token_url": "https://oauth2.googleapis.com/token",  
-              "scope": "https://www.googleapis.com/auth/drive.readonly"  
-            },
-        )
+    name="test-connector",
+    url="http://connector-example.com/search",
+    oauth={
+        "client_id": "xxx-yyy.apps.googleusercontent.com",
+        "client_secret": "zzz-vvv",
+        "authorize_url": "https://accounts.google.com/o/oauth2/auth",
+        "token_url": "https://oauth2.googleapis.com/token",
+        "scope": "https://www.googleapis.com/auth/drive.readonly",
+    },
+)
 ```
 ```typescript TYPESCRIPT
 const { CohereClient } = require("cohere-ai");
@@ -322,15 +339,19 @@ curl --request PATCH
 ```
 ```python PYTHON
 import cohere
+
 # initialize the Cohere Client with an API Key
-co = cohere.Client('YOUR_API_KEY')
-connectors = co.update_connector(connector_id, oauth={  
-              "client_id": "xxx-yyy.apps.googleusercontent.com",  
-              "client_secret": "zzz-vvv",  
-              "authorize_url": "https://accounts.google.com/o/oauth2/auth",  
-              "token_url": "https://oauth2.googleapis.com/token",  
-              "scope": "https://www.googleapis.com/auth/drive.readonly"  
-            })
+co = cohere.Client("YOUR_API_KEY")
+connectors = co.update_connector(
+    connector_id,
+    oauth={
+        "client_id": "xxx-yyy.apps.googleusercontent.com",
+        "client_secret": "zzz-vvv",
+        "authorize_url": "https://accounts.google.com/o/oauth2/auth",
+        "token_url": "https://oauth2.googleapis.com/token",
+        "scope": "https://www.googleapis.com/auth/drive.readonly",
+    },
+)
 ```
 ```typescript TYPESCRIPT
 const { CohereClient } = require("cohere-ai");
@@ -365,11 +386,17 @@ To use pass through authentication/authorization specify the access token in the
 
 <CodeBlocks>
 ```python PYTHON
-import cohere  
-co = cohere.Client('Your API key')  
-response = co.chat(  
-	message="What is the chemical formula for glucose?",  
-	connectors=[{"id": "web-search", "user_access_token": "{Personal/Service API key}" }]  
+import cohere
+
+co = cohere.Client("Your API key")
+response = co.chat(
+    message="What is the chemical formula for glucose?",
+    connectors=[
+        {
+            "id": "web-search",
+            "user_access_token": "{Personal/Service API key}",
+        }
+    ],
 )
 ```
 ```curl CURL

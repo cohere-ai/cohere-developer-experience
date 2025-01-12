@@ -27,12 +27,15 @@ Also, note that multi-step is enabled in the Chat API by default.
 ```python PYTHON
 # define the `web_search` tool.
 
+
 def web_search(query: str) -> list[dict]:
-  # your code for performing a web search goes here
-  # return [{
-  #		"url": "https://en.wikipedia.org/wiki/Ontario",
-  #		"text": "The capital of Ontario is Toronto, ..."
-  #	}]
+    pass
+    # your code for performing a web search goes here
+    # return [{
+    # 		"url": "https://en.wikipedia.org/wiki/Ontario",
+    # 		"text": "The capital of Ontario is Toronto, ..."
+    # 	}]
+
 
 web_search_tool = {
     "type": "function",
@@ -44,12 +47,12 @@ web_search_tool = {
             "properties": {
                 "query": {
                     "type": "str",
-                    "description": "the query to look up"
+                    "description": "the query to look up",
                 }
             },
-            "required": ["query"]
-        }
-    }
+            "required": ["query"],
+        },
+    },
 }
 ```
 
@@ -58,6 +61,7 @@ web_search_tool = {
 ```python PYTHON
 import json
 import cohere
+
 co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
 # 1 - Add the user message
@@ -78,7 +82,9 @@ while res.message.tool_calls:
 
     print("\nTool calls:")
     for tc in res.message.tool_calls:
-        print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
+        print(
+            f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}"
+        )
 
     messages.append(
         {
@@ -95,14 +101,25 @@ while res.message.tool_calls:
         print(tool_result)
         tool_content = []
         for data in tool_result:
-            tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+            tool_content.append(
+                {
+                    "type": "document",
+                    "document": {"data": json.dumps(data)},
+                }
+            )
             # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
         messages.append(
-            {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
+            {
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": tool_content,
+            }
         )
 
     # 4 - Model either generates more tool calls or returns a response
-    res = co.chat(model=model, messages=messages, tools=[web_search_tool])
+    res = co.chat(
+        model=model, messages=messages, tools=[web_search_tool]
+    )
 
 print("\nResponse:")
 print(res.message.content[0].text)
@@ -179,7 +196,7 @@ response = co.chat(model="command-r-plus-08-2024",
 
 ## A Further Example With Multiple Tools
 
-This section provides another example of multi-step tool use, this time with multiple tools. The notebook for this example can be [found here](https://github.com/cohere-ai/notebooks/blob/main/notebooks/agents/Multi_Step_Tool_Use_Spotify_v2.ipynb).
+This section provides another example of multi-step tool use, this time with multiple tools. The notebook for this example can be [found here](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/agents/Multi_Step_Tool_Use_Spotify_v2.ipynb).
 
 This example demonstrates an agent that performs analysis on a Spotify tracks dataset (via a Python interpreter tool) while also having access to another tool: web search tool.
 
@@ -193,6 +210,7 @@ Here, we define the web search tool, which uses the Tavily Python client to perf
 from tavily import TavilyClient
 
 tavily_client = TavilyClient(api_key="TAVILY_API_KEY")
+
 
 # here's a web search engine
 def web_search(query: str) -> list[dict]:
@@ -235,8 +253,11 @@ def python_interpreter(code: str) -> list[dict]:
     except Exception as e:
         return {"error": str(e), "executed_code": code}
     # Get stdout
-    return [{"console_output": output.getvalue(), "executed_code": code}]
-    
+    return [
+        {"console_output": output.getvalue(), "executed_code": code}
+    ]
+
+
 # the LLM is equipped with a description of a python console
 python_interpreter_tool = {
     "type": "function",
@@ -248,12 +269,12 @@ python_interpreter_tool = {
             "properties": {
                 "code": {
                     "type": "string",
-                    "description": "Python code to execute"
+                    "description": "Python code to execute",
                 }
             },
-            "required": ["code"]
-        }
-    }
+            "required": ["code"],
+        },
+    },
 }
 
 functions_map = {
@@ -262,7 +283,7 @@ functions_map = {
 }
 ```
 
-We'll also need the `spotify_data` dataset, which contains information about Spotify tracks such as the track information, release information, popularity metrics, and musical characteristics. You can find the dataset [here](https://github.com/cohere-ai/notebooks/blob/main/notebooks/guides/advanced_rag/spotify_dataset.csv).
+We'll also need the `spotify_data` dataset, which contains information about Spotify tracks such as the track information, release information, popularity metrics, and musical characteristics. You can find the dataset [here](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/advanced_rag/spotify_dataset.csv).
 
 Here is the task that the agent needs to perform:
 
@@ -286,19 +307,18 @@ Next, we run the tool use workflow involving for steps:
 
 ```python PYTHON
 model = "command-r-plus-08-2024"
-tools = [web_search_tool,python_interpreter_tool]
+tools = [web_search_tool, python_interpreter_tool]
 
 # Step 1: get user message
 print(f"USER MESSAGE:\n{message}")
-print("="*50)
+print("=" * 50)
 
-messages = [{'role': 'user','content': message}]
+messages = [{"role": "user", "content": message}]
 
 # 2 - Model generates tool calls, if any
-res = co.chat(model=model,
-        messages=messages,
-        tools=tools,
-        temperature=0.1)
+res = co.chat(
+    model=model, messages=messages, tools=tools, temperature=0.1
+)
 
 # Keep invoking tools as long as the model generates tool calls
 while res.message.tool_calls:
@@ -310,35 +330,62 @@ while res.message.tool_calls:
     for tc in res.message.tool_calls:
         if tc.function.name == "python_interpreter":
             print(f"Tool name: {tc.function.name}")
-            tool_call_prettified = print("\n".join(f"  {line}" for line_num, line in enumerate(json.loads(tc.function.arguments)["code"].splitlines())))
+            tool_call_prettified = print(
+                "\n".join(
+                    f"  {line}"
+                    for line_num, line in enumerate(
+                        json.loads(tc.function.arguments)[
+                            "code"
+                        ].splitlines()
+                    )
+                )
+            )
             print(tool_call_prettified)
         else:
-            print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
+            print(
+                f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}"
+            )
 
-    messages.append({'role': 'assistant',
-                    'tool_calls': res.message.tool_calls,
-                    'tool_plan': res.message.tool_plan})
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_calls": res.message.tool_calls,
+            "tool_plan": res.message.tool_plan,
+        }
+    )
 
     # 3 - Execute tools based on the tool calls generated by the model
     print("\nTOOL RESULTS:")
     for tc in res.message.tool_calls:
-        tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
+        tool_result = functions_map[tc.function.name](
+            **json.loads(tc.function.arguments)
+        )
         print(tool_result, "\n")
         tool_content = []
         for data in tool_result:
-            tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+            tool_content.append(
+                {
+                    "type": "document",
+                    "document": {"data": json.dumps(data)},
+                }
+            )
             # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
         messages.append(
-            {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
+            {
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": tool_content,
+            }
         )
 
     # 4 - Model either generates more tool calls or returns a response
-    res = co.chat(model=model,
-                messages=messages,
-                tools=tools,
-                temperature=0.1)
-    
-messages.append({"role": "assistant", "content": res.message.content[0].text})
+    res = co.chat(
+        model=model, messages=messages, tools=tools, temperature=0.1
+    )
+
+messages.append(
+    {"role": "assistant", "content": res.message.content[0].text}
+)
 
 print("\nRESPONSE:")
 print(res.message.content[0].text)
@@ -346,12 +393,14 @@ print(res.message.content[0].text)
 if res.message.citations:
     print("\nCITATIONS:")
     for citation in res.message.citations:
-        print(f"Start: {citation.start} | End: {citation.end} | Text: '{citation.text}'")
+        print(
+            f"Start: {citation.start} | End: {citation.end} | Text: '{citation.text}'"
+        )
         print("Sources:")
         if citation.sources:
             for source in citation.sources:
                 print(source.id)
-        print("-"*50)
+        print("-" * 50)
 ```
 And here is an example output. In summary, the agent performs the task in a sequence of 3 steps:
 

@@ -5588,7 +5588,7 @@ paths:
 
                     With `prompt_truncation` set to "OFF", no elements will be dropped. If the sum of the inputs exceeds the model's context length limit, a `TooManyTokens` error will be returned.
 
-                    Compatible Deployments: 
+                    Compatible Deployments:
                      - AUTO: Cohere Platform Only
                      - AUTO_PRESERVE_ORDER: Azure, AWS Sagemaker/Bedrock, Private Deployments
                 connectors:
@@ -5832,6 +5832,8 @@ paths:
 
                     **Note**: This parameter is only compatible with models [Command R 08-2024](https://docs.cohere.com/docs/command-r#august-2024-release), [Command R+ 08-2024](https://docs.cohere.com/docs/command-r-plus#august-2024-release) and newer.
 
+                    **Note**: `command-r7b-12-2024` only supports `"CONTEXTUAL"` and `"STRICT"` modes.
+
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
       responses:
         "200":
@@ -6021,6 +6023,8 @@ paths:
                     Safety modes are not yet configurable in combination with `tools`, `tool_results` and `documents` parameters.
 
                     **Note**: This parameter is only compatible with models [Command R 08-2024](https://docs.cohere.com/v2/docs/command-r#august-2024-release), [Command R+ 08-2024](https://docs.cohere.com/v2/docs/command-r-plus#august-2024-release) and newer.
+
+                    **Note**: `command-r7b-12-2024` only supports `"CONTEXTUAL"` and `"STRICT"` modes.
                 max_tokens:
                   x-fern-audiences:
                     - public
@@ -6105,6 +6109,20 @@ paths:
                   type: boolean
                   description: |
                     Defaults to `false`. When set to `true`, the log probabilities of the generated tokens will be included in the response.
+                tool_choice:
+                  x-fern-audiences:
+                    - public
+                  enum:
+                    - REQUIRED
+                    - NONE
+                  description: |
+                    Used to control whether or not the model will be forced to use a tool when answering. When `REQUIRED` is specified, the model will be forced to use at least one of the user-defined tools, and the `tools` parameter must be passed in the request.
+                    When `NONE` is specified, the model will be forced **not** to use one of the specified tools, and give a direct response.
+                    If tool_choice isn't specified, then the model is free to choose whether to use the specified tools or not.
+
+                    **Note**: This parameter is only compatible with models [Command-r7b-12-2024](https://docs.cohere.com/v2/docs/command-r7b) and newer.
+
+                    **Note**: The same functionality can be achieved in `/v1/chat` using the `force_single_step` parameter. If `force_single_step=true`, this is equivalent to specifying `REQUIRED`. While if `force_single_step=true` and `tool_results` are passed, this is equivalent to specifying `NONE`.
       responses:
         "200":
           description: OK
@@ -6195,6 +6213,45 @@ paths:
 
 
                 asyncio.run(main())
+            - sdk: go
+              name: Default
+              code: >
+                package main
+
+
+                import (
+                	"context"
+                	"log"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient()
+
+                	resp, err := co.V2.Chat(
+                		context.TODO(),
+                		&cohere.V2ChatRequest{
+                			Model: "command-r-plus-08-2024",
+                			Messages: cohere.ChatMessages{
+                				{
+                					Role: "user",
+                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                						String: "Hello world!",
+                					}},
+                				},
+                			},
+                		},
+                	)
+
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	log.Printf("%+v", resp)
+                }
             - sdk: java
               name: Default
               code: >
@@ -6549,6 +6606,50 @@ paths:
                                     .build());
                     System.out.println(response);
                   }
+                }
+            - sdk: go
+              name: Documents
+              code: >
+                package main
+
+
+                import (
+                	"context"
+                	"log"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient()
+
+                	resp, err := co.V2.Chat(
+                		context.TODO(),
+                		&cohere.V2ChatRequest{
+                			Model: "command-r-plus-08-2024",
+                			Documents: []*cohere.V2ChatRequestDocumentsItem{
+                				{
+                					String: "Cohere is the best!",
+                				},
+                			},
+                			Messages: cohere.ChatMessages{
+                				{
+                					Role: "user",
+                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                						String: "Who's the best?",
+                					}},
+                				},
+                			},
+                		},
+                	)
+
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	log.Printf("%+v", resp)
                 }
             - sdk: curl
               name: Documents
@@ -7146,6 +7247,63 @@ paths:
                     System.out.println(response);
                   }
                 }
+            - sdk: go
+              name: Streaming
+              code: >
+                package main
+
+
+                import (
+                	"context"
+                	"errors"
+                	"io"
+                	"log"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient()
+
+                	resp, err := co.V2.ChatStream(
+                		context.TODO(),
+                		&cohere.V2ChatStreamRequest{
+                			Model: "command-r-plus-08-2024",
+                			Messages: cohere.ChatMessages{
+                				{
+                					Role: "user",
+                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                						String: "Hello world!",
+                					}},
+                				},
+                			},
+                		},
+                	)
+
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	// Make sure to close the stream when you're done reading.
+                	// This is easily handled with defer.
+                	defer resp.Close()
+
+                	for {
+                		message, err := resp.Recv()
+
+                		if errors.Is(err, io.EOF) {
+                			// An io.EOF error means the server is done sending messages
+                			// and should be treated as a success.
+                			break
+                		}
+
+                		if message.ContentDelta != nil {
+                			log.Printf("%+v", resp)
+                		}
+                	}
+                }
             - sdk: curl
               name: Streaming
               code: |
@@ -7506,6 +7664,81 @@ paths:
 
                     System.out.println(response);
                   }
+                }
+            - sdk: go
+              name: Tools
+              code: >
+                package main
+
+
+                import (
+                	"context"
+                	"log"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient()
+
+                	resp, err := co.V2.Chat(
+                		context.TODO(),
+                		&cohere.V2ChatRequest{
+                			Model: "command-r-plus-08-2024",
+                			Tools: []*cohere.ToolV2{
+                				{
+                					Type: cohere.String("function"),
+                					Function: &cohere.ToolV2Function{
+                						Name:        cohere.String("query_daily_sales_report"),
+                						Description: cohere.String("Connects to a database to retrieve overall sales volumes and sales information for a given day."),
+                						Parameters: map[string]interface{}{
+                							"type": "object",
+                							"properties": map[string]interface{}{
+                								"date": map[string]interface{}{
+                									"type":        "string",
+                									"description": "Retrieves sales data from this day, formatted as YYYY-MM-DD",
+                								},
+                							},
+                							"required": []string{"date"},
+                						},
+                					},
+                				},
+                				{
+                					Type: cohere.String("function"),
+                					Function: &cohere.ToolV2Function{
+                						Name:        cohere.String("query_product_catalog"),
+                						Description: cohere.String("Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels."),
+                						Parameters: map[string]interface{}{
+                							"type": "object",
+                							"properties": map[string]interface{}{
+                								"category": map[string]interface{}{
+                									"type":        "string",
+                									"description": "Retrieves product information data for all products in this category.",
+                								},
+                							},
+                							"required": []string{"category"},
+                						},
+                					},
+                				},
+                			},
+                			Messages: cohere.ChatMessages{
+                				{
+                					Role: "user",
+                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                						String: "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
+                					}},
+                				},
+                			},
+                		},
+                	)
+
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	log.Printf("%+v", resp)
                 }
             - sdk: curl
               name: Tools
@@ -8083,11 +8316,11 @@ paths:
                   x-fern-audiences:
                     - public
                   description: |-
-                    One of `GENERATION|ALL|NONE` to specify how and if the token likelihoods are returned with the response. Defaults to `NONE`.
+                    One of `GENERATION|NONE` to specify how and if the token likelihoods are returned with the response. Defaults to `NONE`.
 
                     If `GENERATION` is selected, the token likelihoods will only be provided for generated text.
 
-                    If `ALL` is selected, the token likelihoods will be provided both for the prompt and the generated text.
+                    WARNING: `ALL` is deprecated, and will be removed in a future release.
                   enum:
                     - GENERATION
                     - ALL
@@ -17517,13 +17750,16 @@ paths:
                 	"context"
                 	"log"
 
+                	cohere "github.com/cohere-ai/cohere-go/v2"
                 	client "github.com/cohere-ai/cohere-go/v2/client"
                 )
 
                 func main() {
                 	co := client.NewClient()
 
-                	resp, err := co.Datasets.Get(context.TODO(), "dataset_id")
+                	resp, err := co.Datasets.List(
+                		context.TODO(),
+                		&cohere.DatasetsListRequest{})
 
                 	if err != nil {
                 		log.Fatal(err)
@@ -17538,8 +17774,8 @@ paths:
 
                 co = cohere.Client()
 
-                # get dataset
-                response = co.datasets.get(id="<<datasetId>>")
+                # get list of datasets
+                response = co.datasets.list()
 
                 print(response)
             - sdk: python
@@ -17552,7 +17788,7 @@ paths:
 
 
                 async def main():
-                    response = await co.datasets.get(id="<<datasetId>>")
+                    response = await co.datasets.list()
 
                     print(response)
 
@@ -17573,7 +17809,7 @@ paths:
                   public static void main(String[] args) {
                     Cohere cohere = Cohere.builder().clientName("snippet").build();
 
-                    DatasetsGetResponse response = cohere.datasets().get("dataset_id");
+                    DatasetsGetResponse response = cohere.datasets().list();
 
                     System.out.println(response);
                   }
@@ -17586,13 +17822,13 @@ paths:
                 const cohere = new CohereClient({});
 
                 (async () => {
-                  const datasets = await cohere.datasets.get('<<datasetId>>');
+                  const datasets = await cohere.datasets.list();
 
                   console.log(datasets);
                 })();
             - sdk: curl
               name: cURL
-              code: |-
+              code: |
                 curl --request GET \
                   --url https://api.cohere.com/v1/datasets \
                   --header 'accept: application/json' \
@@ -17887,9 +18123,9 @@ paths:
                 })();
             - sdk: curl
               name: cURL
-              code: |-
+              code: |
                 curl --request GET \
-                  --url https://api.cohere.com/v1/datasets \
+                  --url https://api.cohere.com/v1/datasets/id \
                   --header 'accept: application/json' \
                   --header "Authorization: bearer $CO_API_KEY"
       responses:
@@ -22652,6 +22888,8 @@ components:
           description: |
             Defaults to `"accurate"`.
             Dictates the approach taken to generating citations as part of the RAG flow by allowing the user to specify whether they want `"accurate"` results, `"fast"` results or no results.
+
+            **Note**: `command-r7b-12-2024` only supports `"fast"` and `"off"` modes. Its default is `"fast"`.
     ResponseFormatTypeV2:
       x-fern-audiences:
         - public
@@ -22942,8 +23180,11 @@ components:
             delta:
               type: object
               properties:
-                tool_plan:
-                  type: string
+                message:
+                  type: object
+                  properties:
+                    tool_plan:
+                      type: string
     ChatToolCallStartEvent:
       description: A streamed event delta which signifies a tool call has started streaming.
       allOf:
@@ -22955,22 +23196,11 @@ components:
             delta:
               type: object
               properties:
-                tool_call:
+                message:
                   type: object
                   properties:
-                    id:
-                      type: string
-                    type:
-                      type: string
-                      enum:
-                        - function
-                    function:
-                      type: object
-                      properties:
-                        name:
-                          type: string
-                        arguments:
-                          type: string
+                    tool_calls:
+                      $ref: "#/components/schemas/ToolCallV2"
     ChatToolCallDeltaEvent:
       description: A streamed event delta which signifies a delta in tool call arguments.
       allOf:
@@ -22982,14 +23212,17 @@ components:
             delta:
               type: object
               properties:
-                tool_call:
+                message:
                   type: object
                   properties:
-                    function:
+                    tool_calls:
                       type: object
                       properties:
-                        arguments:
-                          type: string
+                        function:
+                          type: object
+                          properties:
+                            arguments:
+                              type: string
     ChatToolCallEndEvent:
       description: A streamed event delta which signifies a tool call has finished
         streaming.
