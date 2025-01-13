@@ -157,22 +157,24 @@ tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(model_id)
 
 # Define conversation input
-conversation = [{"role": "user", "content": "What has Man always dreamed of?"}]
+conversation = [
+    {"role": "user", "content": "What has Man always dreamed of?"}
+]
 
 # Define documents for retrieval-based generation
 documents = [
     {
-        "heading": "The Moon: Our Age-Old Foe", 
-        "body": "Man has always dreamed of destroying the moon. In this essay, I shall..."
+        "heading": "The Moon: Our Age-Old Foe",
+        "body": "Man has always dreamed of destroying the moon. In this essay, I shall...",
     },
     {
         "heading": "Love is all you need",
-        "body": "Man's dream has always been to find love. This profound lesson..."
+        "body": "Man's dream has always been to find love. This profound lesson...",
     },
     {
         "heading": "The Sun: Our Age-Old Friend",
-        "body": "Although often underappreciated, the sun provides several notable benefits..."
-    }
+        "body": "Although often underappreciated, the sun provides several notable benefits...",
+    },
 ]
 
 # Get the Grounded Generation prompt
@@ -181,14 +183,14 @@ input_prompt = tokenizer.apply_chat_template(
     documents=documents,
     tokenize=False,
     add_generation_prompt=True,
-    return_tensors="pt"
+    return_tensors="pt",
 )
 print("== Grounded Generation prompt:", input_prompt)
 
 # Tokenize the prompt
 input_ids = tokenizer.encode_plus(input_prompt, return_tensors="pt")
 
-# Generate a response 
+# Generate a response
 gen_tokens = model.generate(
     input_ids,
     max_new_tokens=512,
@@ -200,7 +202,6 @@ gen_tokens = model.generate(
 # Decode and print the generated text along with generation prompt
 gen_text = tokenizer.decode(gen_tokens[0])
 print(gen_text)
-
 ````
 </Accordion>
 
@@ -319,44 +320,49 @@ tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(model_id)
 
 # Define conversation input
-conversation = [{"role": "user", "content": "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"}]
+conversation = [
+    {
+        "role": "user",
+        "content": "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
+    }
+]
 
 # Define tools
 tools = [
-    { 
-"type": "function", 
-"function": {
-"name": "query_daily_sales_report",
-"description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
-"parameters": {
-                    "type": "object",
-                    "properties": {
-                        "day": {
-                            "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
-                            "type": "string",
-                        }
-                    },
-                    "required": ["day"]
+    {
+        "type": "function",
+        "function": {
+            "name": "query_daily_sales_report",
+            "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "day": {
+                        "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
+                        "type": "string",
+                    }
                 },
-}
-    }, 
-    { 
-"type": "function", 
-"function": {
-"name": "query_product_catalog",
-"description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
-"parameters": {
-                    "type": "object",
-                    "properties": {
-                        "category": {
-                            "description": "Retrieves product information data for all products in this category.",
-                            "type": "string",
-                        }
-                    },
-                    "required": ["category"]
+                "required": ["day"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "query_product_catalog",
+            "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "category": {
+                        "description": "Retrieves product information data for all products in this category.",
+                        "type": "string",
+                    }
                 },
-}
-    }
+                "required": ["category"],
+            },
+        },
+    },
 ]
 
 # Get the Tool Use prompt
@@ -373,7 +379,7 @@ print("== Prompt for step 1 of the Agent:", input_prompt)
 # Tokenize the prompt
 input_ids = tokenizer.encode_plus(input_prompt, return_tensors="pt")
 
-# Generate a response 
+# Generate a response
 gen_tokens = model.generate(
     input_ids,
     max_new_tokens=512,
@@ -383,7 +389,9 @@ gen_tokens = model.generate(
 )
 
 # Decode and print the generated text along with generation prompt
-gen_text = tokenizer.decode(gen_tokens[0][len(input_ids[0]):], skip_special_tokens=True)
+gen_text = tokenizer.decode(
+    gen_tokens[0][len(input_ids[0]) :], skip_special_tokens=True
+)
 print(gen_text)
 ````
 </Accordion>
@@ -477,21 +485,73 @@ I can find the sales summary for 29th September 2023 as well as the details abou
 If the model generates tool calls, you should add them to the chat history like so:
 
 ````python PYTHON
-tool_call_0 = {"name": "query_daily_sales_report", "arguments": {"day": "2023-09-29"}}
-tool_call_1 = {"name": "query_product_catalog", "arguments": {"category": "Electronics"}}
+tool_call_0 = {
+    "name": "query_daily_sales_report",
+    "arguments": {"day": "2023-09-29"},
+}
+tool_call_1 = {
+    "name": "query_product_catalog",
+    "arguments": {"category": "Electronics"},
+}
 tool_plan = "I will use the 'query_daily_sales_report' tool to find the sales summary for 29th September 2023. I will then use the 'query_product_catalog' tool to find the details about the products in the 'Electronics' category."
 
-conversation.append({"role": "assistant", "tool_calls": [{"id": "0", "type": "function", "function": tool_call_0}, {"id": "1", "type": "function", "function": tool_call_1}], "tool_plan": tool_plan})
+conversation.append(
+    {
+        "role": "assistant",
+        "tool_calls": [
+            {"id": "0", "type": "function", "function": tool_call_0},
+            {"id": "1", "type": "function", "function": tool_call_1},
+        ],
+        "tool_plan": tool_plan,
+    }
+)
 ````
 
 and then call the tool and append the result, with the tool role, like below. It is crucial to format the tool results as a dictionary:
 
 ````python PYTHON
-api_response_query_daily_sales_report = {"date": "2023-09-29", "summary": "Total Sales Amount: 10000, Total Units Sold: 250"} # this needs to be a dictionary!!
-api_response_query_product_catalog = {"category": "Electronics", "products": [{"product_id": "E1001", "name": "Smartphone", "price": 500, "stock_level": 20}, {"product_id": "E1002", "name": "Laptop", "price": 1000, "stock_level": 15}, {"product_id": "E1003", "name": "Tablet", "price": 300, "stock_level": 25}]} # this needs to be a dictionary!!
+api_response_query_daily_sales_report = {
+    "date": "2023-09-29",
+    "summary": "Total Sales Amount: 10000, Total Units Sold: 250",
+}  # this needs to be a dictionary!!
+api_response_query_product_catalog = {
+    "category": "Electronics",
+    "products": [
+        {
+            "product_id": "E1001",
+            "name": "Smartphone",
+            "price": 500,
+            "stock_level": 20,
+        },
+        {
+            "product_id": "E1002",
+            "name": "Laptop",
+            "price": 1000,
+            "stock_level": 15,
+        },
+        {
+            "product_id": "E1003",
+            "name": "Tablet",
+            "price": 300,
+            "stock_level": 25,
+        },
+    ],
+}  # this needs to be a dictionary!!
 
-conversation.append({"role": "tool", "tool_call_id": "0", "content": api_response_query_daily_sales_report})
-conversation.append({"role": "tool", "tool_call_id": "1", "content": api_response_query_product_catalog})
+conversation.append(
+    {
+        "role": "tool",
+        "tool_call_id": "0",
+        "content": api_response_query_daily_sales_report,
+    }
+)
+conversation.append(
+    {
+        "role": "tool",
+        "tool_call_id": "1",
+        "content": api_response_query_product_catalog,
+    }
+)
 ````
 
 After that, you can generate() again to let the model use the tool result in the chat.
@@ -519,7 +579,7 @@ print("== Prompt for step 2 of the Agent:", input_prompt)
 # Tokenize the prompt
 input_ids = tokenizer.encode_plus(input_prompt, return_tensors="pt")
 
-# Generate a response 
+# Generate a response
 gen_tokens = model.generate(
     input_ids,
     max_new_tokens=512,
@@ -528,7 +588,9 @@ gen_tokens = model.generate(
 )
 
 # Decode and print the generated text along with generation prompt
-gen_text = tokenizer.decode(gen_tokens[0][len(input_ids[0]):], skip_special_tokens=True)
+gen_text = tokenizer.decode(
+    gen_tokens[0][len(input_ids[0]) :], skip_special_tokens=True
+)
 print(gen_text)
 ````
 </Accordion>
