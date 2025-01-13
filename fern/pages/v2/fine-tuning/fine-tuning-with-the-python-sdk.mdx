@@ -21,13 +21,13 @@ The snippet below creates a dataset for fine-tuning a model on records of custom
 
 ```python PYTHON
 # create a dataset
-co = cohere.ClientV2('Your API key')
+co = cohere.ClientV2("Your API key")
 
 my_dataset = co.datasets.create(
-  name="customer service logs",
-  type="chat-finetune-input",
-  data=open("./customer-chat.jsonl", "rb"),
-  eval_data=open("./customer-chat-eval.jsonl", "rb")
+    name="customer service logs",
+    type="chat-finetune-input",
+    data=open("./customer-chat.jsonl", "rb"),
+    eval_data=open("./customer-chat-eval.jsonl", "rb"),
 )
 
 result = co.wait(my_dataset)
@@ -42,15 +42,15 @@ from cohere.finetuning import FinetunedModel, Settings, BaseModel
 
 # start training a custom model using the dataset
 finetuned_model = co.finetuning.create_finetuned_model(
-  request=FinetunedModel(
-    name="customer-service-chat-model",
-    settings=Settings(
-      base_model=BaseModel(
-        base_type="BASE_TYPE_CHAT",
-      ),
-      dataset_id=my_dataset.id,
+    request=FinetunedModel(
+        name="customer-service-chat-model",
+        settings=Settings(
+            base_model=BaseModel(
+                base_type="BASE_TYPE_CHAT",
+            ),
+            dataset_id=my_dataset.id,
+        ),
     ),
-  ),
 )
 ```
 

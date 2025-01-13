@@ -89,26 +89,30 @@ Here are some example code snippets for you to use.
 
 ```python PYTHON
 # create dataset
-rerank_dataset = co.datasets.create(name="rerank-dataset",
-                                    data=open("path/to/train.jsonl", "rb"),
-                                    type="reranker-finetune-input")
+rerank_dataset = co.datasets.create(
+    name="rerank-dataset",
+    data=open("path/to/train.jsonl", "rb"),
+    type="reranker-finetune-input",
+)
 print(co.wait(rerank_dataset))
-                                              
+
 # start the fine-tune job using this dataset
 finetune = co.finetuning.create_finetuned_model(
-  request=FinetunedModel(
-    name="rerank-ft",
-    settings=Settings(
-      base_model=BaseModel(
-        name="english",
-        base_type="BASE_TYPE_RERANK",
-      ),
-      dataset_id=my-rerank_dataset.id,
-    ),
-  )
+    request=FinetunedModel(
+        name="rerank-ft",
+        settings=Settings(
+            base_model=BaseModel(
+                name="english",
+                base_type="BASE_TYPE_RERANK",
+            ),
+            dataset_id=my - rerank_dataset.id,
+        ),
+    )
 )
 
-print(f"fine-tune ID: {finetune.id}, fine-tune status: {finetune.status}")
+print(
+    f"fine-tune ID: {finetune.id}, fine-tune status: {finetune.status}"
+)
 ```
 
 ### Parameters:
@@ -123,14 +127,14 @@ Please see our API docs for the full documentation, for passing the request. For
 ```python PYTHON
 import cohere
 
-co = cohere.ClientV2('Your API key')
+co = cohere.ClientV2("Your API key")
 # get the finetuned model object
 ft = co.finetuning.get_finetuned_model(my_finetune.finetuned_model.id)
 
 response = co.rerank(
     query="which one is the best doc?",
     documents=["this is the first doc", "this is the second doc"],
-    model=ft.finetuned_model.id+"-ft",
+    model=ft.finetuned_model.id + "-ft",
 )
 
 # Printing the model's response.
