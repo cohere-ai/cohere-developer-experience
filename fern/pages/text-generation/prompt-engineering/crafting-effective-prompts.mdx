@@ -30,6 +30,7 @@ Then use the Chat API to send a message to the model:
 
 ```python PYTHON
 import cohere
+
 co = cohere.Client(api_key="<YOUR API KEY>")
 
 message = """
@@ -42,9 +43,7 @@ Summarize the text below.
 
 # get model response
 response = co.chat(
-  message=message,
-  model="command-r-plus-08-2024",
-  temperature=0.3
+    message=message, model="command-r-plus-08-2024", temperature=0.3
 )
 ```
 
@@ -77,20 +76,29 @@ For the example above, we can split the original news article into different sec
 ```python PYTHON
 # Sections from the original news article
 documents = [
-    {"title": "background", "snippet": "From the beginning of the IIHF Ice Hockey World Championships in 1920, Canada would send a ..."},
-    {"title": "expectations", "snippet": "At the time, the National Hockey League was considered to be where the best hockey players ..."},
-    {"title": "legacy", "snippet": "While Canada won the series, the Soviets earned the respect of fans and players alike. The Canadians ..."},
+    {
+        "title": "background",
+        "snippet": "From the beginning of the IIHF Ice Hockey World Championships in 1920, Canada would send a ...",
+    },
+    {
+        "title": "expectations",
+        "snippet": "At the time, the National Hockey League was considered to be where the best hockey players ...",
+    },
+    {
+        "title": "legacy",
+        "snippet": "While Canada won the series, the Soviets earned the respect of fans and players alike. The Canadians ...",
+    },
 ]
 
 # New request
-query = '''The 1972 Canada–USSR Summit Series was an eight-game ice hockey series between the Soviet Union and Canada, held in September 1972. Please summarize the salient points of the included documents and do so in a flowing high natural language quality text. Use bullet points where appropriate.'''
+query = """The 1972 Canada–USSR Summit Series was an eight-game ice hockey series between the Soviet Union and Canada, held in September 1972. Please summarize the salient points of the included documents and do so in a flowing high natural language quality text. Use bullet points where appropriate."""
 
 # Call the model
 response = co.chat(
-  message=query,
-  documents=documents,
-  model="command-r-plus-08-2024",
-  temperature=0.3
+    message=query,
+    documents=documents,
+    model="command-r-plus-08-2024",
+    temperature=0.3,
 )
 ```
 
@@ -152,14 +160,16 @@ def insert_citations(text: str, citations: list[dict]):
     for citation in citations:
         # Adjust start/end with offset
         start, end = citation.start + offset, citation.end + offset
-        cited_docs = [str(int(doc[4:]) + 1) for doc in citation.document_ids]
+        cited_docs = [
+            str(int(doc[4:]) + 1) for doc in citation.document_ids
+        ]
         # Shorten citations if they're too long for convenience
         if len(cited_docs) > 3:
             placeholder = "[" + ", ".join(cited_docs[:3]) + "...]"
         else:
             placeholder = "[" + ", ".join(cited_docs) + "]"
         # ^ doc[4:] removes the 'doc_' prefix, and leaves the quoted document
-        modification = f'{text[start:end]} {placeholder}'
+        modification = f"{text[start:end]} {placeholder}"
         # Replace the cited text with its bolded version + placeholder
         text = text[:start] + modification + text[end:]
         # Update the offset for subsequent replacements
