@@ -20,7 +20,8 @@ To set up, we first import the Cohere module and create a client.
 
 ```python PYTHON
 import cohere
-co = cohere.Client("COHERE_API_KEY") # Your Cohere API key
+
+co = cohere.Client("COHERE_API_KEY")  # Your Cohere API key
 ```
 
 At its most basic, we only need to pass to the Chat endpoint the user message using the `message` parameter – the only required parameter for the endpoint.
@@ -53,9 +54,11 @@ In the quickstart example, we didn’t have to define a preamble because a defau
 Here’s an example. We added a preamble telling the chatbot to assume the persona of an expert public speaking coach. As a result, we get a response that adopts that persona.
 
 ```python PYTHON
-response = co.chat(message="Hello",
-                   model="command-r-plus",
-                   preamble="You are an expert public speaking coach. Don't use any greetings.")
+response = co.chat(
+    message="Hello",
+    model="command-r-plus",
+    preamble="You are an expert public speaking coach. Don't use any greetings.",
+)
 print(response.text)
 ```
 
@@ -78,13 +81,15 @@ In streaming mode, the endpoint will generate a series of objects. To get the ac
 If you have not already, make your own copy of the Google Colaboratory notebook and run the code in this section to see the same example with streamed responses activated.
 
 ```python PYTHON
-stream = co.chat_stream(message="Hello. I'd like to learn about techniques for effective audience engagement",
-                        model="command-r-plus",
-                        preamble="You are an expert public speaking coach")
+stream = co.chat_stream(
+    message="Hello. I'd like to learn about techniques for effective audience engagement",
+    model="command-r-plus",
+    preamble="You are an expert public speaking coach",
+)
 
 for event in stream:
     if event.event_type == "text-generation":
-        print(event.text, end='')
+        print(event.text, end="")
 ```
 
 ```
@@ -149,21 +154,23 @@ while True:
     message = input("User: ")
 
     # Typing "quit" ends the conversation
-    if message.lower() == 'quit':
+    if message.lower() == "quit":
         print("Ending chat.")
         break
 
     # Chatbot response
-    stream = co.chat_stream(message=message,
-                            model="command-r-plus",
-                            preamble=preamble,
-                            conversation_id=conversation_id)
+    stream = co.chat_stream(
+        message=message,
+        model="command-r-plus",
+        preamble=preamble,
+        conversation_id=conversation_id,
+    )
 
-    print("Chatbot: ", end='')
+    print("Chatbot: ", end="")
 
     for event in stream:
         if event.event_type == "text-generation":
-            print(event.text, end='')
+            print(event.text, end="")
         if event.event_type == "stream-end":
             chat_history = event.response.chat_history
 
@@ -237,12 +244,12 @@ The chat history is a list of multiple turns of messages from the user and the c
 from cohere import ChatMessage
 
 chat_history = [
-  ChatMessage(role="USER", message="What is 2 + 2"),
-  ChatMessage(role="CHATBOT", message="The answer is 4"),
-  ChatMessage(role="USER", message="Add 5 to that number"),
-  ChatMessage(role="CHATBOT", message="Sure. The answer is 9"),
-  ...
-  ]
+    ChatMessage(role="USER", message="What is 2 + 2"),
+    ChatMessage(role="CHATBOT", message="The answer is 4"),
+    ChatMessage(role="USER", message="Add 5 to that number"),
+    ChatMessage(role="CHATBOT", message="Sure. The answer is 9"),
+    ...,
+]
 ```
 
 The following modifies the previous implementation by using `chat_history` instead of `conversation_id` for managing the conversation history.
@@ -262,29 +269,33 @@ while True:
     message = input("User: ")
 
     # Typing "quit" ends the conversation
-    if message.lower() == 'quit':
+    if message.lower() == "quit":
         print("Ending chat.")
         break
 
     # Chatbot response
-    stream = co.chat_stream(message=message,
-                            model="command-r-plus",
-                            preamble=preamble,
-                            chat_history=chat_history)
+    stream = co.chat_stream(
+        message=message,
+        model="command-r-plus",
+        preamble=preamble,
+        chat_history=chat_history,
+    )
 
     chatbot_response = ""
-    print("Chatbot: ", end='')
+    print("Chatbot: ", end="")
 
     for event in stream:
         if event.event_type == "text-generation":
-            print(event.text, end='')
+            print(event.text, end="")
             chatbot_response += event.text
     print("\n")
 
     # Add to chat history
     chat_history.extend(
-        [ChatMessage(role="USER", message=message),
-         ChatMessage(role="CHATBOT", message=chatbot_response)]
+        [
+            ChatMessage(role="USER", message=message),
+            ChatMessage(role="CHATBOT", message=chatbot_response),
+        ]
     )
 ```
 
