@@ -1,5 +1,5 @@
 ---
-title: Batch Embedding Jobs
+title: "Batch Embedding Jobs with the Embed API"
 slug: docs/embed-jobs-api
 hidden: false
 description: >-
@@ -16,7 +16,7 @@ updatedAt: 'Mon Jun 17 2024 10:20:02 GMT+0000 (Coordinated Universal Time)'
  The Embed Jobs API is only compatible with our embed v3.0 models
 </Note>
 
-In this guide, we show you how to use the embed jobs endpoint to asynchronously embed a large amount of texts. This guide uses a simple dataset of wikipedia pages and its associated metadata to illustrate the endpoint’s functionality. To see an end-to-end example of retrieval, check out this [notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/Embed_Jobs_Semantic_Search.ipynb).
+In this guide, we show you how to use the embed jobs endpoint to asynchronously embed a large amount of texts. This guide uses a simple dataset of wikipedia pages and its associated metadata to illustrate the endpoint’s functionality. To see an end-to-end example of retrieval, check out this [notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/Embed_Jobs_Semantic_Search.ipynb).
 
 ### How to use the Embed Jobs API
 
@@ -60,21 +60,21 @@ As seen in the example above, the following would be a valid `create_dataset` ca
 
 ```python PYTHON
 # Upload a dataset for embed jobs
-ds=co.datasets.create(
-	name='sample_file',
-	# insert your file path here - you can upload it on the right - we accept .csv and jsonl files
-	data=open('embed_jobs_sample_data.jsonl', 'rb'),
-	keep_fields=['wiki_id','url','views','title']
-	optional_fields=['langs']
-	dataset_type="embed-input",
-  embedding_types=['float']
-	)
+ds = co.datasets.create(
+    name="sample_file",
+    # insert your file path here - you can upload it on the right - we accept .csv and jsonl files
+    data=open("embed_jobs_sample_data.jsonl", "rb"),
+    keep_fields=["wiki_id", "url", "views", "title"],
+    optional_fields=["langs"],
+    dataset_type="embed-input",
+    embedding_types=["float"],
+)
 
 # wait for the dataset to finish validation
 print(co.wait(ds))
 ```
 
-Currently the dataset endpoint will accept `.csv` and `.jsonl` files - in both cases, it is imperative to have either a field called `text` or a header called `text`. You can see an example of a valid `jsonl` file [here](https://raw.githubusercontent.com/cohere-ai/notebooks/main/notebooks/data/embed_jobs_sample_data.jsonl) and a valid csv file [here](https://raw.githubusercontent.com/cohere-ai/notebooks/main/notebooks/data/embed_jobs_sample_data.csv).
+Currently the dataset endpoint will accept `.csv` and `.jsonl` files - in both cases, it is imperative to have either a field called `text` or a header called `text`. You can see an example of a valid `jsonl` file [here](https://raw.githubusercontent.com/cohere-ai/cohere-developer-experience/main/notebooks/data/embed_jobs_sample_data.jsonl) and a valid csv file [here](https://raw.githubusercontent.com/cohere-ai/cohere-developer-experience/main/notebooks/data/embed_jobs_sample_data.csv).
 
 ### 1\. Upload your Dataset
 
@@ -82,13 +82,14 @@ The Embed Jobs API takes in `dataset IDs` as an input. Uploading a local file to
 
 ```python PYTHON
 import cohere
+
 co = cohere.Client(api_key="<YOUR API KEY>")
 
-input_dataset=co.datasets.create(
-	name='your_file_name',
-	data=open('/content/your_file_path', 'rb'),
-	dataset_type="embed-input"
-	)
+input_dataset = co.datasets.create(
+    name="your_file_name",
+    data=open("/content/your_file_path", "rb"),
+    dataset_type="embed-input",
+)
 
 # block on server-side validation
 print(co.wait(input_dataset))
@@ -114,11 +115,12 @@ Your dataset is now ready to be embedded. Here's a code snippet illustrating wha
 
 ```python PYTHON
 embed_job = co.embed_jobs.create(
-	dataset_id=input_dataset.id,
-	input_type='search_document' ,
-	model='embed-english-v3.0',
-  embedding_types=['float'],
-	truncate='END')
+    dataset_id=input_dataset.id,
+    input_type="search_document",
+    model="embed-english-v3.0",
+    embedding_types=["float"],
+    truncate="END",
+)
 
 # block until the job is complete
 co.wait(embed_job)
@@ -131,17 +133,17 @@ Since we’d like to search over these embeddings and we can think of them as co
 The output of embed jobs is a dataset object which you can download or pipe directly to a database of your choice:
 
 ```python PYTHON
-output_dataset=co.datasets.get(id=embed_job.output.id)
-co.utils.save(filepath='/content/embed_job_output.csv', format="csv")
+output_dataset = co.datasets.get(id=embed_job.output.id)
+co.utils.save(filepath="/content/embed_job_output.csv", format="csv")
 ```
 
 Alternatively if you would like to pass the dataset into a downstream function you can do the following:
 
 ```python PYTHON
-output_dataset=co.datasets.get(id=embed_job.output.id)
-results=[]
+output_dataset = co.datasets.get(id=embed_job.output.id)
+results = []
 for record in output_dataset:
-	results.append(record)
+    results.append(record)
 ```
 
 ### Sample Output
@@ -182,4 +184,4 @@ If you have specified any metadata to be kept either as `optional_fields` or `ke
 
 ### Next Steps
 
-Check out our end to end [notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/Embed_Jobs_Serverless_Pinecone_Semantic_Search.ipynb) on retrieval with Pinecone's serverless offering.
+Check out our end to end [notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/Embed_Jobs_Serverless_Pinecone_Semantic_Search.ipynb) on retrieval with Pinecone's serverless offering.

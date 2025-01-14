@@ -1,10 +1,10 @@
 ---
-title: "Structured Outputs"
+title: "How do Structured Outputs Work?"
 slug: "v2/docs/structured-outputs"
 
 hidden: false
 
-description: "This page describes how to get Cohere models to create outputs in a certain format, such as JSON."
+description: "This page describes how to get Cohere models to create outputs in a certain format, such as JSON, TOOLS."
 image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"  
 keywords: "Cohere, language models, structured outputs"
 
@@ -18,10 +18,10 @@ updatedAt: "Tue Jun 11 2024 02:43:00 GMT+0000 (Coordinated Universal Time)"
 Structured Outputs is a feature for forcing the LLM's output to follow a specified format 100% of the time. This increases the reliability of LLM in enterprise applications where downstream applications expect the LLM output to be correctly formatted. By forcing the model to follow a structured schema, hallucinated fields and entries in structured data can be reliably eliminated.
 
 Compatible models:
-- Command R 08 2024
-- Command R
 - Command R+ 08 2024
 - Command R+
+- Command R 08 2024
+- Command R
 
 ## How to Use Structured Outputs
 
@@ -49,6 +49,7 @@ In JSON mode, when making an API request, you can specify the `response_format` 
 
 ```python PYTHON
 import cohere
+
 co = cohere.ClientV2(api_key="YOUR API KEY")
 
 res = co.chat(
@@ -63,7 +64,6 @@ res = co.chat(
 )
 
 print(res.message.content[0].text)
-
 ```
 By setting the `response_format` type to `"json_object"` in the Chat API, the output of the model is guaranteed to be a valid JSON object.
 
@@ -95,6 +95,7 @@ For example, let's say you want the LLM to generate a JSON object with specific 
 
 ```python PYTHON
 import cohere
+
 co = cohere.ClientV2(api_key="YOUR API KEY")
 
 res = co.chat(
@@ -135,12 +136,61 @@ In this schema, we defined three keys ("title," "author," "publication_year") an
 
 ```
 
+### Nested Array Schema Json Example
+
+Here's an example of a nested array. Note that the top level json structure must always be a json object.
+
+```py
+cohere_api_key = os.getenv('cohere_api_key')
+co = cohere.ClientV2(cohere_api_key)
+response = co.chat(
+    response_format={
+      "type": "json_object",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "actions": {
+            "type": "array",          
+            "items": {
+              "type": "object",          
+              "properties": {
+                "japanese": {"type": "string"},
+                "romaji": {"type": "string"},
+                "english": {"type": "string"}
+              },
+              "required": ["japanese", "romaji", "english"]
+            },
+          }
+        },
+        "required": ["actions"]
+      }
+    },
+    model="command-r",
+    messages=[
+      {"role": "user", "content": "Generate a JSON array of objects with the following fields: japanese, romaji, english. These actions should be japanese verbs provided in the dictionary form.},
+    ]
+)  
+return json.loads(response.message.content[0].text)
+```
+
+The output for this example would be:
+
+```json
+{"actions": [
+  {"japanese": "いこう", "romaji": "ikou", "english": "onward"},
+  {"japanese": "探す", "romaji": "sagasu", "english": "search"},
+  {"japanese": "話す", "romaji": "hanasu", "english": "talk"}
+]
+```
+
+
+
 <Info title="Important"> 
 Note: Each schema provided (in both JSON and Tools modes) will incur a latency overhead required for processing the schema. This is only applicable for the first few requests.
 </Info>
 
 ### Structured Outputs (Tools)
-When you use the Chat API with `tools`, setting the `strict_tools` parameter to `true` will enforce that every generated tool call follows the specified tool schema.
+When you use the Chat API with `tools`, setting the `strict_tools` parameter to `True` will enforce that every generated tool call follows the specified tool schema.
 
 <Note title="Experimental"> 
 `strict_tools` is currently an experimental parameter. We’ll be iterating on this feature and are looking for feedback. Share your experience with us in the `#api-discussions` channel on [discord](https://discord.gg/co-mmunity) or via [email](mailto:support@cohere.com).
@@ -150,9 +200,9 @@ With `strict_tools` enabled, the API will ensure that the tool names and tool pa
 
 Additionally, this results in faster development. You don’t need to spend a lot of time prompt engineering the model to avoid hallucinations.
 
-In the example below, we create a tool that can retrieve weather data for a given location. The tool is called`get_weather` which contains a parameter called `location`. We then invoke the Chat API with `strict_tools` set to `true` to ensure that the generated tool calls always include the correct function and parameter names.
+In the example below, we create a tool that can retrieve weather data for a given location. The tool is called `get_weather` which contains a parameter called `location`. We then invoke the Chat API with `strict_tools` set to `True` to ensure that the generated tool calls always include the correct function and parameter names.
 
-When the `strict_tools` parameter is set to `true`, you can define a maximum of 200 fields across all tools being passed to an API call.
+When the `strict_tools` parameter is set to `True`, you can define a maximum of 200 fields across all tools being passed to an API call.
 
 ```python PYTHON {24}
 tools = [
@@ -214,11 +264,70 @@ When constructing a `schema` keep the following constraints in mind:
 - The `type` in the top level schema must be `object`
 - Every object in the schema must have at least one `required` field specified
 
+## Parameter types support
+
+### Supported schema features
+
+The Structured Outputs feature (both JSON and Tools mode) relies on the JSON Schema notation for defining the parameters. JSON Schema allows developers to specify the expected format of JSON objects, ensuring that the data adheres to predefined rules and constraints.
+
+Structured Outputs supports a subset of the JSON Schema specification, detailed in the tables below. This is broken down into three categories:
+- Structured Outputs (JSON)
+- Structured Outputs (Tools) - When `strict_tools` is set to `True`
+- Tool Use - When `strict_tools` is set to `False`
+
+#### Basic types
+
+| Parameter | [Structured Outputs (JSON)](#) | [Structured Outputs (Tools)](https://docs.cohere.com/v2/docs/tool-use#structured-outputs-tools) | [Tool Use](https://docs.cohere.com/v2/docs/tool-use) |
+| --- | --- | --- | --- |
+| String |  Yes | Yes | Yes |
+| Integer | Yes | Yes | Yes |
+| Float |  Yes | Yes | Yes |
+| Boolean | Yes | Yes | Yes |
+
+See usage examples for [JSON](https://docs.cohere.com/v2/docs/parameter-types-in-json#basic-types) and [Tools](https://docs.cohere.com/v2/docs/parameter-types-in-tool-use#basic-types).
+
+
+#### Arrays
+
+| Parameter | [Structured Outputs (JSON)](#) | [Structured Outputs (Tools)](https://docs.cohere.com/v2/docs/tool-use#structured-outputs-tools) | [Tool Use](https://docs.cohere.com/v2/docs/tool-use) |
+| --- | --- | --- | --- |
+| Arrays - With specific types |  Yes | Yes | Yes |
+| Arrays - Without specific types | Yes | Yes | Yes |
+| Arrays - List of lists |  Yes | Yes | Yes |
+
+See usage examples for [JSON](https://docs.cohere.com/v2/docs/parameter-types-in-json#arrays) and [Tools](https://docs.cohere.com/v2/docs/parameter-types-in-tool-use#arrays).
+
+#### Others
+
+| Parameter | [Structured Outputs (JSON)](#) | [Structured Outputs (Tools)](https://docs.cohere.com/v2/docs/tool-use#structured-outputs-tools) | [Tool Use](https://docs.cohere.com/v2/docs/tool-use) |
+| --- | --- | --- | --- |
+| Nested objects |  Yes | Yes | Yes |
+| Enum | Yes | Yes | Yes |
+| Const¹ |  Yes | Yes | Yes |
+| Pattern | Yes | Yes | Yes |
+| Format² | Yes | Yes | Yes |
+| $ref | Yes | Yes | Yes |
+| $def | Yes | Yes | Yes |
+| additionalProperties | Yes³ | Yes⁴ | Yes |
+| uniqueItems | No | No | Yes |
+| anyOf | Yes | Yes | Yes |
+
+¹ Const is supported for these types: `int`, `float`, `bool`, `type(None)`, `str`.
+
+² Format is supported for these values: `date-time`, `uuid`, `date`, `time`.
+
+³ In Structured Outputs (JSON), `additionalProperties` does not enforce `required`, `dependencies`, `propertyNames`, `anyOf`, `allOf`, `oneOf`.
+
+⁴ In Structured Outputs (Tools), `additionalProperties` does not enforce `required`, `dependencies`, `propertyNames`, `any Of`, `all Of`, `one Of`.
+
+See usage examples for [JSON](https://docs.cohere.com/v2/docs/parameter-types-in-json#others) and [Tools](https://docs.cohere.com/v2/docs/parameter-types-in-tool-use#others).
+
+
 ### Unsupported schema features
 
 We do not support the entirety of the [JSON Schema specification](https://json-schema.org/specification).  Below is a list of some unsupported features:
 
-- [Schema Composition](https://json-schema.org/understanding-json-schema/reference/combining#schema-composition) (`anyOf`, `allOf`, `oneOf` and `not`)
+- [Schema Composition](https://json-schema.org/understanding-json-schema/reference/combining#schema-composition) (`allOf`, `oneOf` and `not`)
 - [Numeric Ranges](https://json-schema.org/understanding-json-schema/reference/numeric#range) (`maximum` and  `minimum`)
 - [Array Length Ranges](https://json-schema.org/understanding-json-schema/reference/array#length) (`minItems` and `maxItems`) 
 - String limitations:
@@ -233,6 +342,3 @@ We do not support the entirety of the [JSON Schema specification](https://json-s
     - `uuid`
     - `date`
     - `time`
-- Others:
-    - `uniqueItems`
-    - `additionalProperties`
