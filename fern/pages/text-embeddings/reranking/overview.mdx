@@ -27,6 +27,7 @@ In this example, the documents being passed in are a list of strings:
 
 ```python PYTHON
 import cohere
+
 co = cohere.Client(api_key="<YOUR API KEY>")
 
 query = "What is the capital of the United States?"
@@ -35,8 +36,15 @@ docs = [
     "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean that are a political division controlled by the United States. Its capital is Saipan.",
     "Charlotte Amalie is the capital and largest city of the United States Virgin Islands. It has about 20,000 people. The city is on the island of Saint Thomas.",
     "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district. The President of the USA and many major national government offices are in the territory. This makes it the political center of the United States of America.",
-    "Capital punishment has existed in the United States since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) also uses capital punishment."]
-results = co.rerank(model="rerank-v3.5", query=query, documents=docs, top_n=5, return_documents=True)
+    "Capital punishment has existed in the United States since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) also uses capital punishment.",
+]
+results = co.rerank(
+    model="rerank-v3.5",
+    query=query,
+    documents=docs,
+    top_n=5,
+    return_documents=True,
+)
 ```
 
 **Response**
@@ -102,103 +110,121 @@ Alternatively, you can pass in a JSON object and specify the fields you'd like t
 ```python PYTHON
 query = "What is the capital of the United States?"
 docs = [
-	{"Title": "Facts about Carson City","Content": "Carson City is the capital city of the American state of Nevada. At the 2010 United States Census, Carson City had a population of 55,274."},
-	{"Title": "The Commonwealth of Northern Mariana Islands","Content": "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean that are a political division controlled by the United States. Its capital is Saipan."},
-	{"Title": "The Capital of United States Virgin Islands","Content": "Charlotte Amalie is the capital and largest city of the United States Virgin Islands. It has about 20,000 people. The city is on the island of Saint Thomas."},
-	{"Title": "Washington D.C.","Content":"Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district. The President of the USA and many major national government offices are in the territory. This makes it the political center of the United States of America."},
-	{"Title": "Capital Punishment in the US","Content": "Capital punishment has existed in the United States since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) also uses capital punishment."}
-	]
-results = co.rerank(model="rerank-v3.5", query=query, documents=docs, rank_fields=['Title','Content'],top_n=5, return_documents=True)
-
+    {
+        "Title": "Facts about Carson City",
+        "Content": "Carson City is the capital city of the American state of Nevada. At the 2010 United States Census, Carson City had a population of 55,274.",
+    },
+    {
+        "Title": "The Commonwealth of Northern Mariana Islands",
+        "Content": "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean that are a political division controlled by the United States. Its capital is Saipan.",
+    },
+    {
+        "Title": "The Capital of United States Virgin Islands",
+        "Content": "Charlotte Amalie is the capital and largest city of the United States Virgin Islands. It has about 20,000 people. The city is on the island of Saint Thomas.",
+    },
+    {
+        "Title": "Washington D.C.",
+        "Content": "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district. The President of the USA and many major national government offices are in the territory. This makes it the political center of the United States of America.",
+    },
+    {
+        "Title": "Capital Punishment in the US",
+        "Content": "Capital punishment has existed in the United States since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) also uses capital punishment.",
+    },
+]
+results = co.rerank(
+    model="rerank-v3.5",
+    query=query,
+    documents=docs,
+    rank_fields=["Title", "Content"],
+    top_n=5,
+    return_documents=True,
+)
 ```
 
 In the `docs` parameter, we are passing in a list of objects which have the key values: `['Title' ,'Content']`. As part of the Rerank call, we are specifying which keys to rank over, as well as the order in which the key value pairs should be considered.
 
 ```python PYTHON
-{
-	id='e8f55f3f-d86e-47d7-9b24-7feb18286505',
+RerankResponse(
+    id="e8f55f3f-d86e-47d7-9b24-7feb18286505",
     results=[
         RerankResponseResultsItem(
             document=RerankResponseResultsItemDocument(
                 text=None,
                 Content=(
-                    'Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) '
-                    'is the capital of the United States. It is a federal district. The President of the USA and many major '
-                    'national government offices are in the territory. This makes it the political center of the United States of America.'
+                    "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) "
+                    "is the capital of the United States. It is a federal district. The President of the USA and many major "
+                    "national government offices are in the territory. This makes it the political center of the United States of America."
                 ),
-                Title='Washington D.C.'
+                Title="Washington D.C.",
             ),
             index=3,
-            relevance_score=0.8914433
+            relevance_score=0.8914433,
         ),
         RerankResponseResultsItem(
             document=RerankResponseResultsItemDocument(
                 text=None,
                 Content=(
-                    'Charlotte Amalie is the capital and largest city of the United States Virgin Islands. '
-                    'It has about 20,000 people. The city is on the island of Saint Thomas.'
+                    "Charlotte Amalie is the capital and largest city of the United States Virgin Islands. "
+                    "It has about 20,000 people. The city is on the island of Saint Thomas."
                 ),
-                Title='The Capital of United States Virgin Islands'
+                Title="The Capital of United States Virgin Islands",
             ),
             index=2,
-            relevance_score=0.40344992
+            relevance_score=0.40344992,
         ),
         RerankResponseResultsItem(
             document=RerankResponseResultsItemDocument(
                 text=None,
                 Content=(
-                    'Carson City is the capital city of the American state of Nevada. At the 2010 United States Census, '
-                    'Carson City had a population of 55,274.'
+                    "Carson City is the capital city of the American state of Nevada. At the 2010 United States Census, "
+                    "Carson City had a population of 55,274."
                 ),
-                Title='Facts about Carson City'
+                Title="Facts about Carson City",
             ),
             index=0,
-            relevance_score=0.23343581
+            relevance_score=0.23343581,
         ),
         RerankResponseResultsItem(
             document=RerankResponseResultsItemDocument(
                 text=None,
                 Content=(
-                    'The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean that '
-                    'are a political division controlled by the United States. Its capital is Saipan.'
+                    "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean that "
+                    "are a political division controlled by the United States. Its capital is Saipan."
                 ),
-                Title='The Commonwealth of Northern Mariana Islands'
+                Title="The Commonwealth of Northern Mariana Islands",
             ),
             index=1,
-            relevance_score=0.15964958
+            relevance_score=0.15964958,
         ),
         RerankResponseResultsItem(
             document=RerankResponseResultsItemDocument(
                 text=None,
                 Content=(
-                    'Capital punishment has existed in the United States since before the United States was a country. '
-                    'As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) '
-                    'also uses capital punishment.'
+                    "Capital punishment has existed in the United States since before the United States was a country. "
+                    "As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) "
+                    "also uses capital punishment."
                 ),
-                Title='Capital Punishment in the US'
+                Title="Capital Punishment in the US",
             ),
             index=4,
-            relevance_score=0.10465127
+            relevance_score=0.10465127,
         ),
     ],
     meta=ApiMeta(
         api_version=ApiMetaApiVersion(
-            version='1',
-            is_deprecated=None,
-            is_experimental=None
+            version="1", is_deprecated=None, is_experimental=None
         ),
         billed_units=ApiMetaBilledUnits(
             images=None,
             input_tokens=None,
             output_tokens=None,
             search_units=1.0,
-            classifications=None
+            classifications=None,
         ),
         tokens=None,
-        warnings=None
-    )
-}
-
+        warnings=None,
+    ),
+)
 ```
 
 ## Multilingual Reranking
