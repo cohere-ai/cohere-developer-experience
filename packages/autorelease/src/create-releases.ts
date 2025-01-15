@@ -2,7 +2,9 @@ import { Octokit } from "@octokit/rest"
 
 const versionMatchRegex = /v?(\d+\.\d+\.\d+)/g
 
-const languages = ["python", "npm", "go"] as const
+const languages = ["python", "typescript", "go", "typescript"] as const
+
+const bumpTypes = ["major", "minor", "patch"] as const
 
 const sortVersions = (versions: string[]) => {
     return versions.sort((a, b) => {
@@ -38,7 +40,7 @@ const getGoVersions = async () => {
     return [json.Version.replace("v", "")]
 }
 
-const updateVersion = async (version: string, update: "major" | "minor" | "patch") => {
+const updateVersion = async (version: string, update: typeof bumpTypes[number]) => {
     const [major, minor, patch] = version.split(".").map(Number)
 
     return ({
@@ -49,19 +51,20 @@ const updateVersion = async (version: string, update: "major" | "minor" | "patch
 }
 
 const getLatestVersions = async () => {
-    const [pythonVersions, npmVersions, goVersions] = await Promise.all([
+    const [pythonVersions, typescriptVersions, goVersions] = await Promise.all([
         getPythonVersions(),
         getNpmVersions(),
         getGoVersions(),
     ])
     return {
         python: sortVersions(pythonVersions).pop()!,
-        npm: sortVersions(npmVersions).pop()!,
+        typescript: sortVersions(typescriptVersions).pop()!,
         go: sortVersions(goVersions).pop()!,
+        java: "0.0.0" // TODO: java
     }
 }
 
-const getNextVersions = async (update: "major" | "minor" | "patch") => {
+const getNextVersions = async (update: typeof bumpTypes[number]) => {
     const latest = await getLatestVersions()
 
     return {
@@ -69,14 +72,18 @@ const getNextVersions = async (update: "major" | "minor" | "patch") => {
             previous: latest.python,
             next: await updateVersion(latest.python, update),
         },
-        npm: {
-            previous: latest.npm,
-            next: await updateVersion(latest.npm, update),
+        typescript: {
+            previous: latest.typescript,
+            next: await updateVersion(latest.typescript, update),
         },
         go: {
             previous: latest.go,
             next: await updateVersion(latest.go, update),
         },
+        java: {
+            previous: latest.java,
+            next: await updateVersion(latest.java, update),
+        }
     }
 }
 
@@ -126,7 +133,8 @@ const createRelease = async (language: typeof languages[number], version: string
 }
 
 (async () => {
-    const bumpType = process.env.BUMP_TYPE as typeof languages[number] | undefined
+    const bumpType = process.env.BUMP_TYPE as typeof bumpTypes[number] | undefined
+    const language = process.env.LANGUAGE as typeof languages[number] | undefined
 
     if (!bumpType) {
         throw new Error("BUMP_TYPE is not defined.")
@@ -134,5 +142,5 @@ const createRelease = async (language: typeof languages[number], version: string
 
     const nextVersions = await getNextVersions(bumpType)
 
-    await Promise.all(languages.map(async language => createRelease(language, nextVersions[language].next)))
+    await Promise.all(languages.filter(l => language ? l === language : true).map(async language => createRelease(language, nextVersions[language].next)))
 })()
