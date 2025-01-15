@@ -1,0 +1,115 @@
+name: release-sdks
+
+on: [push]
+
+jobs:
+  fern-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install Fern
+        run: npm install -g fern-api
+
+      - name: Check Fern API is valid
+        run: fern check
+
+  fern-generate-node:
+    needs: fern-check
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/node@')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+
+      - name: Download Fern
+        run: npm install -g fern-api
+
+      - name: Release TypeScript SDK
+        env:
+          FERN_TOKEN: ${{ secrets.FERN_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          tag=${{ github.ref_name }}
+          prefix="node@"
+          SDK_VERSION="${tag#$prefix}"
+          fern generate --group node-sdk --version "$SDK_VERSION" --log-level debug
+
+  fern-generate-go:
+    needs: fern-check
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/go@')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+
+      - name: Download Fern
+        run: npm install -g fern-api
+
+      - name: Release Go SDK
+        env:
+          FERN_TOKEN: ${{ secrets.FERN_TOKEN }}
+        run: |
+          tag=${{ github.ref_name }}
+          prefix="go@"
+          SDK_VERSION="${tag#$prefix}"
+          fern generate --group go-sdk --version "$SDK_VERSION" --log-level debug
+
+  fern-generate-java:
+    needs: fern-check
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/java@')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+
+      - name: Download Fern
+        run: npm install -g fern-api
+
+      - name: Release Java SDK
+        env:
+          FERN_TOKEN: ${{ secrets.FERN_TOKEN }}
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          MAVEN_CENTRAL_SECRET_KEY_KEY_ID: ${{ secrets.MAVEN_CENTRAL_SECRET_KEY_KEY_ID }}
+          MAVEN_CENTRAL_SECRET_KEY_PASSWORD: ${{ secrets.MAVEN_CENTRAL_SECRET_KEY_PASSWORD }}
+          MAVEN_CENTRAL_SECRET_KEY: ${{ secrets.MAVEN_CENTRAL_SECRET_KEY }}
+        run: |
+          tag=${{ github.ref_name }}
+          prefix="java@"
+          SDK_VERSION="${tag#$prefix}"
+          fern generate --group java-sdk --version "$SDK_VERSION" --log-level debug
+
+  fern-generate-python:
+    needs: fern-check
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/python@')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+
+      - name: Download Fern
+        run: npm install -g fern-api
+
+      - name: Release Python SDK
+        env:
+          FERN_TOKEN: ${{ secrets.FERN_TOKEN }}
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          tag=${{ github.ref_name }}
+          prefix="python@"
+          SDK_VERSION="${tag#$prefix}"
+          fern generate --group python-sdk --version "$SDK_VERSION" --log-level debug
