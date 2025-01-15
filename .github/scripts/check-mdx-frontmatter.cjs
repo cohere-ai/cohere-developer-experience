@@ -16,6 +16,10 @@ const validators = [checkDescriptionLength, checkTitleLength];
 // List of folders to exclude (relative to mdxDir)
 const excludedFolders = ["-ARCHIVE-", "api-reference", "llm-university"];
 
+function logInvalidMessage(message) {
+    console.error(`[INVALID]: ${message}`);
+}
+
 function shouldExcludeFolder(dirPath) {
   return excludedFolders.some((excludedFolder) => {
     return path.relative(mdxDir, dirPath).startsWith(excludedFolder);
@@ -28,7 +32,7 @@ async function shouldExcludeFile(filePath) {
     const { data } = matter(fileContent);
     return data.hidden === true;
   } catch (error) {
-    console.error(`Error reading file "${filePath}":`, error);
+    console.error(`[ERROR]: Error reading file "${filePath}":`, error);
     return false; // In case of error, don't exclude the file
   }
 }
@@ -40,14 +44,14 @@ async function checkDescriptionLength(filePath) {
   const maxDescriptionLength = 160;
 
   if (!data.description) {
-    console.error(`File "${filePath}" is missing a description.`);
+    logInvalidMessage(`File "${filePath}" is missing a description.`);
     return false;
   }
 
   const descriptionLength = data.description.length;
 
   if (descriptionLength < minDescriptionLength || descriptionLength > maxDescriptionLength) {
-    console.error(
+    logInvalidMessage(
       `File "${filePath}" has an invalid description length: ${descriptionLength} characters. ` +
       `Description should be between ${minDescriptionLength}-${maxDescriptionLength} characters.`
     );
@@ -74,7 +78,7 @@ async function checkTitleLength(filePath) {
         if (filesToExclude.includes(filePath)) {
             return true;
         }
-        console.error(`File "${filePath}" is missing a title.`);
+        logInvalidMessage(`File "${filePath}" is missing a title.`);
         return false;
     }
 
