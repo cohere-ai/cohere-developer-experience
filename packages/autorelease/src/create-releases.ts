@@ -46,7 +46,7 @@ const updateVersion = async (version: string, update: typeof bumpTypes[number]) 
     return ({
         major: `${major + 1}.0.0`,
         minor: `${major}.${minor + 1}.0`,
-        patch: `${major}.${minor + 1}.${patch + 1}`,
+        patch: `${major}.${minor}.${patch + 1}`,
     })[update]
 }
 
