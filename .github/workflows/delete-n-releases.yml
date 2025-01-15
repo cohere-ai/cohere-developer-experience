@@ -1,8 +1,12 @@
-name: create-sdks-release-tags
+name: delete-n-releases
 
 on:
-  push: {}
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      n:
+        description: 'Number of releases to delete'
+        required: true
+        default: "1"
 
 jobs:
   run:
@@ -25,4 +29,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_OWNER: ${{ github.repository_owner }}
           GITHUB_REPO: ${{ github.event.repository.name }}
-        run: pnpm run --filter autorelease release
+          N_VERSIONS: ${{ github.event.inputs.n }}
+        run: pnpm run --filter autorelease delete
