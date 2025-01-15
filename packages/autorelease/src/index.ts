@@ -86,8 +86,8 @@ const createRelease = (language: typeof languages[number], version: string) => {
     octokit.repos.createRelease({
         owner: process.env.GITHUB_OWNER!,
         repo: process.env.GITHUB_REPO!,
-        tag_name: `${language}/${version}`,
-        name: `${language}/${version}`,
+        tag_name: `${language}@${version}`,
+        name: `${language}@${version}`,
         body: `This release updates the ${language} package to ${version}.`,
     })
 }
