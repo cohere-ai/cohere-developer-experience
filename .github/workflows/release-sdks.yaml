@@ -9,11 +9,19 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Install Fern
-        run: npm install -g fern-api
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
-      - name: Check Fern API is valid
-        run: fern check
+      - name: Install Dependencies
+        shell: bash
+        run: pnpm install        
+
+      - name: Run fern check
+        env:
+          FERN_TOKEN: ${{ secrets.FERN_TOKEN }}
+        run: pnpm run docs:check
 
   fern-generate-node:
     needs: fern-check
