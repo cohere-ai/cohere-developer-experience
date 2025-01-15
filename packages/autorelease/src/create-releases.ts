@@ -8,7 +8,7 @@ const sortVersions = (versions: string[]) => {
     return versions.sort((a, b) => {
         const [aMajor, aMinor, aPatch] = a.split(".").map(Number)
         const [bMajor, bMinor, bPatch] = b.split(".").map(Number)
-        
+
         if (aMajor !== bMajor) {
             return aMajor - bMajor
         } else if (aMinor !== bMinor) {
@@ -40,7 +40,7 @@ const getGoVersions = async () => {
 
 const updateVersion = async (version: string, update: "major" | "minor" | "patch") => {
     const [major, minor, patch] = version.split(".").map(Number)
-    
+
     return ({
         major: `${major + 1}.0.0`,
         minor: `${major}.${minor + 1}.0`,
@@ -80,20 +80,59 @@ const getNextVersions = async (update: "major" | "minor" | "patch") => {
     }
 }
 
-const createRelease = (language: typeof languages[number], version: string) => {
+const formatTagName = (language: typeof languages[number], version: string) => `${language}@${version}`
+
+const maybeDeleteRelease = async (language: typeof languages[number], version: string) => {
     const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
-    
-    octokit.repos.createRelease({
+
+    for await (const releases of octokit.paginate.iterator(
+        octokit.repos.listReleases,
+        {
+            owner: process.env.GITHUB_OWNER!,
+            repo: process.env.GITHUB_REPO!,
+        }
+    )) {
+        const release = releases.data.find(release => release.tag_name === formatTagName(language, version))
+
+        console.log(`Deleting existing release for ${formatTagName(language, version)}`)
+
+        if (release) {
+            await octokit.repos.deleteRelease({
+                owner: process.env.GITHUB_OWNER!,
+                repo: process.env.GITHUB_REPO!,
+                release_id: release.id,
+            })
+            await octokit.git.deleteRef({
+                owner: process.env.GITHUB_OWNER!,
+                repo: process.env.GITHUB_REPO!,
+                ref: `tags/${release.tag_name}`,
+            })
+        }
+    }
+}
+
+const createRelease = async (language: typeof languages[number], version: string) => {
+    const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
+
+    await maybeDeleteRelease(language, version)
+
+    await octokit.repos.createRelease({
         owner: process.env.GITHUB_OWNER!,
         repo: process.env.GITHUB_REPO!,
-        tag_name: `${language}@${version}`,
-        name: `${language}@${version}`,
+        tag_name: formatTagName(language, version),
+        name: formatTagName(language, version),
         body: `This release updates the ${language} package to ${version}.`,
     })
 }
 
 (async () => {
-    const nextVersions = await getNextVersions("patch")    
+    const bumpType = process.env.BUMP_TYPE as typeof languages[number] | undefined
 
-    await Promise.all(languages.map(async language => createRelease(language, nextVersions[language].next)))        
+    if (!bumpType) {
+        throw new Error("BUMP_TYPE is not defined.")
+    }
+
+    const nextVersions = await getNextVersions(bumpType)
+
+    await Promise.all(languages.map(async language => createRelease(language, nextVersions[language].next)))
 })()

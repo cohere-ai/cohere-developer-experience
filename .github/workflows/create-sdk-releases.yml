@@ -1,8 +1,16 @@
 name: create-sdk-releases
 
 on:
-  workflow_dispatch: {}
-
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'The type of version bump to make'
+        required: true
+        type: choice
+        options:
+          - 'major'
+          - 'minor'
+          - 'patch'
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -24,4 +32,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_OWNER: ${{ github.repository_owner }}
           GITHUB_REPO: ${{ github.event.repository.name }}
+          BUMP_TYPE: ${{ github.event.inputs.bump_type }}
         run: pnpm run --filter autorelease release
