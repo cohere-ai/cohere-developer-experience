@@ -36,7 +36,11 @@ from pydantic import BaseModel, Field
 
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.language_models import BaseLanguageModel
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import (
+    BaseMessage,
+    HumanMessage,
+    SystemMessage,
+)
 from langchain_core.prompts import (
     ChatPromptTemplate,
     MessagesPlaceholder,
@@ -111,6 +115,7 @@ The above cell introduces a suite of tools that are provided to the csv agent. T
 ```python
 # Define tools that we want the csv agent to have access to
 
+
 def get_file_peek_tool() -> Tool:
     def file_peek(filename: str, num_rows: int = 5) -> str:
         """Returns the first textual contents of an uploaded file
@@ -152,7 +157,9 @@ def get_file_read_tool() -> Tool:
             return "the table_path was not recognised"
 
     class file_read_inputs(BaseModel):
-        filename: str = Field(description="The name of the attached file to read.")
+        filename: str = Field(
+            description="The name of the attached file to read."
+        )
 
     file_read_tool = Tool(
         name="file_read",
@@ -198,7 +205,9 @@ def create_prompt(
     system_message: Optional[BaseMessage] = SystemMessage(
         content="You are a helpful AI assistant."
     ),
-    extra_prompt_messages: Optional[List[BaseMessagePromptTemplate]] = None,
+    extra_prompt_messages: Optional[
+        List[BaseMessagePromptTemplate]
+    ] = None,
 ) -> ChatPromptTemplate:
     """Create prompt for this agent.
 
@@ -254,7 +263,9 @@ def _get_prompt(
             )
         prompt_message = " ".join(prompt_messages)
 
-    prompt = create_prompt(system_message=HumanMessage(prompt_message))
+    prompt = create_prompt(
+        system_message=HumanMessage(prompt_message)
+    )
     return prompt
 
 
@@ -335,10 +346,14 @@ def create_csv_agent(
         df = []
         for item in path:
             if not isinstance(item, (str, IOBase)):
-                raise ValueError(f"Expected str or file-like object, got {type(path)}")
+                raise ValueError(
+                    f"Expected str or file-like object, got {type(path)}"
+                )
             df.append(pd.read_csv(item, **_kwargs))
     else:
-        raise ValueError(f"Expected str, list, or file-like object, got {type(path)}")
+        raise ValueError(
+            f"Expected str, list, or file-like object, got {type(path)}"
+        )
 
     if not prompt:
         prompt = _get_prompt(path, number_of_head_rows)
@@ -348,13 +363,19 @@ def create_csv_agent(
         get_file_peek_tool(),
         get_python_tool(),
     ] + extra_tools
-    if "preamble" in llm.__dict__ and not llm.__dict__.get("preamble"):
+    if "preamble" in llm.__dict__ and not llm.__dict__.get(
+        "preamble"
+    ):
         llm = ChatCohere(**llm.__dict__)
         llm.preamble = CSV_PREAMBLE.format(
-            current_date=datetime.now().strftime("%A, %B %d, %Y %H:%M:%S")
+            current_date=datetime.now().strftime(
+                "%A, %B %d, %Y %H:%M:%S"
+            )
         )
 
-    agent = create_tool_calling_agent(llm=llm, tools=final_tools, prompt=prompt)
+    agent = create_tool_calling_agent(
+        llm=llm, tools=final_tools, prompt=prompt
+    )
     agent_executor = AgentExecutor(
         agent=agent,
         tools=final_tools,
@@ -403,23 +424,15 @@ Let's use our CSV Agent to interact with the CSV file
 ```python
 # Try out an example
 llm = ChatCohere(model="command-r-plus", temperature=0)
-agent_executor = create_csv_agent(
-                llm,
-                "movies_tickets.csv")
-resp = agent_executor.invoke({"input":"Who all watched Shawshank redemption?"})
+agent_executor = create_csv_agent(llm, "movies_tickets.csv")
+resp = agent_executor.invoke(
+    {"input": "Who all watched Shawshank redemption?"}
+)
 print(resp.get("output"))
 ```
+    The output returned is:
 
-    
-    
-    [1m> Entering new AgentExecutor chain...[0m
-    [32;1m[1;3m
-    Invoking: `python_interpreter` with `{'code': 'import csv\n\nlines = csv.reader(open(\'movies_tickets.csv\', "r"))\n\nshawshank_redemption_watchers = []\n\nfor i, line in enumerate(lines):\n    if i == 0:\n        continue\n    if line[0] == \'The Shawshank Redemption\':\n        shawshank_redemption_watchers.append(line[1])\n\nprint(f"People who watched Shawshank Redemption: {shawshank_redemption_watchers}")'}`
-    responded: I will use Python to read the CSV file and find out who watched Shawshank Redemption.
-    
-    [0m[38;5;200m[1;3mPeople who watched Shawshank Redemption: ['John', 'Jerry', 'Jack', 'Jeremy']
-    [0m[32;1m[1;3mJohn, Jerry, Jack and Jeremy watched Shawshank Redemption.[0m
-    
-    [1m> Finished chain.[0m
-    John, Jerry, Jack and Jeremy watched Shawshank Redemption.
+```
+John, Jerry, Jack and Jeremy watched Shawshank Redemption.
+```
 
