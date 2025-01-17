@@ -47,7 +47,9 @@ We'll work with [the CaseHOLD dataset](https://huggingface.co/datasets/casehold/
 We'll work with an [IterableDataset](https://huggingface.co/docs/datasets/en/about_mapstyle_vs_iterable) and load only a small fraction of examples at a time to avoid loading the entire dataset in memory.
 
 ```python PYTHON
-iterable_dataset = load_dataset("casehold/casehold", split="train", streaming=True)
+iterable_dataset = load_dataset(
+    "casehold/casehold", split="train", streaming=True
+)
 ```
 
 For this example, we'll use a subset of only 420 data points, to be split across training, validation and test sets. 
@@ -73,14 +75,18 @@ d = []
 # Store each dataset entry as dictionary within Python list
 for example in iterable_dataset.take(num_examples):
     selected_passage_idx = "holding_{}".format(example["label"])
-    hard_negatives_idx = [x for x in all_labels if x != selected_passage_idx]
+    hard_negatives_idx = [
+        x for x in all_labels if x != selected_passage_idx
+    ]
     d.append(
         {
-            'query': example["citing_prompt"],
-            'docs': [example.get(key) for key in all_labels],
-            'label': int(example["label"]),
-            'relevant_passages': [example[selected_passage_idx]],
-            'hard_negatives': [example.get(key) for key in hard_negatives_idx]
+            "query": example["citing_prompt"],
+            "docs": [example.get(key) for key in all_labels],
+            "label": int(example["label"]),
+            "relevant_passages": [example[selected_passage_idx]],
+            "hard_negatives": [
+                example.get(key) for key in hard_negatives_idx
+            ],
         }
     )
 
@@ -98,8 +104,8 @@ test_num = 10
 
 # Do train-validation-test split
 df_train = df[:train_num].copy()
-df_valid = df[train_num:train_num+valid_num].copy()
-df_test = df[train_num+valid_num:].copy()
+df_valid = df[train_num : train_num + valid_num].copy()
+df_test = df[train_num + valid_num :].copy()
 ```
 
 ### Step 2: Assess the Pre-Trained Model
@@ -116,10 +122,12 @@ To get predictions, we'll use the [`rerank()` method](/reference/rerank-1) of th
 ```python PYTHON
 # Predict index of document that corrrectly answers query
 def get_prediction(item, model="rerank-english-v3.0"):
-    response = co.rerank(model=model,
-                         query=item["query"], 
-                         documents=item["docs"], 
-                         top_n=1)
+    response = co.rerank(
+        model=model,
+        query=item["query"],
+        documents=item["docs"],
+        top_n=1,
+    )
     prediction = response.results[0].index
     return prediction
 ```
@@ -129,7 +137,11 @@ We apply this function to every row in the test set and save the predictions in 
 ```python PYTHON
 # Calculate pre-trained model's test accuracy
 df_test["baseline_prediction"] = df_test.apply(get_prediction, axis=1)
-print("Baseline accuracy:", sum(df_test["baseline_prediction"] == df_test["label"])/len(df_test))
+print(
+    "Baseline accuracy:",
+    sum(df_test["baseline_prediction"] == df_test["label"])
+    / len(df_test),
+)
 ```
 
 The pre-trained model gets 60% accuracy, which isn't bad!  But we can do better with fine-tuning.
@@ -150,19 +162,25 @@ def create_rerank_ft_data(query, relevant_passages, hard_negatives):
     formatted_data = {
         "query": query,
         "relevant_passages": relevant_passages,
-        "hard_negatives": hard_negatives
+        "hard_negatives": hard_negatives,
     }
     return formatted_data
 
+
 # Creates jsonl file if does not already exist
 def create_jsonl_from_list(file_name, df):
-    path = f'{file_name}.jsonl'
+    path = f"{file_name}.jsonl"
     if not os.path.isfile(path):
-        with open(path, 'w+') as file:
+        with open(path, "w+") as file:
             for idx, row in df.iterrows():
-                formatted_data = create_rerank_ft_data(row["query"], row["relevant_passages"], row["hard_negatives"])
-                file.write(json.dumps(formatted_data) + '\n')
+                formatted_data = create_rerank_ft_data(
+                    row["query"],
+                    row["relevant_passages"],
+                    row["hard_negatives"],
+                )
+                file.write(json.dumps(formatted_data) + "\n")
             file.close()
+
 
 # Create training and validation jsonl files
 create_jsonl_from_list("casehold_train", df_train)
@@ -208,8 +226,15 @@ In the following code, we calculate the test accuracy of the fine-tuned model. W
 
 ```python PYTHON
 # Calculate fine-tuned model's test accuracy
-df_test['ft_prediction'] = df_test.apply(get_prediction, model='9f22e08a-f1ab-4cee-9524-607dcb08c954-ft', axis=1)
-print("Fine-tune accuracy:", sum(df_test["ft_prediction"] == df_test["label"])/len(df_test))
+df_test["ft_prediction"] = df_test.apply(
+    get_prediction,
+    model="9f22e08a-f1ab-4cee-9524-607dcb08c954-ft",
+    axis=1,
+)
+print(
+    "Fine-tune accuracy:",
+    sum(df_test["ft_prediction"] == df_test["label"]) / len(df_test),
+)
 ```
 
 The fine-tuned model has test accuracy 80%, which is a meaningful improvement over the pre-trained model's accuracy of 60%. 
