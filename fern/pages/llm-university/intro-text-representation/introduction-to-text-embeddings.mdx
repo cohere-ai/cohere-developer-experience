@@ -38,7 +38,8 @@ We also import the Cohere module and create a client.
 
 ```python PYTHON
 import cohere
-co = cohere.Client("COHERE_API_KEY") # Your Cohere API key
+
+co = cohere.Client("COHERE_API_KEY")  # Your Cohere API key
 ```
 
 ### Step 1: Prepare the Dataset
@@ -47,18 +48,25 @@ We'll work a subset of the [Airline Travel Information System (ATIS) intent clas
 
 ```python PYTHON
 # Load the dataset to a dataframe
-df_orig = pd.read_csv('https://raw.githubusercontent.com/cohere-ai/cohere-developer-experience/main/notebooks/data/atis_intents_train.csv', names=['intent','query'])
+df_orig = pd.read_csv(
+    "https://raw.githubusercontent.com/cohere-ai/cohere-developer-experience/main/notebooks/data/atis_intents_train.csv",
+    names=["intent", "query"],
+)
 
 # Take a small sample for illustration purposes
-sample_classes = ['atis_airfare', 'atis_airline', 'atis_ground_service']
+sample_classes = [
+    "atis_airfare",
+    "atis_airline",
+    "atis_ground_service",
+]
 df = df_orig.sample(frac=0.1, random_state=30)
 df = df[df.intent.isin(sample_classes)]
 df_orig = df_orig.drop(df.index)
-df.reset_index(drop=True,inplace=True)
+df.reset_index(drop=True, inplace=True)
 
-# Remove unnecessary column 
-intents = df['intent'] #save for a later need
-df.drop(columns=['intent'], inplace=True)
+# Remove unnecessary column
+intents = df["intent"]  # save for a later need
+df.drop(columns=["intent"], inplace=True)
 ```
 
 Here are a few example data points:
@@ -98,14 +106,14 @@ Next, we embed each inquiry by calling Cohere’s [Embed endpoint](/reference/em
 The code looks like this:
 
 ```python PYTHON
-def get_embeddings(texts, model='embed-english-v3.0', input_type="search_document"):
-    output = co.embed(
-        model=model,
-        input_type=input_type,
-        texts=texts)
+def get_embeddings(
+    texts, model="embed-english-v3.0", input_type="search_document"
+):
+    output = co.embed(model=model, input_type=input_type, texts=texts)
     return output.embeddings
 
-df['query_embeds'] = get_embeddings(df['query'].tolist())
+
+df["query_embeds"] = get_embeddings(df["query"].tolist())
 ```
 
 For every piece of text passed to the Embed endpoint, a sequence of 1024 numbers will be generated. Each number represents a piece of information about the meaning contained in that piece of text. Here are the first few dimensions given by the `embed-english-v3.0` model for "show me a list of ground transportation at boston airport":
@@ -126,9 +134,10 @@ def get_pc(arr, n):
     pca = PCA(n_components=n)
     embeds_transform = pca.fit_transform(arr)
     return embeds_transform
-  
+
+
 # Reduce embeddings to 10 principal components to aid visualization
-embeds = np.array(df['query_embeds'].tolist())
+embeds = np.array(df["query_embeds"].tolist())
 embeds_pc = get_pc(embeds, 10)
 ```
 

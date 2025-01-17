@@ -2,7 +2,7 @@ import { Octokit } from "@octokit/rest"
 
 const versionMatchRegex = /v?(\d+\.\d+\.\d+)/g
 
-const languages = ["python", "typescript", "go", "typescript"] as const
+const languages = ["python", "typescript", "go"] as const
 
 const bumpTypes = ["major", "minor", "patch"] as const
 
@@ -123,24 +123,41 @@ const createRelease = async (language: typeof languages[number], version: string
 
     await maybeDeleteRelease(language, version)
 
+    const tagName = formatTagName(language, version)
+
+    await octokit.git.createRef({
+        owner: process.env.GITHUB_OWNER!,
+        repo: process.env.GITHUB_REPO!,
+        ref: `refs/tags/${tagName}`,
+        sha: process.env.GITHUB_SHA!,
+    })
+
     await octokit.repos.createRelease({
         owner: process.env.GITHUB_OWNER!,
         repo: process.env.GITHUB_REPO!,
-        tag_name: formatTagName(language, version),
-        name: formatTagName(language, version),
+        tag_name: tagName,
+        name: tagName,
         body: `This release updates the ${language} package to ${version}.`,
     })
 }
 
 (async () => {
     const bumpType = process.env.BUMP_TYPE as typeof bumpTypes[number] | undefined
-    const language = process.env.LANGUAGE as typeof languages[number] | undefined
+    const language = process.env.LANGUAGE as typeof languages[number] | "all" | undefined
 
     if (!bumpType) {
         throw new Error("BUMP_TYPE is not defined.")
     }
 
+    if (!language) {
+        throw new Error("LANGUAGE is not defined.")
+    }
+
     const nextVersions = await getNextVersions(bumpType)
 
-    await Promise.all(languages.filter(l => language ? l === language : true).map(async language => createRelease(language, nextVersions[language].next)))
+    await Promise.all(
+        languages
+            .filter(l => language === "all" ? true : l === language)
+            .map(async language => createRelease(language, nextVersions[language].next))
+    )
 })()
