@@ -51,34 +51,39 @@ The following are the helper functions mentioned above.
 
 ```python PYTHON
 # Function to generate Cohere embeddings
-def embed_text(texts):  
-    embeddings = \[]  
-    for i in range(0, len(texts), 90):  
-        batch = texts[i:i+90]  
-        output = co.embed(  
+def embed_text(texts):
+    embeddings = []
+    for i in range(0, len(texts), 90):
+        batch = texts[i : i + 90]
+        output = co.embed(
             model="embed-english-v3.0",
-          	input_type="search_document",
-            texts=batch)  
-        embeddings.extend(output.embeddings)  
-        time.sleep(60) # accounting for Cohere trial API key rate limit  
+            input_type="search_document",
+            texts=batch,
+        )
+        embeddings.extend(output.embeddings)
+        time.sleep(
+            60
+        )  # accounting for Cohere trial API key rate limit
     return embeddings
 ```
 
 ```python PYTHON
 # Function to reduce dimensionality of embeddings using umap
 
-def reduce_dimensionality(embeddings):  
-    reducer = umap.UMAP()  
-    umap_embeddings = reducer.fit_transform(embeddings)  
+
+def reduce_dimensionality(embeddings):
+    reducer = umap.UMAP()
+    umap_embeddings = reducer.fit_transform(embeddings)
     return umap_embeddings[:, 0], umap_embeddings[:, 1]
 ```
 
 ```python PYTHON
 # Function to save embeddings into a json file in Databutton data storage
 
-def save_embeddings_to_json(df):  
-    # Create a dictionary where each key is the index of the DataFrame and each value is the corresponding embedding  
-    embeddings_dict = df['embedding'].to_dict()
+
+def save_embeddings_to_json(df):
+    # Create a dictionary where each key is the index of the DataFrame and each value is the corresponding embedding
+    embeddings_dict = df["embedding"].to_dict()
 ```
 
 ### Step 2: Create a User Interface with Streamlit
@@ -99,7 +104,7 @@ The reduced embeddings are now saved as a new file. We can copy the code snippet
 
 ```python PYTHON
 # Call the embeddings data as a DataFrame
-df = db.storage.dataframes.get(key=”reduced.csv”)
+df = db.storage.dataframes.get(key="reduced.csv")
 ```
 
 ### Step 3: Cluster Data to Identify Groups
@@ -119,13 +124,13 @@ We will create a user interface that provides interactivity at a few crucial poi
 - **Display and save the results**: The script will display the DataFrame that now includes cluster labels and distances from centroids. If you’re satisfied with the results, you can save this labeled data back into Databutton’s storage for later use.
 
 ```python PYTHON
-import databutton as db  
-import streamlit as st  
-from sklearn.cluster import KMeans  
-from sklearn.metrics import silhouette_score  
-import matplotlib.pyplot as plt  
-import numpy as np  
-import plotly.express as px  
+import databutton as db
+import streamlit as st
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+import matplotlib.pyplot as plt
+import numpy as np
+import plotly.express as px
 from scipy.spatial import distance
 
 # 1: Load DataFrame
@@ -134,59 +139,82 @@ df = db.storage.dataframes.get(key="reduced.csv")
 
 # 2: Extract UMAP coordinates
 
-umapx = df['umap_x']  
-umapy = df['umap_y']  
+umapx = df["umap_x"]
+umapy = df["umap_y"]
 umap_coords = np.column_stack((umapx, umapy))
 
 # 3: Define a range of potential clusters and compute SSE
 
-clusters = range(2, 10)  # You may want to modify this range  
-sse = \[]  
-for k in clusters:  
-    kmeans = KMeans(n_clusters=k, random_state=0)  
-    kmeans.fit(umap_coords)  
+clusters = range(2, 10)  # You may want to modify this range
+sse = []
+for k in clusters:
+    kmeans = KMeans(n_clusters=k, random_state=0)
+    kmeans.fit(umap_coords)
     sse.append(kmeans.inertia_)
 
 # 4: Plot the elbow plot
 
-fig, ax = plt.subplots(figsize=(10, 5))  
-plt.plot(clusters, sse, 'bx-')  
-plt.xlabel('k (number of clusters)')  
-plt.ylabel('Sum of Squared Errors (SSE)')  
-plt.title('Elbow Plot For Optimal Number of Clusters')  
+fig, ax = plt.subplots(figsize=(10, 5))
+plt.plot(clusters, sse, "bx-")
+plt.xlabel("k (number of clusters)")
+plt.ylabel("Sum of Squared Errors (SSE)")
+plt.title("Elbow Plot For Optimal Number of Clusters")
 st.pyplot(fig)
 
 # 5: User selects number of clusters based on elbow plot
 
-n_clusters = st.slider('Number of Clusters', min_value=2, max_value=10, value=2)
+n_clusters = st.slider(
+    "Number of Clusters", min_value=2, max_value=10, value=2
+)
 
 # 6: Run KMeans with optimal number of clusters
 
-kmeans_model = KMeans(n_clusters=n_clusters, random_state=0)  
-df['cluster_labels'] = kmeans_model.fit_predict(umap_coords)
+kmeans_model = KMeans(n_clusters=n_clusters, random_state=0)
+df["cluster_labels"] = kmeans_model.fit_predict(umap_coords)
 
 # 7: Plotting the clusters
 
-fig = px.scatter(df, x='umap_x', y='umap_y', color='cluster_labels', hover_data=['utt'])  
+fig = px.scatter(
+    df,
+    x="umap_x",
+    y="umap_y",
+    color="cluster_labels",
+    hover_data=["utt"],
+)
 st.plotly_chart(fig)
 
 # 8: Calculate cluster centers and distances from centroids
 
-centroids = df.groupby('cluster_labels')\[['umap_x', 'umap_y']].mean().reset_index()  
-def calc_distance(row):  
-    centroid = centroids\[centroids['cluster_labels'] == row['cluster_labels']]  
-    centroid_coords = (centroid['umap_x'].values[0], centroid['umap_y'].values[0])  
-    row_coords = (row['umap_x'], row['umap_y'])  
-    return distance.euclidean(row_coords, centroid_coords)  
-df['distance_from_centroid'] = df.apply(calc_distance, axis=1)
+centroids = (
+    df.groupby("cluster_labels")[["umap_x", "umap_y"]]
+    .mean()
+    .reset_index()
+)
+
+
+def calc_distance(row):
+    centroid = centroids[
+        centroids["cluster_labels"] == row["cluster_labels"]
+    ]
+    centroid_coords = (
+        centroid["umap_x"].values[0],
+        centroid["umap_y"].values[0],
+    )
+    row_coords = (row["umap_x"], row["umap_y"])
+    return distance.euclidean(row_coords, centroid_coords)
+
+
+df["distance_from_centroid"] = df.apply(calc_distance, axis=1)
 
 # 9: Display and save the results
 
-selected_cluster = st.selectbox('Select a cluster label', df['cluster_labels'].unique())  
-temp_df = df\[['utt', 'cluster_labels', 'distance_from_centroid']]  
-st.write(temp_df\[temp_df['cluster_labels'] == selected_cluster])
+selected_cluster = st.selectbox(
+    "Select a cluster label", df["cluster_labels"].unique()
+)
+temp_df = df[["utt", "cluster_labels", "distance_from_centroid"]]
+st.write(temp_df[temp_df["cluster_labels"] == selected_cluster])
 
-if st.button("Save Labelled Data"):  
+if st.button("Save Labelled Data"):
     db.storage.dataframes.put(key="cluster.csv", df=df)
 ```
 
@@ -240,82 +268,100 @@ We create several helper functions for processing the DataFrame, generating keyw
 ```python PYTHON
 # Function to generate a name for each cluster
 
-def generate_label(customer_service_prompt, text_series):  
-    # Initialize Cohere model  
-    COHERE_API_KEY = db.secrets.get(name="COHERE_API_KEY")  
-    co = cohere.Client(COHERE_API_KEY)  
-    text_list = text_series.tolist()  
-    formatted_text_list = ""  
-    for text in text_list:  
-        formatted_text_list += "- " + text + "\\n"  
-    prompt=customer_service_prompt + formatted_text_list
-    response = co.chat(  
-        model='command-r',  
-        message=prompt,  
-        max_tokens=800,  
-        temperature=0.2,  
-        k=0)  
+
+def generate_label(customer_service_prompt, text_series):
+    # Initialize Cohere model
+    COHERE_API_KEY = db.secrets.get(name="COHERE_API_KEY")
+    co = cohere.Client(COHERE_API_KEY)
+    text_list = text_series.tolist()
+    formatted_text_list = ""
+    for text in text_list:
+        formatted_text_list += "- " + text + "\\n"
+    prompt = customer_service_prompt + formatted_text_list
+    response = co.chat(
+        model="command-r",
+        message=prompt,
+        max_tokens=800,
+        temperature=0.2,
+        k=0,
+    )
     return response.text, prompt
 ```
 
 ```python PYTHON
 # Function to generate keywords for each cluster
 
-def extract_top_n_words(vectorizer, tfidf_matrix, n=10):  
-  """  
-  Given a TfidfVectorizer and a TF-IDF matrix, return the `n` words with the highest TF-IDF scores.  
-  """  
-  # Get the names of the words  
-  #feature_names = vectorizer.get_feature_names_out()
 
-  # Sum tfidf frequency of each term through documents
-  summed_tfidf = np.sum(tfidf_matrix, axis=0)
+def extract_top_n_words(vectorizer, tfidf_matrix, n=10):
+    """
+    Given a TfidfVectorizer and a TF-IDF matrix, return the `n` words with the highest TF-IDF scores.
+    """
+    # Get the names of the words
+    # feature_names = vectorizer.get_feature_names_out()
 
-  # Connecting term to its sums frequency
-  words_freq = [(word, summed_tfidf[0, idx]) for word, idx in vectorizer.vocabulary_.items()]
-  words_freq = sorted(words_freq, key = lambda x: x[1], reverse=True)
+    # Sum tfidf frequency of each term through documents
+    summed_tfidf = np.sum(tfidf_matrix, axis=0)
 
-  # Return the n words with highest tfidf
-  return [word[0] for word in words_freq[:n]]
+    # Connecting term to its sums frequency
+    words_freq = [
+        (word, summed_tfidf[0, idx])
+        for word, idx in vectorizer.vocabulary_.items()
+    ]
+    words_freq = sorted(words_freq, key=lambda x: x[1], reverse=True)
+
+    # Return the n words with highest tfidf
+    return [word[0] for word in words_freq[:n]]
 ```
 
 ```python PYTHON
 # Helper function to generate the cluster name and keywords
 
-@st.cache_resource  
-def generate_keywords_and_label(df, cluster, utterance_prompt):  
-  # Filter the DataFrame for each cluster  
-  df_cluster = df\[df['cluster_labels'] == cluster]
-  # Generate the TF-IDF matrix
-  vectorizer = TfidfVectorizer(stop_words='english')
-  tfidf_matrix = vectorizer.fit_transform(df_cluster['utt'])
 
-  # Extract the top N keywords from each cluster
-  keywords = extract_top_n_words(vectorizer, tfidf_matrix, n=10)
+@st.cache_resource
+def generate_keywords_and_label(df, cluster, utterance_prompt):
+    # Filter the DataFrame for each cluster
+    df_cluster = df[df["cluster_labels"] == cluster]
+    # Generate the TF-IDF matrix
+    vectorizer = TfidfVectorizer(stop_words="english")
+    tfidf_matrix = vectorizer.fit_transform(df_cluster["utt"])
 
-  # Generate a summary label using the AI model
-  prompt = utterance_prompt + "\nKeywords for messages in this cluster: " + ', '.join(keywords) + "\n"
-  summary, prompt = generate_label(prompt, df_cluster['utt'].sample(n=5))
+    # Extract the top N keywords from each cluster
+    keywords = extract_top_n_words(vectorizer, tfidf_matrix, n=10)
 
-  # Extract cluster name from AI generated label
-  start = summary.find("Cluster name:") + len("Cluster name:")
-  end = summary.find("\n", start)
-  cluster_name = summary[start:end].strip()
+    # Generate a summary label using the AI model
+    prompt = (
+        utterance_prompt
+        + "\nKeywords for messages in this cluster: "
+        + ", ".join(keywords)
+        + "\n"
+    )
+    summary, prompt = generate_label(
+        prompt, df_cluster["utt"].sample(n=5)
+    )
 
-  # Update original DataFrame with generated label and keywords
-  df.loc[df['cluster_labels'] == cluster, 'label'] = cluster_name
-  df.loc[df['cluster_labels'] == cluster, 'keywords'] = ', '.join(keywords)
+    # Extract cluster name from AI generated label
+    start = summary.find("Cluster name:") + len("Cluster name:")
+    end = summary.find("\n", start)
+    cluster_name = summary[start:end].strip()
 
-  return df, keywords, cluster_name
+    # Update original DataFrame with generated label and keywords
+    df.loc[df["cluster_labels"] == cluster, "label"] = cluster_name
+    df.loc[df["cluster_labels"] == cluster, "keywords"] = ", ".join(
+        keywords
+    )
+
+    return df, keywords, cluster_name
+
 
 # Helper function to present cluster data
 
-def present_cluster_data(df, cluster, keywords, label):  
-  df_cluster = df\[df['cluster_labels'] == cluster]
-  st.markdown(f"**Cluster {cluster}**")
-  st.markdown(f"**Generated Keywords:** {', '.join(keywords)}")
-  st.markdown(f"**AI Proposed Label:** {label}")
-  st.DataFrame(df_cluster[['utt', 'distance_from_centroid']])
+
+def present_cluster_data(df, cluster, keywords, label):
+    df_cluster = df[df["cluster_labels"] == cluster]
+    st.markdown(f"**Cluster {cluster}**")
+    st.markdown(f"**Generated Keywords:** {', '.join(keywords)}")
+    st.markdown(f"**AI Proposed Label:** {label}")
+    st.DataFrame(df_cluster[["utt", "distance_from_centroid"]])
 ```
 
 And finally, putting the steps together for cluster names and keyword generation, as well as adding the user interaction steps, we have the following:
@@ -328,12 +374,12 @@ And finally, putting the steps together for cluster names and keyword generation
 These are reflected in the corresponding code block.
 
 ```python PYTHON
-from sklearn.feature_extraction.text import TfidfVectorizer  
-import databutton as db  
-import streamlit as st  
-import pandas as pd  
-import cohere  
-import numpy as np  
+from sklearn.feature_extraction.text import TfidfVectorizer
+import databutton as db
+import streamlit as st
+import pandas as pd
+import cohere
+import numpy as np
 import time
 
 # helper functions...
@@ -350,25 +396,29 @@ cluster_labels = {}
 
 vectorizer = TfidfVectorizer(stop_words="english")
 
-clusters = df["cluster_labels"].unique()  
-if (  
-    st.button("Generate AI Labels", key="labelling", type="primary")  
-    or st.session_state.load_state  
-):  
-    st.session_state.load_state = True  
-    for cluster in clusters:  
-        df, keywords, label = generate_keywords_and_label(df, cluster, utterance_prompt)  
-        present_cluster_data(df, cluster, keywords, label)  
-        # Add user interaction to rename the label  
-        state_key = f"user_label_{cluster}"  
-        new_label = st.text_input(  
-            f"Enter a new label for cluster {cluster} (leave empty to keep the AI proposed label)",  
-            value=st.session_state.get(state_key, label),  
-            key=state_key,  
-        )  
-        if new_label != label:  
-            df.loc\[df["cluster_labels"] == cluster, "label"] = new_label
-	
+clusters = df["cluster_labels"].unique()
+if (
+    st.button("Generate AI Labels", key="labelling", type="primary")
+    or st.session_state.load_state
+):
+    st.session_state.load_state = True
+    for cluster in clusters:
+        df, keywords, label = generate_keywords_and_label(
+            df, cluster, utterance_prompt
+        )
+        present_cluster_data(df, cluster, keywords, label)
+        # Add user interaction to rename the label
+        state_key = f"user_label_{cluster}"
+        new_label = st.text_input(
+            f"Enter a new label for cluster {cluster} (leave empty to keep the AI proposed label)",
+            value=st.session_state.get(state_key, label),
+            key=state_key,
+        )
+        if new_label != label:
+            df.loc[df["cluster_labels"] == cluster, "label"] = (
+                new_label
+            )
+
     # For each cluster, find the utterance that is closest to the centroid
     for cluster in df["cluster_labels"].unique():
         min_distance_idx = df[df["cluster_labels"] == cluster][
@@ -380,27 +430,33 @@ if (
 
     # Create the scatter plot
     fig = px.scatter(
-        df, x="umap_x", y="umap_y", color="cluster_labels", hover_data=["utt", "label"]
+        df,
+        x="umap_x",
+        y="umap_y",
+        color="cluster_labels",
+        hover_data=["utt", "label"],
     )
 
     # Add labels to the points that are closest to the centroid in each cluster
     for i in range(len(df)):
         if df.iloc[i]["utt"] == df.iloc[i]["closest_centroid_utt"]:
             fig.add_annotation(
-                x=df.iloc[i]["umap_x"], y=df.iloc[i]["umap_y"], text=df.iloc[i]["label"]
+                x=df.iloc[i]["umap_x"],
+                y=df.iloc[i]["umap_y"],
+                text=df.iloc[i]["label"],
             )
 
     # Display the plot
     st.plotly_chart(fig)
 
-save = st.button("Save changes", type="primary")  
-if save:  
-    # Reset the input session states after save. Also reset the button state  
-    st.session_state.load_state = False  
-    for key in st.session_state.keys():  
-        if key.startswith('user_label_'):  
-            del st.session_state[key]  
-    db.storage.dataframes.put(key="labeled_cluster.csv", df=df)  
+save = st.button("Save changes", type="primary")
+if save:
+    # Reset the input session states after save. Also reset the button state
+    st.session_state.load_state = False
+    for key in st.session_state.keys():
+        if key.startswith("user_label_"):
+            del st.session_state[key]
+    db.storage.dataframes.put(key="labeled_cluster.csv", df=df)
     st.write("Labelled Data Saved")
 ```
 
