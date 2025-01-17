@@ -24,7 +24,7 @@ However, one key property of LLMs that’s different from traditional software i
 Here’s an example. In [Chapter 1](/docs/constructing-prompts), we looked at a text extraction task of turning a list of bank invoices in a text document into a JSON object containing three fields: “Invoice Number,” “Merchant Name,” and “Account Number.” For brevity, we’ll turn it into a shorter version with the document containing just one invoice, as follows.
 
 ```python PYTHON
-prompt="""Turn the following information into a JSON string with the following keys: Invoice Number, Merchant Name, and Account Number.
+prompt = """Turn the following information into a JSON string with the following keys: Invoice Number, Merchant Name, and Account Number.
 Bank Invoice: INVOICE #0521 MERCHANT ALLBIRDS ACC XXX3846
 """
 ```
@@ -130,23 +130,45 @@ Next, we define the output schema that defines what the LLM response should look
 
 ```python PYTHON
 class Symptom(BaseModel):
-    symptom: str = Field(..., description="Symptom that a patient is experiencing")
+    symptom: str = Field(
+        ..., description="Symptom that a patient is experiencing"
+    )
     affected_area: str = Field(
         ...,
         description="What part of the body the symptom is affecting",
-        validators=[ValidChoices(["Head", "Face", "Neck", "Chest"], on_fail="reask")]
+        validators=[
+            ValidChoices(
+                ["Head", "Face", "Neck", "Chest"], on_fail="reask"
+            )
+        ],
     )
 
+
 class CurrentMed(BaseModel):
-    medication: str = Field(..., description="Name of the medication the patient is taking")
-    response: str = Field(..., description="How the patient is responding to the medication")
+    medication: str = Field(
+        ...,
+        description="Name of the medication the patient is taking",
+    )
+    response: str = Field(
+        ...,
+        description="How the patient is responding to the medication",
+    )
 
 
 class PatientInfo(BaseModel):
     gender: str = Field(..., description="Patient's gender")
-    age: int = Field(..., description="Patient's age", validators=[ValidRange(0, 100)])
-    symptoms: List[Symptom] = Field(..., description="Symptoms that the patient is experiencing")
-    current_meds: List[CurrentMed] = Field(..., description="Medications that the patient is currently taking")
+    age: int = Field(
+        ...,
+        description="Patient's age",
+        validators=[ValidRange(0, 100)],
+    )
+    symptoms: List[Symptom] = Field(
+        ..., description="Symptoms that the patient is experiencing"
+    )
+    current_meds: List[CurrentMed] = Field(
+        ...,
+        description="Medications that the patient is currently taking",
+    )
 ```
 
 In the schema, we defined a few “validators,” a Guardrails feature that lets us define the type of validation to perform. One example is `ValidChoices`, useful for situations where we want to enforce that a response can only be within a predefined list of items. In our example, in the `symptom` field, the value can only be one of head, neck, or chest. And if the generated response doesn’t fulfill this criteria, it will be re-prompted. This is shown by the `on_fail` setting that triggers a `reask`.
@@ -228,7 +250,7 @@ We’re ready to run an LLM call using the Cohere `Generate` endpoint. For this,
 response = guard(
     co.chat,
     prompt_params={"doctors_notes": doctors_notes},
-    model='command-r-plus',
+    model="command-r-plus",
     temperature=0,
 )
 
