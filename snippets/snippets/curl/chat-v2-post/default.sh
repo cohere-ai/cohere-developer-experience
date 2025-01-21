@@ -10,5 +10,5 @@ curl --request POST \
         "role": "user",
         "content": "Hello world!"
       }
-    ],
+    ]
   }'

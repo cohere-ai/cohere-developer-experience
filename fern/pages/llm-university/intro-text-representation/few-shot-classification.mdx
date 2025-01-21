@@ -6,7 +6,7 @@ hidden: false
 createdAt: "Thu Mar 28 2024 18:08:03 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Wed Apr 03 2024 19:02:29 GMT+0000 (Coordinated Universal Time)"
 ---
-We’ll use [Cohere’s Python SDK](/reference/about?ref=txt.cohere.com#python) for the code examples. Follow along in [this notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/llmu/Classify_Endpoint.ipynb).
+We’ll use [Cohere’s Python SDK](/reference/about?ref=txt.cohere.com#python) for the code examples. Follow along in [this notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/llmu/Classify_Endpoint.ipynb).
 
 In the text classification space, a trend is emerging where developers and teams are leveraging large language models (LLMs) when building an AI-based classifier system. This is opposed to building a system from scratch on their own, which first, requires the team to have the know-how in machine learning and engineering, and second, requires a huge amount of labeled training data to build a working solution.
 
@@ -30,7 +30,7 @@ from cohere import ClassifyExample
 We also create a Cohere client.
 
 ```python PYTHON
-co = cohere.Client("COHERE_API_KEY") # Your Cohere API key
+co = cohere.Client("COHERE_API_KEY")  # Your Cohere API key
 ```
 
 ### Step 1: Prepare Examples and Input
@@ -55,38 +55,49 @@ Our sentiment analysis classifier has three classes with five examples each: “
 The examples:
 
 ```python PYTHON
-examples = [ClassifyExample(text="I’m so proud of you", label="positive"), 
-            ClassifyExample(text="What a great time to be alive", label="positive"), 
-            ClassifyExample(text="That’s awesome work", label="positive"), 
-            ClassifyExample(text="The service was amazing", label="positive"), 
-            ClassifyExample(text="I love my family", label="positive"), 
-            ClassifyExample(text="They don't care about me", label="negative"), 
-            ClassifyExample(text="I hate this place", label="negative"), 
-            ClassifyExample(text="The most ridiculous thing I've ever heard", label="negative"), 
-            ClassifyExample(text="I am really frustrated", label="negative"), 
-            ClassifyExample(text="This is so unfair", label="negative"),
-            ClassifyExample(text="This made me think", label="neutral"), 
-            ClassifyExample(text="The good old days", label="neutral"), 
-            ClassifyExample(text="What's the difference", label="neutral"), 
-            ClassifyExample(text="You can't ignore this", label="neutral"), 
-            ClassifyExample(text="That's how I see it", label="neutral")]
+examples = [
+    ClassifyExample(text="I’m so proud of you", label="positive"),
+    ClassifyExample(
+        text="What a great time to be alive", label="positive"
+    ),
+    ClassifyExample(text="That’s awesome work", label="positive"),
+    ClassifyExample(text="The service was amazing", label="positive"),
+    ClassifyExample(text="I love my family", label="positive"),
+    ClassifyExample(
+        text="They don't care about me", label="negative"
+    ),
+    ClassifyExample(text="I hate this place", label="negative"),
+    ClassifyExample(
+        text="The most ridiculous thing I've ever heard",
+        label="negative",
+    ),
+    ClassifyExample(text="I am really frustrated", label="negative"),
+    ClassifyExample(text="This is so unfair", label="negative"),
+    ClassifyExample(text="This made me think", label="neutral"),
+    ClassifyExample(text="The good old days", label="neutral"),
+    ClassifyExample(text="What's the difference", label="neutral"),
+    ClassifyExample(text="You can't ignore this", label="neutral"),
+    ClassifyExample(text="That's how I see it", label="neutral"),
+]
 ```
 
 The inputs (we have twelve in this example):
 
 ```python PYTHON
-inputs = ["Hello, world! What a beautiful day",
-          "It was a great time with great people",
-          "Great place to work",
-          "That was a wonderful evening",
-          "Maybe this is why",
-          "Let's start again",
-          "That's how I see it",
-          "These are all facts",
-          "This is the worst thing",
-          "I cannot stand this any longer",
-          "This is really annoying",
-          "I am just plain fed up"]
+inputs = [
+    "Hello, world! What a beautiful day",
+    "It was a great time with great people",
+    "Great place to work",
+    "That was a wonderful evening",
+    "Maybe this is why",
+    "Let's start again",
+    "That's how I see it",
+    "These are all facts",
+    "This is the worst thing",
+    "I cannot stand this any longer",
+    "This is really annoying",
+    "I am just plain fed up",
+]
 ```
 
 ### Step 2: Generate Predictions
@@ -108,13 +119,13 @@ def classify_text(inputs, examples):
     """
     # Classify text by calling the Classify endpoint
     response = co.classify(
-        model='embed-english-v2.0',
-        inputs=inputs,
-        examples=examples)
+        model="embed-english-v2.0", inputs=inputs, examples=examples
+    )
 
     classifications = response.classifications
 
     return classifications
+
 
 # Classify the inputs
 predictions = classify_text(inputs, examples)

@@ -1,5 +1,5 @@
 ---
-title: Datasets
+title: The Cohere Datasets API (and How to Use It)
 slug: docs/datasets
 hidden: false
 description: >-
@@ -35,7 +35,7 @@ You should also be aware of how Cohere handles data retention. This is the most 
 
 First, let's install the SDK
 
-```python PYTHON
+```bash
 pip install cohere
 ```
 
@@ -43,7 +43,8 @@ Import dependencies and set up the Cohere client.
 
 ```python PYTHON
 import cohere
-co = cohere.Client(api_key='Your API key')
+
+co = cohere.Client(api_key="Your API key")
 ```
 
 (All the rest of the examples on this page will be in Python, but you can find more detailed instructions for getting set up by checking out the Github repositories for [Python](https://github.com/cohere-ai/cohere-python), [Typescript](https://github.com/cohere-ai/cohere-typescript), and [Go](https://github.com/cohere-ai/cohere-go).)
@@ -52,7 +53,7 @@ co = cohere.Client(api_key='Your API key')
 
 Datasets are created by uploading files, specifying both a `name` for the dataset and the dataset `type`.
 
-The file extension and file contents have to match the requirements for the selected dataset `type`. See the table below to learn more about the supported dataset types. 
+The file extension and file contents have to match the requirements for the selected dataset `type`. See the [table below](#supported-dataset-types) to learn more about the supported dataset types. 
 
 The dataset `name` is useful when browsing the datasets you've uploaded. In addition to its name, each dataset will also be assigned a unique `id` when it's created.
 
@@ -60,9 +61,10 @@ Here is an example code snippet illustrating the process of creating a dataset, 
 
 ```python PYTHON
 my_dataset = co.datasets.create(
-	name="shakespeare",
-	data=open("./shakespeare.jsonl", "rb"),
-	type="chat-finetune-input")
+    name="shakespeare",
+    data=open("./shakespeare.jsonl", "rb"),
+    type="chat-finetune-input",
+)
 
 print(my_dataset.id)
 ```
@@ -75,7 +77,7 @@ Here's a code snippet showing how to check the validation status of a dataset yo
 
 ```python PYTHON
 ds = co.wait(my_dataset)
-print(ds.validation_status)
+print(ds.dataset.validation_status)
 ```
 
 To help you interpret the results, here's a table specifying all the possible API error messages and what they mean:
@@ -101,7 +103,7 @@ The Dataset API will preserve metadata if specified at time of upload. During th
 
 #### Sample Dataset Input Format
 
-```json JSON
+```text JSONL
 {"wiki_id": 69407798, "url": "https://en.wikipedia.org/wiki?curid=69407798", "views": 5674.4492597435465, "langs": 38, "title": "Deaths in 2022", "text": "The following notable deaths occurred in 2022. Names are reported under the date of death, in alphabetical order. A typical entry reports information in the following sequence:", "paragraph_id": 0, "id": 0}
 {"wiki_id": 3524766, "url": "https://en.wikipedia.org/wiki?curid=3524766", "views": 5409.5609619796405, "title": "YouTube", "text": "YouTube is a global online video sharing and social media platform headquartered in San Bruno, California. It was launched on February 14, 2005, by Steve Chen, Chad Hurley, and Jawed Karim. It is owned by Google, and is the second most visited website, after Google Search. YouTube has more than 2.5 billion monthly users who collectively watch more than one billion hours of videos each day. , videos were being uploaded at a rate of more than 500 hours of content per minute.", "paragraph_id": 0, "id": 1}
 ```
@@ -110,14 +112,14 @@ As seen in the above example, the following would be a valid `create_dataset` ca
 
 ```python PYTHON
 # Upload a dataset for embed jobs
-ds=co.datasets.create(
-	name='sample_file',
-	# insert your file path here - you can upload it on the right - we accept .csv and jsonl files
-	data=open('embed_jobs_sample_data.jsonl', 'rb'),
-	keep_fields=['wiki_id','url','views','title'],
-	optional_fields=['langs'],
-	type="embed-input"
-	)
+ds = co.datasets.create(
+    name="sample_file",
+    # insert your file path here - you can upload it on the right - we accept .csv and jsonl files
+    data=open("embed_jobs_sample_data.jsonl", "rb"),
+    keep_fields=["wiki_id", "url", "views", "title"],
+    optional_fields=["langs"],
+    type="embed-input",
+)
 
 # wait for the dataset to finish validation
 print(co.wait(ds))
@@ -132,23 +134,23 @@ In the example below, we will create a new dataset and upload an evaluation set 
 ```python PYTHON
 # create a dataset
 my_dataset = co.datasets.create(
-	name="shakespeare",
-	type="chat-finetune-input",
-	data=open("./shakespeare.jsonl", "rb"),
-        eval_data=open("./shakespeare-eval.jsonl", "rb")
+    name="shakespeare",
+    type="chat-finetune-input",
+    data=open("./shakespeare.jsonl", "rb"),
+    eval_data=open("./shakespeare-eval.jsonl", "rb"),
 )
 
 co.wait(my_dataset)
 
 # start training a custom model using the dataset
 co.finetuning.create_finetuned_model(
-	request=FinetunedModel(
+    request=FinetunedModel(
         name="shakespearean-model",
         settings=Settings(
             base_model=BaseModel(
                 base_type="BASE_TYPE_CHAT",
             ),
-            dataset_id=my_dataset.id
+            dataset_id=my_dataset.id,
         ),
     )
 )
@@ -162,31 +164,33 @@ Datasets of type `chat-finetune-input`, for example, are expected to have a json
 
 ```python PYTHON
 {
-  "messages": [
-    {
-      "role": "System",
-      "content": "You are a large language model trained by Cohere."
-    },
-    {
-      "role": "User",
-      "content": "Hi! What were Time magazines top 10 cover stories in the last 10 years?"
-    },
-    {
-      "role": "Chatbot",
-      "content": "Time magazines top 10 cover stories in the last 10 years were:\\n\\n1. Volodymyr Zelenskyy\\n2. Elon Musk\\n3. Martin Luther King Jr.\\n4. How Earth Survived\\n5. Her Lasting Impact\\n6. Nothing to See Here\\n7. Meltdown\\n8. Deal With It\\n9. The Top of America\\n10. Bitter Pill"
-    }
+    "messages": [
+        {
+            "role": "System",
+            "content": "You are a large language model trained by Cohere.",
+        },
+        {
+            "role": "User",
+            "content": "Hi! What were Time magazines top 10 cover stories in the last 10 years?",
+        },
+        {
+            "role": "Chatbot",
+            "content": "Time magazines top 10 cover stories in the last 10 years were:\\n\\n1. Volodymyr Zelenskyy\\n2. Elon Musk\\n3. Martin Luther King Jr.\\n4. How Earth Survived\\n5. Her Lasting Impact\\n6. Nothing to See Here\\n7. Meltdown\\n8. Deal With It\\n9. The Top of America\\n10. Bitter Pill",
+        },
+    ]
 }
 ```
 
 The following table describes the types of datasets supported by the Dataset API:
 
+#### Supported Dataset Types
 | Dataset Type                           | Description                                                                                                                                                                     | Schema                                                                                     | Rules                                                                                                                                                                      | Task Type                   | Status                    | File Types Supported           | Are Metadata Fields Supported? | Sample File                                                                                                                                                                               |
 |----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------|---------------------------|--------------------------------|--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `single-label-classification-finetune-input` | A file containing text and a single label (class) for each text                                                                                                                 | `text:string  label:string`                                                              | You must include 40 valid train examples, with five examples per label. A label cannot be present in all examples  There must be 24 valid evaluation examples.        | Classification Fine-tuning  | Supported                 | `csv` and `jsonl`               | No                             | [Art classification file](https://drive.google.com/file/d/15-CchSiALUQwto4b-yAMWhdUqz8vfwQ1/view?usp=drive_link)                                                                          |
 | `multi-label-classification-finetune-input`  | A file containing text and an array of label(s) (class) for each text                                                                                                            | `text:string  label:list[string]`                                                        | You must include 40 valid train examples, with five examples per label. A label cannot be present in all examples. There must be 24 valid evaluation examples.          | Classification Fine-tuning  | Supported                 | `jsonl`                          | No                             | n/a                                                                                                                                                                                         |
 | `reranker-finetune-input`              | A file containing queries and an array of passages relevant to the query. There must also be "hard negatives", passages semantically similar but ultimately not relevant.        | `query:string  relevant_passages:list[string]  hard_negatives:list[string]`            | There must be 256 train examples and at least 64 evaluation examples. There must be  at least one relevant passage, with no overlap between relevant passage and hard  negatives. | Rerank Fine-tuning          | Supported                 | `jsonl`                          | No                             | [train_valid.json](https://drive.google.com/file/d/1CmXWfQRedVyWBDCsSkeF9g8gyqmpUA7C/view?usp=drive_link)                                                                                  |
 | `chat-finetune-input`                  | A file containing conversations                                                                                                                                                 | `messages: list[{role: string, content: string}]`          | There must be two valid train examples and one valid evaluation example.                                                                                                     | Chat Fine-tuning            | In progress/not supported | `jsonl`                          | No                             | [train_celestial_fox.json](https://drive.google.com/file/d/19x6sOPXNWoZj9Jo989h09wd4IJ6Su9by/view?usp=drive_link)                                                                         |
-| `embed-input`                          | A file containing text to be embedded                                                                                                                                           | `text:string`                                                                              | None of the rows in the file can be empty.                                                                                                                                | Embed job                   | Supported                 | `csv` and `jsonl`               | Yes                            | [embed_jobs_sample_data.jsonl](https://raw.githubusercontent.com/cohere-ai/notebooks/main/notebooks/data/embed_jobs_sample_data.jsonl) / [embed_jobs_sample_data.csv](https://github.com/cohere-ai/notebooks/blob/main/notebooks/data/embed_jobs_sample_data.csv) |
+| `embed-input`                          | A file containing text to be embedded                                                                                                                                           | `text:string`                                                                              | None of the rows in the file can be empty.                                                                                                                                | Embed job                   | Supported                 | `csv` and `jsonl`               | Yes                            | [embed_jobs_sample_data.jsonl](https://raw.githubusercontent.com/cohere-ai/cohere-developer-experience/main/notebooks/data/embed_jobs_sample_data.jsonl) / [embed_jobs_sample_data.csv](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/data/embed_jobs_sample_data.csv) |
 
 
 
@@ -203,12 +207,16 @@ my_dataset = my_dataset_response.dataset
 
 # print each entry in the dataset
 for record in my_dataset:
-  print(record)
+    print(record)
 
 # save the dataset as jsonl
-co.utils.save_dataset(dataset=my_dataset, filepath='./path/to/new/file.jsonl')
+co.utils.save_dataset(
+    dataset=my_dataset, filepath="./path/to/new/file.jsonl"
+)
 # or save the dataset as csv
-co.utils.save_dataset(dataset=my_dataset, filepath='./path/to/new/file.csv')
+co.utils.save_dataset(
+    dataset=my_dataset, filepath="./path/to/new/file.csv"
+)
 ```
 
 ### Deleting a dataset

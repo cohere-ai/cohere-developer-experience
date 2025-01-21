@@ -6,7 +6,7 @@ hidden: false
 createdAt: "Thu Mar 21 2024 17:44:45 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Fri Apr 19 2024 20:22:55 GMT+0000 (Coordinated Universal Time)"
 ---
-We’ll use [Cohere’s Python SDK](/reference/about?ref=txt.cohere.com#python) for the code examples. Follow along in [this notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/llmu/Prompt_Engineering_Basics.ipynb). 
+We’ll use [Cohere’s Python SDK](/reference/about?ref=txt.cohere.com#python) for the code examples. Follow along in [this notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/llmu/Prompt_Engineering_Basics.ipynb). 
 
 _Note: This chapter covers the basics of prompt engineering. If you want to explore this topic further, we have a dedicated [LLMU module on prompt engineering](/docs/intro-prompt-engineering) as well as further [documentation on prompt engineering](/docs/prompt-engineering)._
 
@@ -20,7 +20,8 @@ To set up, we first import the Cohere module and create a client.
 
 ```python PYTHON
 import cohere
-co = cohere.Client("COHERE_API_KEY") # Your Cohere API key
+
+co = cohere.Client("COHERE_API_KEY")  # Your Cohere API key
 ```
 
 Let's also define a function `generate_text()` to take a user message, call the Chat endpoint, and stream the response.
@@ -30,7 +31,7 @@ def generate_text(message):
     stream = co.chat_stream(message=message, model="command-r-plus")
     for event in stream:
         if event.event_type == "text-generation":
-            print(event.text, end='')
+            print(event.text, end="")
 ```
 
 ## Writing a Basic Prompt
@@ -40,7 +41,9 @@ The best way to design prompts for a model like [Command](https://cohere.com/mod
 For instance, let’s say that we are creating the product description copy for a wireless earbuds product. We can write the prompt as follows.
 
 ```python PYTHON
-generate_text("Generate a concise product description for the product: wireless earbuds.")
+generate_text(
+    "Generate a concise product description for the product: wireless earbuds."
+)
 ```
 
 ```
@@ -60,10 +63,12 @@ But perhaps we want to be more specific regarding what we want the output to loo
 Let’s say we want the model to write the product description in a particular format with specific information. In this case, we can append this specific instruction in the prompt.
 
 ```python PYTHON
-generate_text("""
+generate_text(
+    """
     Generate a concise product description for the product: wireless earbuds. 
     Use the following format: Hook, Solution, Features and Benefits, Call to Action.
-    """)
+    """
+)
 ```
 
 ```
@@ -92,7 +97,8 @@ The model returns an output following the format that we wanted.
 The prompt can also be constructed as a combination of an instruction and some context. Let’s see this in action with another example: emails. We can create a prompt to summarize an email, which is included in the prompt for context.
 
 ```python PYTHON
-generate_text("""
+generate_text(
+    """
     Summarize this email in one sentence.
     Dear [Team Members],
     I am writing to thank you for your hard work and dedication in organizing our recent community meetup. The event was a great success and it would not have been possible without your efforts.
@@ -102,7 +108,8 @@ generate_text("""
     Thank you again for your hard work and dedication. I am looking forward to working with you on future events.
     Sincerely,
     [Your Name]
-    """)
+    """
+)
 ```
 
 ```
@@ -118,10 +125,12 @@ This instruction–context prompt format is extremely useful as it means that we
 Let's move to another example — an extraction task, which a generative model can do very well. Given context, which in this case is a description of a movie, we want the model to extract the movie title.
 
 ```python PYTHON
-generate_text("""
+generate_text(
+    """
     Extract the movie title from the text below.
     Deadpool 2 | Official HD Deadpool's "Wet on Wet" Teaser | 2018
-    """)
+    """
+)
 ```
 
 ```
@@ -137,7 +146,8 @@ The model is also effective at tasks that involve taking a piece of text and rew
 Here's an example. We have a one-line instruction followed by the context, which in this case is a blog excerpt. The instruction is to generate a list of frequently asked questions (FAQ) based on the passage, which involves a mixture of several tasks, such as extraction and rewriting.
 
 ```python PYTHON
-generate_text("""
+generate_text(
+    """
     Given the following text, write down a list of potential frequently asked questions (FAQ), together with the answers.
     The Cohere Platform provides an API for developers and organizations to access cutting-edge LLMs without needing machine learning know-how. 
     The platform handles all the complexities of curating massive amounts of text data, model development, distributed training, model serving, and more. 
@@ -150,7 +160,8 @@ generate_text("""
     
     With text embedding, we enter a piece of text and get back a list of numbers that represents its semantic meaning (we’ll see what “semantic” means in a section below). 
     This is useful for use cases that involve “measuring” what a passage of text represents, for example, in analyzing its sentiment.
-    """)
+    """
+)
 ```
 
 ```

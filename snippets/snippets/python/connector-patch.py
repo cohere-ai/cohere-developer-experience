@@ -1,6 +1,6 @@
 import cohere
 
-co = cohere.Client("<<apiKey>>")
+co = cohere.Client()
 response = co.connectors.update(
     connector_id="test-id", name="new name", url="https://example.com/search"
 )

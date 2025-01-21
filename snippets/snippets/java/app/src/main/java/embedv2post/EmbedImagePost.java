@@ -1,5 +1,10 @@
 package embedv2post; /* (C)2024 */
 
+import com.cohere.api.Cohere;
+import com.cohere.api.resources.v2.requests.V2EmbedRequest;
+import com.cohere.api.types.EmbedByTypeResponse;
+import com.cohere.api.types.EmbedInputType;
+import com.cohere.api.types.EmbeddingType;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -7,19 +12,11 @@ import java.net.URL;
 import java.util.Base64;
 import java.util.List;
 
-import com.cohere.api.Cohere;
-import com.cohere.api.resources.v2.requests.V2EmbedRequest;
-import com.cohere.api.types.EmbedByTypeResponse;
-import com.cohere.api.types.EmbedInputType;
-import com.cohere.api.types.EmbeddingType;
-
 public class EmbedImagePost {
   public static void main(String[] args) {
-    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
-    URL url =
-        URI.toUrl(
-            "https://cohere.com/favicon-32x32.png");
+    URL url = URI.toUrl("https://cohere.com/favicon-32x32.png");
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.connect();
 

@@ -1,5 +1,5 @@
 ---
-title: "Multimodal Embeddings"
+title: "Unlocking the Power of Multimodal Embeddings"
 slug: "v2/docs/multimodal-embeddings"
 
 hidden: false
@@ -18,7 +18,7 @@ updatedAt: "Tues Sep 17 2024 00:00:00 GMT+0000 (Coordinated Universal Time)"
  Image capabilities is only compatible with our embed v3.0 models
 </Note>
 
-In this guide, we show you how to use the embed endpoint to embed a series of images. This guide uses a simple dataset of graphs to illustrate how semantic search can be done over images with Cohere. To see an end-to-end example of retrieval, check out this [notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/Multimodal_Semantic_Search.ipynb).
+In this guide, we show you how to use the embed endpoint to embed a series of images. This guide uses a simple dataset of graphs to illustrate how semantic search can be done over images with Cohere. To see an end-to-end example of retrieval, check out this [notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/Multimodal_Semantic_Search.ipynb).
 
 ### Introduction to Multimodal Embeddings
 
@@ -35,30 +35,33 @@ The Embed API takes in images with the following file formats: `png`, `jpeg`,`We
 import os
 import base64
 
+
 # Defining the function to convert an image to a base 64 Data URL
 def image_to_base64_data_url(image_path):
-  _, file_extension = os.path.splitext(image_path)
-  file_type=(file_extension[1:])
-  
-  with open(image_path, "rb") as f:
-    enc_img = base64.b64encode(f.read()).decode('utf-8')
-    enc_img = f"data:image/{file_type};base64,{enc_img}"
-  return enc_img
+    _, file_extension = os.path.splitext(image_path)
+    file_type = file_extension[1:]
 
-image_path='<YOUR IMAGE PATH>'
-processed_image=image_to_base64_data_url(image_path)
+    with open(image_path, "rb") as f:
+        enc_img = base64.b64encode(f.read()).decode("utf-8")
+        enc_img = f"data:image/{file_type};base64,{enc_img}"
+    return enc_img
+
+
+image_path = "<YOUR IMAGE PATH>"
+processed_image = image_to_base64_data_url(image_path)
 ```
 #### 2\. Call the Embed Endpoint
 ```python PYTHON
 # Import the necessary packages
 import cohere
+
 co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
 co.embed(
-    model='embed-english-v3.0',
+    model="embed-english-v3.0",
     images=[processed_image],
-    input_type='image',
-    embedding_types=['float']
+    input_type="image",
+    embedding_types=["float"],
 )
 ```
 ## Sample Output

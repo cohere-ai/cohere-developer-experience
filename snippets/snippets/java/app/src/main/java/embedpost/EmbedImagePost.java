@@ -14,11 +14,9 @@ import java.util.List;
 
 public class EmbedImagePost {
   public static void main(String[] args) {
-    Cohere cohere = Cohere.builder().token("<<apiKey>>").clientName("snippet").build();
+    Cohere cohere = Cohere.builder().clientName("snippet").build();
 
-    URL url =
-        URI.toUrl(
-            "https://cohere.com/favicon-32x32.png");
+    URL url = URI.toUrl("https://cohere.com/favicon-32x32.png");
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.connect();
 
