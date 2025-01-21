@@ -110,7 +110,7 @@ For this guide, we will be using the Cohere `embed-english-v3.0 model` which has
 
 ```python PYTHON
 # create a vectorizer
-api_key='{Insert your cohere API Key}'
+api_key = "{Insert your cohere API Key}"
 
 cohere_vectorizer = CohereTextVectorizer(
     model="embed-english-v3.0",
@@ -188,20 +188,22 @@ You can also visit: [http://localhost:8001/redis-stack/browser](http://localhost
 
 ```python PYTHON
 # read in your documents
-jsonl_file_path='data/redis_guide_data.jsonl'
+jsonl_file_path = "data/redis_guide_data.jsonl"
 
-corpus=[]
-text_to_embed=[]
+corpus = []
+text_to_embed = []
 
-with jsonlines.open(jsonl_file_path, mode='r') as reader:
+with jsonlines.open(jsonl_file_path, mode="r") as reader:
     for line in reader:
         corpus.append(line)
         # we want to store the embeddings of the field called `text`
-        text_to_embed.append(line['text'])
+        text_to_embed.append(line["text"])
 
 # call embed_many which returns an array
 # hash data structures get serialized as a string and thus we store the embeddings in hashes as a byte string (handled by numpy)
-res=cohere_vectorizer.embed_many(text_to_embed, input_type='search_document', as_buffer=True)
+res = cohere_vectorizer.embed_many(
+    text_to_embed, input_type="search_document", as_buffer=True
+)
 ```
 
 We will be loading a subset of data which contains paragraphs from wikipedia - the data lives in a `jsonl` and we will need to parse it to get the text field which is what we are embedding. To do this, we load the file and read it line-by-line, creating a corpus object and a text_to_embed object. We then pass the text_to_embed object into `co.embed_many` which takes in an list of strings.
@@ -210,16 +212,20 @@ We will be loading a subset of data which contains paragraphs from wikipedia - t
 
 ```python PYTHON
 # contruct the data payload to be uploaded to your index
-data = [{"url": row['url'],
-         "title": row['title'],
-         "text": row['text'],
-         "wiki_id": row['wiki_id'],
-         "paragraph_id": row['paragraph_id'],
-         "id":row['id'],
-         "views":row['views'],
-         "langs":row['langs'],
-         "embedding":v}
-        for row, v in zip(corpus, res)]
+data = [
+    {
+        "url": row["url"],
+        "title": row["title"],
+        "text": row["text"],
+        "wiki_id": row["wiki_id"],
+        "paragraph_id": row["paragraph_id"],
+        "id": row["id"],
+        "views": row["views"],
+        "langs": row["langs"],
+        "embedding": v,
+    }
+    for row, v in zip(corpus, res)
+]
 
 # load the data into your index
 index.load(data)
@@ -233,20 +239,35 @@ At this point, your Redis DB is ready for semantic search!
 
 ```python PYTHON
 # use the Cohere vectorizer again to create a query embedding
-query_embedding = cohere_vectorizer.embed("What did Microsoft release in 2015?", input_type='search_query',as_buffer=True)
+query_embedding = cohere_vectorizer.embed(
+    "What did Microsoft release in 2015?",
+    input_type="search_query",
+    as_buffer=True,
+)
 
 
 query = VectorQuery(
     vector=query_embedding,
     vector_field_name="embedding",
-    return_fields=["url","wiki_id","paragraph_id","id","views","langs","title","text",],
-    num_results=5
+    return_fields=[
+        "url",
+        "wiki_id",
+        "paragraph_id",
+        "id",
+        "views",
+        "langs",
+        "title",
+        "text",
+    ],
+    num_results=5,
 )
 
 results = index.query(query)
 
 for doc in results:
-    print(f"Title:{doc['title']}\nText:{doc['text']}\nDistance {doc['vector_distance']}\n\n")
+    print(
+        f"Title:{doc['title']}\nText:{doc['text']}\nDistance {doc['vector_distance']}\n\n"
+    )
 ```
 
 Use the `VectorQuery` class to construct a query object - here you can specify the fields you’d like Redis to return as well as the number of results (i.e. for this example we set it to `5`).
@@ -265,7 +286,9 @@ query.set_filter(tag_filter)
 results = index.query(query)
 
 for doc in results:
-    print(f"Title:{doc['title']}\nText:{doc['text']}\nDistance {doc['vector_distance']}\n")
+    print(
+        f"Title:{doc['title']}\nText:{doc['text']}\nDistance {doc['vector_distance']}\n"
+    )
 ```
 
 One feature of Redis is the ability to add [filtering](https://www.redisvl.com/api/query.html) to your queries on the fly. Here we are constructing a `tag filter` on the column `title` which was initialized in our schema with `type=tag`.
@@ -274,24 +297,41 @@ One feature of Redis is the ability to add [filtering](https://www.redisvl.com/a
 
 ```python PYTHON
 # define a tag match on the title, text match on the text field, and numeric filter on the views field
-filter_data=(Tag('title')=='Elizabeth II') & (Text("text")% "born") & (Num("views")>4500)
+filter_data = (
+    (Tag("title") == "Elizabeth II")
+    & (Text("text") % "born")
+    & (Num("views") > 4500)
+)
 
-query_embedding = co.embed("When was she born?", input_type='search_query',as_buffer=True)
+query_embedding = co.embed(
+    "When was she born?", input_type="search_query", as_buffer=True
+)
 
 # reinitialize the query with the filter expression
 query = VectorQuery(
     vector=query_embedding,
     vector_field_name="embedding",
-    return_fields=["url","wiki_id","paragraph_id","id","views","langs","title","text",],
+    return_fields=[
+        "url",
+        "wiki_id",
+        "paragraph_id",
+        "id",
+        "views",
+        "langs",
+        "title",
+        "text",
+    ],
     num_results=5,
-    filter_expression=filter_data
+    filter_expression=filter_data,
 )
 
 results = index.query(query)
 print(results)
 
 for doc in results:
-    print(f"Title:{doc['title']}\nText:{doc['text']}\nDistance {doc['vector_distance']}\nView {doc['views']}")
+    print(
+        f"Title:{doc['title']}\nText:{doc['text']}\nDistance {doc['vector_distance']}\nView {doc['views']}"
+    )
 ```
 
 Another feature of Redis is the ability to initialize a query with a set of filters called a [filter expression](https://www.redisvl.com/user_guide/hybrid_queries_02.html). A filter expression allows for the you to combine a set of filters over an arbitrary set of fields at query time.
