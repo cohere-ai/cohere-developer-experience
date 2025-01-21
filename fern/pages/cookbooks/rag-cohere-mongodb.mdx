@@ -10,7 +10,7 @@ keywords: "Cohere, retrieval-augmented generation, RAG, chatbot"
 import { AuthorsContainer } from "../../components/authors-container";
 import { CookbookHeader } from "../../components/cookbook-header";
 
-<CookbookHeader href="https://github.com/cohere-ai/notebooks/blob/main/notebooks/guides/rag_chatbot_with_cohere_and_mongodb.ipynb" />
+<CookbookHeader href="https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/rag_chatbot_with_cohere_and_mongodb.ipynb" />
 
  **What you will learn:**
  * How to empower leverage semantic search on customer or operational data in MongoDB Atlas.
@@ -52,8 +52,8 @@ Libraries:
 
 
 
-```python
-!pip install --quiet datasets tqdm cohere pymongo
+```sh
+pip install --quiet datasets tqdm cohere pymongo
 ```
 
 
@@ -102,7 +102,11 @@ from datasets import load_dataset
 # Make sure you have an Hugging Face token(HF_TOKEN) in your development environemnt before running the code below
 # How to get a token: https://huggingface.co/docs/hub/en/security-tokens
 # https://huggingface.co/datasets/MongoDB/fake_tech_companies_market_reports
-dataset = load_dataset("MongoDB/fake_tech_companies_market_reports", split="train", streaming=True)
+dataset = load_dataset(
+    "MongoDB/fake_tech_companies_market_reports",
+    split="train",
+    streaming=True,
+)
 dataset_df = dataset.take(100)
 
 # Convert the dataset to a pandas dataframe
@@ -176,29 +180,31 @@ dataset_df.head(5)
 ```python
 # Data Preparation
 def combine_attributes(row):
-  combined = f"{row['company']} {row['sector']} "
+    combined = f"{row['company']} {row['sector']} "
 
-  # Add reports information
-  for report in row['reports']:
-    combined += f"{report['year']} {report['title']} {report['author']} {report['content']} "
+    # Add reports information
+    for report in row["reports"]:
+        combined += f"{report['year']} {report['title']} {report['author']} {report['content']} "
 
-  # Add recent news information
-  for news in row['recent_news']:
-    combined += f"{news['headline']} {news['summary']} "
+    # Add recent news information
+    for news in row["recent_news"]:
+        combined += f"{news['headline']} {news['summary']} "
 
-  return combined.strip()
+    return combined.strip()
 ```
 
 
 ```python
 # Add the new column 'combined_attributes'
-dataset_df['combined_attributes'] = dataset_df.apply(combine_attributes, axis=1)
+dataset_df["combined_attributes"] = dataset_df.apply(
+    combine_attributes, axis=1
+)
 ```
 
 
 ```python
 # Display the first few rows of the updated dataframe
-dataset_df[['company', 'ticker', 'combined_attributes']].head()
+dataset_df[["company", "ticker", "combined_attributes"]].head()
 ```
 
 <div>
@@ -251,24 +257,30 @@ dataset_df[['company', 'ticker', 'combined_attributes']].head()
 ```python
 from tqdm import tqdm
 
-def get_embedding(text: str, input_type: str="search_document") -> list[float]:
-  if not text.strip():
-    print("Attempted to get embedding for empty text.")
-    return []
 
-  model = "embed-english-v3.0"
-  response = co.embed(
-    texts=[text],
-    model=model,
-    input_type=input_type, # Used for embeddings of search queries run against a vector DB to find relevant documents
-    embedding_types=['float']
-  )
+def get_embedding(
+    text: str, input_type: str = "search_document"
+) -> list[float]:
+    if not text.strip():
+        print("Attempted to get embedding for empty text.")
+        return []
 
-  return response.embeddings.float[0]
+    model = "embed-english-v3.0"
+    response = co.embed(
+        texts=[text],
+        model=model,
+        input_type=input_type,  # Used for embeddings of search queries run against a vector DB to find relevant documents
+        embedding_types=["float"],
+    )
+
+    return response.embeddings.float[0]
+
 
 # Apply the embedding function with a progress bar
 tqdm.pandas(desc="Generating embeddings")
-dataset_df["embedding"] = dataset_df['combined_attributes'].progress_apply(get_embedding)
+dataset_df["embedding"] = dataset_df[
+    "combined_attributes"
+].progress_apply(get_embedding)
 
 print(f"We just computed {len(dataset_df['embedding'])} embeddings.")
 ```
@@ -392,6 +404,7 @@ Follow MongoDB’s [steps to get the connection](https://www.mongodb.com/docs/ma
 
 ```python
 import os
+
 os.environ["MONGO_URI"] = ""
 ```
 
@@ -399,25 +412,29 @@ os.environ["MONGO_URI"] = ""
 ```python
 import pymongo
 
+
 def get_mongo_client(mongo_uri):
-  """Establish and validate connection to the MongoDB."""
+    """Establish and validate connection to the MongoDB."""
 
-  client = pymongo.MongoClient(mongo_uri, appname="devrel.showcase.rag.cohere_mongodb.python")
+    client = pymongo.MongoClient(
+        mongo_uri, appname="devrel.showcase.rag.cohere_mongodb.python"
+    )
 
-  # Validate the connection
-  ping_result = client.admin.command('ping')
-  if ping_result.get('ok') == 1.0:
-    # Connection successful
-    print("Connection to MongoDB successful")
-    return client
-  else:
-    print("Connection to MongoDB failed")
-  return None
+    # Validate the connection
+    ping_result = client.admin.command("ping")
+    if ping_result.get("ok") == 1.0:
+        # Connection successful
+        print("Connection to MongoDB successful")
+        return client
+    else:
+        print("Connection to MongoDB failed")
+    return None
+
 
 MONGO_URI = os.environ["MONGO_URI"]
 
 if not MONGO_URI:
-  print("MONGO_URI not set in environment variables")
+    print("MONGO_URI not set in environment variables")
 
 mongo_client = get_mongo_client(MONGO_URI)
 
@@ -461,7 +478,7 @@ MongoDB's Document model and its compatibility with Python dictionaries offer se
 ![](../../assets/images/rag-cohere-mongodb-4.png)
 
 ```python
-documents = dataset_df.to_dict('records')
+documents = dataset_df.to_dict("records")
 collection.insert_many(documents)
 
 print("Data ingestion into MongoDB completed")
@@ -499,56 +516,57 @@ Common stages include:
 
 ```python
 def vector_search(user_query, collection):
-  """
-  Perform a vector search in the MongoDB collection based on the user query.
+    """
+    Perform a vector search in the MongoDB collection based on the user query.
 
-  Args:
-  user_query (str): The user's query string.
-  collection (MongoCollection): The MongoDB collection to search.
+    Args:
+    user_query (str): The user's query string.
+    collection (MongoCollection): The MongoDB collection to search.
 
-  Returns:
-  list: A list of matching documents.
-  """
+    Returns:
+    list: A list of matching documents.
+    """
 
-  # Generate embedding for the user query
-  query_embedding = get_embedding(user_query, input_type="search_query")
+    # Generate embedding for the user query
+    query_embedding = get_embedding(
+        user_query, input_type="search_query"
+    )
 
-  if query_embedding is None:
-    return "Invalid query or embedding generation failed."
+    if query_embedding is None:
+        return "Invalid query or embedding generation failed."
 
-  # Define the vector search pipeline
-  vector_search_stage = {
-    "$vectorSearch": {
-      "index": "vector_index",
-      "queryVector": query_embedding,
-      "path": "embedding",
-      "numCandidates": 150,  # Number of candidate matches to consider
-      "limit": 5  # Return top 4 matches
+    # Define the vector search pipeline
+    vector_search_stage = {
+        "$vectorSearch": {
+            "index": "vector_index",
+            "queryVector": query_embedding,
+            "path": "embedding",
+            "numCandidates": 150,  # Number of candidate matches to consider
+            "limit": 5,  # Return top 4 matches
+        }
     }
-  }
 
-  unset_stage = {
-    "$unset": "embedding"  # Exclude the 'embedding' field from the results
-  }
-
-  project_stage = {
-    "$project": {
-      "_id": 0,  # Exclude the _id field
-      "company": 1,  # Include the plot field
-      "reports": 1,  # Include the title field
-      "combined_attributes": 1, # Include the genres field
-      "score": {
-        "$meta": "vectorSearchScore"  # Include the search score
-      }
+    unset_stage = {
+        "$unset": "embedding"  # Exclude the 'embedding' field from the results
     }
-  }
 
-  pipeline = [vector_search_stage, unset_stage, project_stage]
+    project_stage = {
+        "$project": {
+            "_id": 0,  # Exclude the _id field
+            "company": 1,  # Include the plot field
+            "reports": 1,  # Include the title field
+            "combined_attributes": 1,  # Include the genres field
+            "score": {
+                "$meta": "vectorSearchScore"  # Include the search score
+            },
+        }
+    }
 
-  # Execute the search
-  results = collection.aggregate(pipeline)
-  return list(results)
+    pipeline = [vector_search_stage, unset_stage, project_stage]
 
+    # Execute the search
+    results = collection.aggregate(pipeline)
+    return list(results)
 ```
 
 ## Step 7:  Add the Cohere Reranker
@@ -557,7 +575,6 @@ Cohere rerank functions as a second stage search that can improve the precision 
 ![](../../assets/images/rag-cohere-mongodb-6.png)
 
 ```python
-
 def rerank_documents(query: str, documents, top_n: int = 3):
     # Perform reranking with Cohere ReRank Model
     try:
@@ -566,26 +583,31 @@ def rerank_documents(query: str, documents, top_n: int = 3):
             query=query,
             documents=documents,
             top_n=top_n,
-            rank_fields=["company", "reports", "combined_attributes"]
+            rank_fields=["company", "reports", "combined_attributes"],
         )
 
         # Extract the top reranked documents
         top_documents_after_rerank = []
         for result in response.results:
             original_doc = documents[result.index]
-            top_documents_after_rerank.append({
-                'company': original_doc['company'],
-                'combined_attributes': original_doc['combined_attributes'],
-                'reports': original_doc['reports'],
-                'vector_search_score': original_doc['score'],
-                'relevance_score': result.relevance_score
-            })
+            top_documents_after_rerank.append(
+                {
+                    "company": original_doc["company"],
+                    "combined_attributes": original_doc[
+                        "combined_attributes"
+                    ],
+                    "reports": original_doc["reports"],
+                    "vector_search_score": original_doc["score"],
+                    "relevance_score": result.relevance_score,
+                }
+            )
 
         return top_documents_after_rerank
 
     except Exception as e:
         print(f"An error occurred during reranking: {e}")
-        return documents[:top_n]  # Return top N documents without reranking
+        # Return top N documents without reranking
+        return documents[:top_n]
 ```
 
 
@@ -700,21 +722,22 @@ pd.DataFrame(reranked_documents).head()
 
 ```python
 def format_documents_for_chat(documents):
-  return [
-    {
-        "company": doc['company'],
-        # "reports": doc['reports'],
-        "combined_attributes": doc['combined_attributes']
-    }
-    for doc in documents
-  ]
+    return [
+        {
+            "company": doc["company"],
+            # "reports": doc['reports'],
+            "combined_attributes": doc["combined_attributes"],
+        }
+        for doc in documents
+    ]
+
 
 # Generating response with Cohere Command R
 response = co.chat(
-  message=query,
-  documents=format_documents_for_chat(reranked_documents),
-  model="command-r-plus",
-  temperature=0.3
+    message=query,
+    documents=format_documents_for_chat(reranked_documents),
+    model="command-r-plus",
+    temperature=0.3,
 )
 
 print("Final answer:")
@@ -742,7 +765,7 @@ print(response.text)
 
 ```python
 for cite in response.citations:
-  print(cite)
+    print(cite)
 ```
 
 ```
@@ -784,129 +807,176 @@ start=1465 end=1528 text='Attracting and retaining skilled talent in a competiti
 ```python
 from typing import Dict, Optional, List
 
+
 class CohereChat:
 
-    def __init__(self, cohere_client, system: str = "", database: str = "cohere_chat",
-                 main_collection: str = "main_collection", history_params: Optional[Dict[str, str]] = None):
-      self.co = cohere_client
-      self.system = system
-      self.history_params = history_params or {}
+    def __init__(
+        self,
+        cohere_client,
+        system: str = "",
+        database: str = "cohere_chat",
+        main_collection: str = "main_collection",
+        history_params: Optional[Dict[str, str]] = None,
+    ):
+        self.co = cohere_client
+        self.system = system
+        self.history_params = history_params or {}
 
-      # Use the connection string from history_params
-      self.client = pymongo.MongoClient(self.history_params.get('connection_string', 'mongodb://localhost:27017/'))
+        # Use the connection string from history_params
+        self.client = pymongo.MongoClient(
+            self.history_params.get(
+                "connection_string", "mongodb://localhost:27017/"
+            )
+        )
 
-      # Use the database parameter
-      self.db = self.client[database]
+        # Use the database parameter
+        self.db = self.client[database]
 
-      # Use the main_collection parameter
-      self.main_collection = self.db[main_collection]
+        # Use the main_collection parameter
+        self.main_collection = self.db[main_collection]
 
-      # Use the history_collection from history_params, or default to "chat_history"
-      self.history_collection = self.db[self.history_params.get('history_collection', 'chat_history')]
+        # Use the history_collection from history_params, or default to "chat_history"
+        self.history_collection = self.db[
+            self.history_params.get(
+                "history_collection", "chat_history"
+            )
+        ]
 
-      # Use the session_id from history_params, or default to "default_session"
-      self.session_id = self.history_params.get('session_id', 'default_session')
+        # Use the session_id from history_params, or default to "default_session"
+        self.session_id = self.history_params.get(
+            "session_id", "default_session"
+        )
 
     def add_to_history(self, message: str, prefix: str = ""):
-      self.history_collection.insert_one({
-        'session_id': self.session_id,
-        'message': message,
-        'prefix': prefix
-      })
+        self.history_collection.insert_one(
+            {
+                "session_id": self.session_id,
+                "message": message,
+                "prefix": prefix,
+            }
+        )
 
     def get_chat_history(self) -> List[Dict[str, str]]:
-      history = self.history_collection.find({'session_id': self.session_id}).sort('_id', 1)
-      return [{"role": "user" if item['prefix'] == "USER" else "chatbot", "message": item['message']} for item in history]
+        history = self.history_collection.find(
+            {"session_id": self.session_id}
+        ).sort("_id", 1)
+        return [
+            {
+                "role": (
+                    "user" if item["prefix"] == "USER" else "chatbot"
+                ),
+                "message": item["message"],
+            }
+            for item in history
+        ]
 
-    def rerank_documents(self, query: str, documents: List[Dict], top_n: int = 3) -> List[Dict]:
-      rerank_docs = [
-          {
-            'company': doc['company'],
-            'combined_attributes': doc['combined_attributes']
-          }
-          for doc in documents
-          if doc['combined_attributes'].strip()
-      ]
+    def rerank_documents(
+        self, query: str, documents: List[Dict], top_n: int = 3
+    ) -> List[Dict]:
+        rerank_docs = [
+            {
+                "company": doc["company"],
+                "combined_attributes": doc["combined_attributes"],
+            }
+            for doc in documents
+            if doc["combined_attributes"].strip()
+        ]
 
-      if not rerank_docs:
-          print("No valid documents to rerank.")
-          return []
+        if not rerank_docs:
+            print("No valid documents to rerank.")
+            return []
 
-      try:
-          response = self.co.rerank(
-              query=query,
-              documents=rerank_docs,
-              top_n=top_n,
-              model="rerank-english-v3.0",
-              rank_fields=["company", "combined_attributes"]
-          )
+        try:
+            response = self.co.rerank(
+                query=query,
+                documents=rerank_docs,
+                top_n=top_n,
+                model="rerank-english-v3.0",
+                rank_fields=["company", "combined_attributes"],
+            )
 
-          top_documents_after_rerank = [
-              {
-                  'company': rerank_docs[result.index]['company'],
-                  'combined_attributes': rerank_docs[result.index]['combined_attributes'],
-                  'relevance_score': result.relevance_score
-              }
-              for result in response.results
-          ]
+            top_documents_after_rerank = [
+                {
+                    "company": rerank_docs[result.index]["company"],
+                    "combined_attributes": rerank_docs[result.index][
+                        "combined_attributes"
+                    ],
+                    "relevance_score": result.relevance_score,
+                }
+                for result in response.results
+            ]
 
-          print(f"\nHere are the top {top_n} documents after rerank:")
-          for doc in top_documents_after_rerank:
-              print(f"== {doc['company']} (Relevance: {doc['relevance_score']:.4f})")
+            print(
+                f"\nHere are the top {top_n} documents after rerank:"
+            )
+            for doc in top_documents_after_rerank:
+                print(
+                    f"== {doc['company']} (Relevance: {doc['relevance_score']:.4f})"
+                )
 
-          return top_documents_after_rerank
+            return top_documents_after_rerank
 
-      except Exception as e:
-          print(f"An error occurred during reranking: {e}")
-          return documents[:top_n]
+        except Exception as e:
+            print(f"An error occurred during reranking: {e}")
+            return documents[:top_n]
 
-    def format_documents_for_chat(self, documents: List[Dict]) -> List[Dict]:
-      return [
-        {
-          "company": doc['company'],
-          "combined_attributes": doc['combined_attributes']
-        }
-        for doc in documents
-      ]
+    def format_documents_for_chat(
+        self, documents: List[Dict]
+    ) -> List[Dict]:
+        return [
+            {
+                "company": doc["company"],
+                "combined_attributes": doc["combined_attributes"],
+            }
+            for doc in documents
+        ]
 
     def send_message(self, message: str, vector_search_func) -> str:
-      self.add_to_history(message, "USER")
+        self.add_to_history(message, "USER")
 
-      # Perform vector search
-      search_results = vector_search_func(message, self.main_collection)
+        # Perform vector search
+        search_results = vector_search_func(
+            message, self.main_collection
+        )
 
-      # Rerank the search results
-      reranked_documents = self.rerank_documents(message, search_results)
+        # Rerank the search results
+        reranked_documents = self.rerank_documents(
+            message, search_results
+        )
 
-      # Format documents for chat
-      formatted_documents = self.format_documents_for_chat(reranked_documents)
+        # Format documents for chat
+        formatted_documents = self.format_documents_for_chat(
+            reranked_documents
+        )
 
-      # Generate response using Cohere chat
-      response = self.co.chat(
-        chat_history=self.get_chat_history(),
-        message=message,
-        documents=formatted_documents,
-        model="command-r-plus",
-        temperature=0.3
-      )
+        # Generate response using Cohere chat
+        response = self.co.chat(
+            chat_history=self.get_chat_history(),
+            message=message,
+            documents=formatted_documents,
+            model="command-r-plus",
+            temperature=0.3,
+        )
 
-      result = response.text
-      self.add_to_history(result, "CHATBOT")
+        result = response.text
+        self.add_to_history(result, "CHATBOT")
 
-      print("Final answer:")
-      print(result)
+        print("Final answer:")
+        print(result)
 
-      print("\nCitations:")
-      for cite in response.citations:
-        print(cite)
+        print("\nCitations:")
+        for cite in response.citations:
+            print(cite)
 
-      return result
+        return result
 
     def show_history(self):
-      history = self.history_collection.find({'session_id': self.session_id}).sort('_id', 1)
-      for item in history:
-        print(f"{item['prefix']}: {item['message']}")
-        print("-------------------------")
+        history = self.history_collection.find(
+            {"session_id": self.session_id}
+        ).sort("_id", 1)
+        for item in history:
+            print(f"{item['prefix']}: {item['message']}")
+            print("-------------------------")
 ```
 
 
@@ -918,14 +988,16 @@ chat = CohereChat(
     database=DB_NAME,
     main_collection=COLLECTION_NAME,
     history_params={
-        'connection_string': MONGO_URI,
-        'history_collection': "chat_history",
-        'session_id': 2
-    }
+        "connection_string": MONGO_URI,
+        "history_collection": "chat_history",
+        "session_id": 2,
+    },
 )
 
 # Send a message
-response = chat.send_message("What is the best investment to make why?", vector_search)
+response = chat.send_message(
+    "What is the best investment to make why?", vector_search
+)
 ```
 
 ```

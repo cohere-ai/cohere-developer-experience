@@ -13,7 +13,7 @@ In Module 1 you learned about text <a target="_blank" href="/docs/text-embedding
 
 ### Colab Notebook
 
-This chapter comes with a corresponding [notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/llmu/Embed_Endpoint.ipynb), and we encourage you to follow it along as you read the chapter.
+This chapter comes with a corresponding [notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/llmu/Embed_Endpoint.ipynb), and we encourage you to follow it along as you read the chapter.
 
 For the setup, please refer to the <a target="_blank" href="/docs/setting-up">Setting Up</a> chapter at the beginning of this module.
 
@@ -22,7 +22,10 @@ For the setup, please refer to the <a target="_blank" href="/docs/setting-up">Se
 The dataset we'll use is formed of 50 top search terms on the web about "Hello, World!". 
 
 ```python PYTHON
-df = pd.read_csv("https://github.com/cohere-ai/notebooks/raw/main/notebooks/data/hello-world-kw.csv", names=["search_term"])
+df = pd.read_csv(
+    "https://github.com/cohere-ai/cohere-developer-experience/raw/main/notebooks/data/hello-world-kw.csv",
+    names=["search_term"],
+)
 df.head()
 ```
 
@@ -55,13 +58,15 @@ The code looks like this:
 
 ```python PYTHON
 def embed_text(texts):
-  output = co.embed(
-                model="embed-english-v3.0",
-    						input_type="search_document",
-                texts=texts)
-  embedding = output.embeddings
+    output = co.embed(
+        model="embed-english-v3.0",
+        input_type="search_document",
+        texts=texts,
+    )
+    embedding = output.embeddings
 
-  return embedding
+    return embedding
+
 
 df["search_term_embeds"] = embed_text(df["search_term"].tolist())
 ```
@@ -82,15 +87,16 @@ We can make use of the <a target="_blank" href="https://umap-learn.readthedocs.i
 ```python PYTHON
 # If you don't have umap installed, pleased run `pip install umap-learn` first!
 import umap
-embeds = list(df["search_term_embeds"]) 
+
+embeds = list(df["search_term_embeds"])
 
 # Compress the embeddings to 2 dimensions (UMAP's default reduction is to 2 dimensions)
-reducer = umap.UMAP(n_neighbors=49) 
+reducer = umap.UMAP(n_neighbors=49)
 umap_embeds = reducer.fit_transform(embeds)
 
 # Store the compressed embeddings in the dataframe/table
-df['x'] = umap_embeds[:,0]
-df['y'] = umap_embeds[:,1]
+df["x"] = umap_embeds[:, 0]
+df["y"] = umap_embeds[:, 1]
 ```
 
 You can then use any plotting library to visualize these compressed embeddings on a 2D plot.

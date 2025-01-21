@@ -14,12 +14,7 @@ curl --request POST \
     "messages": [
       {
         "role": "user",
-        "content": [
-          {
-            "type": "text",
-            "text": "Who's the best?"
-          }
-        ]
+        "content": "Who's the best?"
       }
     ]
   }'

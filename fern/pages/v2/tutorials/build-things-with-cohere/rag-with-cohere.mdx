@@ -7,7 +7,7 @@ image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "Cohere, retrieval-augmented generation, RAG"
 ---
 
-<a target="_blank" href="https://colab.research.google.com/github/cohere-ai/notebooks/blob/main/notebooks/guides/getting-started/v2/tutorial_pt6.ipynb">Open in Colab</a>
+<a target="_blank" href="https://colab.research.google.com/github/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/getting-started/v2/tutorial_pt6_v2.ipynb">Open in Colab</a>
 
 The Chat endpoint provides comprehensive support for various text generation use cases, including retrieval-augmented generation (RAG). 
 
@@ -32,7 +32,6 @@ To get started, first we need to install the `cohere` library and create a Coher
 
 
 ```python PYTHON
-
 # pip install cohere
 
 import cohere
@@ -40,7 +39,8 @@ import numpy as np
 import json
 from typing import List
 
-co = cohere.ClientV2(api_key="COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
+# Get your free API key: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(api_key="COHERE_API_KEY")
 ```
 
 ## Basic RAG
@@ -53,21 +53,21 @@ In this example, each document is a `data` object with one field, `text`. But we
 
 ```python PYTHON
 documents = [
-  {
-    "data": {
-      "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
-    }
-  },
-  {
-    "data": {
-      "text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."
-    }
-  },
-  {
-    "data": {
-      "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
-    }
-  }
+    {
+        "data": {
+            "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+        }
+    },
+    {
+        "data": {
+            "text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."
+        }
+    },
+    {
+        "data": {
+            "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+        }
+    },
 ]
 ```
 
@@ -89,9 +89,11 @@ RAG introduces additional objects in the Chat response. One of them is `citation
 query = "Are there health benefits?"
 
 # Generate the response
-response = co.chat(model="command-r-plus-08-2024",
-                   messages=[{'role': 'user', 'content': query}],
-                   documents=documents)
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=[{"role": "user", "content": query}],
+    documents=documents,
+)
 
 # Display the response
 print(response.message.content[0].text)
@@ -127,7 +129,7 @@ Here, we build a tool that takes a user query and returns a list of relevant doc
 
 ```python PYTHON
 def generate_search_queries(message: str) -> List[str]:
-    
+
     # Define the query generation tool
     query_gen_tool = [
         {
@@ -150,22 +152,21 @@ def generate_search_queries(message: str) -> List[str]:
         }
     ]
 
-
     # Define a preamble to optimize search query generation
     instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
 
     # Generate search queries (if any)
     search_queries = []
-    
+
     res = co.chat(
         model="command-r-08-2024",
         messages=[
             {"role": "system", "content": instructions},
             {"role": "user", "content": message},
         ],
-        tools=query_gen_tool
+        tools=query_gen_tool,
     )
-    
+
     if res.message.tool_calls:
         for tc in res.message.tool_calls:
             queries = json.loads(tc.function.arguments)["queries"]
@@ -282,10 +283,11 @@ faqs_long = [
 
 # Embed the documents
 doc_emb = co.embed(
-            model="embed-english-v3.0",
-            input_type="search_document",
-            texts=[doc['data']['text'] for doc in faqs_long],
-            embedding_types=["float"]).embeddings.float
+    model="embed-english-v3.0",
+    input_type="search_document",
+    texts=[doc["data"]["text"] for doc in faqs_long],
+    embedding_types=["float"],
+).embeddings.float
 ```
 
 Next, we add a query, which asks about how to get to know the team.
@@ -307,7 +309,8 @@ query_emb = co.embed(
     model="embed-english-v3.0",
     input_type="search_query",
     texts=[queries_for_search],
-    embedding_types=["float"]).embeddings.float
+    embedding_types=["float"],
+).embeddings.float
 ```
 ```
 Search query:  how to get to know teammates
@@ -372,18 +375,22 @@ Here we select `top_n` to be 2, which will be the documents we will pass next fo
 
 ```python PYTHON
 # Rerank the documents
-results = co.rerank(query=queries_for_search,
-                    documents=[doc['data']['text'] for doc in retrieved_documents],
-                    top_n=2,
-                    model='rerank-english-v3.0')
+results = co.rerank(
+    query=queries_for_search,
+    documents=[doc["data"]["text"] for doc in retrieved_documents],
+    top_n=2,
+    model="rerank-english-v3.0",
+)
 
 # Display the reranking results
 for idx, result in enumerate(results.results):
-    print(f"Rank: {idx+1}") 
+    print(f"Rank: {idx+1}")
     print(f"Score: {result.relevance_score}")
     print(f"Document: {retrieved_documents[result.index]}\n")
-    
-reranked_documents = [retrieved_documents[result.index] for result in results.results]
+
+reranked_documents = [
+    retrieved_documents[result.index] for result in results.results
+]
 ```
 ```
 Rank: 1
@@ -412,9 +419,11 @@ RAG introduces additional objects in the Chat response. One of them is `citation
 
 ```python PYTHON
 # Generate the response
-response = co.chat(model="command-r-plus-08-2024",
-                   messages=[{'role': 'user', 'content': query}],
-                   documents=reranked_documents)
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=[{"role": "user", "content": query}],
+    documents=reranked_documents,
+)
 
 # Display the response
 print(response.message.content[0].text)

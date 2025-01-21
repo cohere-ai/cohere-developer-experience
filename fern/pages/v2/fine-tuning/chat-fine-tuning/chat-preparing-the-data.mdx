@@ -26,34 +26,8 @@ A message consist of the following parts:
 Here is a chat example that trains a chat bot to answer questions. Notice that, for the sake of readability, the document spans over multiple lines. For your dataset, make sure that each line contains one whole example.
 
 ```json JSON
-{
-  "messages": [
-    {
-      "role": "System",
-      "content": "You are a large language model trained by Cohere."
-    },
-    {
-      "role": "User",
-      "content": "Hi! What were Time magazines top 10 cover stories in the last 10 years?"
-    },
-    {
-      "role": "Chatbot",
-      "content": "Time magazines top 10 cover stories in the last 10 years were:\\n\\n1. Volodymyr Zelenskyy\\n2. Elon Musk\\n3. Martin Luther King Jr.\\n4. How Earth Survived\\n5. Her Lasting Impact\\n6. Nothing to See Here\\n7. Meltdown\\n8. Deal With It\\n9. The Top of America\\n10. Bitter Pill"
-    },
-    {
-      "role": "User",
-      "content": "Who is Volodymyr Zelenskyy?"
-    },
-    {
-      "role": "Chatbot",
-      "content": "Volodymyr Zelenskyy is a Ukrainian politician who was elected President of Ukraine in 2019. He previously served as the Minister of Internal Affairs in the government of Prime Minister Volodymyr Groysman."
-    },
-    {
-      "role": "User",
-      "content": "Thank you!"
-    }
-  ]
-}
+{"messages":[{"role":"System","content":"You are a large language model trained by Cohere."},{"role":"User","content":"Hi! What were Time magazines top 10 cover stories in the last 10 years?"},{"role":"Chatbot","content":"Time magazines top 10 cover stories in the last 10 years were:\n\n1. Volodymyr Zelenskyy\n2. Elon Musk\n3. Martin Luther King Jr.\n4. How Earth Survived\n5. Her Lasting Impact\n6. Nothing to See Here\n7. Meltdown\n8. Deal With It\n9. The Top of America\n10. Bitter Pill"},{"role":"User","content":"Who is Volodymyr Zelenskyy?"},{"role":"Chatbot","content":"Volodymyr Zelenskyy is a Ukrainian politician who was elected President of Ukraine in 2019. He previously served as the Minister of Internal Affairs in the government of Prime Minister Volodymyr Groysman."},{"role":"User","content":"Thank you!"}]}
+
 ```
 
 ### Data Requirements
@@ -77,17 +51,21 @@ If you intend to fine-tune through our UI you can skip to the next chapter. Othe
 import cohere
 
 # instantiate the Cohere client
-co = cohere.ClientV2("YOUR_API_KEY")  
+co = cohere.ClientV2("YOUR_API_KEY")
 
-chat_dataset = co.datasets.create(name="chat-dataset",
-                                   data=open("path/to/train.jsonl", "rb"),
-                                   type="chat-finetune-input")
+chat_dataset = co.datasets.create(
+    name="chat-dataset",
+    data=open("path/to/train.jsonl", "rb"),
+    type="chat-finetune-input",
+)
 print(co.wait(chat_dataset))
-                                   
-chat_dataset_with_eval = co.datasets.create(name="chat-dataset-with-eval",
-                                           data=open("path/to/train.jsonl, "rb"),
-                                           eval_data=open("path/to/eval.jsonl, "rb"),
-                                           type="chat-finetune-input")
+
+chat_dataset_with_eval = co.datasets.create(
+    name="chat-dataset-with-eval",
+    data=open("path/to/train.jsonl", "rb"),
+    eval_data=open("path/to/eval.jsonl", "rb"),
+    type="chat-finetune-input",
+)
 print(co.wait(chat_dataset_with_eval))
 ```
 

@@ -1,0 +1,48 @@
+name: snippet-ci
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install Dependencies
+        shell: bash
+        run: pnpm install             
+
+      - name: Set up python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      
+      - name: poetry install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install poetry
+          poetry install
+
+      - name: Run snippet tests
+        continue-on-error: true
+        env:
+          CO_API_KEY: ${{ secrets.COHERE_TOKEN }}
+        run: pnpm run --filter snippet-tester test
+
+      - name: "Notify Slack"
+        if: failure()
+        uses: slackapi/slack-github-action@fcfb566f8b0aab22203f066d80ca1d7e4b5d05b3 # v1.27.1
+        with:
+          channel-id: "#endpoints-operations"
+          slack-message: "🚨 Snippets regression detected! see <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|job>."
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_DEPLOY_NOTIFIER_BOT_TOKEN }}
