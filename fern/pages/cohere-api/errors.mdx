@@ -1,56 +1,156 @@
 ---
-title: "Errors"
-slug: "reference/errors"
-
+title: Errors
+slug: reference/errors
 hidden: false
-description: "This document explains how Cohere uses HTTP response codes to indicate the success or failure of an API request, with codes in the 2xx range indicating success, 4xx range indicating errors due to provided information, and 5xx range indicating server errors. It also provides code examples for error handling in different programming languages."
-image: "../../assets/images/72cf813-meta_docs_image_cohere.jpg"  
-keywords: "RAG, retrieval, augmented, generation, LLM, connectors, connector, langchain"
-
-createdAt: "Tue Sep 06 2022 17:39:07 GMT+0000 (Coordinated Universal Time)"
-updatedAt: "Fri Mar 15 2024 04:29:33 GMT+0000 (Coordinated Universal Time)"
+description: >-
+  Understand Cohere's HTTP response codes and how to handle errors in various
+  programming languages.
+image: ../../assets/images/72cf813-meta_docs_image_cohere.jpg
+keywords: 'RAG, retrieval, augmented, generation, LLM, connectors, connector, langchain'
+createdAt: 'Tue Sep 06 2022 17:39:07 GMT+0000 (Coordinated Universal Time)'
+updatedAt: 'Fri Mar 15 2024 04:29:33 GMT+0000 (Coordinated Universal Time)'
 ---
-Cohere uses conventional HTTP response codes to indicate the success or failure of an API request. In general:
 
-- Codes in the **2xx** range indicate success.
-- Codes in the **4xx** range indicate an error that failed given the information provided (e.g., a required parameter was omitted, a charge failed, etc.).
-- Codes in the **5xx** range indicate an error with Cohere's servers (these are rare).
+# Http status codes
 
-With a non-2xx response code, the response will be an error object in the following shape:
+## 400 - Bad Request
 
-```
-{
-    "message": string
-}
-```
+400 responses are sent when the body of the request is not valid. This can happen when required fields are missing, or when the values provided are not valid.
 
-Here are code examples for how error handling might look in our SDKs:
+To resolve this error, consult [the API spec](https://docs.cohere.com/reference/about) to ensure that you are providing the correct fields and values. 
 
-<CodeBlocks>
-```python PYTHON
- try:
-  response = co.generate(
-      model='invalid-model',
-      prompt='sample prompt')
-  except cohere.CohereError as e:
-      print(e.message)
-      print(e.http_status)
-      print(e.headers)
-```
-```javascript JAVASCRIPT
-(async () => {
-  const response = await cohere.generate({model: 'invalid-model'});
+<details>
+    <summary>Example error responses</summary>
+    |message|
+    |---|
+    |invalid request: list of documents must not be empty|
+    |invalid request: prompt must be at least 1 token long.|
+    |too many tokens: total number of tokens in the prompt cannot exceed 4081 - received 4292. Try using a shorter prompt, or enabling prompt truncating. See https://docs.cohere.com/reference/generate for more details.|
+    |invalid request: valid input_type must be provided with the provided model|
+    |system turn must be the first in the list|
+    |invalid request: all elements in history must have a message.|
+    |invalid request: message must be at least 1 token long or tool results must be specified.|
+    |invalid request: query must not be empty or be only whitespace|
+    |invalid request: model 'command-r' is not supported by the generate API|
+    |invalid request: cannot specify both frequency_penalty and presence_penalty.|
+    |invalid request: only one of 'presence_penalty' and 'frequency_penalty' can be specified for this model.|
+    |message must not be empty in a turn|
+    |too many tokens: max tokens must be less than or equal to 4096, the maximum output for this model - received 8192.|
+    |invalid request: response_format is not supported with RAG.|
+    |too many tokens: size limit exceeded by 11326 tokens. Try using shorter or fewer inputs, or setting prompt_truncation='AUTO'.|
+    |invalid request: number of total max chunks (number of documents * max chunks per doc) must be less than 10000|
+    |invalid request: min classes for classify request is 2 - received 0|
+    |invalid request: Invalid role in chat_history at index 2. Role must be one of the following: User, Chatbot, System, Tool|
+    |invalid request: total number of texts must be at most 96 - received 104|
+    |invalid request: temperature must be between 0 and 1.0 inclusive.|
+    |invalid request: presence_penalty must be between 0 and 1 inclusive.|
+    |invalid request: text must be longer than 250 characters|
+    |invalid request: inputs contains an element that is the empty string at index 0|
+    |multi step limit reached - set a higher limit|
+    |invalid request: return_top_n is invalid, value must be between 1 and 4|
+    |invalid request: document at index 0 cannot be empty|
+    |embedding_types parameter is required|
+    |finetuneID is not a valid UUID: ''|
+    |invalid request: tool names can only contain certain characters (A-Za-z0-9_) and can't begin with a digit (provided name: 'xyz').|
+    |invalid json syntax: invalid character '\a' in string literal|
+    |invalid request: RAG is not supported for this model.|
+    |tool call id not found in previous tool calls|
+    |invalid request: each unique label must have at least 2 examples. Not enough examples for: awr_report, create_user, tablespace_usage|
+    |invalid request: multi step is not supported by the provided model: command.|
+    |invalid request: invalid API version was passed in, for more information please refer to https://docs.cohere.com/versioning-reference|
+    |document does not have a 'snippet' or a 'text' field that can be used for chunking and reranking|
+    |finetuned model with name xyz is not ready for serving|
+    |invalid request: required 'text' param is missing or empty.|
+    |invalid request: rank_fields cannot be empty, it must either contain at least one field or be omitted|
+    |schema must be an object|
+    |a model parameter is required for this endpoint.|
+    |cannot have duplicate tool ids|
+    |too many tokens: multi-hop prompt is too long even after truncation|
+    |connectors failed with continue on failure disabled: connector xyz failed with message 'failed to get auth token: user is not authenticated for connector xyz'|
+    |invalid request: the 'tool_1' tool must have at least a description, input, or output.|
+    |tool call id must be provided with tool message|
+    |invalid request: images must be used with input_type=image|
+    |invalid request: format must be one of 'paragraph', or 'bullets'.|
+    |invalid request: finetuned model is not compatible with RAG functionality|
+    |required field name not found in properties|
+    |property title must have a type|
+    |tool call must be of type function|
+    |invalid request: length must be one of 'short', 'medium', or 'long'.|
+    |invalid request: duplicate document ID adfasd at index 1 and 0|
+    |too many tokens: minimal context could not be added to prompt (size limit exceeded by 280 tokens)|
+    |invalid request: raw prompting is not supported with the following parameter(s): connectors, documents, search_queries_only, tools.|
+    |invalid request: max_tokens can only be 0 if return_likelihoods is set to 'ALL' and prompt is longer than 1 token.|
+</details>
 
-  if (response.statusCode !== 200) {
-      console.log(response.body.message);
-  }
-})();
-```
-```go GO
-_, err := co.Generate(generateOptions)
-if err != nil {
-  fmt.Println(err)
-  return
-}
-```
-</CodeBlocks>
+## 401 - Unauthorized
+
+401 responses are sent when the API key is missing, invalid or has expired. To resolve this error, ensure that you are providing a valid API key.
+
+<details>
+    <summary>Example error responses</summary>
+    |message|
+    |---|
+    |no api key supplied|
+    |invalid api token|
+    |Your API key has expired. Please create a production key at dashboard.cohere.com or reach out to your contact at Cohere to continue usage.|
+</details>
+
+## 402 - Payment Required
+
+402 responses are sent when the account has reached its billing limit. To resolve these errors, [add or update](https://dashboard.cohere.com/billing?tab=payment) a payment method.
+
+<details>
+    <summary>Example error responses</summary>
+    |message|
+    |---|
+    |Please add or update your payment method at https://dashboard.cohere.com/billing?tab=payment to continue|
+    |Maximum billing reached for this API key as set in your dashboard, please go to https://dashboard.cohere.com/billing?tab=payment to increase your maximum amount to continue using this API key. Your billing capacity will reset at the beginning of next month.|
+</details>
+
+## 404 - Not Found
+
+404 responses are sent when the requested resource is not found. This can happen when the model, dataset, or connector ID is incorrect, or when the resource has been deleted.
+
+<details>
+    <summary>Example error responses</summary>
+    |message|
+    |---|
+    |model 'xyz' not found, make sure the correct model ID was used and that you have access to the model.|
+    |404 page not found|
+    |resource not found: no messages found with conversation id models|
+    |failed to find org by org id|
+    |connector 'web-search' not found.|
+    |finetuned model xyz not found|
+    |dataset with id texts not found|
+    |connector '' not found.|
+    |dataset with id my-dataset-id not found|
+    |finetuned model xyz not found|
+</details>
+
+## 429 - Too Many Requests
+
+429 responses are sent when the rate limit has been exceeded. Please consult the [rate limit documentation](https://docs.cohere.com/v2/docs/rate-limits) to understand the limits and how to avoid these errors.
+
+<details>
+    <summary>Example error responses</summary>
+    |message|
+    |---|
+    |You are past the per minute request limit, please wait and try again later.|
+    |You are using a Trial key, which is limited to 40 API calls / minute. You can continue to use the Trial key for free or upgrade to a Production key with higher rate limits at 'https://dashboard.cohere.com/api-keys'. Contact us on 'https://discord.gg/XW44jPfYJu' or email us at support@cohere.com with any questions|
+    |Please wait and try again later|
+    |trial token rate limit exceeded, limit is 100000 tokens per minute|
+</details>
+
+## 499 - Request Cancelled
+
+499 responses are sent when a user cancels the request. To resolve these errors, try the request again.
+
+<details>
+    <summary>Example error responses</summary>
+    |message|
+    |---|
+    |request cancelled|
+    |streaming error - scroll down for more streaming errors|
+    |failed to get rerank inference: request cancelled|
+    |request cancelled by user|
+</details>

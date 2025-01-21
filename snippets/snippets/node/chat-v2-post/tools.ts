@@ -1,12 +1,10 @@
 const { CohereClientV2 } = require('cohere-ai');
 
-const cohere = new CohereClientV2({
-  token: '<<apiKey>>',
-});
+const cohere = new CohereClientV2({});
 
 (async () => {
   const response = await cohere.chat({
-    model: 'command-r-plus',
+    model: 'command-r-plus-08-2024',
     tools: [
       {
         type: 'function',
@@ -15,10 +13,12 @@ const cohere = new CohereClientV2({
           description:
             'Connects to a database to retrieve overall sales volumes and sales information for a given day.',
           parameters: {
-            day: {
-              description: 'Retrieves sales data for this day, formatted as YYYY-MM-DD.',
-              type: 'str',
-              required: true,
+            type: 'object',
+            properties: {
+              day: {
+                description: 'Retrieves sales data for this day, formatted as YYYY-MM-DD.',
+                type: 'string',
+              },
             },
           },
         },
@@ -30,10 +30,13 @@ const cohere = new CohereClientV2({
           description:
             'Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.',
           parameters: {
-            category: {
-              description: 'Retrieves product information data for all products in this category.',
-              type: 'str',
-              required: true,
+            type: 'object',
+            properties: {
+              category: {
+                description:
+                  'Retrieves product information data for all products in this category.',
+                type: 'string',
+              },
             },
           },
         },

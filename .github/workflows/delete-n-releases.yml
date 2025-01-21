@@ -1,0 +1,33 @@
+name: delete-n-releases
+
+on:
+  workflow_dispatch:
+    inputs:
+      n:
+        description: 'Number of releases to delete'
+        required: true
+        default: "1"
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install Dependencies
+        shell: bash
+        run: pnpm install
+
+      - name: Run snippet tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO: ${{ github.event.repository.name }}
+          N_VERSIONS: ${{ github.event.inputs.n }}
+        run: pnpm run --filter autorelease delete

@@ -1,7 +1,7 @@
 import cohere
 import asyncio
 
-co = cohere.AsyncClient("<<apiKey>>")
+co = cohere.AsyncClient()
 
 
 async def main():
@@ -17,5 +17,6 @@ async def main():
         # perform web search before answering the question. You can also use your own custom connector.
         connectors=[{"id": "web-search"}],
     )
+
 
 asyncio.run(main())

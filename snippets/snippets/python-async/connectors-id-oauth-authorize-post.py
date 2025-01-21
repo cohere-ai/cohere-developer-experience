@@ -1,7 +1,7 @@
 import cohere
 import asyncio
 
-co = cohere.AsyncClient("<<apiKey>>")
+co = cohere.AsyncClient()
 
 
 async def main():
@@ -9,5 +9,6 @@ async def main():
         connector_id="test-id", after_token_redirect="https://test.com"
     )
     print(response)
+
 
 asyncio.run(main())

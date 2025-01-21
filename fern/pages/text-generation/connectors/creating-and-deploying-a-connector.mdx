@@ -1,14 +1,14 @@
 ---
-title: "Creating and Deploying a Connector"
-slug: "docs/creating-and-deploying-a-connector"
-
-hidden: false 
-description: "This document provides a guide for implementing a connector, which involves setting up the connector and data source, configuring the connection between the connector and the Chat API, deploying the connector, and registering it with Cohere to generate grounded generations. It also includes recommendations for structuring the response from the connector to improve final generations."
-image: "../../../assets/images/cf31483-cohere_meta_image.jpg"  
-keywords: "Cohere connectors, retrieval augmented generation"
-
-createdAt: "Fri Dec 01 2023 17:20:28 GMT+0000 (Coordinated Universal Time)"
-updatedAt: "Mon May 06 2024 19:20:26 GMT+0000 (Coordinated Universal Time)"
+title: Creating and Deploying a Connector
+slug: docs/creating-and-deploying-a-connector
+hidden: false
+description: >-
+  Learn how to implement a connector, from setup to deployment, to enable
+  grounded generations with Cohere's Chat API.
+image: ../../../assets/images/cf31483-cohere_meta_image.jpg
+keywords: 'Cohere connectors, retrieval augmented generation'
+createdAt: 'Fri Dec 01 2023 17:20:28 GMT+0000 (Coordinated Universal Time)'
+updatedAt: 'Mon May 06 2024 19:20:26 GMT+0000 (Coordinated Universal Time)'
 ---
 This section will provide a rough guide for implementing a connector. There are two major parts of this process:
 
@@ -54,7 +54,11 @@ curl --request POST
 ```
 ```python PYTHON
 import requests
-r = requests.post('{base_connector_url}/search', {'query': 'How do I expense a meal?'})
+
+r = requests.post(
+    "{base_connector_url}/search",
+    {"query": "How do I expense a meal?"},
+)
 ```
 ```typescript TYPESCRIPT
 const response = await fetch('{base_connector_url}/search'{
@@ -117,12 +121,12 @@ After you’ve deployed the connector and verified it can respond to requests, i
 import cohere
 
 # initialize the Cohere Client with an API Key
-co = cohere.Client('YOUR_API_KEY')
+co = cohere.Client("YOUR_API_KEY")
 
 created_connector = co.create_connector(
-            name="Example connector",
-            url="https://connector-example.com/search",
-        )
+    name="Example connector",
+    url="https://connector-example.com/search",
+)
 ```
 ```curl CURL
 curl --request POST  
@@ -179,7 +183,11 @@ curl --request POST
 ```
 ```python PYTHON
 import requests
-r = requests.post('{base_connector_url}/search', {'query': 'How do I expense a meal?'})
+
+r = requests.post(
+    "{base_connector_url}/search",
+    {"query": "How do I expense a meal?"},
+)
 ```
 ```typescript TYPESCRIPT
 const response = await fetch('https://connector.example.com/search'{
@@ -198,11 +206,14 @@ In order to produce grounded generations, include your connector id in the `conn
 
 <CodeBlocks>
 ```python PYTHON
-import cohere  
-co = cohere.Client('Your API key')  
-response = co.chat(  
-	message="What is the chemical formula for glucose?",  
-	connectors=[{"id": "example_connector_id"}] # this is from the create step  
+import cohere
+
+co = cohere.Client("Your API key")
+response = co.chat(
+    message="What is the chemical formula for glucose?",
+    connectors=[
+        {"id": "example_connector_id"}
+    ],  # this is from the create step
 )
 ```
 ```curl CURL

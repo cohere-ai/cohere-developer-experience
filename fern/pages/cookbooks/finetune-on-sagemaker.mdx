@@ -1,0 +1,335 @@
+---
+title: Finetuning on AWS Sagemaker
+slug: /page/finetune-on-sagemaker
+
+description: Learn how to finetune one of Cohere's models on AWS Sagemaker.
+image: "../../assets/images/f1cc130-cohere_meta_image.jpg"
+keywords: "Cohere, LLMs, finetuning"
+---
+
+import { AuthorsContainer } from "../../components/authors-container";
+import { CookbookHeader } from "../../components/cookbook-header";
+
+<AuthorsContainer
+  authors={[
+    {
+      name: "Mike Mao",
+      imageSrc: "https://fern-image-hosting.s3.amazonaws.com/cohere/d514b09-mike-headshot.jpg"
+    }
+  ]}
+/>
+
+<CookbookHeader href="https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/finetuning/Command%20R%20finetuning%20sagemaker.ipynb" />
+
+## Finetune and deploy a custom Command-R model
+
+This sample notebook shows you how to finetune and deploy a custom Command-R model using Amazon SageMaker.
+
+> **Note**: This is a reference notebook and it cannot run unless you make changes suggested in the notebook.
+
+## Pre-requisites:
+1. **Note: This notebook contains elements which render correctly in Jupyter interface. Open this notebook from an Amazon SageMaker Notebook Instance or Amazon SageMaker Studio.**
+1. Ensure that IAM role used has **AmazonSageMakerFullAccess**
+1. To deploy this ML model successfully, ensure that:
+    1. Either your IAM role has these three permissions and you have authority to make AWS Marketplace subscriptions in the AWS account used: 
+        1. **aws-marketplace:ViewSubscriptions**
+        1. **aws-marketplace:Unsubscribe**
+        1. **aws-marketplace:Subscribe**  
+    2. or your AWS account has a subscription to the packages for [Cohere Command R Finetuning](https://aws.amazon.com/marketplace/ai/configuration?productId=1762e582-e7df-47f0-a49f-98e22302a702). If so, skip step: [Subscribe to the finetune algorithm](#1.-Subscribe-to-the-finetune-algorithm)
+
+## Contents:
+1. [Subscribe to the finetune algorithm](#1.-Subscribe-to-the-finetune-algorithm)
+2. [Upload data and finetune Command-R Model](#2.-Upload-data-and-finetune-Command-R)
+3. [Create an endpoint for inference with the custom model](#3.-Create-an-endpoint-for-inference-with-the-custom-model)
+   1. [Create an endpoint](#A.-Create-an-endpoint)
+   2. [Perform real-time inference](#B.-Perform-real-time-inference)
+4. [Clean-up](#4.-Clean-up)
+    1. [Delete the endpoint](#A.-Delete-the-endpoint)
+    2. [Unsubscribe to the listing (optional)](#Unsubscribe-to-the-listing-(optional))
+    
+
+## Usage instructions
+You can run this notebook one cell at a time (By using Shift+Enter for running a cell).
+
+## 1. Subscribe to the finetune algorithm
+
+To subscribe to the model algorithm:
+1. Open the algorithm listing page [Cohere Command R Finetuning](https://aws.amazon.com/marketplace/pp/prodview-2czs5tbao7b7c)
+2. On the AWS Marketplace listing, click on the **Continue to Subscribe** button.
+3. On the **Subscribe to this software** page, review and click on **"Accept Offer"** if you and your organization agrees with EULA, pricing, and support terms. On the "Configure and launch" page, make sure ARN displayed in your region match with the ARN in the following cell.
+
+```sh
+pip install "cohere>=5.11.0"
+```
+
+```python
+import cohere
+import boto3
+import sagemaker as sage
+from sagemaker.s3 import S3Uploader
+```
+
+The algorithm is available in the list of AWS regions specified below.
+
+
+```python
+region = boto3.Session().region_name
+
+cohere_package = ""
+# cohere_package = "cohere-command-r-ft-v-0-1-2-bae2282f0f4a30bca8bc6fea9efeb7ca"
+
+# Mapping for algorithms
+algorithm_map = {
+    "us-east-1": f"arn:aws:sagemaker:us-east-1:865070037744:algorithm/{cohere_package}",
+    "us-east-2": f"arn:aws:sagemaker:us-east-2:057799348421:algorithm/{cohere_package}",
+    "us-west-2": f"arn:aws:sagemaker:us-west-2:594846645681:algorithm/{cohere_package}",
+    "eu-central-1": f"arn:aws:sagemaker:eu-central-1:446921602837:algorithm/{cohere_package}",
+    "ap-southeast-1": f"arn:aws:sagemaker:ap-southeast-1:192199979996:algorithm/{cohere_package}",
+    "ap-southeast-2": f"arn:aws:sagemaker:ap-southeast-2:666831318237:algorithm/{cohere_package}",
+    "ap-northeast-1": f"arn:aws:sagemaker:ap-northeast-1:977537786026:algorithm/{cohere_package}",
+    "ap-south-1": f"arn:aws:sagemaker:ap-south-1:077584701553:algorithm/{cohere_package}",
+}
+if region not in algorithm_map.keys():
+    raise Exception(
+        f"Current boto3 session region {region} is not supported."
+    )
+
+arn = algorithm_map[region]
+```
+
+## 2. Upload data and finetune Command-R
+
+Select a path on S3 to store the training and evaluation datasets and update the **s3_data_dir** below:
+
+
+```python
+s3_data_dir = "s3://..."  # Do not add a trailing slash otherwise the upload will not work
+```
+
+Upload sample training data to S3:
+
+### Note:
+
+You'll need your data in a .jsonl file that contains chat-formatted data. [Doc](https://docs.cohere.com/docs/chat-preparing-the-data#data-requirements)
+
+
+### Example:
+
+JSONL:
+```
+{
+  "messages": [
+    {
+      "role": "System",
+      "content": "You are a chatbot trained to answer to my every question."
+    },
+    {
+      "role": "User",
+      "content": "Hello"
+    },
+    {
+      "role": "Chatbot",
+      "content": "Greetings! How can I help you?"
+    },
+    {
+      "role": "User",
+      "content": "What makes a good running route?"
+    },
+    {
+      "role": "Chatbot",
+      "content": "A sidewalk-lined road is ideal so that you\u2019re up and off the road away from vehicular traffic."
+    }
+  ]
+}
+```
+
+
+
+```python
+sess = sage.Session()
+# TODO[Optional]: change it to your data
+# You can download following example datasets from https://github.com/cohere-ai/cohere-developer-experience/tree/main/notebooks/data and upload them
+# to the root of this juyter notebook
+train_dataset = S3Uploader.upload(
+    "./scienceQA_train.jsonl", s3_data_dir, sagemaker_session=sess
+)
+# optional eval dataset
+eval_dataset = S3Uploader.upload(
+    "./scienceQA_eval.jsonl", s3_data_dir, sagemaker_session=sess
+)
+print("traint_dataset", train_dataset)
+print("eval_dataset", eval_dataset)
+```
+
+**Note:** If eval dataset is absent, we will auto-split the training dataset into training and evaluation datasets with the ratio of 80:20.
+
+Each dataset must contain at least 1 examples. If an evaluation dataset is absent, training dataset must cointain at least 2 examples.
+
+We recommend using a dataset than contains at least 100 examples but a larger dataset is likely to yield high quality finetunes. Be aware that a larger dataset would mean that the time to finetune would also be longer.
+
+Specify a directory on S3 where finetuned models should be stored. **Make sure you *do not reuse the same directory* across multiple runs.** 
+
+
+```python
+# TODO update this with a custom S3 path
+# DO NOT add a trailing slash at the end
+s3_models_dir = f"s3://..."
+```
+
+Create Cohere client:
+
+
+```python
+co = cohere.SagemakerClient(region_name=region)
+```
+
+#### Optional: Define hyperparameters
+
+- `train_epochs`: Integer. This is the maximum number of training epochs to run for. Defaults to **1**
+
+| Default | Min | Max |
+| --- | --- | --- |
+| 1 | 1 | 10 |
+- `learning_rate`: Float. The initial learning rate to be used during training. Default to **0.0001**
+
+| Default | Min | Max |
+| --- | --- | --- |
+| 0.0001 | 0.000005 | 0.1 |
+- `train_batch_size`: Integer. The batch size used during training. Defaults to **16** for Command.
+
+| Default | Min | Max |
+| --- | --- | --- |
+| 16 | 8 | 32 |
+- `early_stopping_enabled`: Boolean. Enables early stopping. When set to true, the final model is the best model found based on the validation set. When set to false, the final model is the last model of training. Defaults to **true**.
+
+- `early_stopping_patience`: Integer. Stop training if the loss metric does not improve beyond 'early_stopping_threshold' for this many times of evaluation. Defaults to **10**
+
+| Default | Min | Max |
+| --- | --- | --- |
+| 10 | 1 | 15 |
+- `early_stopping_threshold`: Float. How much the loss must improve to prevent early stopping. Defaults to **0.001**.
+
+| Default | Min | Max |
+| --- | --- | --- |
+| 0.001 | 0.001 | 0.1 |
+
+If the algorithm is **command-r-0824-ft**, you have the option to define:
+- `lora_rank': Integer`. Lora adapter rank. Defaults to **32**
+
+| Default | Min | Max |
+| --- | --- | --- |
+| 32 | 8 | 32 |
+
+
+```python
+# Example of how to pass hyperparameters to the fine-tuning job
+train_parameters = {
+    "train_epochs": 1,
+    "early_stopping_patience": 2,
+    "early_stopping_threshold": 0.001,
+    "learning_rate": 0.01,
+    "train_batch_size": 16,
+}
+```
+
+Create fine-tuning jobs for the uploaded datasets. Add a field for `eval_data` if you have pre-split your dataset and uploaded both training and evaluation datasets to S3. Remember to use p4de for Command-R Finetuning.
+
+
+```python
+finetune_name = "test-finetune"
+co.sagemaker_finetuning.create_finetune(
+    arn=arn,
+    name=finetune_name,
+    train_data=train_dataset,
+    eval_data=eval_dataset,
+    s3_models_dir=s3_models_dir,
+    instance_type="ml.p4de.24xlarge",
+    training_parameters=train_parameters,
+    role="ServiceRoleSagemaker",
+)
+```
+
+The finetuned weights for the above will be store in a tar file `{s3_models_dir}/test-finetune.tar.gz` where the file name is the same as the name used during the creation of the finetune.
+
+## 3. Create an endpoint for inference with the custom model
+
+### A. Create an endpoint
+
+The Cohere AWS SDK provides a built-in method for creating an endpoint for inference. This will automatically deploy the model you finetuned earlier.
+
+> **Note**: This is equivalent to creating and deploying a `ModelPackage` in SageMaker's SDK.
+
+
+
+```python
+endpoint_name = "test-finetune"
+co.sagemaker_finetuning.create_endpoint(
+    arn=arn,
+    endpoint_name=endpoint_name,
+    s3_models_dir=s3_models_dir,
+    recreate=True,
+    instance_type="ml.p4de.24xlarge",
+    role="ServiceRoleSagemaker",
+)
+
+# If the endpoint is already created, you just need to connect to it
+co.connect_to_endpoint(endpoint_name=endpoint_name)
+```
+
+### B. Perform real-time inference
+
+Now, you can access all models deployed on the endpoint for inference:
+
+
+```python
+message = "Classify the following text as either very negative, negative, neutral, positive or very positive: mr. deeds is , as comedy goes , very silly -- and in the best way."
+
+result = co.sagemaker_finetuning.chat(message=message)
+print(result)
+```
+
+#### [Optional] Now let's evaluate our finetuned model using the evaluation dataset. 
+
+
+```python
+import json
+from tqdm import tqdm
+
+total = 0
+correct = 0
+for line in tqdm(
+    open("./sample_finetune_scienceQA_eval.jsonl").readlines()
+):
+    total += 1
+    question_answer_json = json.loads(line)
+    question = question_answer_json["messages"][0]["content"]
+    answer = question_answer_json["messages"][1]["content"]
+    model_ans = co.sagemaker_finetuning.chat(
+        message=question, temperature=0
+    ).text
+    if model_ans == answer:
+        correct += 1
+
+print(f"Accuracy of finetuned model is %.3f" % (correct / total))
+```
+
+## 4. Clean-up
+
+### A. Delete the endpoint
+
+After you've successfully performed inference, you can delete the deployed endpoint to avoid being charged continuously. This can also be done via the Cohere AWS SDK:
+
+
+```python
+co.delete_endpoint()
+co.close()
+```
+
+## Unsubscribe to the listing (optional)
+
+If you would like to unsubscribe to the model package, follow these steps. Before you cancel the subscription, ensure that you do not have any [deployable models](https://console.aws.amazon.com/sagemaker/home#/models) created from the model package or using the algorithm. Note - You can find this information by looking at the container name associated with the model. 
+
+**Steps to unsubscribe to product from AWS Marketplace**:
+1. Navigate to __Machine Learning__ tab on [__Your Software subscriptions page__](https://aws.amazon.com/marketplace/ai/library?productType=ml&ref_=mlmp_gitdemo_indust)
+2. Locate the listing that you want to cancel the subscription for, and then choose __Cancel Subscription__  to cancel the subscription.
+

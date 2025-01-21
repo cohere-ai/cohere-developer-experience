@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	co := client.NewClient(client.WithToken("<<apiKey>>"))
+	co := client.NewClient()
 
 	resp, err := co.Connectors.Delete(context.TODO(), "connector_id")
 

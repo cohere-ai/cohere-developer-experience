@@ -5,17 +5,23 @@ on:
     branches:
       - main
 
-concurrency: 
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 jobs:
   run:
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      pull-requests: write  # Only for commenting
+      contents: read       # For checking out code
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        # with:
+        #   ref: "${{ github.event.pull_request.merge_commit_sha }}"
+
+      - name: Checkout PR
+        if: github.event_name == 'pull_request_target'
+        run: |
+          git fetch origin pull/${{ github.event.pull_request.number }}/head:pr-${{ github.event.pull_request.number }}
+          git checkout pr-${{ github.event.pull_request.number }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -24,7 +30,7 @@ jobs:
 
       - name: Install Dependencies
         shell: bash
-        run: pnpm install
+        run: pnpm install        
 
       - name: Run fern check
         env:

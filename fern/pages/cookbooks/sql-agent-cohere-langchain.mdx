@@ -1,0 +1,591 @@
+---
+title: SQL Agent with Cohere and LangChain (i-5O Case Study)
+slug: /page/sql-agent-cohere-langchain
+
+description: "This page contains a tutorial on how to build a SQL agent with Cohere and LangChain in the manufacturing industry."
+image: "../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, automatic SQL generation, code generation, AI agents"
+---
+
+import { AuthorsContainer } from "../../components/authors-container";
+import { CookbookHeader } from "../../components/cookbook-header";
+
+<CookbookHeader href="https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/agents/i-5O-sql-agent/sql_agent_demo.ipynb" />
+
+*This notebook was created in collaboration with [i-5O](https://i-5o.ai/)*
+
+This tutorial demonstrates how to create a SQL agent using Cohere and LangChain. The agent can translate natural language queries coming from users into SQL, and execute them against a database. This powerful combination allows for intuitive interaction with databases without requiring direct SQL knowledge.
+
+Key topics covered:
+1. Setting up the necessary libraries and environment
+2. Connecting to a SQLite database
+3. Configuring the LangChain SQL Toolkit
+4. Creating a custom prompt template with few-shot examples
+5. Building and running the SQL agent
+
+By the end of this tutorial, you'll have a functional SQL agent that can answer questions about your data using natural language.
+
+
+This tutorial uses a mocked up data of a manufacturing environment where a product item's production is tracked across multiple stations, allowing for analysis of production efficiency, station performance, and individual item progress through the manufacturing process. This is modelled after a real customer use case.
+
+The database contains two tables:
+- The `product_tracking` table records the movement of items through different zones in manufacturing stations, including start and end times, station names, and product IDs.
+- The `status` table logs the operational status of stations, including timestamps, station names, and whether they are productive or in downtime.
+
+
+**Table of contents**<a id='toc0_'></a>    
+- [Import the required libraries](#toc1_1_)    
+- [Load the database](#toc1_2_)    
+- [Setup the LangChain SQL Toolkit](#toc1_3_)    
+- [Create a prompt template with few shot examples](#toc1_4_)    
+- [Create the agent](#toc1_5_)    
+- [Run the agent](#toc1_6_)    
+
+
+## <a id='toc1_1_'></a>[Import the required libraries](#toc0_)
+
+First, let's import the necessary libraries for creating a SQL agent using Cohere and LangChain. These libraries enable natural language interaction with databases and provide tools for building AI-powered agents.
+
+
+```python PYTHON
+import os
+
+os.environ["COHERE_API_KEY"] = ""
+```
+
+
+```python PYTHON
+! pip install faiss-gpu -qq
+```
+
+
+```python PYTHON
+! pip install langchain-core langchain-cohere langchain-community
+```
+
+```python PYTHON
+from langchain.agents import AgentExecutor
+from langchain_cohere import create_sql_agent
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_cohere.chat_models import ChatCohere
+from langchain_community.utilities.sql_database import SQLDatabase
+from langchain_community.agent_toolkits import SQLDatabaseToolkit
+from langchain_community.vectorstores import FAISS
+from langchain_core.example_selectors import SemanticSimilarityExampleSelector
+from langchain_cohere import CohereEmbeddings
+from datetime import datetime, timedelta
+import os
+import json
+```
+
+
+## <a id='toc1_2_'></a>[Load the database](#toc0_)
+
+Next, we load the database for our manufacturing data.
+
+We create an in-memory SQLite database using SQL scripts for the `product_tracking` and `status` tables. You can get the [SQL tables here](https://github.com/cohere-ai/cohere-developer-experience/tree/main/notebooks/agents/i-5O-sql-agent).
+
+We then create a SQLDatabase instance, which will be used by our LangChain tools and agents to interact with the data.
+
+
+```python PYTHON
+import sqlite3
+import os
+
+from langchain_community.utilities.sql_database import SQLDatabase
+from sqlalchemy import create_engine
+from sqlalchemy.pool import StaticPool
+
+def get_engine_for_manufacturing_db():
+    """Create an in-memory database with the manufacturing data tables."""
+    connection = sqlite3.connect(":memory:", check_same_thread=False)
+
+    # Read and execute the SQL scripts
+    for sql_file in ['product_tracking.sql', 'status.sql']:
+        with open(sql_file, 'r') as file:
+            sql_script = file.read()
+            connection.executescript(sql_script)
+
+    return create_engine(
+        "sqlite://",
+        creator=lambda: connection,
+        poolclass=StaticPool,
+        connect_args={"check_same_thread": False},
+    )
+
+# Create the engine
+engine = get_engine_for_manufacturing_db()
+
+# Create the SQLDatabase instance
+db = SQLDatabase(engine)
+
+# Now you can use this db instance with your LangChain tools and agents
+```
+
+
+```python PYTHON
+# Test the connection
+db.run("SELECT * FROM status LIMIT 5;")
+```
+
+```
+"[('2024-05-09 19:28:00', 'Canada/Toronto', '2024-05-09', '19', '28', 'stn3', 'downtime'), ('2024-04-21 06:57:00', 'Canada/Toronto', '2024-04-21', '6', '57', 'stn3', 'productive'), ('2024-04-11 23:52:00', 'Canada/Toronto', '2024-04-11', '23', '52', 'stn4', 'productive'), ('2024-04-03 21:52:00', 'Canada/Toronto', '2024-04-03', '21', '52', 'stn2', 'downtime'), ('2024-04-30 05:01:00', 'Canada/Toronto', '2024-04-30', '5', '1', 'stn4', 'productive')]"
+```
+
+
+
+```python PYTHON
+# Test the connection
+db.run("SELECT * FROM product_tracking LIMIT 5;")
+```
+
+```
+"[('2024-05-27 17:22:00', '2024-05-27 17:57:00', 'Canada/Toronto', '2024-05-27', '17', 'stn2', 'wip', '187', '35'), ('2024-04-26 15:56:00', '2024-04-26 17:56:00', 'Canada/Toronto', '2024-04-26', '15', 'stn4', 'wip', '299', '120'), ('2024-04-12 04:36:00', '2024-04-12 05:12:00', 'Canada/Toronto', '2024-04-12', '4', 'stn3', 'wip', '60', '36'), ('2024-04-19 15:15:00', '2024-04-19 15:22:00', 'Canada/Toronto', '2024-04-19', '15', 'stn4', 'wait', '227', '7'), ('2024-04-24 19:10:00', '2024-04-24 21:07:00', 'Canada/Toronto', '2024-04-24', '19', 'stn4', 'wait', '169', '117')]"
+```
+
+
+## <a id='toc1_3_'></a>[Setup the LangChain SQL Toolkit](#toc0_)
+
+Next, we initialize the LangChain SQL Toolkit and sets up the language model to use Cohere's model. This prepares the necessary components for querying the SQL database using natural language.
+
+
+
+```python PYTHON
+## Define model to use
+import os
+
+MODEL="command-r-plus-08-2024"
+llm = ChatCohere(model=MODEL,
+                 temperature=0.1,
+                 verbose=True,
+                 cohere_api_key=os.getenv("COHERE_API_KEY"))
+
+
+toolkit = SQLDatabaseToolkit(db=db, llm=llm)
+context = toolkit.get_context()
+tools = toolkit.get_tools()
+
+print('**List of pre-defined Langchain Tools**')
+print([tool.name for tool in tools])
+```
+```
+**List of pre-defined Langchain Tools**
+['sql_db_query', 'sql_db_schema', 'sql_db_list_tables', 'sql_db_query_checker']
+```
+
+## <a id='toc1_4_'></a>[Create a prompt template with few shot examples](#toc0_)
+
+Next, we create a prompt template with few-shot examples. Few-shot examples are used to provide the model with context and improve its performance on specific tasks. In this case, we'll prepare examples of natural language queries and their corresponding SQL queries to help the model generate accurate SQL statements for our database.
+
+In this example, we use `SemanticSimilarityExampleSelector` to select the top k examples that are most similar to an input query out of all the examples available.
+
+
+```python PYTHON
+examples = [
+    {
+        "input": "What was the average processing time for all stations on April 3rd 2024?",
+        "query": "SELECT station_name, AVG(CAST(duration AS INTEGER)) AS avg_processing_time FROM product_tracking WHERE date = '2024-04-03' AND zone = 'wip' GROUP BY station_name ORDER BY station_name;",
+    },
+    {
+        "input": "What was the average processing time for all stations on April 3rd 2024 between 4pm and 6pm?",
+        "query": "SELECT station_name, AVG(CAST(duration AS INTEGER)) AS avg_processing_time FROM product_tracking WHERE date = '2024-04-03' AND CAST(hour AS INTEGER) BETWEEN 16 AND 18 AND zone = 'wip' GROUP BY station_name ORDER BY station_name;",
+    },
+    {
+        "input": "What was the average processing time for stn4 on April 3rd 2024?",
+        "query": "SELECT AVG(CAST(duration AS INTEGER)) AS avg_processing_time FROM product_tracking WHERE date = '2024-04-03' AND station_name = 'stn4' AND zone = 'wip';",
+    },
+    {
+        "input": "How much downtime did stn2 have on April 3rd 2024?",
+        "query": "SELECT COUNT(*) AS downtime_count FROM status WHERE date = '2024-04-03' AND station_name = 'stn2' AND station_status = 'downtime';",
+    },
+    {
+        "input": "What were the productive time and downtime numbers for all stations on April 3rd 2024?",
+        "query": "SELECT station_name, station_status, COUNT(*) as total_time FROM status WHERE date = '2024-04-03' GROUP BY station_name, station_status;",
+    },
+    {
+        "input": "What was the bottleneck station on April 3rd 2024?",
+        "query": "SELECT station_name, AVG(CAST(duration AS INTEGER)) AS avg_processing_time FROM product_tracking WHERE date = '2024-04-03' AND zone = 'wip' GROUP BY station_name ORDER BY avg_processing_time DESC LIMIT 1;",
+    },
+    {
+        "input": "Which percentage of the time was stn5 down in the last week of May?",
+        "query": "SELECT SUM(CASE WHEN station_status = 'downtime' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS percentage_downtime FROM status WHERE station_name = 'stn5' AND date >= '2024-05-25' AND date <= '2024-05-31';",
+    },
+]
+```
+
+
+```python PYTHON
+example_selector = SemanticSimilarityExampleSelector.from_examples(
+    examples,
+    CohereEmbeddings(cohere_api_key=os.getenv("COHERE_API_KEY"),
+                     model="embed-english-v3.0"),
+    FAISS,
+    k=5,
+    input_keys=["input"],
+)
+```
+
+
+```python PYTHON
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    FewShotPromptTemplate,
+    MessagesPlaceholder,
+    PromptTemplate,
+    SystemMessagePromptTemplate,
+)
+
+system_prefix = """You are an agent designed to interact with a SQL database.
+You are an expert at answering questions about manufacturing data.
+Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
+Always start with checking the schema of the available tables.
+Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
+You can order the results by a relevant column to return the most interesting examples in the database.
+Never query for all the columns from a specific table, only ask for the relevant columns given the question.
+You have access to tools for interacting with the database.
+Only use the given tools. Only use the information returned by the tools to construct your final answer.
+You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
+
+DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
+
+The current date is {date}.
+
+For questions regarding productive time, downtime, productive or productivity, use minutes as units.
+
+For questions regarding productive time, downtime, productive or productivity use the status table.
+
+For questions regarding processing time and average processing time, use minutes as units.
+
+For questions regarding bottlenecks, processing time and average processing time use the product_tracking table.
+
+If the question does not seem related to the database, just return "I don't know" as the answer.
+
+Here are some examples of user inputs and their corresponding SQL queries:"""
+
+few_shot_prompt = FewShotPromptTemplate(
+    example_selector=example_selector,
+    example_prompt=PromptTemplate.from_template(
+        "User input: {input}\nSQL query: {query}"
+    ),
+    input_variables=["input", "dialect", "top_k","date"],
+    prefix=system_prefix,
+    suffix="",
+)
+```
+
+
+```python PYTHON
+full_prompt = ChatPromptTemplate.from_messages(
+    [
+        SystemMessagePromptTemplate(prompt=few_shot_prompt),
+        ("human", "{input}"),
+        MessagesPlaceholder("agent_scratchpad"),
+    ]
+)
+```
+
+
+```python PYTHON
+# Example formatted prompt
+prompt_val = full_prompt.invoke(
+    {
+        "input": "What was the productive time for all stations today?",
+        "top_k": 5,
+        "dialect": "SQLite",
+        "date":datetime.now(),
+        "agent_scratchpad": [],
+    }
+)
+print(prompt_val.to_string())
+```
+```
+System: You are an agent designed to interact with a SQL database.
+You are an expert at answering questions about manufacturing data.
+Given an input question, create a syntactically correct SQLite query to run, then look at the results of the query and return the answer.
+Always start with checking the schema of the available tables.
+Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most 5 results.
+You can order the results by a relevant column to return the most interesting examples in the database.
+Never query for all the columns from a specific table, only ask for the relevant columns given the question.
+You have access to tools for interacting with the database.
+Only use the given tools. Only use the information returned by the tools to construct your final answer.
+You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
+
+DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
+
+The current date is 2024-10-10 09:40:22.052973.
+
+For questions regarding productive time, downtime, productive or productivity, use minutes as units.
+
+For questions regarding productive time, downtime, productive or productivity use the status table. 
+
+For questions regarding processing time and average processing time, use minutes as units. 
+
+For questions regarding bottlenecks, processing time and average processing time use the product_tracking table. 
+
+If the question does not seem related to the database, just return "I don't know" as the answer.
+
+Here are some examples of user inputs and their corresponding SQL queries:
+
+User input: What were the productive time and downtime numbers for all stations on April 3rd 2024?
+SQL query: SELECT station_name, station_status, COUNT(*) as total_time FROM status WHERE date = '2024-04-03' GROUP BY station_name, station_status;
+
+User input: What was the average processing time for all stations on April 3rd 2024?
+SQL query: SELECT station_name, AVG(CAST(duration AS INTEGER)) AS avg_processing_time FROM product_tracking WHERE date = '2024-04-03' AND zone = 'wip' GROUP BY station_name ORDER BY station_name;
+
+User input: What was the average processing time for all stations on April 3rd 2024 between 4pm and 6pm?
+SQL query: SELECT station_name, AVG(CAST(duration AS INTEGER)) AS avg_processing_time FROM product_tracking WHERE date = '2024-04-03' AND CAST(hour AS INTEGER) BETWEEN 16 AND 18 AND zone = 'wip' GROUP BY station_name ORDER BY station_name;
+
+User input: What was the bottleneck station on April 3rd 2024?
+SQL query: SELECT station_name, AVG(CAST(duration AS INTEGER)) AS avg_processing_time FROM product_tracking WHERE date = '2024-04-03' AND zone = 'wip' GROUP BY station_name ORDER BY avg_processing_time DESC LIMIT 1;
+
+User input: What was the average processing time for stn4 on April 3rd 2024?
+SQL query: SELECT AVG(CAST(duration AS INTEGER)) AS avg_processing_time FROM product_tracking WHERE date = '2024-04-03' AND station_name = 'stn4' AND zone = 'wip';
+Human: What was the productive time for all stations today?
+```
+
+## <a id='toc1_5_'></a>[Create the agent](#toc0_)
+
+Next, we create an instance of the SQL agent using the LangChain framework, specifically using `create_sql_agent`.
+
+This agent will be capable of interpreting natural language queries, converting them into SQL queries, and executing them against our database. The agent uses the LLM we defined earlier, along with the SQL toolkit and the custom prompt we created.
+
+
+```python PYTHON
+agent = create_sql_agent(
+   llm=llm,
+   toolkit=toolkit,
+   prompt=full_prompt,
+   verbose=True
+)
+```
+
+## <a id='toc1_6_'></a>[Run the agent](#toc0_)
+
+Now, we can run the agent and test it with a few different queries.
+
+
+```python PYTHON
+# %%time
+output=agent.invoke({
+   "input": "What was the total downtime for each station during the month of May 2024?",
+    "date": datetime.now()
+})
+print(output['output'])
+
+# Answer: stn2: 1 minute(s), stn3: 2 minute(s)stn5: 4 minute(s)
+```
+
+```
+[1m> Entering new Cohere SQL Agent Executor chain...[0m
+[32;1m[1;3m
+Invoking: `sql_db_list_tables` with `{}`
+responded: I will first check the schema of the available tables. Then, I will write and execute a query to find the total downtime for each station during the month of May 2024.
+
+[0m[38;5;200m[1;3mproduct_tracking, status[0m[32;1m[1;3m
+Invoking: `sql_db_schema` with `{'table_names': 'product_tracking, status'}`
+responded: I have found that the relevant tables are 'product_tracking' and 'status'. I will now check the schema of these tables.
+
+[0m[33;1m[1;3m
+CREATE TABLE product_tracking (
+  timestamp_start TEXT, 
+  timestamp_end TEXT, 
+  timezone TEXT, 
+  date TEXT, 
+  hour TEXT, 
+  station_name TEXT, 
+  zone TEXT, 
+  product_id TEXT, 
+  duration TEXT
+)
+
+/*
+3 rows from product_tracking table:
+timestamp_start	timestamp_end	timezone	date	hour	station_name	zone	product_id	duration
+2024-05-27 17:22:00	2024-05-27 17:57:00	Canada/Toronto	2024-05-27	17	stn2	wip	187	35
+2024-04-26 15:56:00	2024-04-26 17:56:00	Canada/Toronto	2024-04-26	15	stn4	wip	299	120
+2024-04-12 04:36:00	2024-04-12 05:12:00	Canada/Toronto	2024-04-12	4	stn3	wip	60	36
+*/
+
+
+CREATE TABLE status (
+  timestamp_event TEXT, 
+  timezone TEXT, 
+  date TEXT, 
+  hour TEXT, 
+  minute TEXT, 
+  station_name TEXT, 
+  station_status TEXT
+)
+
+/*
+3 rows from status table:
+timestamp_event	timezone	date	hour	minute	station_name	station_status
+2024-05-09 19:28:00	Canada/Toronto	2024-05-09	19	28	stn3	downtime
+2024-04-21 06:57:00	Canada/Toronto	2024-04-21	6	57	stn3	productive
+2024-04-11 23:52:00	Canada/Toronto	2024-04-11	23	52	stn4	productive
+*/[0m[32;1m[1;3m
+Invoking: `sql_db_query_checker` with `{'query': "SELECT station_name, COUNT(*) as total_downtime FROM status WHERE date LIKE '2024-05-%' AND station_status = 'downtime' GROUP BY station_name;"}`
+responded: I have found that the 'status' table contains the 'station_name' and 'station_status' columns, which are relevant to the user's request. I will now write and execute a query to find the total downtime for each station during the month of May 2024.
+
+[0m[36;1m[1;3m```sql
+SELECT station_name, COUNT(*) as total_downtime FROM status WHERE date LIKE '2024-05-%' AND station_status = 'downtime' GROUP BY station_name;
+```[0m[32;1m[1;3m
+Invoking: `sql_db_query` with `{'query': "SELECT station_name, COUNT(*) as total_downtime FROM status WHERE date LIKE '2024-05-%' AND station_status = 'downtime' GROUP BY station_name;"}`
+responded: I have checked the query and it is correct. I will now execute it.
+
+[0m[36;1m[1;3m[('stn2', 1), ('stn3', 2), ('stn5', 4)][0m[32;1m[1;3mThe total downtime for each station during the month of May 2024 was:
+
+| station_name | total_downtime |
+|---|---|
+| stn2 | 1 |
+| stn3 | 2 |
+| stn5 | 4 |[0m
+
+[1m> Finished chain.[0m
+The total downtime for each station during the month of May 2024 was:
+
+| station_name | total_downtime |
+|---|---|
+| stn2 | 1 |
+| stn3 | 2 |
+| stn5 | 4 |
+```
+
+
+```python PYTHON
+output=agent.invoke({
+   "input": "What is the average processing duration at stn5 in the wip zone?",
+    "date": datetime.now()
+})
+print(output['output'])
+
+# Answer: 39.17 minutes
+```
+```
+[1m> Entering new Cohere SQL Agent Executor chain...[0m
+[32;1m[1;3m
+Invoking: `sql_db_list_tables` with `{}`
+responded: I will first check the schema of the available tables. Then, I will write and execute a query to find the average processing duration at stn5 in the wip zone.
+
+[0m[38;5;200m[1;3mproduct_tracking, status[0m[32;1m[1;3m
+Invoking: `sql_db_schema` with `{'table_names': 'product_tracking'}`
+responded: The available tables are product_tracking and status.
+
+I will now write and execute a query to find the average processing duration at stn5 in the wip zone.
+
+[0m[33;1m[1;3m
+CREATE TABLE product_tracking (
+  timestamp_start TEXT, 
+  timestamp_end TEXT, 
+  timezone TEXT, 
+  date TEXT, 
+  hour TEXT, 
+  station_name TEXT, 
+  zone TEXT, 
+  product_id TEXT, 
+  duration TEXT
+)
+
+/*
+3 rows from product_tracking table:
+timestamp_start	timestamp_end	timezone	date	hour	station_name	zone	product_id	duration
+2024-05-27 17:22:00	2024-05-27 17:57:00	Canada/Toronto	2024-05-27	17	stn2	wip	187	35
+2024-04-26 15:56:00	2024-04-26 17:56:00	Canada/Toronto	2024-04-26	15	stn4	wip	299	120
+2024-04-12 04:36:00	2024-04-12 05:12:00	Canada/Toronto	2024-04-12	4	stn3	wip	60	36
+*/[0m[32;1m[1;3m
+Invoking: `sql_db_query_checker` with `{'query': "SELECT AVG(CAST(duration AS INTEGER)) AS avg_processing_duration FROM product_tracking WHERE station_name = 'stn5' AND zone = 'wip';"}`
+responded: The available tables are product_tracking and status.
+
+I will now write and execute a query to find the average processing duration at stn5 in the wip zone.
+
+[0m[36;1m[1;3mSELECT AVG(CAST(duration AS INTEGER)) AS avg_processing_duration FROM product_tracking WHERE station_name = 'stn5' AND zone = 'wip';[0m[32;1m[1;3m
+Invoking: `sql_db_query` with `{'query': "SELECT AVG(CAST(duration AS INTEGER)) AS avg_processing_duration FROM product_tracking WHERE station_name = 'stn5' AND zone = 'wip';"}`
+responded: The available tables are product_tracking and status.
+
+I will now write and execute a query to find the average processing duration at stn5 in the wip zone.
+
+[0m[36;1m[1;3m[(39.166666666666664,)][0m[32;1m[1;3mThe average processing duration at stn5 in the wip zone is 39.17 minutes.[0m
+
+[1m> Finished chain.[0m
+The average processing duration at stn5 in the wip zone is 39.17 minutes.
+```
+
+
+```python PYTHON
+output=agent.invoke({
+   "input": "Which station had the highest total duration in the wait zone?",
+    "date": datetime.now()
+})
+print(output['output'])
+
+# Answer: stn4 - 251 minutes
+
+```
+
+```
+[1m> Entering new Cohere SQL Agent Executor chain...[0m
+[32;1m[1;3m
+Invoking: `sql_db_list_tables` with `{}`
+responded: I will first check the schema of the available tables. Then I will write and execute a query to find the station with the highest total duration in the wait zone.
+
+[0m[38;5;200m[1;3mproduct_tracking, status[0m[32;1m[1;3m
+Invoking: `sql_db_schema` with `{'table_names': 'product_tracking, status'}`
+responded: I have found that the relevant tables are product_tracking and status. I will now write and execute a query to find the station with the highest total duration in the wait zone.
+
+[0m[33;1m[1;3m
+CREATE TABLE product_tracking (
+  timestamp_start TEXT, 
+  timestamp_end TEXT, 
+  timezone TEXT, 
+  date TEXT, 
+  hour TEXT, 
+  station_name TEXT, 
+  zone TEXT, 
+  product_id TEXT, 
+  duration TEXT
+)
+
+/*
+3 rows from product_tracking table:
+timestamp_start	timestamp_end	timezone	date	hour	station_name	zone	product_id	duration
+2024-05-27 17:22:00	2024-05-27 17:57:00	Canada/Toronto	2024-05-27	17	stn2	wip	187	35
+2024-04-26 15:56:00	2024-04-26 17:56:00	Canada/Toronto	2024-04-26	15	stn4	wip	299	120
+2024-04-12 04:36:00	2024-04-12 05:12:00	Canada/Toronto	2024-04-12	4	stn3	wip	60	36
+*/
+
+
+CREATE TABLE status (
+  timestamp_event TEXT, 
+  timezone TEXT, 
+  date TEXT, 
+  hour TEXT, 
+  minute TEXT, 
+  station_name TEXT, 
+  station_status TEXT
+)
+
+/*
+3 rows from status table:
+timestamp_event	timezone	date	hour	minute	station_name	station_status
+2024-05-09 19:28:00	Canada/Toronto	2024-05-09	19	28	stn3	downtime
+2024-04-21 06:57:00	Canada/Toronto	2024-04-21	6	57	stn3	productive
+2024-04-11 23:52:00	Canada/Toronto	2024-04-11	23	52	stn4	productive
+*/[0m[32;1m[1;3m
+Invoking: `sql_db_query_checker` with `{'query': "SELECT station_name, SUM(CAST(duration AS INTEGER)) AS total_duration FROM product_tracking WHERE zone = 'wait' GROUP BY station_name ORDER BY total_duration DESC LIMIT 1;"}`
+responded: I have found that the relevant columns are zone and duration in the product_tracking table. I will now write and execute a query to find the station with the highest total duration in the wait zone.
+
+[0m[36;1m[1;3m```sql
+SELECT station_name, SUM(CAST(duration AS INTEGER)) AS total_duration FROM product_tracking WHERE zone = 'wait' GROUP BY station_name ORDER BY total_duration DESC LIMIT 1;
+```[0m[32;1m[1;3m
+Invoking: `sql_db_query` with `{'query': "SELECT station_name, SUM(CAST(duration AS INTEGER)) AS total_duration FROM product_tracking WHERE zone = 'wait' GROUP BY station_name ORDER BY total_duration DESC LIMIT 1;"}`
+responded: I have checked the query and it is correct. I will now execute it.
+
+[0m[36;1m[1;3m[('stn4', 251)][0m[32;1m[1;3mThe station with the highest total duration in the wait zone is stn4, with a total duration of 251 minutes.[0m
+
+[1m> Finished chain.[0m
+The station with the highest total duration in the wait zone is stn4, with a total duration of 251 minutes.
+```
+
+## Conclusion
+This tutorial demonstrated how to create a SQL agent using Cohere and LangChain. The agent can translate natural language queries coming from users into SQL, and execute them against a database. This powerful combination allows for intuitive interaction with databases without requiring direct SQL knowledge.
+

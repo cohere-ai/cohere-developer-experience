@@ -1,14 +1,16 @@
 ---
-title: "Single-Step Tool Use"
-slug: "docs/tool-use"
-
-hidden: false 
-description: "This document explains how tool use allows customers to connect large language models to external tools, enabling more advanced interactions beyond simple chat. Customers can provide tools to the model, which then dynamically selects the right tools to call based on user messages, and customers can execute these tool calls to enhance the model's responses."
-image: "../../../assets/images/39c2d8c-cohere_meta_image.jpg"
-keywords: "natural language processing, Cohere, large language models, tool use with LLMs, generative AI tool use"
-
-createdAt: "Thu Feb 29 2024 18:14:38 GMT+0000 (Coordinated Universal Time)"
-updatedAt: "Mon Jun 17 2024 19:35:37 GMT+0000 (Coordinated Universal Time)"
+title: How Does Single-Step Tool Use Work?
+slug: docs/tool-use
+hidden: false
+description: >-
+  Enable your large language models to connect with external tools for more
+  advanced and dynamic interactions (V1).
+image: ../../../assets/images/39c2d8c-cohere_meta_image.jpg
+keywords: >-
+  natural language processing, Cohere, large language models, tool use with
+  LLMs, generative AI tool use
+createdAt: 'Thu Feb 29 2024 18:14:38 GMT+0000 (Coordinated Universal Time)'
+updatedAt: 'Mon Jun 17 2024 19:35:37 GMT+0000 (Coordinated Universal Time)'
 ---
 Tool use is a technique which allows developers to connect Cohere's Command family of models to external tools like search engines, APIs, functions, databases, etc. It comes in two variants, single-step and multi-step, and this doc will focus on single-step tool use.
 
@@ -16,7 +18,7 @@ Single-step tool use enables a richer set of behaviors by leveraging data stored
 
 This is particularly valuable for enterprise developers, since a lot of enterprise data lives in external sources.
 
-Check out [this notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/agents/Vanilla_Tool_Use.ipynb) for worked-out examples.
+Check out [this notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/agents/Vanilla_Tool_Use.ipynb) for worked-out examples.
 
 ## What Is Possible with Single-Step Tool Use?
 
@@ -80,32 +82,33 @@ Observe that, for each tool, the developer describes the tool name, description,
 
 ```python PYTHON
 import cohere
+
 co = cohere.Client(api_key="<YOUR API KEY>")
 
 # tool descriptions that the model has access to
 tools = [
-   {
-       "name": "query_daily_sales_report",
-       "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
-       "parameter_definitions": {
-           "day": {
-               "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
-               "type": "str",
-               "required": True
-           }
-       }
-   },
-   {
-       "name": "query_product_catalog",
-       "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
-       "parameter_definitions": {
-           "category": {
-               "description": "Retrieves product information data for all products in this category.",
-               "type": "str",
-               "required": True
-           }
-       }
-   }
+    {
+        "name": "query_daily_sales_report",
+        "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+        "parameter_definitions": {
+            "day": {
+                "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
+                "type": "str",
+                "required": True,
+            }
+        },
+    },
+    {
+        "name": "query_product_catalog",
+        "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
+        "parameter_definitions": {
+            "category": {
+                "description": "Retrieves product information data for all products in this category.",
+                "type": "str",
+                "required": True,
+            }
+        },
+    },
 ]
 
 # preamble containing instructions about the task and the desired style for the output.
@@ -121,11 +124,11 @@ Unless the user asks for a different style of answer, you should answer in full 
 message = "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
 
 response = co.chat(
-   message=message,
-   force_single_step=True,
-   tools=tools,
-   preamble=preamble,
-   model="command-r"
+    message=message,
+    force_single_step=True,
+    tools=tools,
+    preamble=preamble,
+    model="command-r-08-2024",
 )
 ```
 
@@ -139,16 +142,15 @@ print("\n".join(str(tool_call) for tool_call in response.tool_calls))
 
 # An example output:
 # cohere.ToolCall {
-#	name: query_daily_sales_report
-#	parameters: {'day': '2023-09-29'}
-#	generation_id: 4807c924-9003-4d6b-8069-eda03962c465
-#}
-#cohere.ToolCall {
-#	name: query_product_catalog
-#	parameters: {'category': 'Electronics'}
-#	generation_id: 4807c924-9003-4d6b-8069-eda03962c465
-#}
-
+# 	name: query_daily_sales_report
+# 	parameters: {'day': '2023-09-29'}
+# 	generation_id: 4807c924-9003-4d6b-8069-eda03962c465
+# }
+# cohere.ToolCall {
+# 	name: query_product_catalog
+# 	parameters: {'category': 'Electronics'}
+# 	generation_id: 4807c924-9003-4d6b-8069-eda03962c465
+# }
 ```
 
 ### Step 3
@@ -159,21 +161,18 @@ Now, the developer will query the appropriate tools and receive a tool result in
 tool_results = []
 # Iterate over the tool calls generated by the model
 for tool_call in response.tool_calls:
-   # here is where you would call the tool recommended by the model, using the parameters recommended by the model
-   output = functions_map[tool_call.name](**tool_call.parameters)
-   # store the output in a list
-   outputs = [output]
-   # store your tool results in this format
-   tool_results.append({
-       "call": tool_call,
-       "outputs": outputs
-   })
+    # here is where you would call the tool recommended by the model, using the parameters recommended by the model
+    output = functions_map[tool_call.name](**tool_call.parameters)
+    # store the output in a list
+    outputs = [output]
+    # store your tool results in this format
+    tool_results.append({"call": tool_call, "outputs": outputs})
 
 
 print("Tool results that will be fed back to the model in step 4:")
 print(json.dumps(tool_results, indent=4))
 # Tool results that will be fed back to the model in step 4:
-#[
+# [
 #    {
 #        "call": {
 #            "name": "query_daily_sales_report",
@@ -223,8 +222,7 @@ print(json.dumps(tool_results, indent=4))
 #            }
 #        ]
 #    }
-#]
-
+# ]
 ```
 
 ### Step 4
@@ -233,12 +231,12 @@ Call the chat endpoint again with the tool results to get the final model answer
 
 ```python PYTHON
 response = co.chat(
-   message=message,
-   tools=tools,
-   tool_results=tool_results,
-   preamble=preamble,
-   model="command-r",
-   temperature=0.3
+    message=message,
+    tools=tools,
+    tool_results=tool_results,
+    preamble=preamble,
+    model="command-r-08-2024",
+    temperature=0.3,
 )
 
 
@@ -247,14 +245,13 @@ print(response.text)
 
 
 # Final answer:
-# On the 29th of September 2023, there were 250 units sold, with a total sales amount of 10,000. 
+# On the 29th of September 2023, there were 250 units sold, with a total sales amount of 10,000.
 
 
 # The Electronics category contains three products:
 # - Smartphone: 500 (price), 20 (stock level)
-#- Laptop: 1000 (price), 15 (stock level)
-#- Tablet: 300 (price), 25 (stock level)
-
+# - Laptop: 1000 (price), 15 (stock level)
+# - Tablet: 300 (price), 25 (stock level)
 ```
 
 This step comes with a unique differentiator: the language model cites which tool results were used to generate the final model answer! These citations make it easy to check where the model’s generated response claims are coming from.
@@ -276,21 +273,21 @@ Developers can control the granularity of these citations. Simply split tool res
 ```python PYTHON
 print("Citations that support the final answer:")
 for cite in response.citations:
-  print(cite)
+    print(cite)
 
 # Citations that support the final answer:
-#{'start': 7, 'end': 29, 'text': '29th of September 2023', 'document_ids': ['query_daily_sales_report:0:0']}
-#{'start': 42, 'end': 75, 'text': '10,000 sales with 250 units sold.', 'document_ids': ['query_daily_sales_report:0:0']}
-#{'start': 112, 'end': 127, 'text': 'three products.', 'document_ids': ['query_product_catalog:1:0']}
-#{'start': 234, 'end': 244, 'text': 'Smartphone', 'document_ids': ['query_product_catalog:1:0']}
-#{'start': 247, 'end': 250, 'text': '500', 'document_ids': ['query_product_catalog:1:0']}
-#{'start': 253, 'end': 255, 'text': '20', 'document_ids': ['query_product_catalog:1:0']}
-#{'start': 260, 'end': 266, 'text': 'Laptop', 'document_ids': ['query_product_catalog:1:0']}
-#{'start': 269, 'end': 273, 'text': '1000', 'document_ids': ['query_product_catalog:1:0']}
-#{'start': 276, 'end': 278, 'text': '15', 'document_ids': ['query_product_catalog:1:0']}
-#{'start': 283, 'end': 289, 'text': 'Tablet', 'document_ids': ['query_product_catalog:1:0']}
-#{'start': 292, 'end': 295, 'text': '300', 'document_ids': ['query_product_catalog:1:0']}
-#{'start': 298, 'end': 300, 'text': '25', 'document_ids': ['query_product_catalog:1:0']}
+# {'start': 7, 'end': 29, 'text': '29th of September 2023', 'document_ids': ['query_daily_sales_report:0:0']}
+# {'start': 42, 'end': 75, 'text': '10,000 sales with 250 units sold.', 'document_ids': ['query_daily_sales_report:0:0']}
+# {'start': 112, 'end': 127, 'text': 'three products.', 'document_ids': ['query_product_catalog:1:0']}
+# {'start': 234, 'end': 244, 'text': 'Smartphone', 'document_ids': ['query_product_catalog:1:0']}
+# {'start': 247, 'end': 250, 'text': '500', 'document_ids': ['query_product_catalog:1:0']}
+# {'start': 253, 'end': 255, 'text': '20', 'document_ids': ['query_product_catalog:1:0']}
+# {'start': 260, 'end': 266, 'text': 'Laptop', 'document_ids': ['query_product_catalog:1:0']}
+# {'start': 269, 'end': 273, 'text': '1000', 'document_ids': ['query_product_catalog:1:0']}
+# {'start': 276, 'end': 278, 'text': '15', 'document_ids': ['query_product_catalog:1:0']}
+# {'start': 283, 'end': 289, 'text': 'Tablet', 'document_ids': ['query_product_catalog:1:0']}
+# {'start': 292, 'end': 295, 'text': '300', 'document_ids': ['query_product_catalog:1:0']}
+# {'start': 298, 'end': 300, 'text': '25', 'document_ids': ['query_product_catalog:1:0']}
 ```
 
 ## The Model Can Still Answer Directly if no Tool is Relevant
@@ -301,7 +298,7 @@ There may be times when a single-step tool use query doesn't turn up a tool that
 res = co.chat(message=message, tools=tools)
 
 if not response.tool_calls:
-  	co.chat(message=message, tools=tools, tool_results=[])
+    co.chat(message=message, tools=tools, tool_results=[])
 ```
 
 ## Single-Step Tool Use and Chat History
@@ -340,7 +337,7 @@ Please [reach out](mailto:MAXIMEVOISIN@COHERE.COM) to join the beta.
 
 ## Getting started
 
-Check out [this notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/agents/Vanilla_Tool_Use.ipynb) for a worked-out examples.
+Check out [this notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/agents/Vanilla_Tool_Use.ipynb) for a worked-out examples.
 
 ## FAQ
 

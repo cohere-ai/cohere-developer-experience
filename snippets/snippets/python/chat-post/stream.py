@@ -1,6 +1,6 @@
 import cohere
 
-co = cohere.Client("<<apiKey>>")
+co = cohere.Client()
 
 response = co.chat_stream(
     chat_history=[
@@ -17,4 +17,4 @@ response = co.chat_stream(
 
 for event in response:
     if event.event_type == "text-generation":
-        print(event.text, end='')
+        print(event.text, end="")

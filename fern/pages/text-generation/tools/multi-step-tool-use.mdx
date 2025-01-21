@@ -1,11 +1,13 @@
 ---
 title: "Multi-step Tool Use (Agents)"
-slug: "docs/multi-step-tool-use"
-hidden: false 
-description: "Tool use allows developers to connect Cohere's models to external tools for various actions, while multi-step tool use extends this to allow the model to call multiple tools in a sequence of steps. This process enables the model to reason, perform dynamic actions, and adapt quickly based on external information."
-image: "../../../assets/images/21a3b59-cohere_meta_image.jpg"
-createdAt: "Wed Mar 27 2024 19:22:07 GMT+0000 (Coordinated Universal Time)"
-updatedAt: "Mon Jun 17 2024 19:41:53 GMT+0000 (Coordinated Universal Time)"
+slug: docs/multi-step-tool-use
+hidden: false
+description: >-
+  "Cohere's tool use feature enhances AI capabilities by connecting external
+  tools for dynamic, adaptable, and sequential actions."
+image: ../../../assets/images/21a3b59-cohere_meta_image.jpg
+createdAt: 'Wed Mar 27 2024 19:22:07 GMT+0000 (Coordinated Universal Time)'
+updatedAt: 'Mon Jun 17 2024 19:41:53 GMT+0000 (Coordinated Universal Time)'
 ---
 Tool use is a technique which allows Cohere's models to invoke external tools: search engines, APIs, functions, databases, and so on. Given a list of tool definitions, the model will generate a plan of action and decide which tools to use, in which order, and with what parameters.
 
@@ -23,23 +25,26 @@ Also, note that multi-step is enabled by default.
 ```python PYTHON
 # define the `web_search` tool.
 
+
 def web_search(query: str) -> list[dict]:
-  # your code for performing a web search goes here
-  # return [{
-  #		"url": "https://en.wikipedia.org/wiki/Ontario",
-  #		"text": "The capital of Ontario is Toronto, ..."
-  #	}]
+    pass
+    # your code for performing a web search goes here
+    # return [{
+    # 		"url": "https://en.wikipedia.org/wiki/Ontario",
+    # 		"text": "The capital of Ontario is Toronto, ..."
+    # 	}]
+
 
 web_search_tool = {
-  "name": "web_search",
-  "description": "performs a web search with the specified query",
-  "parameter_definitions": {
-    "query": {
-      "description": "the query to look up",
-      "type": "str",
-      "required": True
-    }
-  }
+    "name": "web_search",
+    "description": "performs a web search with the specified query",
+    "parameter_definitions": {
+        "query": {
+            "description": "the query to look up",
+            "type": "str",
+            "required": True,
+        }
+    },
 }
 ```
 
@@ -47,36 +52,47 @@ web_search_tool = {
 
 ```python PYTHON
 import cohere
+
 co = cohere.Client(api_key="<YOUR API KEY>")
 
 message = "Who is the mayor of the capital of Ontario?"
-model = "command-r-plus"
+model = "command-r-plus-08-2024"
 
 # STEP 2: Check what tools the model wants to use and how
 
-res = co.chat(model=model, message=message, force_single_step=False, tools=[web_search_tool])
+res = co.chat(
+    model=model,
+    message=message,
+    force_single_step=False,
+    tools=[web_search_tool],
+)
 
 # as long as the model sends back tool_calls,
 # keep invoking tools and sending the results back to the model
 while res.tool_calls:
-  print(res.text) # This will be an observation and a plan with next steps
-  tool_results = []
-  for call in res.tool_calls:
-    # use the `web_search` tool with the search query the model sent back
-    web_search_results = {"call": call, "outputs": web_search(call.parameters["query"])}
-    tool_results.append(web_search_results)
-    
-  # call chat again with tool results
-  res = co.chat(
-    model="command-r-plus",
-    chat_history=res.chat_history,
-    message="",
-    force_single_step=False,
-    tools=[web_search_tool],
-    tool_results=tool_results
-  )
-  
- print(res.text) # "The mayor of Toronto, the capital of Ontario is Olivia Chow"
+    # This will be an observation and a plan with next steps
+    print(res.text)
+    tool_results = []
+    for call in res.tool_calls:
+        # use the `web_search` tool with the search query the model sent back
+        web_search_results = {
+            "call": call,
+            "outputs": web_search(call.parameters["query"]),
+        }
+        tool_results.append(web_search_results)
+
+    # call chat again with tool results
+    res = co.chat(
+        model="command-r-plus-08-2024",
+        chat_history=res.chat_history,
+        message="",
+        force_single_step=False,
+        tools=[web_search_tool],
+        tool_results=tool_results,
+    )
+
+    # "The mayor of Toronto, the capital of Ontario is Olivia Chow"
+    print(res.text)
 ```
 
 ## How Does Multi-step Tool Use Work?

@@ -1,14 +1,15 @@
 ---
-title: "Preparing the Chat Fine-tuning Data"
-slug: "docs/chat-preparing-the-data"
-
+title: Preparing the Chat Fine-tuning Data
+slug: docs/chat-preparing-the-data
 hidden: false
-description: "This document provides guidelines on preparing data in `jsonl` format for fine-tuning a chat model, including ensuring proper roles, message lengths, and encoding in UTF-8. It also explains how to create datasets using the Python SDK and best practices for chat customization."
-image: "../../../assets/images/6b90ef9-cohere_meta_image.jpg"  
-keywords: "fine-tuning, fine-tuning language models"
-
-createdAt: "Thu Nov 16 2023 02:53:26 GMT+0000 (Coordinated Universal Time)"
-updatedAt: "Tue May 07 2024 19:35:14 GMT+0000 (Coordinated Universal Time)"
+description: >-
+  Prepare your data for fine-tuning a Command model for Chat with this
+  step-by-step guide, including data formatting, requirements, and best
+  practices.
+image: ../../../assets/images/6b90ef9-cohere_meta_image.jpg
+keywords: 'fine-tuning, fine-tuning language models'
+createdAt: 'Thu Nov 16 2023 02:53:26 GMT+0000 (Coordinated Universal Time)'
+updatedAt: 'Tue May 07 2024 19:35:14 GMT+0000 (Coordinated Universal Time)'
 ---
 In this section, we will walk through how you can prepare your data for fine-tuning a one of the Command family of models for Chat.
 
@@ -62,8 +63,7 @@ To pass the validation tests Cohere performs on uploaded data, ensure that:
 
 - You have the proper roles. There are only three acceptable values for the `role` field: `System`, `Chatbot` or `User`. There should be at least one instance of `Chatbot` and `User` in each conversation. If your dataset includes other roles, an error will be thrown.
 - A preamble should be uploaded as the first message in the conversation, with `role: System`. All other messages with `role: System` will be treated as speakers in the conversation.
-- The "System" preamble message is not longer than 4096 tokens, which is half the maximum training sequence length.
-- Each turn in the conversation should be within the training context length of 8192 tokens to avoid being dropped from the dataset. We explain a turn in the "Chat Customization Best Practices" section below.
+- Each turn in the conversation should be within the training context length of 16384 tokens to avoid being dropped from the dataset. We explain a turn in the "Chat Customization Best Practices" section below.
 - Your data is encoded in UTF-8.
 
 ### Evaluation Datasets
@@ -78,17 +78,21 @@ If you intend to fine-tune through our UI you can skip to the next chapter. Othe
 import cohere
 
 # instantiate the Cohere client
-co = cohere.Client("YOUR_API_KEY")  
+co = cohere.Client("YOUR_API_KEY")
 
-chat_dataset = co.datasets.create(name="chat-dataset",
-                                   data=open("path/to/train.jsonl", "rb"),
-                                   type="chat-finetune-input")
+chat_dataset = co.datasets.create(
+    name="chat-dataset",
+    data=open("path/to/train.jsonl", "rb"),
+    type="chat-finetune-input",
+)
 print(co.wait(chat_dataset))
-                                   
-chat_dataset_with_eval = co.datasets.create(name="chat-dataset-with-eval",
-                                           data=open("path/to/train.jsonl, "rb"),
-                                           eval_data=open("path/to/eval.jsonl, "rb"),
-                                           type="chat-finetune-input")
+
+chat_dataset_with_eval = co.datasets.create(
+    name="chat-dataset-with-eval",
+    data=open("path/to/train.jsonl", "rb"),
+    eval_data=open("path/to/eval.jsonl", "rb"),
+    type="chat-finetune-input",
+)
 print(co.wait(chat_dataset_with_eval))
 ```
 
@@ -125,7 +129,7 @@ A turn includes all messages up to the Chatbot speaker. The following conversati
 
 A few things to bear in mind:
 
-- The preamble is always kept within the context window. This means that the preamble and _all turns within the context window_ should be within 8192 tokens.
+- The preamble is always kept within the context window. This means that the preamble and _all turns within the context window_ should be within 16384 tokens.
 - To check how many tokens your data is, you can use the [co.tokenize() api](/reference/tokenize).
-- If any turns are above the context length of 8192 tokens, we will drop them from the training data.
+- If any turns are above the context length of 16384 tokens, we will drop them from the training data.
 - If an evaluation file is not uploaded, we will make our best effort to automatically split your uploaded conversations into an 80/20 split. In other words, if you upload a training dataset containing only the minimum of two conversations, we'll randomly put one of them in the training set, and the other in the evaluation set.
