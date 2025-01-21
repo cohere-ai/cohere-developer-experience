@@ -6,7 +6,7 @@ hidden: false
 createdAt: "Thu Mar 28 2024 16:46:15 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Thu May 23 2024 01:03:24 GMT+0000 (Coordinated Universal Time)"
 ---
-This chapter uses the same [notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/llmu/Introduction_Text_Embeddings.ipynb) as the previous chapter.
+This chapter uses the same [notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/llmu/Introduction_Text_Embeddings.ipynb) as the previous chapter.
 
 As the amount of unstructured text data increases, organizations will want to be able to derive an understanding of its contents. One example would be to discover underlying topics in a collection of documents so we can explore trends and insights. Another could be for businesses to segment customers based on preferences and activity.
 
@@ -31,14 +31,16 @@ Let’s look at an example using the same 9 data points.
 - which airlines fly between boston and pittsburgh
 ```
 
-### Step 1: Embed the Text for Clustesring
+### Step 1: Embed the Text for Clustering
 
 We embed the documents using the same `get_embeddings()` function as before, but now we set `input_type="clustering"` because we'll use the embeddings for clustering.
 
 ```python PYTHON
 # Embed the text for clustering
-df['clustering_embeds'] = get_embeddings(df['query'].tolist(), input_type="clustering")
-embeds = np.array(df['clustering_embeds'].tolist())
+df["clustering_embeds"] = get_embeddings(
+    df["query"].tolist(), input_type="clustering"
+)
+embeds = np.array(df["clustering_embeds"].tolist())
 ```
 
 ### Step 2: Cluster the Embeddings
@@ -57,7 +59,7 @@ classes = kmeans_model.fit_predict(embeds).tolist()
 
 # Store the cluster assignments
 df_clust = df_pc2.copy()
-df_clust['cluster'] = (list(map(str,classes)))
+df_clust["cluster"] = list(map(str, classes))
 ```
 
 ### Step 3: Visualize the Results in a 2D Plot

@@ -1,15 +1,10 @@
 import cohere
 
-co = cohere.ClientV2("<<apiKey>>")
+co = cohere.ClientV2()
 
 response = co.chat(
-    model="command-r-plus",
-    messages=[
-        {
-            "role": "user",
-            "content": "hello world!"
-        }
-    ]
+    model="command-r-plus-08-2024",
+    messages=[{"role": "user", "content": "hello world!"}],
 )
 
 print(response)

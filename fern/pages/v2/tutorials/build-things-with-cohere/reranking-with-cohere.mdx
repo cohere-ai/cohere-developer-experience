@@ -1,0 +1,284 @@
+---
+title: Reranking with Cohere
+slug: /v2/docs/reranking-with-cohere
+
+description: "This page contains a tutorial on using Cohere's ReRank models."
+image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, language models, ReRank models"
+---
+
+<a target="_blank" href="https://colab.research.google.com/github/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/getting-started/v2/tutorial_pt5_v2.ipynb">Open in Colab</a>
+
+Reranking is a technique that provides a semantic boost to the search quality of any keyword or vector search system, and is especially useful in [RAG systems](/v2/docs/retrieval-augmented-generation-rag).
+
+We can rerank results from semantic search as well as any other search systems such as lexical search. This means that companies can retain an existing keyword-based (also called “lexical”) or semantic search system for the first-stage retrieval and integrate the [Rerank endpoint](/v2/docs/rerank-2) in the second-stage reranking.
+
+In this tutorial, you'll learn about:
+- Reranking lexical/semantic search results
+- Reranking semi-structured data
+- Reranking tabular data
+- Multilingual reranking
+
+You'll learn these by building an onboarding assistant for new hires.
+
+## Setup
+
+To get started, first we need to install the `cohere` library and create a Cohere client.
+
+
+```python PYTHON
+# pip install cohere
+
+import cohere
+
+# Get your free API key: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(api_key="COHERE_API_KEY")
+```
+
+## Reranking lexical/semantic search results
+
+Rerank requires just a single line of code to implement.
+
+Suppose we have a list of search results of an FAQ list, which can come from semantic, lexical, or any other types of search systems. But this list may not be optimally ranked for relevance to the user query.
+
+This is where Rerank can help. We call the endpoint using `co.rerank()` and pass the following arguments:
+- `query`: The user query
+- `documents`: The list of documents
+- `top_n`: The top reranked documents to select
+- `model`: We choose Rerank English 3
+
+
+```python PYTHON
+# Define the documents
+faqs = [
+    {
+        "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+    },
+    {
+        "text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."
+    },
+    {
+        "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+    },
+    {
+        "text": "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year."
+    },
+]
+```
+
+
+```python PYTHON
+# Add the user query
+query = "Are there fitness-related perks?"
+
+# Rerank the documents
+results = co.rerank(
+    model="rerank-v3.5",
+    query=query,
+    documents=faqs,
+    top_n=1,
+)
+
+print(results)
+```
+```
+id='2fa5bc0d-28aa-4c99-8355-7de78dbf3c86' results=[RerankResponseResultsItem(document=None, index=2, relevance_score=0.01798621), RerankResponseResultsItem(document=None, index=3, relevance_score=8.463939e-06)] meta=ApiMeta(api_version=ApiMetaApiVersion(version='1', is_deprecated=None, is_experimental=None), billed_units=ApiMetaBilledUnits(input_tokens=None, output_tokens=None, search_units=1.0, classifications=None), tokens=None, warnings=None)
+```
+
+
+```python PYTHON
+# Display the reranking results
+def return_results(results, documents):
+    for idx, result in enumerate(results.results):
+        print(f"Rank: {idx+1}")
+        print(f"Score: {result.relevance_score}")
+        print(f"Document: {documents[result.index]}\n")
+
+
+return_results(results, faqs_short)
+```
+```
+Rank: 1
+Score: 0.01798621
+Document: {'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}
+
+Rank: 2
+Score: 8.463939e-06
+Document: {'text': 'Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year.'}
+```
+
+
+Further reading:
+- [Rerank endpoint API reference](https://docs.cohere.com/reference/rerank)
+- [Documentation on Rerank](https://docs.cohere.com/docs/rerank-overview)
+- [Documentation on Rerank fine-tuning](https://docs.cohere.com/docs/rerank-fine-tuning)
+- [Documentation on Rerank best practices](https://docs.cohere.com/docs/reranking-best-practices)
+- [LLM University module on Text Representation](https://cohere.com/llmu#text-representation)
+
+## Reranking semi-structured data
+
+The Rerank 3 model supports multi-aspect and semi-structured data like emails, invoices, JSON documents, code, and tables. By setting the rank fields, you can select which fields the model should consider for reranking.
+
+In the following example, we'll use an email data example. It is a semi-stuctured data that contains a number of fields – `from`, `to`, `date`, `subject`, and `text`. 
+
+Suppose the new hire now wants to search for any emails about check-in sessions. Let's pretend we have a list of 5 emails retrieved from the email provider's API.
+
+To perform reranking over semi-structured data, we serialize the documents to YAML format, which prepares the data in the format required for reranking. Then, we pass the YAML formatted documents to the Rerank endpoint.
+
+```python PYTHON
+# Define the documents
+emails = [
+    {
+        "from": "hr@co1t.com",
+        "to": "david@co1t.com",
+        "date": "2024-06-24",
+        "subject": "A Warm Welcome to Co1t!",
+        "text": "We are delighted to welcome you to the team! As you embark on your journey with us, you'll find attached an agenda to guide you through your first week.",
+    },
+    {
+        "from": "it@co1t.com",
+        "to": "david@co1t.com",
+        "date": "2024-06-24",
+        "subject": "Setting Up Your IT Needs",
+        "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.",
+    },
+    {
+        "from": "john@co1t.com",
+        "to": "david@co1t.com",
+        "date": "2024-06-24",
+        "subject": "First Week Check-In",
+        "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!",
+    },
+]
+```
+
+
+```python PYTHON
+# Convert the documents to YAML format
+yaml_docs = [yaml.dump(doc, sort_keys=False) for doc in emails]
+
+# Add the user query
+query = "Any email about check ins?"
+
+# Rerank the documents
+results = co.rerank(
+    model="rerank-v3.5",
+    query=query,
+    documents=yaml_docs,
+    top_n=2,
+)
+
+return_results(results, emails)
+```
+```
+Rank: 1
+Score: 0.1979091
+Document: {'from': 'john@co1t.com', 'to': 'david@co1t.com', 'date': '2024-06-24', 'subject': 'First Week Check-In', 'text': "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!"}
+
+Rank: 2
+Score: 9.535461e-05
+Document: {'from': 'hr@co1t.com', 'to': 'david@co1t.com', 'date': '2024-06-24', 'subject': 'A Warm Welcome to Co1t!', 'text': "We are delighted to welcome you to the team! As you embark on your journey with us, you'll find attached an agenda to guide you through your first week."}
+```
+
+
+## Reranking tabular data
+
+Many enterprises rely on tabular data, such as relational databases, CSVs, and Excel. To perform reranking, you can transform a dataframe into a list of JSON records and use Rerank 3's JSON capabilities to rank them. We follow the same steps in the previous example, where we convert the data into YAML format before passing it to the Rerank endpoint.
+
+Here's an example of reranking a CSV file that contains employee information.
+
+```python PYTHON
+import pandas as pd
+from io import StringIO
+
+# Create a demo CSV file
+data = """name,role,join_date,email,status
+Rebecca Lee,Senior Software Engineer,2024-07-01,rebecca@co1t.com,Full-time
+Emma Williams,Product Designer,2024-06-15,emma@co1t.com,Full-time
+Michael Jones,Marketing Manager,2024-05-20,michael@co1t.com,Full-time
+Amelia Thompson,Sales Representative,2024-05-20,amelia@co1t.com,Part-time
+Ethan Davis,Product Designer,2024-05-25,ethan@co1t.com,Contractor"""
+data_csv = StringIO(data)
+
+# Load the CSV file
+df = pd.read_csv(data_csv)
+df.head(1)
+```
+
+Here's what the table looks like:
+
+| name        | role                     | join_date  | email                                       | status    |
+| :---------- | :----------------------- | :--------- | :------------------------------------------ | :-------- |
+| Rebecca Lee | Senior Software Engineer | 2024-07-01 | [rebecca@co1t.com](mailto:rebecca@co1t.com) | Full-time |
+
+Below, we'll get results from the Rerank endpoint:
+
+
+```python PYTHON
+# Define the documents
+employees = df.to_dict("records")
+
+# Convert the documents to YAML format
+yaml_docs = [yaml.dump(doc, sort_keys=False) for doc in employees]
+
+# Add the user query
+query = "Any full-time product designers who joined recently?"
+
+# Rerank the documents
+results = co.rerank(
+    model="rerank-v3.5",
+    query=query,
+    documents=yaml_docs,
+    top_n=1,
+)
+return_results(results, employees)
+```
+```
+Rank: 1
+Score: 0.986828
+Document: {'name': 'Emma Williams', 'role': 'Product Designer', 'join_date': '2024-06-15', 'email': 'emma@co1t.com', 'status': 'Full-time'}
+```
+
+
+## Multilingual reranking
+
+The Rerank models (`rerank-v3.5` and `rerank-multilingual-v3.0`) support 100+ languages. This means you can perform semantic search on texts in different languages.
+
+In the example below, we repeat the steps of performing reranking with one difference – changing the model type to a multilingual one. Here, we use the `rerank-v3.5` model. Here, we are reranking the FAQ list using an Arabic query.
+
+```python PYTHON
+# Define the query
+query = "هل هناك مزايا تتعلق باللياقة البدنية؟"  # Are there fitness benefits?
+
+# Rerank the documents
+results = co.rerank(
+    model="rerank-v3.5",
+    query=query,
+    documents=faqs,
+    top_n=1,
+)
+
+return_results(results, faqs)
+```
+```
+Rank: 1
+Score: 0.42232594
+Document: {'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}
+
+Rank: 2
+Score: 0.00025118678
+Document: {'text': 'Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year.'}
+```   
+
+
+## Conclusion
+
+In this tutorial, you learned about:
+- How to rerank lexical/semantic search results
+- How to rerank semi-structured data
+- How to rerank tabular data
+- How to perform multilingual reranking
+
+We have now seen two critical components of a powerful search system - [semantic search](/v2/docs/semantic-search-with-cohere), or dense retrieval (Part 4) and reranking (Part 5). These building blocks are essential for implementing RAG solutions.
+
+In Part 6, you will learn how to [implement RAG](/v2/docs/rag-with-cohere).

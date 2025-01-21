@@ -4,7 +4,7 @@ slug: "docs/implementing-a-multi-step-agent-with-langchain"
 
 hidden: false
 
-description: "This page describes how to building a powerful, flexible AI agent with Cohere and LangChain."
+description: "This page describes how to building a powerful, flexible AI agent with Cohere and LangChain. (V1)" 
 image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"  
 keywords: "Cohere, AI agents, LangChain"
 
@@ -18,7 +18,7 @@ In this document, we'll go through the nuts-and-bolts of building a generative-A
 Multi-step tool use with Cohere can be implemented using the [Langchain framework](https://python.langchain.com/docs/integrations/providers/cohere), which conveniently comes with many pre-defined tools. More specifically, we recommend using the [ReAct](https://react-lm.github.io/) agent abstraction in Langchain, powered by `create_cohere_react_agent`. Let’s see how we can easily build an agent, using the multi-step tool use capabilities of Langchain and Cohere.
 
 <Note title="Jupyter Notebook">  
- The example below is also available in [this Jupyter Notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/agents/Vanilla_Multi_Step_Tool_Use.ipynb) for convenience.
+ The example below is also available in [this Jupyter Notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/agents/Vanilla_Multi_Step_Tool_Use.ipynb) for convenience.
 </Note>
 
 First, we'll install the dependencies. (Note: the `!` is required for notebooks, but you must omit it if you're in the command line).
@@ -34,9 +34,11 @@ Below, we've included two code snippets, equipping the agent with the Web Search
 #### Example: define the Web Search tool
 
 ```python PYTHON
-from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_community.tools.tavily_search import (
+    TavilySearchResults,
+)
 
-os.environ["TAVILY_API_KEY"] = #<your-api-key>
+os.environ["TAVILY_API_KEY"] = "#<your-api-key>"
 
 internet_search = TavilySearchResults()
 internet_search.name = "internet_search"
@@ -44,8 +46,14 @@ internet_search.description = "Returns a list of relevant document snippets for 
 
 
 from langchain_core.pydantic_v1 import BaseModel, Field
+
+
 class TavilySearchInput(BaseModel):
-   query: str = Field(description="Query to search the internet with")
+    query: str = Field(
+        description="Query to search the internet with"
+    )
+
+
 internet_search.args_schema = TavilySearchInput
 ```
 
@@ -57,15 +65,18 @@ from langchain_experimental.utilities import PythonREPL
 
 python_repl = PythonREPL()
 python_tool = Tool(
-   name="python_repl",
-   description="Executes python code and returns the result. The code runs in astatic sandbox without interactive mode, so print output or save output to a file.",
-   func=python_repl.run,
+    name="python_repl",
+    description="Executes python code and returns the result. The code runs in astatic sandbox without interactive mode, so print output or save output to a file.",
+    func=python_repl.run,
 )
 python_tool.name = "python_interpreter"
 
+
 # from langchain_core.pydantic_v1 import BaseModel, Field
 class ToolInput(BaseModel):
-   code: str = Field(description="Python code to execute.")
+    code: str = Field(description="Python code to execute.")
+
+
 python_tool.args_schema = ToolInput
 ```
 
@@ -74,36 +85,43 @@ Even better any Python function can easily be _transformed_ into a Langchain too
 #### Example: define a custom tool
 
 ```python PYTHON
-
 from langchain_core.tools import tool
 import random
 
+
 @tool
 def random_operation_tool(a: int, b: int):
- """Calculates a random operation between the inputs."""
- coin_toss = random.uniform(0, 1)
- if coin_toss > 0.5:
-   return {'output': a*b}
- else:
-   return {'output': a+b}
+    """Calculates a random operation between the inputs."""
+    coin_toss = random.uniform(0, 1)
+    if coin_toss > 0.5:
+        return {"output": a * b}
+    else:
+        return {"output": a + b}
 
-random_operation_tool.name = "random_operation" # use python case
-random_operation_tool.description = "Calculates a random operation between the inputs."
+
+random_operation_tool.name = "random_operation"  # use python case
+random_operation_tool.description = (
+    "Calculates a random operation between the inputs."
+)
 
 from langchain_core.pydantic_v1 import BaseModel, Field
+
+
 class random_operation_inputs(BaseModel):
-   a: int = Field(description="First input")
-   b: int = Field(description="Second input")
+    a: int = Field(description="First input")
+    b: int = Field(description="Second input")
+
+
 random_operation_tool.args_schema = random_operation_inputs
-
-
 ```
 
 Third, create a ReAct agent in Langchain. The model can dynamically pick the right tool(s) for the user query, call them in a sequence, analyze the results, and self-reflect. Note that your ReAct agent can optionally take an input preamble.
 
 ```python PYTHON
 from langchain.agents import AgentExecutor
-from langchain_cohere.react_multi_hop.agent import create_cohere_react_agent
+from langchain_cohere.react_multi_hop.agent import (
+    create_cohere_react_agent,
+)
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_cohere.chat_models import ChatCohere
 
@@ -122,25 +140,27 @@ prompt = ChatPromptTemplate.from_template("{input}")
 
 # Create the ReAct agent
 agent = create_cohere_react_agent(
-   llm=llm,
-   tools=[internet_search, vectorstore_search, python_tool],
-   prompt=prompt,
+    llm=llm,
+    tools=[internet_search, vectorstore_search, python_tool],
+    prompt=prompt,
 )
 
-agent_executor = AgentExecutor(agent=agent,
-                               tools=[internet_search, vectorstore_search, python_tool],
-                               verbose=True)
-
-
+agent_executor = AgentExecutor(
+    agent=agent,
+    tools=[internet_search, vectorstore_search, python_tool],
+    verbose=True,
+)
 ```
 
 Finally, call your agent with a question!
 
 ```python PYTHON
-agent_executor.invoke({
-   "input": "I want to write an essay about the Roman Empire. Any tips for writing an essay? Any fun facts?",
-   "preamble": preamble,
-})
+agent_executor.invoke(
+    {
+        "input": "I want to write an essay about the Roman Empire. Any tips for writing an essay? Any fun facts?",
+        "preamble": preamble,
+    }
+)
 ```
 
 ### Inspecting the Logs
@@ -231,7 +251,7 @@ embd = CohereEmbeddings()
 
 # Docs to index
 urls = [
-   "https://paulgraham.com/best.html",
+    "https://paulgraham.com/best.html",
 ]
 
 # Load
@@ -240,14 +260,14 @@ docs_list = [item for sublist in docs for item in sublist]
 
 # Split
 text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-   chunk_size=512, chunk_overlap=0
+    chunk_size=512, chunk_overlap=0
 )
 doc_splits = text_splitter.split_documents(docs_list)
 
 # Add to vectorstore
 vectorstore = FAISS.from_documents(
-   documents=doc_splits,
-   embedding=embd,
+    documents=doc_splits,
+    embedding=embd,
 )
 
 vectorstore_retriever = vectorstore.as_retriever()
@@ -256,9 +276,9 @@ vectorstore_retriever = vectorstore.as_retriever()
 from langchain.tools.retriever import create_retriever_tool
 
 vectorstore_search = create_retriever_tool(
-   retriever=vectorstore_retriever,
-   name="vectorstore_search",
-   description="Retrieve relevant info from a vectorstore that contains information from Paul Graham about how to write good essays."
+    retriever=vectorstore_retriever,
+    name="vectorstore_search",
+    description="Retrieve relevant info from a vectorstore that contains information from Paul Graham about how to write good essays.",
 )
 ```
 
@@ -273,30 +293,40 @@ The ReAct agent can handle multi-turn conversations by using `chat_history`.
 from langchain_core.messages import HumanMessage, AIMessage
 
 chat_history = [
-   HumanMessage(content="I'm considering switching to Oracle for my CRM."),
-   AIMessage(content="That sounds like a good idea! How can I help you?"),
-   HumanMessage(content="Recap all the info you can find about their offering."),
+    HumanMessage(
+        content="I'm considering switching to Oracle for my CRM."
+    ),
+    AIMessage(
+        content="That sounds like a good idea! How can I help you?"
+    ),
+    HumanMessage(
+        content="Recap all the info you can find about their offering."
+    ),
 ]
 
 prompt = ChatPromptTemplate.from_messages(chat_history)
 
 # Step 2: When you make the agent, specify the chat_history as the prompt
 agent = create_cohere_react_agent(
-   llm=llm,
-   tools=[internet_search, vectorstore_search, python_tool],
-   prompt=prompt,
+    llm=llm,
+    tools=[internet_search, vectorstore_search, python_tool],
+    prompt=prompt,
 )
 
-agent_executor = AgentExecutor(agent=agent,
-                               tools=[internet_search, vectorstore_search, python_tool],
-                               verbose=True)
+agent_executor = AgentExecutor(
+    agent=agent,
+    tools=[internet_search, vectorstore_search, python_tool],
+    verbose=True,
+)
 
 # Step 3: When you invoke the agent_executor there's no need to pass anything else into invoke
-response = agent_executor.invoke({
-   "preamble": preamble,
-})
+response = agent_executor.invoke(
+    {
+        "preamble": preamble,
+    }
+)
 
-response['output']
+response["output"]
 ```
 
 ### Can the ReAct Agent Directly Answer a Question?
@@ -306,9 +336,11 @@ Yes. The ReAct agent from Cohere comes out of the box with the ability to answer
 For example, let’s look at the following question:
 
 ```python PYTHON
-agent_executor.invoke({
-   "input": "Hey how are you?",
-})
+agent_executor.invoke(
+    {
+        "input": "Hey how are you?",
+    }
+)
 ```
 
 By inspecting the logs, we see that the ReAct agent decided to just respond directly.

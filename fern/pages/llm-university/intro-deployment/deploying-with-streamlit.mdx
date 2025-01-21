@@ -8,7 +8,7 @@ image: "../../../assets/images/cf70b20-Cohere_LLM_University.png"
 createdAt: "Wed Apr 26 2023 16:43:39 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Sat May 04 2024 20:18:20 GMT+0000 (Coordinated Universal Time)"
 ---
-_We’ll show only selected code snippets in this article, but you can find the complete code in [this repository](https://github.com/cohere-ai/notebooks/tree/main/notebooks/llmu/examples/deploy_streamlit)_.
+_We’ll show only selected code snippets in this article, but you can find the complete code in [this repository](https://github.com/cohere-ai/cohere-developer-experience/tree/main/notebooks/llmu/examples/deploy_streamlit)_.
 
 In this module, we will explore various options for deploying LLM-powered applications. And we'll begin with one of the fastest and simplest options to get started – Streamlit.
 
@@ -38,7 +38,7 @@ We then build a function that leverages Cohere’s [Python SDK](/generate-refere
 
 ```python PYTHON
 def generate_idea(industry):
-  prompt = f"""
+    prompt = f"""
 Generate a startup idea given the industry.
 
 # Examples
@@ -56,14 +56,10 @@ Startup Idea: An online primary school that lets students mix and match their ow
 
 Industry: {industry}"""
 
-  # Call the Cohere Chat endpoint
-  response = co.chat(
-    model='command-r',
-    message=prompt,
-    preamble="")
+    # Call the Cohere Chat endpoint
+    response = co.chat(model="command-r", message=prompt, preamble="")
 
-  return response.text.replace("Startup Idea: ", "")
-
+    return response.text.replace("Startup Idea: ", "")
 ```
 
 Doing a quick test, entering “_Public Transportation_” returns the following startup idea: “_A small electronic device that notifies users when they have to get off the train or bus_”. Looking good so far.
@@ -76,7 +72,7 @@ We create another function that takes in a startup idea as the input and returns
 
 ```python PYTHON
 def generate_name(idea):
-  prompt= f"""
+    prompt = f"""
 Generate a startup name and name given the startup idea.
 
 # Examples
@@ -94,14 +90,10 @@ Startup Name: Prime Age
 
 Startup Idea: {idea}"""
 
-  # Call the Cohere Chat endpoint
-  response = co.chat(
-    model='command-r',
-    message=prompt,
-    preamble="")
+    # Call the Cohere Chat endpoint
+    response = co.chat(model="command-r", message=prompt, preamble="")
 
-  return response.text.replace("Startup Name: ", "")
-
+    return response.text.replace("Startup Name: ", "")
 ```
 
 Doing a quick test, entering the public transportation startup idea we got earlier returns the following startup name - “_Beepro_”. Not bad.
@@ -119,14 +111,13 @@ st.title("🚀 Startup Idea Generator")
 
 form = st.form(key="user_settings")
 with form:
-    industry_input = st.text_input("Industry", key = "industry_input")
+    industry_input = st.text_input("Industry", key="industry_input")
     generate_button = form.form_submit_button("Generate Idea")
     if generate_button:
         startup_idea = generate_idea(industry_input)
         startup_name = generate_name(startup_idea)
         st.markdown("##### " + startup_name)
         st.write(startup_idea)
-
 ```
 
 It uses a number of features from the [Streamlit API](https://docs.streamlit.io/library/api-reference?ref=txt.cohere.com), as follows:
@@ -162,14 +153,14 @@ For this, we’ll also use `st.slider()` to let the users control the `temperatu
 
 ```python PYTHON
 def generate_idea(industry, temperature):
-...
-  response = co.chat(
-    model='command-r',
-    message=prompt,
-    temperature=temperature,
-    preamble="")
-...
-
+    # ...
+    response = co.chat(
+        model="command-r",
+        message=prompt,
+        temperature=temperature,
+        preamble="",
+    )
+    # ...
 ```
 
 Let’s also add a couple more things. First, we’ll use `st.progress()` to show a progress bar as the idea generation takes place. Second, we’ll add a check to the `Industry` user input to make it a required field.
@@ -181,37 +172,52 @@ st.title("🚀 Startup Idea Generator")
 
 form = st.form(key="user_settings")
 with form:
-# User input - Industry name
-industry_input = st.text_input("Industry", key = "industry_input")
+    # User input - Industry name
+    industry_input = st.text_input("Industry", key="industry_input")
 
-# Create a two-column view
-col1, col2 = st.columns(2)
+    # Create a two-column view
+    col1, col2 = st.columns(2)
 
-with col1:
-    # User input - The number of ideas to generate
-    num_input = st.slider("Number of ideas", value = 3, key = "num_input", min_value=1, max_value=10)
+    with col1:
+        # User input - The number of ideas to generate
+        num_input = st.slider(
+            "Number of ideas",
+            value=3,
+            key="num_input",
+            min_value=1,
+            max_value=10,
+        )
 
-with col2:
-    # User input - The 'temperature' value representing the level of creativity
-    creativity_input = st.slider("Creativity", value = 0.5, key = "creativity_input", min_value=0.1, max_value=0.9)
+    with col2:
+        # User input - The 'temperature' value representing the level of creativity
+        creativity_input = st.slider(
+            "Creativity",
+            value=0.5,
+            key="creativity_input",
+            min_value=0.1,
+            max_value=0.9,
+        )
 
-# Submit button to start generating ideas
-generate_button = form.form_submit_button("Generate Idea")
+    # Submit button to start generating ideas
+    generate_button = form.form_submit_button("Generate Idea")
 
-if generate_button:
-    if industry_input == "":
-        st.error("Industry field cannot be blank")
-    else:
-        my_bar = st.progress(0.05)
-        st.subheader("Startup Ideas")
-        for i in range(num_input):
-            st.markdown("""---""")
-            startup_idea = generate_idea(industry_input,creativity_input)
-            startup_name = generate_name(startup_idea,creativity_input)
-            st.markdown("##### " + startup_name)
-            st.write(startup_idea)
-            my_bar.progress((i+1)/num_input)
-
+    if generate_button:
+        if industry_input == "":
+            st.error("Industry field cannot be blank")
+        else:
+            my_bar = st.progress(0.05)
+            st.subheader("Startup Ideas")
+            for i in range(num_input):
+                st.markdown("""---""")
+                startup_idea = generate_idea(
+                    industry_input, creativity_input
+                )
+                startup_name = generate_name(
+                    startup_idea, creativity_input
+                )
+                st.markdown("##### " + startup_name)
+                st.write(startup_idea)
+                my_bar.progress((i + 1) / num_input)
 ```
 
 And with that, the final front-end now looks like the following.

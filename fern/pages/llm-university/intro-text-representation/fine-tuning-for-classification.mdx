@@ -6,7 +6,7 @@ hidden: false
 createdAt: "Tue Apr 02 2024 19:13:31 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Thu Apr 04 2024 02:08:02 GMT+0000 (Coordinated Universal Time)"
 ---
-We’ll use [Cohere’s Python SDK](/reference/about?ref=txt.cohere.com#python) for the code examples. Follow along in [this notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/llmu/Fine_Tuning_for_Classify.ipynb).
+We’ll use [Cohere’s Python SDK](/reference/about?ref=txt.cohere.com#python) for the code examples. Follow along in [this notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/llmu/Fine_Tuning_for_Classify.ipynb).
 
 In the previous chapter, you used few-shot classification for a sentiment analysis task and got decent results with a small dataset.
 
@@ -35,7 +35,8 @@ We also import the Cohere module and create a client.
 
 ```python PYTHON
 import cohere
-co = cohere.Client("COHERE_API_KEY") # Your Cohere API key
+
+co = cohere.Client("COHERE_API_KEY")  # Your Cohere API key
 ```
 
 ### Step 1: Prepare the Dataset
@@ -44,14 +45,19 @@ We'll use the [Airline Travel Information System (ATIS)](https://www.kaggle.com/
 
 ```python PYTHON
 # Load the dataset to a dataframe
-df = pd.read_csv('https://raw.githubusercontent.com/cohere-ai/notebooks/main/notebooks/data/atis_subset.csv', names=['query','intent'])
+df = pd.read_csv(
+    "https://raw.githubusercontent.com/cohere-ai/cohere-developer-experience/main/notebooks/data/atis_subset.csv",
+    names=["query", "intent"],
+)
 ```
 
  The first thing we need is to create a training dataset, to be used for building the classifier, and a test dataset, to be used for testing the classifier performance. We will use 800 and 200 data points for these datasets, respectively.
 
 ```python PYTHON
 # Split the dataset into training and test portions
-df_train, df_test = train_test_split(df, test_size=200, random_state=21)
+df_train, df_test = train_test_split(
+    df, test_size=200, random_state=21
+)
 ```
 
 Our goal is to train the classifier so it can predict the class of a new customer inquiry out of eight classes, as follows:
@@ -71,18 +77,18 @@ We transform the data to JSONL format to match the style expected by the Classif
 
 ```python PYTHON
 def create_classification_data(text, label):
-    formatted_data = {
-        "text": text,
-        "label": label
-    }
+    formatted_data = {"text": text, "label": label}
     return formatted_data
+
 
 if not os.path.isfile("data.jsonl"):
     print("Creating jsonl file ...")
-    with open("data.jsonl", 'w+') as file:
+    with open("data.jsonl", "w+") as file:
         for row in df_train.itertuples():
-            formatted_data = create_classification_data(row.query, row.intent)
-            file.write(json.dumps(formatted_data) + '\n')
+            formatted_data = create_classification_data(
+                row.query, row.intent
+            )
+            file.write(json.dumps(formatted_data) + "\n")
         file.close()
         print("Done")
 else:
@@ -133,20 +139,22 @@ We fill in the model ID to generate test predictions.
 ```python PYTHON
 # Generate classification predictions on the test dataset using the finetuned model
 
+
 # Classification function
 def classify_text_finetune(texts):
     classifications = co.classify(
-        model='b2c94ac3-7a74-4de7-a11a-9808a3b8ef59-ft',
+        model="b2c94ac3-7a74-4de7-a11a-9808a3b8ef59-ft",
         inputs=texts,
-        examples=None
+        examples=None,
     ).classifications
     return [c.predictions[0] for c in classifications]
 
+
 # Create batches of texts and classify them
-BATCH_SIZE = 90 # The API accepts a maximum of 96 inputs
+BATCH_SIZE = 90  # The API accepts a maximum of 96 inputs
 y_pred = []
 for i in range(0, len(df_test), BATCH_SIZE):
-    batch_texts = df_test["query"][i:i+BATCH_SIZE].tolist()
+    batch_texts = df_test["query"][i : i + BATCH_SIZE].tolist()
     y_pred.extend(classify_text_finetune(batch_texts))
 ```
 
@@ -155,10 +163,10 @@ Next, we calculate the model's test accuracy and F1 score.
 ```python PYTHON
 # Compute metrics on the test dataset
 accuracy = accuracy_score(df_test["intent"], y_pred)
-f1 = f1_score(df_test["intent"], y_pred, average='weighted')
+f1 = f1_score(df_test["intent"], y_pred, average="weighted")
 
-print(f'Accuracy: {100*accuracy:.2f}')
-print(f'F1-score: {100*f1:.2f}')
+print(f"Accuracy: {100*accuracy:.2f}")
+print(f"F1-score: {100*f1:.2f}")
 ```
 
 ```

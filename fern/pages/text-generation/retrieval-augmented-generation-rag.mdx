@@ -18,16 +18,27 @@ The code snippet below, for example, will produce a grounded answer to `"Where d
 
 ```python PYTHON
 import cohere
+
 co = cohere.Client(api_key="<YOUR API KEY>")
 
 co.chat(
-  model="command-r-plus-08-2024",
-  message="Where do the tallest penguins live?",
-  documents=[
-    {"title": "Tall penguins", "snippet": "Emperor penguins are the tallest."},
-    {"title": "Penguin habitats", "snippet": "Emperor penguins only live in Antarctica."},
-    {"title": "What are animals?", "snippet": "Animals are different from plants."}
-  ])
+    model="command-r-plus-08-2024",
+    message="Where do the tallest penguins live?",
+    documents=[
+        {
+            "title": "Tall penguins",
+            "snippet": "Emperor penguins are the tallest.",
+        },
+        {
+            "title": "Penguin habitats",
+            "snippet": "Emperor penguins only live in Antarctica.",
+        },
+        {
+            "title": "What are animals?",
+            "snippet": "Animals are different from plants.",
+        },
+    ],
+)
 ```
 
 **Response**
@@ -56,7 +67,7 @@ The response also includes **inline citations**  that reference the first two do
 
 As you will learn in the following section, the [Chat API](/reference/chat) will also assist you with generating search queries to fetch documents from a data source.
 
-You can find more code and context in [this colab notebook](https://github.com/cohere-ai/notebooks/blob/main/notebooks/Vanilla_RAG.ipynb).
+You can find more code and context in [this colab notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/Vanilla_RAG.ipynb).
 
 ### Three steps of RAG
 
@@ -80,12 +91,13 @@ Calling the [Chat API](/reference/chat) with the `search_queries_only` parameter
 
 ```python PYTHON
 import cohere
+
 co = cohere.Client(api_key="<YOUR API KEY>")
 
 co.chat(
-  model="command-r-08-2024",
-  message="Who is more popular: Nsync or Backstreet Boys?",
-  search_queries_only=True
+    model="command-r-08-2024",
+    message="Who is more popular: Nsync or Backstreet Boys?",
+    search_queries_only=True,
 )
 ```
 
@@ -110,23 +122,22 @@ If you are looking for greater control over how search queries are generated, yo
 Here, we build a tool that takes a user query and returns a list of relevant document snippets for that query. The tool can generate zero, one or multiple search queries depending on the user query.
 
 ```python PYTHON
-    
 query_gen_tool = [
-{
-    "name": "internet_search",
-    "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
-    "parameter_definitions": {
-        "queries": {
-            "description": "a list of queries to search the internet with.",
-            "type": "List[str]",
-            "required": True
-        }
+    {
+        "name": "internet_search",
+        "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+        "parameter_definitions": {
+            "queries": {
+                "description": "a list of queries to search the internet with.",
+                "type": "List[str]",
+                "required": True,
+            }
+        },
     }
-}
 ]
 
 instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
-    
+
 response = co.chat(
     preamble=instructions,
     model="command-r-08-2024",
@@ -152,7 +163,7 @@ You can then customize the preamble and/or the tool definition to generate queri
 For example, you can customize the preamble to encourage a longer list of search queries to be generated.
 
 ```python PYTHON
-instructions_verbose = "Write many search queries that will find helpful information for answering the user's question accurately. Always write a very long list of at least 7 search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer.
+instructions_verbose = "Write many search queries that will find helpful information for answering the user's question accurately. Always write a very long list of at least 7 search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
 ```
 ```
 # Sample response
@@ -226,12 +237,14 @@ As an alternative to manually implementing the 3 step workflow, the Chat API off
 
 ```python PYTHON
 import cohere
+
 co = cohere.Client(api_key="<YOUR API KEY>")
 
 co.chat(
-  model="command-r-plus-08-2024",
-  message="Who is more popular: Nsync or Backstreet Boys?",
-  connectors=[{"id": "web-search"}])
+    model="command-r-plus-08-2024",
+    message="Who is more popular: Nsync or Backstreet Boys?",
+    connectors=[{"id": "web-search"}],
+)
 ```
 
 **Response**
@@ -260,13 +273,93 @@ co.chat(
 }
 ```
 
-In addition to the Cohere provided `web-search` Connector, you can [register your own custom Connectors](/docs/creating-and-deploying-a-connector) such as Google Drive, Confluence etc.
+In addition to the Cohere provided `web-search` Connector, you can [register your own custom Connectors](/v1/docs/creating-and-deploying-a-connector) such as Google Drive, Confluence etc.
 
 ### Prompt Truncation
 
 LLMs come with limitations; specifically, they can only handle so much text as input. This means that you will often need to figure out which document sections and chat history elements to keep, and which ones to omit.
 
 For more information, check out our dedicated doc on [prompt truncation](/docs/prompt-truncation).
+
+### Citation modes
+
+When using Retrieval Augmented Generation (RAG) in streaming mode, it’s possible to configure how citations are generated and presented. You can choose between fast citations or accurate citations, depending on your latency and precision needs:
+
+- Accurate citations: The model produces its answer first, and then, after the entire response is generated, it provides citations that map to specific segments of the response text. This approach may incur slightly higher latency, but it ensures the citation indices are more precisely aligned with the final text segments of the model’s answer. This is the default option, though you can explicitly specify it by adding the `citation_quality="accurate"` argument in the API call.
+
+- Fast citations: The model generates citations inline, as the response is being produced. In streaming mode, you will see citations injected at the exact moment the model uses a particular piece of external context. This approach provides immediate traceability at the expense of slightly less precision in citation relevance. You can specify it by adding the `citation_quality="fast"` argument in the API call.
+
+Below are example code snippets demonstrating both approaches.
+
+<Accordion title='Accurate citations'>
+
+```python PYTHON
+documents = [
+    {
+        "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+    },
+    {
+        "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+    },
+]
+
+message = "Are there fitness-related benefits?"
+
+response = co.chat_stream(
+    model="command-r-plus-08-2024",
+    message=message,
+    documents=documents,
+    citation_quality="accurate",
+)
+
+for chunk in response:
+    if chunk.event_type == "text-generation":
+        print(chunk.text, end="")
+    if chunk.event_type == "citation-generation":
+        for citation in chunk.citations:
+            print("", citation.document_ids, end="")
+```
+Example response:
+```mdx wordWrap
+Yes, we offer gym memberships, on-site yoga classes, and comprehensive health insurance. ['doc_1']
+```
+
+</Accordion>
+
+<Accordion title='Fast citations'>
+
+```python PYTHON
+documents = [
+    {
+        "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+    },
+    {
+        "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+    },
+]
+
+message = "Are there fitness-related benefits?"
+
+response = co.chat_stream(
+    model="command-r-plus-08-2024",
+    message=message,
+    documents=documents,
+    citation_quality="fast",
+)
+
+for chunk in response:
+    if chunk.event_type == "text-generation":
+        print(chunk.text, end="")
+    if chunk.event_type == "citation-generation":
+        for citation in chunk.citations:
+            print("", citation.document_ids, end="")
+```
+Example response:
+```mdx wordWrap
+Yes, we offer gym memberships, ['doc_1'] on-site yoga classes, ['doc_1'] and comprehensive health insurance. ['doc_1']
+```
+
+</Accordion>
 
 ### Caveats
 
