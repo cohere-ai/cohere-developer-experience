@@ -1,0 +1,120 @@
+---
+title: "Tool use - basic usage"
+slug: "v2/docs/tool-use-overview"
+
+hidden: false 
+description: >-
+  TBD
+image: "../../../assets/images/4a5325a-cohere_meta_image.jpg"  
+keywords: "Cohere, text generation, LLMs, generative AI"
+
+createdAt: "Thu Feb 29 2024 18:05:29 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Tue Jun 18 2024 07:20:15 GMT+0000 (Coordinated Universal Time)"
+---
+
+## Overview
+
+Tool use is a technique which allows developers to connect Cohere’s Command R family of models to external tools like search engines, APIs, functions, databases, etc.
+
+This opens up a richer set of behaviors by leveraging data stored in tools, taking actions through APIs, interacting with a vector database, querying a search engine, etc., and is particularly valuable for enterprise developers, since a lot of enterprise data lives in external sources.
+
+The Chat endpoint comes with built-in tool use capabilities such as function calling, multi-step reasoning, and citation generation.
+
+## Setup
+
+First, import the Cohere library and create a client.
+
+```python PYTHON
+# ! pip install -U cohere
+import cohere
+
+co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+```
+
+## Tool definition
+
+The pre-requisite, or Step 0, before we can run a tool use workflow, is to define the tools. We can break this further into two steps:
+
+- Creating the tool
+- Defining the tool schema
+
+### Creating the tool
+
+A tool can be any function that you create or extrenal services that return an object for a given input. Some examples: a web search engine, an email service, an SQL database, a vector database, a weather data service, a sports data service, or even another LLM.
+
+In this example, we define a `get_weather` function that returns the temperature for a given query, which is the location. You can implement any logic here, but to simplify the example, here we are hardcoding the return value to be the same for all queries.
+
+```python PYTHON
+def get_weather(location):
+    # Implement any logic here 
+    return [{"temperature": "20C"}]
+    # Return a list of objects e.g. [{"url": "abc.com", "text": "..."}, {"url": "xyz.com", "text": "..."}]
+
+functions_map = {"get_weather": get_weather}
+```
+
+### Defining the tool schema
+
+We also need to define the tool schemas in a format that can be passed to the Chat endpoint. The schema follows the JSON Schema specification and must contain the following fields: 
+- `name`: the name of the tool.
+- `description`: a description of what the tool is and what it is used for.
+- `parameters`: a list of parameters that the tool accepts. For each parameter, we need to define the following fields:
+  - `type`: the type of the parameter.
+  - `properties`: the name of the parameter and the following fields:
+    - `type`: the type of the parameter.
+    - `description`: a description of what the parameter is and what it is used for.
+  - `required`: a list of required parameters from the `properties` field.
+
+This schema informs the LLM about what the tool does, and the LLM decides whether to use a particular tool based on the information that it contains. Therefore, the more descriptive and clear the schema, the more likely the LLM will make the right tool call decisions.
+
+```python PYTHON
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "gets the weather of a given location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "the location to get weather, example: San Fransisco, CA",
+                    }
+                },
+                "required": ["location"],
+            },
+        },
+    },
+]
+```
+
+## Running the tool use workflow
+
+We can think of a tool use system as consisting of four components:
+
+- The user
+- The application
+- The LLM
+- The tools
+
+At its most basic, these four components interact in a workflow through four steps:
+
+- Step 1: **Get user message**: The LLM gets the user message (via the application).
+- Step 2: **Generate tool calls**: The LLM decides which tools to call (if any) and generates the tool calls.
+- Step 3: **Get tool results**: The application executes the tools, and the results are sent to the LLM.
+- Step 4: **Generate response and citations**: The LLM generates the response and citations back to the user.
+
+<img src="https://cohere.com/_next/image?url=https%3A%2F%2Fcohere-ai.ghost.io%2Fcontent%2Fimages%2F2024%2F07%2Ftool-use-workflow-2.png&w=3840&q=75" alt="Tool use workflow" />
+
+### Step 1: Get user message
+...
+
+### Step 2: Generate tool calls
+...
+
+### Step 3: Get tool results
+...
+
+### Step 4: Generate response and citations
+...
