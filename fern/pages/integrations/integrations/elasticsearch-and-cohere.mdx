@@ -85,11 +85,12 @@ When creating your Elastic Serverless API key make sure to turn on Control secur
 
 ```python PYTHON
 ELASTICSEARCH_ENDPOINT = getpass("Elastic Endpoint: ")
-ELASTIC_API_KEY = getpass("Elastic encoded API key: ") # Use the encoded API key
+ELASTIC_API_KEY = getpass(
+    "Elastic encoded API key: "
+)  # Use the encoded API key
 
 client = Elasticsearch(
-  ELASTICSEARCH_ENDPOINT,
-  api_key=ELASTIC_API_KEY
+    ELASTICSEARCH_ENDPOINT, api_key=ELASTIC_API_KEY
 )
 
 # Confirm the client has connected
@@ -109,7 +110,9 @@ We will create an inference endpoint that uses `embed-english-v3.0` and `int8` o
 ```python PYTHON
 COHERE_API_KEY = getpass("Enter Cohere API key:  ")
 # Delete the inference model if it already exists
-client.options(ignore_status=[404]).inference.delete(inference_id="cohere_embeddings")
+client.options(ignore_status=[404]).inference.delete(
+    inference_id="cohere_embeddings"
+)
 
 client.inference.put(
     task_type="text_embedding",
@@ -120,7 +123,7 @@ client.inference.put(
             "api_key": COHERE_API_KEY,
             "model_id": "embed-english-v3.0",
             "embedding_type": "int8",
-            "similarity": "cosine"
+            "similarity": "cosine",
         },
         "task_settings": {},
     },
@@ -141,14 +144,16 @@ The mapping of the destination index – the index that contains the embeddings 
 Let's create an index named cohere-wiki-embeddings with the mappings we need
 
 ```python PYTHON
-client.indices.delete(index="cohere-wiki-embeddings", ignore_unavailable=True)
+client.indices.delete(
+    index="cohere-wiki-embeddings", ignore_unavailable=True
+)
 client.indices.create(
     index="cohere-wiki-embeddings",
     mappings={
         "properties": {
             "text_semantic": {
                 "type": "semantic_text",
-                "inference_id": "cohere_embeddings"
+                "inference_id": "cohere_embeddings",
             },
             "text": {"type": "text", "copy_to": "text_semantic"},
             "wiki_id": {"type": "integer"},
@@ -157,7 +162,7 @@ client.indices.create(
             "langs": {"type": "integer"},
             "title": {"type": "text"},
             "paragraph_id": {"type": "integer"},
-            "id": {"type": "integer"}
+            "id": {"type": "integer"},
         }
     },
 )
@@ -184,17 +189,18 @@ url = "https://raw.githubusercontent.com/cohere-ai/cohere-developer-experience/m
 response = requests.get(url)
 
 # Load the response data into a JSON object
-jsonl_data = response.content.decode('utf-8').splitlines()
+jsonl_data = response.content.decode("utf-8").splitlines()
 
 # Prepare the documents to be indexed
 documents = []
 for line in jsonl_data:
     data_dict = json.loads(line)
-    documents.append({
-        "_index": "cohere-wiki-embeddings",
-        "_source": data_dict,
+    documents.append(
+        {
+            "_index": "cohere-wiki-embeddings",
+            "_source": data_dict,
         }
-      )
+    )
 
 # Use the bulk endpoint to index
 helpers.bulk(client, documents)
@@ -385,21 +391,21 @@ Next, we can easily get a grounded generation with citations from the Cohere Cha
 response = co.chat(
     message=query,
     documents=ranked_documents,
-    model='command-r-plus-08-2024'
+    model="command-r-plus-08-2024",
 )
 
 source_documents = []
 for citation in response.citations:
-  for document_id in citation.document_ids:
-    if document_id not in source_documents:
-      source_documents.append(document_id)
+    for document_id in citation.document_ids:
+        if document_id not in source_documents:
+            source_documents.append(document_id)
 
 print(f"Query: {query}")
 print(f"Response: {response.text}")
 print("Sources:")
 for document in response.documents:
-  if document['id'] in source_documents:
-    print(f"{document['title']}: {document['text']}")
+    if document["id"] in source_documents:
+        print(f"{document['title']}: {document['text']}")
 ```
 
 And there you have it! A quick and easy implementation of hybrid search and RAG with Cohere and Elastic.

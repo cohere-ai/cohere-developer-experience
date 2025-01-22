@@ -26,7 +26,9 @@ First, let’s install the Cohere Python SDK, get the Cohere API key, and set up
 
 ```python PYTHON
 import cohere
-co = cohere.Client("COHERE_API_KEY") # Get your API key: https://dashboard.cohere.com/api-keys
+
+# Get your API key: https://dashboard.cohere.com/api-keys
+co = cohere.Client("COHERE_API_KEY")  
 ```
 
 Let’s also define a function to take a [prompt](https://txt.cohere.com/generative-ai-part-1/) and a [temperature value](https://txt.cohere.com/generative-ai-part-1/#being-creative-vs-predictable) and then call the [Generate endpoint](/reference/generate?ref=txt.cohere.com), which is how we can access the Command model.​​ Here, we select the model type to be \`command\`.
@@ -63,7 +65,6 @@ user_input = "a wireless headphone product named the CO-1T"
 prompt = f"""Write a creative product description for {user_input}"""
 
 generate_text(prompt, temp=0.5)
-
 ```
 
 The model returns the following sample response, which does the job we asked for.
@@ -86,14 +87,15 @@ Going back to the previous prompt, the generated product description was great, 
 ```python PYTHON
 user_input_product = "a wireless headphone product named the CO-1T"
 user_input_keywords = '"bluetooth", "wireless", "fast charging"'
-user_input_customer = "a software developer who works in noisy offices"
+user_input_customer = (
+    "a software developer who works in noisy offices"
+)
 user_input_describe = "benefits of this product"
 
 prompt = f"""Write a creative product description for {user_input_product}, \
 with the keywords {user_input_keywords} for {user_input_customer}, and describe {user_input_describe}."""
 
 generate_text(prompt, temp=0.5)
-
 ```
 
 In the example above, we pack the additional details of the prompt in a single paragraph. Alternatively, we can also compose it to be more structured, like so:
@@ -101,7 +103,9 @@ In the example above, we pack the additional details of the prompt in a single p
 ```python PYTHON
 user_input_product = "a wireless headphone product named the CO-1T"
 user_input_keywords = '"bluetooth", "wireless", "fast charging"'
-user_input_customer = "a software developer who works in noisy offices"
+user_input_customer = (
+    "a software developer who works in noisy offices"
+)
 user_input_describe = "benefits of this product"
 
 prompt = f"""Write a creative product description for {user_input_product}.
@@ -110,7 +114,6 @@ Audience: {user_input_customer}
 Describe: {user_input_describe}"""
 
 generate_text(prompt, temp=0.5)
-
 ```
 
 And here’s an example response. This time, the product description is tailored more specifically to our desired target customer, includes the key features that we specified, and sprinkles benefit statements throughout — all coming from the instruction we added to the prompt.
@@ -146,11 +149,12 @@ This is a whole topic on its own, but to provide some idea, [this demo](https://
 Here’s an example where we ask the model to list the features of the CO-1T wireless headphone without any additional context:
 
 ```python PYTHON
-user_input ="What are the key features of the CO-1T wireless headphone"
+user_input = (
+    "What are the key features of the CO-1T wireless headphone"
+)
 prompt = user_input
 
 generate_text(prompt, temp=0)
-
 ```
 
 This generates a response that the model makes up since it doesn’t have any information to refer to.
@@ -169,13 +173,14 @@ software developers who work around the mayhem of tech startups, these headphone
 fast charging capacity and wireless Bluetooth connectivity, the CO-1T is the easy breezy way to get through your day without being \
 overwhelmed by the chaos of the world."""
 
-user_input = "What are the key features of the CO-1T wireless headphone"
+user_input = (
+    "What are the key features of the CO-1T wireless headphone"
+)
 
 prompt = f"""{context}
 Given the information above, answer this question: {user_input}"""
 
 generate_text(prompt, temp=0)
-
 ```
 
 Now, the model accurately lists the features of the model.
@@ -194,14 +199,13 @@ So far, we saw how to get the model to generate responses that follow certain st
 Here, the task is to extract information from a list of invoices. Instead of providing the information in plain text, we can prompt the model to generate a table that contains all the information required.
 
 ```python PYTHON
-prompt="""Turn the following information into a table with columns Invoice Number, Merchant Name, and Account Number.
+prompt = """Turn the following information into a table with columns Invoice Number, Merchant Name, and Account Number.
 Bank Invoice: INVOICE #0521 MERCHANT ALLBIRDS ACC XXX3846
 Bank Invoice: INVOICE #6781 MERCHANT SHOPPERS ACC XXX9877
 Bank Invoice: INVOICE #0777 MERCHANT CN TOWER ACC XXX3846
 """
 
 generate_text(prompt, temp=0)
-
 ```
 
 The response will come in the form of a markdown table.
@@ -221,14 +225,13 @@ Let me know if you'd like me to make any modifications to this table or provide 
 Another useful format is JSON, which we can modify the prompt as follows.
 
 ```python PYTHON
-prompt="""Turn the following information into a JSON string with the following keys: Invoice Number, Merchant Name, and Account Number.
+prompt = """Turn the following information into a JSON string with the following keys: Invoice Number, Merchant Name, and Account Number.
 Bank Invoice: INVOICE #0521 MERCHANT ALLBIRDS ACC XXX3846
 Bank Invoice: INVOICE #6781 MERCHANT SHOPPERS ACC XXX9877
 Bank Invoice: INVOICE #0777 MERCHANT CN TOWER ACC XXX3846
 """
 
 generate_text(prompt, temp=0)
-
 ```
 
 This returns the following response.
@@ -271,11 +274,10 @@ We’ll use this example request: “Send a message to Alison to ask if she can 
 First, let’s generate a response without giving the model an example. Here’s the prompt:
 
 ```python PYTHON
-prompt="""Turn the following message to a virtual assistant into the correct action:
+prompt = """Turn the following message to a virtual assistant into the correct action:
 Send a message to Alison to ask if she can pick me up tonight to go to the concert together"""
 
 generate_text(prompt, temp=0)
-
 ```
 
 The response we get is not wrong, but it doesn’t follow the style that we need, which is a simple one-line rephrasing of the original request. Instead, it generates an email!
@@ -290,7 +292,7 @@ Now, let’s modify the prompt by adding a few examples of how we expect the out
 ```python PYTHON
 user_input = "Send a message to Alison to ask if she can pick me up tonight to go to the concert together"
 
-prompt=f"""Turn the following message to a virtual assistant into the correct action:
+prompt = f"""Turn the following message to a virtual assistant into the correct action:
 
 Message: Ask my aunt if she can go to the JDRF Walk with me October 6th
 Action: can you go to the jdrf walk with me october 6th
@@ -304,7 +306,6 @@ Action: I am sick and will not be in today
 Message: {user_input}"""
 
 generate_text(prompt, temp=0)
-
 ```
 
 This time, the style of the response is exactly how we want it.
@@ -323,7 +324,7 @@ This concept is called _chain of thought_ prompting, introduced by [Wei et al.](
 First let’s look at a prompt _without_ a chain of thought. It contains one example of a question followed by the answer, without any intermediate calculation step. It also contains the new question we want to answer.
 
 ```python PYTHON
-prompt=f"""Q: Roger has 5 tennis balls. He buys 2 more cans of tennis balls. Each can has 3 tennis balls. \
+prompt = f"""Q: Roger has 5 tennis balls. He buys 2 more cans of tennis balls. Each can has 3 tennis balls. \
 How many tennis balls does he have now?
 A: The answer is 11.
 ---
@@ -334,7 +335,6 @@ Q: A box has 10 balls and a half of the balls are red balls. How many red balls 
 A:"""
 
 generate_text(prompt, temp=0)
-
 ```
 
 We get the following response, which is an incorrect answer (12). And notice that the response gives the answer first, similar to the example shown.
@@ -348,7 +348,7 @@ The answer is 12. There are 5 balls that are red and 5 balls that are not red, a
 Now, let’s repeat that, this time with a chain of thought. Now, the example answer contains a reasoning step, describing the calculation logic to get to the final answer, before giving the final answer.
 
 ```python PYTHON
-prompt=f"""Q: Roger has 5 tennis balls. He buys 2 more cans of tennis balls. Each can has 3 tennis balls. \
+prompt = f"""Q: Roger has 5 tennis balls. He buys 2 more cans of tennis balls. Each can has 3 tennis balls. \
 How many tennis balls does he have now?
 A: Roger started with 5 balls. 2 cans of 3 tennis balls each is 6 tennis balls. 5 + 6 = 11. \
 The answer is 11.
@@ -361,7 +361,6 @@ Q: A box has 12 balls and a half of the balls are red balls. How many red balls 
 A:"""
 
 generate_text(prompt, temp=0)
-
 ```
 
 And we get the correct answer this time (10), with the response following the style of the example given.
@@ -386,10 +385,11 @@ Let’s use an example of generating startup ideas. We can get the model to dire
 ```python PYTHON
 user_input = "education"
 
-prompt = f"""Generate a startup idea for this industry: {user_input}"""
+prompt = (
+    f"""Generate a startup idea for this industry: {user_input}"""
+)
 
 generate_text(prompt, temp=0.5)
-
 ```
 
 This generates the following response, which is reasonable, but perhaps not exactly what we are looking for.
@@ -428,7 +428,6 @@ Startup Idea: <the given idea>
 Startup Name: <the given name>"""
 
 generate_text(prompt, temp=0.9)
-
 ```
 
 This provides a richer description of the startup idea.
@@ -461,7 +460,6 @@ prompt = f"""Describe the ideal {user_input_position}. In particular, describe t
 pace, skill, and awareness."""
 
 generate_text(prompt, temp=0.9)
-
 ```
 
 And the response is a paragraph that lists down all the characteristics, but also with unnecessary text before that.
@@ -491,7 +489,6 @@ Pace:"""
 
 response = generate_text(prompt, temp=0.9)
 print(response)
-
 ```
 
 Here’s an example response, which is much closer to what we are looking for:
@@ -520,13 +517,12 @@ The paper proposes adding a prefix that nudges the model to perform a reasoning 
 Here’s an example taken from the paper. First, we look at a prompt without the “Let’s think step by step” prefix.
 
 ```python PYTHON
-prompt=f"""Q: A juggler can juggle 16 balls. Half of the balls are golf balls,
+prompt = f"""Q: A juggler can juggle 16 balls. Half of the balls are golf balls,
 and half of the golf balls are blue. How many blue golf balls are
 there?
 A: The answer (arabic numerals) is"""
 
 generate_text(prompt, temp=0)
-
 ```
 
 It gives an incorrect answer.
