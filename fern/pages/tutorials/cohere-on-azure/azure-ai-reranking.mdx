@@ -37,7 +37,7 @@ To create a client, you need to provide the API key and the model's base URL for
 # ! pip install cohere
 
 api_key_rerank = "AZURE_API_KEY_RERANK"
-endpoint_rerank = "AZURE_ENDPOINT_RERANK" # example: "https://cohere-rerank-v3-multilingual-xyz.eastus.models.ai.azure.com/"
+endpoint_rerank = "AZURE_ENDPOINT_RERANK"  # example: "https://cohere-rerank-v3-multilingual-xyz.eastus.models.ai.azure.com/"
 ```
 
 
@@ -48,7 +48,6 @@ co = cohere.Client(
     api_key=api_key_rerank,
     base_url=endpoint_rerank,
 )
-
 ```
 
 ## Retrieve documents
@@ -60,15 +59,42 @@ Below is a list of nine documents representing the initial search results. Each 
 
 ```python PYTHON
 documents = [
-    {"Title":"Incorrect Password","Content":"Hello, I have been trying to access my account for the past hour and it keeps saying my password is incorrect. Can you please help me?"},
-    {"Title":"Confirmation Email Missed","Content":"Hi, I recently purchased a product from your website but I never received a confirmation email. Can you please look into this for me?"},
-    {"Title":"Questions about Return Policy","Content":"Hello, I have a question about the return policy for this product. I purchased it a few weeks ago and it is defective."},
-    {"Title":"Customer Support is Busy","Content":"Good morning, I have been trying to reach your customer support team for the past week but I keep getting a busy signal. Can you please help me?"},
-    {"Title":"Received Wrong Item","Content":"Hi, I have a question about my recent order. I received the wrong item and I need to return it."},
-    {"Title":"Customer Service is Unavailable","Content":"Hello, I have been trying to reach your customer support team for the past hour but I keep getting a busy signal. Can you please help me?"},
-    {"Title":"Return Policy for Defective Product","Content":"Hi, I have a question about the return policy for this product. I purchased it a few weeks ago and it is defective."},
-    {"Title":"Wrong Item Received","Content":"Good morning, I have a question about my recent order. I received the wrong item and I need to return it."},
-    {"Title":"Return Defective Product","Content":"Hello, I have a question about the return policy for this product. I purchased it a few weeks ago and it is defective."}
+    {
+        "Title": "Incorrect Password",
+        "Content": "Hello, I have been trying to access my account for the past hour and it keeps saying my password is incorrect. Can you please help me?",
+    },
+    {
+        "Title": "Confirmation Email Missed",
+        "Content": "Hi, I recently purchased a product from your website but I never received a confirmation email. Can you please look into this for me?",
+    },
+    {
+        "Title": "Questions about Return Policy",
+        "Content": "Hello, I have a question about the return policy for this product. I purchased it a few weeks ago and it is defective.",
+    },
+    {
+        "Title": "Customer Support is Busy",
+        "Content": "Good morning, I have been trying to reach your customer support team for the past week but I keep getting a busy signal. Can you please help me?",
+    },
+    {
+        "Title": "Received Wrong Item",
+        "Content": "Hi, I have a question about my recent order. I received the wrong item and I need to return it.",
+    },
+    {
+        "Title": "Customer Service is Unavailable",
+        "Content": "Hello, I have been trying to reach your customer support team for the past hour but I keep getting a busy signal. Can you please help me?",
+    },
+    {
+        "Title": "Return Policy for Defective Product",
+        "Content": "Hi, I have a question about the return policy for this product. I purchased it a few weeks ago and it is defective.",
+    },
+    {
+        "Title": "Wrong Item Received",
+        "Content": "Good morning, I have a question about my recent order. I received the wrong item and I need to return it.",
+    },
+    {
+        "Title": "Return Defective Product",
+        "Content": "Hello, I have a question about the return policy for this product. I purchased it a few weeks ago and it is defective.",
+    },
 ]
 ```
 
@@ -88,15 +114,11 @@ When passing documents that contain multiple fields like in this case, for best 
 ```python PYTHON
 import yaml
 
-yaml_docs = [yaml.dump(doc, sort_keys=False) for doc in documents] 
+yaml_docs = [yaml.dump(doc, sort_keys=False) for doc in documents]
 
-query = 'What emails have been about refunds?'
+query = "What emails have been about refunds?"
 
-results = co.rerank(
-    documents=yaml_docs,
-    query=query,
-    top_n=3
-)
+results = co.rerank(documents=yaml_docs, query=query, top_n=3)
 ```
 
 Since we set `top_n=3`, the response will return the three documents most relevant to our query. Each result includes both the document's original position (index) in our input list and a score indicating how well it matches the query.
@@ -106,12 +128,13 @@ Let's examine the reranked results below.
 
 
 ```python PYTHON
-def return_results(results, documents):    
+def return_results(results, documents):
     for idx, result in enumerate(results.results):
-        print(f"Rank: {idx+1}") 
+        print(f"Rank: {idx+1}")
         print(f"Score: {result.relevance_score}")
         print(f"Document: {documents[result.index]}\n")
-    
+
+
 return_results(results, documents)
 ```
 ```mdx
@@ -144,9 +167,27 @@ The model will rerank based on order of the fields passed.
 ```python PYTHON
 # Define the documents
 emails = [
-    {"from": "hr@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "A Warm Welcome to Co1t!", "text": "We are delighted to welcome you to the team! As you embark on your journey with us, you'll find attached an agenda to guide you through your first week."},
-    {"from": "it@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "Setting Up Your IT Needs", "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts."},
-    {"from": "john@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "First Week Check-In", "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!"}
+    {
+        "from": "hr@co1t.com",
+        "to": "david@co1t.com",
+        "date": "2024-06-24",
+        "subject": "A Warm Welcome to Co1t!",
+        "text": "We are delighted to welcome you to the team! As you embark on your journey with us, you'll find attached an agenda to guide you through your first week.",
+    },
+    {
+        "from": "it@co1t.com",
+        "to": "david@co1t.com",
+        "date": "2024-06-24",
+        "subject": "Setting Up Your IT Needs",
+        "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.",
+    },
+    {
+        "from": "john@co1t.com",
+        "to": "david@co1t.com",
+        "date": "2024-06-24",
+        "subject": "First Week Check-In",
+        "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!",
+    },
 ]
 
 yaml_emails = [yaml.dump(doc, sort_keys=False) for doc in emails]

@@ -43,8 +43,8 @@ import re
 import cohere
 
 co = cohere.Client(
-  api_key="AZURE_API_KEY_EMBED",
-  base_url="AZURE_ENDPOINT_EMBED" # example: "https://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/"
+    api_key="AZURE_API_KEY_EMBED",
+    base_url="AZURE_ENDPOINT_EMBED",  # example: "https://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/"
 )
 ```
 
@@ -73,21 +73,24 @@ We'll perform several pre-processing steps: removing any duplicate entries, filt
 ```python PYTHON
 # Ensure there is no duplicated text in the headers
 def remove_duplicates(text):
-    return re.sub(r'((\b\w+\b.{1,2}\w+\b)+).+\1', r'\1', text, flags=re.I)
+    return re.sub(
+        r"((\b\w+\b.{1,2}\w+\b)+).+\1", r"\1", text, flags=re.I
+    )
 
-df ['text'] = df['text'].apply(remove_duplicates)
+
+df["text"] = df["text"].apply(remove_duplicates)
 
 # Keep only selected languages
-languages = ['English', 'Spanish', 'Danish']
-df = df.loc[df['lang'].isin(languages)]
+languages = ["English", "Spanish", "Danish"]
+df = df.loc[df["lang"].isin(languages)]
 
 # Pick the top 80 longest articles
-df['text_length'] = df['text'].str.len()
-df.sort_values(by=['text_length'], ascending=False, inplace=True)
+df["text_length"] = df["text"].str.len()
+df.sort_values(by=["text_length"], ascending=False, inplace=True)
 top_80_df = df[:80]
 
 # Language distribution
-top_80_df['lang'].value_counts()
+top_80_df["lang"].value_counts()
 ```
 
 
@@ -113,17 +116,20 @@ Finally, we'll build a search index with the `hnsw` vector library to store thes
 
 ```python PYTHON
 # Embed documents
-docs = top_80_df['text'].to_list()
-docs_lang = top_80_df['lang'].to_list()
-translated_docs = top_80_df['translation'].to_list() #for reference when returning non-English results
+docs = top_80_df["text"].to_list()
+docs_lang = top_80_df["lang"].to_list()
+translated_docs = top_80_df[
+    "translation"
+].to_list()  # for reference when returning non-English results
 doc_embs = co.embed(
-    texts=docs,
-    input_type='search_document'
+    texts=docs, input_type="search_document"
 ).embeddings
 
 # Create a search index
-index = hnswlib.Index(space='ip', dim=1024)
-index.init_index(max_elements=len(doc_embs), ef_construction=512, M=64)
+index = hnswlib.Index(space="ip", dim=1024)
+index.init_index(
+    max_elements=len(doc_embs), ef_construction=512, M=64
+)
 index.add_items(doc_embs, list(range(len(doc_embs))))
 ```
 
@@ -137,20 +143,21 @@ Next, we build a function that takes a query as input, embeds it, and finds the 
 def retrieval(query):
     # Embed query and retrieve results
     query_emb = co.embed(
-        texts=[query],
-        input_type="search_query"
+        texts=[query], input_type="search_query"
     ).embeddings
-    doc_ids = index.knn_query(query_emb, k=3)[0][0] # we will retrieve 3 closest neighbors
-    
+    doc_ids = index.knn_query(query_emb, k=3)[0][
+        0
+    ]  # we will retrieve 3 closest neighbors
+
     # Print and append results
     print(f"QUERY: {query.upper()} \n")
     retrieved_docs, translated_retrieved_docs = [], []
-    
+
     for doc_id in doc_ids:
         # Append results
         retrieved_docs.append(docs[doc_id])
         translated_retrieved_docs.append(translated_docs[doc_id])
-    
+
         # Print results
         print(f"ORIGINAL ({docs_lang[doc_id]}): {docs[doc_id]}")
         if docs_lang[doc_id] != "English":
@@ -166,8 +173,8 @@ Let’s now try to query the index with a couple of examples, one each in Englis
 
 ```python PYTHON
 queries = [
-    "Can data science help meet sustainability goals?", # English example
-    "Hvor kan jeg finde den seneste danske boligplan?" # Danish example - "Where can I find the latest Danish property plan?"
+    "Can data science help meet sustainability goals?",  # English example
+    "Hvor kan jeg finde den seneste danske boligplan?",  # Danish example - "Where can I find the latest Danish property plan?"
 ]
 
 for query in queries:

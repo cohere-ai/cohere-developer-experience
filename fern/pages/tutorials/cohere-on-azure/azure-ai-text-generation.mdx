@@ -38,8 +38,8 @@ To create a client, you need to provide the API key and the model's base URL for
 import cohere
 
 co = cohere.Client(
-  api_key="AZURE_API_KEY_CHAT",
-  base_url="AZURE_ENDPOINT_CHAT" # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
+    api_key="AZURE_API_KEY_CHAT",
+    base_url="AZURE_ENDPOINT_CHAT",  # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
 )
 ```
 
@@ -97,9 +97,7 @@ This function takes a user message and generates the response via the chat endpo
 
 ```python PYTHON
 def generate_text(message):
-    response = co.chat(
-        message=message
-    )
+    response = co.chat(message=message)
     return response
 ```
 
@@ -149,7 +147,7 @@ Another type of use case is text summarization. Now, let's summarize the custome
 
 
 ```python PYTHON
-prompt=f"""Summarize this customer inquiry into one short sentence.
+prompt = f"""Summarize this customer inquiry into one short sentence.
 
 Inquiry: {inquiry}"""
 
@@ -169,7 +167,7 @@ Let's look at an example where we convert a customer support chat response into 
 
 
 ```python PYTHON
-prompt=f"""Rewrite this customer support agent response into an email format, ready to send to the customer.
+prompt = f"""Rewrite this customer support agent response into an email format, ready to send to the customer.
 
 If you're experiencing brief periods of slow data speeds or difficulty sending text messages and connecting to your mobile network, here are some troubleshooting steps you can follow:
 
@@ -224,27 +222,28 @@ For this, we introduce a couple of additional parameters to the Chat endpoint:
 preamble = """## Task and Context
 You are a helpful customer support agent that assists customers of a mobile network service."""
 
+
 # Run the chatbot
 def run_chatbot(message, chat_history=None):
     if chat_history is None:
         chat_history = []
-        
+
     response = co.chat(
-        message=message,
-        preamble=preamble,
-        chat_history=chat_history
+        message=message, preamble=preamble, chat_history=chat_history
     )
-    
+
     print(response.text)
-    
+
     chat_history = response.chat_history
-            
+
     return chat_history
 ```
 
 
 ```python PYTHON
-chat_history = run_chatbot("Hi. I've noticed some fluctuations in my mobile network's performance recently.")
+chat_history = run_chatbot(
+    "Hi. I've noticed some fluctuations in my mobile network's performance recently."
+)
 ```
 ```mdx
 Hello there! I'd be happy to assist you with this issue. Network performance fluctuations can be concerning, and it's important to identify the cause to ensure you have a smooth experience. 
@@ -256,7 +255,10 @@ We can work together to get to the bottom of this and find a solution to improve
 
 
 ```python PYTHON
-chat_history = run_chatbot("At times, the data speed is very poor. What should I do?", chat_history)
+chat_history = run_chatbot(
+    "At times, the data speed is very poor. What should I do?",
+    chat_history,
+)
 ```
 ```mdx
 Here are some steps you can take to address the issue of poor data speeds:
@@ -284,7 +286,9 @@ If you've tried the basic troubleshooting steps and are still experiencing poor 
 
 
 ```python PYTHON
-chat_history = run_chatbot("Thanks. What else can I check?", chat_history)
+chat_history = run_chatbot(
+    "Thanks. What else can I check?", chat_history
+)
 ```
 ```mdx
 You're welcome! Let's explore a few more advanced troubleshooting steps and potential factors:

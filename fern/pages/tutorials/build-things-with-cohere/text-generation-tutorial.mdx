@@ -30,7 +30,8 @@ To get started, first we need to install the `cohere` library and create a Coher
 
 import cohere
 
-co = cohere.Client("COHERE_API_KEY") # Get your API key: https://dashboard.cohere.com/api-keys
+# Get your API key: https://dashboard.cohere.com/api-keys
+co = cohere.Client("COHERE_API_KEY")  
 ```
 
 ## Basic text generation
@@ -98,10 +99,12 @@ Below, we want the response to be similar in style and length to the convention,
 
 ```python PYTHON
 # Add the user message
-user_input = "Why can't I access the server? Is it a permissions issue?"
+user_input = (
+    "Why can't I access the server? Is it a permissions issue?"
+)
 
 # Create a prompt containing example outputs
-message=f"""Write a ticket title for the following user request:
+message = f"""Write a ticket title for the following user request:
 
 User request: Where are the usual storage places for project files?
 Ticket title: Project File Storage Location
@@ -218,28 +221,37 @@ The `response_format` parameter allows you to specify the schema the JSON object
 
 ```python PYTHON
 # Add the user message
-user_input = "Why can't I access the server? Is it a permissions issue?"
+user_input = (
+    "Why can't I access the server? Is it a permissions issue?"
+)
 
 # Generate the response multiple times by adding the JSON schema
 response = co.chat(
-  model="command-r-plus-08-2024",
-  message=f"""Create an IT ticket for the following user request. Generate a JSON object.
+    model="command-r-plus-08-2024",
+    message=f"""Create an IT ticket for the following user request. Generate a JSON object.
   {user_input}""",
-  response_format={
-    "type": "json_object",
-    "schema": {
-      "type": "object",
-      "required": ["title", "category", "status"],
-      "properties": {
-        "title": { "type": "string"},
-        "category": { "type" : "string", "enum" : ["access", "software"]},
-        "status": { "type" : "string" , "enum" : ["open", "closed"]}
-      }
-    }
-  },
+    response_format={
+        "type": "json_object",
+        "schema": {
+            "type": "object",
+            "required": ["title", "category", "status"],
+            "properties": {
+                "title": {"type": "string"},
+                "category": {
+                    "type": "string",
+                    "enum": ["access", "software"],
+                },
+                "status": {
+                    "type": "string",
+                    "enum": ["open", "closed"],
+                },
+            },
+        },
+    },
 )
 
 import json
+
 json_object = json.loads(response.text)
 
 print(json_object)
@@ -268,8 +280,7 @@ In streaming mode, the endpoint will generate a series of objects. To get the ac
 message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
 
 # Generate the response by streaming it
-response = co.chat_stream(
-            message=message)
+response = co.chat_stream(message=message)
 
 for event in response:
     if event.event_type == "text-generation":
