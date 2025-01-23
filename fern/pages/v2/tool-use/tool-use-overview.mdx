@@ -20,6 +20,8 @@ This opens up a richer set of behaviors by leveraging data stored in tools, taki
 
 The Chat endpoint comes with built-in tool use capabilities such as function calling, multi-step reasoning, and citation generation.
 
+<img src="https://cohere.com/_next/image?url=https%3A%2F%2Fcohere-ai.ghost.io%2Fcontent%2Fimages%2F2024%2F07%2Ftool-use-anatomy-2.jpg&w=3840&q=75" alt="Tool use overview" />
+
 ## Setup
 
 First, import the Cohere library and create a client.
@@ -37,6 +39,8 @@ The pre-requisite, or Step 0, before we can run a tool use workflow, is to defin
 
 - Creating the tool
 - Defining the tool schema
+
+<img src="https://cohere.com/_next/image?url=https%3A%2F%2Fcohere-ai.ghost.io%2Fcontent%2Fimages%2F2024%2F07%2Ftool-setup.png&w=3840&q=75" alt="Tool definition" />
 
 ### Creating the tool
 
@@ -89,7 +93,7 @@ tools = [
 ]
 ```
 
-## Running the tool use workflow
+## Tool use workflow
 
 We can think of a tool use system as consisting of four components:
 
@@ -108,13 +112,133 @@ At its most basic, these four components interact in a workflow through four ste
 <img src="https://cohere.com/_next/image?url=https%3A%2F%2Fcohere-ai.ghost.io%2Fcontent%2Fimages%2F2024%2F07%2Ftool-use-workflow-2.png&w=3840&q=75" alt="Tool use workflow" />
 
 ### Step 1: Get user message
-...
+In the first step, we get the user's message and put it in the `messages` list with the `role` set to `user`.
+
+```python PYTHON
+messages = [{"role": "user", "content": "What's the weather in Toronto?"}]
+```
+
+<Accordion title='System message'>
+Optional: If you want to define a system message, you can add it to the `messages` list with the `role` set to `system`.
+
+```python PYTHON
+system_message = """## Task & Context
+You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.
+
+## Style Guide
+Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.
+"""
+
+messages = [
+    {"role": "system", "content": system_message},
+    {"role": "user", "content": "What's the weather in Toronto?"},
+]
+```
+</Accordion>
+
 
 ### Step 2: Generate tool calls
-...
+
+Next, we call the Chat endpoint to generate the list of tool calls. This is done by passing the parameters `model`, `messages`, and `tools` to the Chat endpoint.
+
+The endpoint will send back a list of tool calls to be made if the model determines that tools are required. If it does, it will return two types of messages:
+- `tool_plan`: its reflection on the next steps it should take, given the user query.
+- `tool_calls`: a list of tool calls to be made (if any), together with the tool call IDs.
+
+We then add this information to the `messages` list with the `role` set to `assistant`.
+
+```python PYTHON
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=messages,
+    tools=tools
+)
+
+if response.message.tool_calls:
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_calls": response.message.tool_calls,
+            "tool_plan": response.message.tool_plan,
+        }
+    )
+    print(response.message.tool_calls)
+```
+
+```mdx wordWrap
+[ToolCallV2(id='get_weather_776n8ctsgycn', type='function', function=ToolCallV2Function(name='get_weather', arguments='{"location":"Toronto"}'))]
+```
 
 ### Step 3: Get tool results
-...
+During this step, we perform the function calling. We call the necessary tools based on the tool call payloads given by the endpoint.
+
+For each tool call, we append the tool results to the `tool_content` list with `type` set to `document` and `document` set to the tool results (in JSON string format).
+
+We then add this information to the `messages` list with the `role` set to `tool`, together with the tool call IDs that were generated in the previous step.
+
+```python PYTHON
+import json
+
+if response.message.tool_calls:
+    for tc in response.message.tool_calls:
+        tool_result = functions_map[tc.function.name](
+            **json.loads(tc.function.arguments)
+        )
+        tool_content = []
+        for data in tool_result:
+            tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+            # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
+        messages.append(
+            {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
+        )
+```
 
 ### Step 4: Generate response and citations
-...
+By this time, the tool call has already been executed, and the result has been returned to the LLM.
+
+In this step, we call the Chat endpoint to generate the response to the user, again by passing the parameters `model`, `messages` (which has now been updated with information fromthe tool calling and tool execution steps), and `tools`.
+
+The model generates a response to the user, grounded on the information provided by the tool.
+
+It also generates fine-grained citations, which are included out-of-the-box with the Command family of models. Here, we see the model generating two citations, one for each specific span in its response, where it uses the tool result to answer the question.
+
+```python PYTHON
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=messages,
+    tools=tools
+)
+print(response.message.content[0].text)
+```
+```mdx wordWrap
+It is 20C in Toronto.
+```
+```mdx wordWrap
+start=6 end=9 text='20C' sources=[ToolSource(type='tool', id='get_weather_776n8ctsgycn:0', tool_output={'temperature': '20C'})] 
+```
+
+## Parallel tool calling
+[[TODO - demonstrate example of parallel tool calling]]
+
+## Directly answering
+[[TODO - describe the scenario where the LLM decides not to use tools but instead directly answers the user]]
+
+## Forcing tool usage
+[[TODO - describe the tool choice parameter]]
+
+## Response object
+
+### Tool calling step
+[[TODO - describe the response object for tool calling step]]
+
+### Response generation step
+[[TODO - describe the response object for response generation step]]
+
+## State management
+[[TODO - describe the state management via the messages list - single and multi turn. show examples]]
+
+### Single turn
+[[TODO - describe state management wrt single turn scenarios]]
+
+### Multi turn
+[[TODO - describe state management wrt multi turn scenarios]]
