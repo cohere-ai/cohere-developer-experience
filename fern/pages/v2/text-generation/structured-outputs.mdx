@@ -141,34 +141,37 @@ In this schema, we defined three keys ("title," "author," "publication_year") an
 Here's an example of a nested array. Note that the top level json structure must always be a json object.
 
 ```python PYTHON
-cohere_api_key = os.getenv('cohere_api_key')
+cohere_api_key = os.getenv("cohere_api_key")
 co = cohere.ClientV2(cohere_api_key)
 response = co.chat(
     response_format={
-      "type": "json_object",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "actions": {
-            "type": "array",          
-            "items": {
-              "type": "object",          
-              "properties": {
-                "japanese": {"type": "string"},
-                "romaji": {"type": "string"},
-                "english": {"type": "string"}
-              },
-              "required": ["japanese", "romaji", "english"]
+        "type": "json_object",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "actions": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "japanese": {"type": "string"},
+                            "romaji": {"type": "string"},
+                            "english": {"type": "string"},
+                        },
+                        "required": ["japanese", "romaji", "english"],
+                    },
+                }
             },
-          }
+            "required": ["actions"],
         },
-        "required": ["actions"]
-      }
     },
     model="command-r",
     messages=[
-        {"role": "user", "content": "Generate a JSON array of objects with the following fields: japanese, romaji, english. These actions should be japanese verbs provided in the dictionary form."},
-    ]
+        {
+            "role": "user",
+            "content": "Generate a JSON array of objects with the following fields: japanese, romaji, english. These actions should be japanese verbs provided in the dictionary form.",
+        },
+    ],
 )
 return json.loads(response.message.content[0].text)
 ```
