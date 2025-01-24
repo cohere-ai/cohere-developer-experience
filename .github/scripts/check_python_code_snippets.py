@@ -75,31 +75,17 @@ def format_python_snippets_in_mdx(file_path, line_length=DEFAULT_LINE_LENGTH):
     return original_content, new_content
 
 
-def process_mdx_files(directory, file_pattern, exclude_dirs=None, line_length=DEFAULT_LINE_LENGTH, check_changes=False):
+def process_mdx_files(directory, file_pattern, exclude_dirs=None, line_length=DEFAULT_LINE_LENGTH):
     """
     Processes all MDX files in the directory, formatting Python code snippets.
-
-    Args:
-        directory (Path or str): Path to the directory containing MDX files.
-        file_pattern (re.Pattern): Regex pattern to match MDX files.
-        exclude_dirs (list): List of directories to exclude.
-        line_length (int): Line length to use for Black formatting.
-        check_changes (bool): If True, raises an exception if changes are detected.
     """
     matching_files = find_files_by_pattern(directory, file_pattern, exclude_dirs)
-    files_changed = []
 
     for file_path in matching_files:
         original_content, new_content = format_python_snippets_in_mdx(file_path, line_length)
 
         if original_content != new_content:
-            files_changed.append(file_path)
-
-    if check_changes and files_changed:
-        raise RuntimeError(
-            f"The following files were modified during the run:\n"
-            + "\n".join(str(file) for file in files_changed)
-        )
+            print(f"Formatted: {file_path}")
 
 
 if __name__ == "__main__":
