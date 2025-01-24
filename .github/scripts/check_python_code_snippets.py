@@ -60,6 +60,10 @@ def format_python_snippets_in_mdx(file_path, line_length=DEFAULT_LINE_LENGTH):
             formatted_code = black.format_str(processed_code, mode=black_mode)
         except black.NothingChanged:
             return match.group(0)  # Return the original block if nothing changed
+        except black.parsing.InvalidInput as e:
+            print(f"Error formatting Python code in {file_path}: {e}")
+            # Optionally return original unformatted code or handle differently
+            return match.group(0)
 
         # Revert the temporary comments back to their original form
         reverted_code = re.sub(r"^\s*# TEMP_COMMENT_(!|%)(.*)", r"\1\2", formatted_code, flags=re.MULTILINE)
@@ -93,13 +97,12 @@ if __name__ == "__main__":
 
     path = sys.argv[1] if len(sys.argv) > 1 else MDX_DIR
     line_length = int(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_LINE_LENGTH
-    check_changes = os.getenv("CI") == "true"  # Set to True in CI pipeline
 
     if Path(path).is_dir():
-        process_mdx_files(path, FILE_PATTERN, EXCLUDE_DIRS, line_length, check_changes)
+        process_mdx_files(path, FILE_PATTERN, EXCLUDE_DIRS, line_length)
     elif Path(path).is_file():
         if FILE_PATTERN.search(path):
-            process_mdx_files(Path(path).parent, FILE_PATTERN, EXCLUDE_DIRS, line_length, check_changes)
+            process_mdx_files(Path(path).parent, FILE_PATTERN, EXCLUDE_DIRS, line_length)
         else:
             print("The specified file does not match the MDX pattern.")
     else:
