@@ -8,7 +8,7 @@ import re
 from base64 import b64encode
 
 
-BASE_PATH = Path(__file__).resolve().parents[2]
+BASE_PATH = Path(__file__).resolve().parents[3]
 COOKBOOKS_PATH = BASE_PATH / "fern/pages/cookbooks"
 BUILD_COOKBOOKS_PATH = BASE_PATH / "scripts/build-cookbooks"
 REGISTRY_FILE = BUILD_COOKBOOKS_PATH / "registry.yaml"
