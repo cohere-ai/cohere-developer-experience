@@ -1,12 +1,11 @@
 name: generate-mdx-files
 
 on:
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to run the workflow on'
-        required: true
-        default: 'main'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'fern/pages/cookbooks/**/*.mdx'
 
 jobs:
   run:
@@ -20,29 +19,39 @@ jobs:
         with:
           ref: ${{ github.event.inputs.branch }}
 
-      - name: Clone Notebooks Repository
-        shell: bash
-        run: |
-          git clone git@github.com:cohere-ai/notebooks.git notebooks
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: Install Poetry
-        shell: bash
-        run: |
-          pip install poetry  # Using pip to install Poetry
+      - name: Bootstrap poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.5.1
+          virtualenvs-in-project: false
 
       - name: Install Project Dependencies with Poetry
         shell: bash
         run: |
           poetry install
 
+            - name: Check for mypy in pyproject.toml
+      id: check_mypy
+        run: |
+          if grep -q 'mypy' pyproject.toml; then
+            echo "mypy is specified in pyproject.toml, running..."
+            poetry run mypy .
+            echo "::set-output name=mypy_run::true"
+          else
+            echo "mypy is not specified in pyproject.toml, exiting."
+            echo "::set-output name=mypy_run::false"
+          fi
+
       - name: Build MDX Files
+        if: steps.check_mypy.outputs.mypy_run == 'true'
         shell: bash
         run: poetry run python .github/scripts/build_cookbooks.py
+
 
       - name: Check for Changes in build-mdx Folder
         id: check_changes
@@ -60,13 +69,3 @@ jobs:
           git config user.email "actions@github.com"
           git commit -m "Update cookbooks"
           git push origin HEAD
-
-      - name: Create Pull Request
-        if: steps.check_changes.outputs.changes_detected == 'true'
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Update Cookbooks files"
-          branch: "update-mdx-from-cookbooks"
-          title: "Update Cookbooks"
-          body: "This PR updates the Cookbooks MDX files generated from the latest notebooks."

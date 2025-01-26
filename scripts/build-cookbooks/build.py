@@ -8,12 +8,12 @@ import re
 from base64 import b64encode
 
 
-BASE_PATH = Path(__file__).resolve().parent
-NOTEBOOKS_REPO_PATH = BASE_PATH / "notebooks"
-COOKBOOKS_PATH = BASE_PATH / "../../fern/pages/cookbooks"
-REGISTRY_FILE = BASE_PATH / "registry.yaml"
-AUTHORS_FILE = BASE_PATH / "authors.yaml"
-TEMPLATES_PATH = BASE_PATH / "templates"
+BASE_PATH = Path(__file__).resolve().parents[2]
+COOKBOOKS_PATH = BASE_PATH / "fern/pages/cookbooks"
+BUILD_COOKBOOKS_PATH = BASE_PATH / "scripts/build-cookbooks"
+REGISTRY_FILE = BUILD_COOKBOOKS_PATH / "registry.yaml"
+AUTHORS_FILE = BUILD_COOKBOOKS_PATH / "authors.yaml"
+TEMPLATES_PATH = BUILD_COOKBOOKS_PATH / "templates"
 MARKDOWN_IMAGE_IMPORT_PATTERN = re.compile(r"!\[(.*?)\]\((.*?)\)")
 TITLE_PATTERN = re.compile(r"(?m)^#\s.*\n", re.MULTILINE)
 SCRIPT_PATTERN = re.compile(r"<script.*?</script>", re.DOTALL)
@@ -22,9 +22,8 @@ SCRIPT_PATTERN = re.compile(r"<script.*?</script>", re.DOTALL)
 def _format_bytes_as_base64(data: bytes) -> str:
     return b64encode(data).decode("utf-8")
 
-
 env = Environment(loader=FileSystemLoader(TEMPLATES_PATH))
-template = env.get_template('cookbook.md')  # Assuming the template name is cookbook.md
+template = env.get_template('cookbook.md') 
 
 def _post_process(body: str, resources: dict[str]) -> str:
     """Perform any transformations to the generated body Markdown."""
@@ -69,7 +68,6 @@ def build_cookbooks():
             continue
         
         author_email_list = entry.get("authors", list())
-        print(author_email_list)
         authors = [
             dict(
                 name=_authors[email]["name"],
@@ -80,7 +78,7 @@ def build_cookbooks():
             if email in _authors
         ]
 
-        notebook_path = NOTEBOOKS_REPO_PATH / entry["path"]
+        notebook_path = BASE_PATH / entry["path"]
         with open(notebook_path, 'r') as f:
             notebook_content = nbformat.read(f, as_version=4)
         body, resources = md_exporter.from_notebook_node(notebook_content)
@@ -119,7 +117,6 @@ def build_cookbooks():
         # Write to file
         with open(output_file_path, 'w', encoding='utf-8') as file:
             file.write(content)
-        print(f"Updated or Created {output_file_path}")
 
 if __name__ == "__main__":
     build_cookbooks()
