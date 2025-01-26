@@ -36,21 +36,23 @@ jobs:
         run: |
           poetry install
 
-      - name: Check for mypy in pyproject.toml
+      - name: Run mypy
         id: check_mypy
         run: |
           if grep -q 'mypy' pyproject.toml; then
             echo "mypy is specified in pyproject.toml, running..."
             poetry run mypy .
-            echo "::set-output name=mypy_run::true"
+            echo "mypy_run=true" >> $GITHUB_ENV
           else
             echo "mypy is not specified in pyproject.toml, exiting."
-            echo "::set-output name=mypy_run::false"
+            echo "mypy_run=false" >> $GITHUB_ENV
+          fi
+        shell: bash
 
       - name: Build MDX Files
-        if: steps.check_mypy.outputs.mypy_run == 'true'
-        shell: bash
+        if: env.mypy_run == 'true'
         run: poetry run python .github/scripts/build_cookbooks.py
+        shell: bash
 
       - name: Check for Changes in build-mdx Folder
         id: check_changes
