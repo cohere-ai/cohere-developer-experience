@@ -1,39 +1,60 @@
 ---
-title: Getting Started with Basic Tool Use
+title: Basic Tool Use
 slug: /page/basic-tool-use
 
 description: "This page describes how to work with Cohere's basic tool use functionality."
-image: "../../assets/images/f1cc130-cohere_meta_image.jpg"  
+image: "../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "Cohere, tool use, AI agents"
 ---
 
 import { AuthorsContainer } from "../../components/authors-container";
 import { CookbookHeader } from "../../components/cookbook-header";
 
-<CookbookHeader href="https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/agents/Vanilla_Tool_Use.ipynb" />
 
-Tool use allows customers to **connect their large language models to external tools, such as search engines, APIs, functions, and databases**.
 
-This allows the customer to unlock a richer set of model behaviors by, for instance, leveraging data stored in tools, taking actions through APIs, interacting with a vector database, or querying a search engine.
+<CookbookHeader href="https://github.com/cohere-ai/notebooks/blob/main/notebooks/agents/Vanilla_Tool_Use.ipynb" />
 
-Below, we illustrate tool use in four steps:
+<a target="_blank" href="https://colab.research.google.com/github/cohere-ai/cohere-developer-experience/blob/main/notebooks/agents/Vanilla_Tool_Use.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
 
+
+Tool use allows customers to **connect their large language models to external tools like search engines, APIs, functions, databases**, etc.
+
+This allows the customer's model to unlock a richer set of behaviors by leveraging data stored in tools, taking actions through APIs, interacting with a vector database, querying a search engine, etc.
+
+This is particularly valuable for enterprise customers, since a lot of enterprise data lives in external sources.
+
+Tool Use consists of 4 steps:
 - Step 1: the user configures the request to the model
-- Step 2: the model uses context to **determine which tool(s) to use and how**
-- Step 3: the tool calls are executed
-- Step 4: the model **generates a final answer with precise citations** based on the tool results
+- Step 2: the **model smartly decides which tool(s) to use and how**
+- Step 3: the tool calls are executed to mock database
+- Step 4: the **model generates a final answer with precise citations based on the tool results**
 
-```python PYTHON
+
+```python
+# we'll use Cohere to do Tool Use
+# TODO: upgrade to "cohere>5"
+%pip install "cohere<5" --quiet
+```
+
+    [2K     [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m52.8/52.8 kB[0m [31m1.6 MB/s[0m eta [36m0:00:00[0m
+    [2K     [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m3.1/3.1 MB[0m [31m28.1 MB/s[0m eta [36m0:00:00[0m
+    [?25h
+
+
+```python
 import cohere, json
 API_KEY = "..." # fill in your Cohere API key here
 co = cohere.Client(API_KEY)
 ```
 
 ## Step 0: Create a mock database
+First, we'll define the mock data that our tools will query. This data represents sales reports and a product catalog.
 
-Before we can illustrate tool use, we first need to do some setup. Here, we'll define the mock data that our tools will query. This data represents sales reports and a product catalog.
 
-```python PYTHON
+```python
+# Mock database containing daily sales reports
 sales_database = {
     '2023-09-28': {
         'total_sales_amount': 5000,
@@ -49,6 +70,7 @@ sales_database = {
     }
 }
 
+# Mock product catalog
 product_catalog = {
     'Electronics': [
         {'product_id': 'E1001', 'name': 'Smartphone', 'price': 500, 'stock_level': 20},
@@ -64,9 +86,12 @@ product_catalog = {
 ```
 
 Now, we'll define the tools that simulate querying this database.  
-For example, you could use the API of an enterprise sales platform.
+You could for example use the API of an enterprise sales platform.
 
-```python PYTHON
+
+
+
+```python
 def query_daily_sales_report(day: str) -> dict:
     """
     Function to retrieve the sales report for the given day
@@ -98,20 +123,24 @@ functions_map = {
 }
 ```
 
-## Step 1 - User configures the request to the model
+## Step 1 - the user configures the request to the model
 
 The developer provides a few things to the model:
-
 - A preamble containing instructions about the task and the desired style for the output.
 - The user request.
 - A list of tools to the model.
 - (Optionally) a chat history for the model to work with.
 
+
 You can specify one or many tools to the model. Every tool needs to be described with a JSON schema, indicating the tool name, description, and parameters (code snippets below).
 
 In our example, we provide two tools to the model: `daily_sales_report` and `product_catalog`.
 
-```python PYTHON
+
+
+```python
+# tool descriptions that the model has access to
+# note: Cohere always adds a "directly_answer" tool under the hood, so that the model can decide to not leverage any tool, if they're not needed.
 tools = [
     {
         "name": "query_daily_sales_report",
@@ -138,29 +167,32 @@ tools = [
 ]
 ```
 
-Now let's define the user request.
+Now let's define the user request.  
 
 In our example we'll use: "Can you provide a sales summary for 29th September 2023, and also give me the details of all products in the 'Electronics' category that were sold that day, including their prices and stock levels?"
 
 Only a langage model with Tool Use can answer this request: it requires looking up information in the right external tools (step 2), and then providing a final answer based on the tool results (step 4).
 
-```python PYTHON
+
+```python
+# preamble containing instructions about the task and the desired style for the output.
 preamble = """
-## Task &amp; Context
+## Task & Context
 You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.
 
 ## Style Guide
 Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.
 """
 
+# user request
 message = "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
 ```
 
-## Step 2 – The model smartly decides which tool(s) to use and how
-
+## Step 2 – the model smartly decides which tool(s) to use and how
 The model intelligently selects the right tool(s) to call -- and the right parameters for each tool call -- based on the content of the user message.
 
-```python PYTHON
+
+```python
 response = co.chat(
     message=message,
     tools=tools,
@@ -168,32 +200,38 @@ response = co.chat(
     model="command-r"
 )
 
+# Note that the Cohere Chat API also exposes:
+# - stream (for streaming mode)
+# - chat_history
+# - among other parameters
+# See https://docs.cohere.com/reference/chat for details.
 
 print("The model recommends doing the following tool calls:")
 print("\n".join(str(tool_call) for tool_call in response.tool_calls))
 ```
 
-```
-The model recommends doing the following tool calls:
-cohere.ToolCall {
-	name: query_daily_sales_report
-	parameters: {'day': '2023-09-29'}
-	generation_id: eaf955e3-623d-4796-bf51-23b07c66ed2c
-}
-cohere.ToolCall {
-	name: query_product_catalog
-	parameters: {'category': 'Electronics'}
-	generation_id: eaf955e3-623d-4796-bf51-23b07c66ed2c
-}
-```
+    The model recommends doing the following tool calls:
+    cohere.ToolCall {
+    	name: query_daily_sales_report
+    	parameters: {'day': '2023-09-29'}
+    	generation_id: eaf955e3-623d-4796-bf51-23b07c66ed2c
+    }
+    cohere.ToolCall {
+    	name: query_product_catalog
+    	parameters: {'category': 'Electronics'}
+    	generation_id: eaf955e3-623d-4796-bf51-23b07c66ed2c
+    }
 
-## Step 3 – The tool calls are executed
 
-You can now execute the appropriate calls, using the tool calls and tool parameters generated by the model.  
+## Step 3 – the tool calls are executed
+
+You can then execute the appropriate calls, using the tool calls and tool parameters generated by the model.  
 These tool calls return tool results that will be fed to the model in Step 4.
 
-```python PYTHON
+
+```python
 tool_results = []
+# Iterate over the tool calls generated by the model
 for tool_call in response.tool_calls:
     # here is where you would call the tool recommended by the model, using the parameters recommended by the model
     print(f"= running tool {tool_call.name}, with parameters: {tool_call.parameters}")
@@ -211,70 +249,77 @@ print("Tool results that will be fed back to the model in step 4:")
 print(json.dumps(tool_results, indent=4))
 ```
 
-```
-= running tool query_daily_sales_report, with parameters: {'day': '2023-09-29'}
-== tool results: [{'date': '2023-09-29', 'summary': 'Total Sales Amount: 10000, Total Units Sold: 250'}]
-= running tool query_product_catalog, with parameters: {'category': 'Electronics'}
-== tool results: [{'category': 'Electronics', 'products': [{'product_id': 'E1001', 'name': 'Smartphone', 'price': 500, 'stock_level': 20}, {'product_id': 'E1002', 'name': 'Laptop', 'price': 1000, 'stock_level': 15}, {'product_id': 'E1003', 'name': 'Tablet', 'price': 300, 'stock_level': 25}]}]
-Tool results that will be fed back to the model in step 4:
-[
-    {
-        "call": {
-            "name": "query_daily_sales_report",
-            "parameters": {
-                "day": "2023-09-29"
+    = running tool query_daily_sales_report, with parameters: {'day': '2023-09-29'}
+    == tool results: [{'date': '2023-09-29', 'summary': 'Total Sales Amount: 10000, Total Units Sold: 250'}]
+    = running tool query_product_catalog, with parameters: {'category': 'Electronics'}
+    == tool results: [{'category': 'Electronics', 'products': [{'product_id': 'E1001', 'name': 'Smartphone', 'price': 500, 'stock_level': 20}, {'product_id': 'E1002', 'name': 'Laptop', 'price': 1000, 'stock_level': 15}, {'product_id': 'E1003', 'name': 'Tablet', 'price': 300, 'stock_level': 25}]}]
+    Tool results that will be fed back to the model in step 4:
+    [
+        {
+            "call": {
+                "name": "query_daily_sales_report",
+                "parameters": {
+                    "day": "2023-09-29"
+                },
+                "generation_id": "eaf955e3-623d-4796-bf51-23b07c66ed2c"
             },
-            "generation_id": "eaf955e3-623d-4796-bf51-23b07c66ed2c"
+            "outputs": [
+                {
+                    "date": "2023-09-29",
+                    "summary": "Total Sales Amount: 10000, Total Units Sold: 250"
+                }
+            ]
         },
-        "outputs": [
-            {
-                "date": "2023-09-29",
-                "summary": "Total Sales Amount: 10000, Total Units Sold: 250"
-            }
-        ]
-    },
-    {
-        "call": {
-            "name": "query_product_catalog",
-            "parameters": {
-                "category": "Electronics"
+        {
+            "call": {
+                "name": "query_product_catalog",
+                "parameters": {
+                    "category": "Electronics"
+                },
+                "generation_id": "eaf955e3-623d-4796-bf51-23b07c66ed2c"
             },
-            "generation_id": "eaf955e3-623d-4796-bf51-23b07c66ed2c"
-        },
-        "outputs": [
-            {
-                "category": "Electronics",
-                "products": [
-                    {
-                        "product_id": "E1001",
-                        "name": "Smartphone",
-                        "price": 500,
-                        "stock_level": 20
-                    },
-                    {
-                        "product_id": "E1002",
-                        "name": "Laptop",
-                        "price": 1000,
-                        "stock_level": 15
-                    },
-                    {
-                        "product_id": "E1003",
-                        "name": "Tablet",
-                        "price": 300,
-                        "stock_level": 25
-                    }
-                ]
-            }
-        ]
-    }
-]
-```
+            "outputs": [
+                {
+                    "category": "Electronics",
+                    "products": [
+                        {
+                            "product_id": "E1001",
+                            "name": "Smartphone",
+                            "price": 500,
+                            "stock_level": 20
+                        },
+                        {
+                            "product_id": "E1002",
+                            "name": "Laptop",
+                            "price": 1000,
+                            "stock_level": 15
+                        },
+                        {
+                            "product_id": "E1003",
+                            "name": "Tablet",
+                            "price": 300,
+                            "stock_level": 25
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
 
-## Step 4 - The model generates a final answer based on the tool results
 
-Finally, the developer calls the Cohere model, providing the tools results, in order to generate the model's final answer.
+## Step 4 - the model generates a final answer based on the tool results
+Finally, the developer calls the Cohere model, providing the tools results, in order to generate the model's final answer.  
 
-```python PYTHON
+Bonus: At Cohere, all Tool Use calls come with... **precise citations**! 🎉
+The model cites which tool results were used to generate the final answer.  
+These citations make it easy to check where the model’s generated response claims are coming from.  
+They help users gain visibility into the model reasoning, and sanity check the final model generation.  
+These citations are optional — you can decide to ignore them.
+
+
+
+
+```python
 response = co.chat(
     message=message,
     tools=tools,
@@ -285,57 +330,58 @@ response = co.chat(
 )
 ```
 
-```python PYTHON
+
+```python
 print("Final answer:")
 print(response.text)
 ```
 
-```
-Final answer:
-On the 29th of September 2023, there were 10,000 sales with 250 units sold.
+    Final answer:
+    On the 29th of September 2023, there were 10,000 sales with 250 units sold. 
+    
+    The Electronics category contains three products. There are details below:
+    
+    | Product Name | Price | Stock Level |
+    | ------------ | ----- | ----------- |
+    | Smartphone | 500 | 20 |
+    | Laptop | 1000 | 15 |
+    | Tablet | 300 | 25 | 
+    
+    The total stock level for Electronics items is 50.
 
-The Electronics category contains three products. There are details below:
-
-| Product Name | Price | Stock Level |
-| ------------ | ----- | ----------- |
-| Smartphone | 500 | 20 |
-| Laptop | 1000 | 15 |
-| Tablet | 300 | 25 |
-
-The total stock level for Electronics items is 50.
-```
 
 ## Bonus: Citations come for free with Cohere! 🎉
 
-At Cohere, model generations come with... precise citations! 🎉  
+At Cohere, model generations come with... precise citations! 🎉
 The model cites which groups of words, in the tool results, were used to generate the final answer.  
 These citations make it easy to check where the model’s generated response claims are coming from.  
 They help users gain visibility into the model reasoning, and sanity check the final model generation.  
 These citations are optional — you can decide to ignore them.
 
-```python PYTHON
+
+```python
 print("Citations that support the final answer:")
 for cite in response.citations:
   print(cite)
 ```
 
-```
-Citations that support the final answer:
-{'start': 7, 'end': 29, 'text': '29th of September 2023', 'document_ids': ['query_daily_sales_report:0:0']}
-{'start': 42, 'end': 75, 'text': '10,000 sales with 250 units sold.', 'document_ids': ['query_daily_sales_report:0:0']}
-{'start': 112, 'end': 127, 'text': 'three products.', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 234, 'end': 244, 'text': 'Smartphone', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 247, 'end': 250, 'text': '500', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 253, 'end': 255, 'text': '20', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 260, 'end': 266, 'text': 'Laptop', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 269, 'end': 273, 'text': '1000', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 276, 'end': 278, 'text': '15', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 283, 'end': 289, 'text': 'Tablet', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 292, 'end': 295, 'text': '300', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 298, 'end': 300, 'text': '25', 'document_ids': ['query_product_catalog:1:0']}
-```
+    Citations that support the final answer:
+    {'start': 7, 'end': 29, 'text': '29th of September 2023', 'document_ids': ['query_daily_sales_report:0:0']}
+    {'start': 42, 'end': 75, 'text': '10,000 sales with 250 units sold.', 'document_ids': ['query_daily_sales_report:0:0']}
+    {'start': 112, 'end': 127, 'text': 'three products.', 'document_ids': ['query_product_catalog:1:0']}
+    {'start': 234, 'end': 244, 'text': 'Smartphone', 'document_ids': ['query_product_catalog:1:0']}
+    {'start': 247, 'end': 250, 'text': '500', 'document_ids': ['query_product_catalog:1:0']}
+    {'start': 253, 'end': 255, 'text': '20', 'document_ids': ['query_product_catalog:1:0']}
+    {'start': 260, 'end': 266, 'text': 'Laptop', 'document_ids': ['query_product_catalog:1:0']}
+    {'start': 269, 'end': 273, 'text': '1000', 'document_ids': ['query_product_catalog:1:0']}
+    {'start': 276, 'end': 278, 'text': '15', 'document_ids': ['query_product_catalog:1:0']}
+    {'start': 283, 'end': 289, 'text': 'Tablet', 'document_ids': ['query_product_catalog:1:0']}
+    {'start': 292, 'end': 295, 'text': '300', 'document_ids': ['query_product_catalog:1:0']}
+    {'start': 298, 'end': 300, 'text': '25', 'document_ids': ['query_product_catalog:1:0']}
 
-```python PYTHON
+
+
+```python
 def insert_citations_in_order(text, citations):
     """
     A helper function to pretty print citations.
@@ -376,32 +422,38 @@ print(insert_citations_in_order(response.text, response.citations))
 
 ```
 
+    On the **29th of September 2023**[1], there were **10,000 sales with 250 units sold.**[1] 
+    
+    The Electronics category contains **three products.**[2] There are details below:
+    
+    | Product Name | Price | Stock Level |
+    | ------------ | ----- | ----------- |
+    | **Smartphone**[2] | **500**[2] | **20**[2] |
+    | **Laptop**[2] | **1000**[2] | **15**[2] |
+    | **Tablet**[2] | **300**[2] | **25**[2] | 
+    
+    The total stock level for Electronics items is 50.
+    
+    [1] source: [{'date': '2023-09-29', 'summary': 'Total Sales Amount: 10000, Total Units Sold: 250'}] 
+        based on tool call: {'name': 'query_daily_sales_report', 'parameters': {'day': '2023-09-29'}, 'generation_id': 'eaf955e3-623d-4796-bf51-23b07c66ed2c'}
+    [2] source: [{'category': 'Electronics', 'products': [{'product_id': 'E1001', 'name': 'Smartphone', 'price': 500, 'stock_level': 20}, {'product_id': 'E1002', 'name': 'Laptop', 'price': 1000, 'stock_level': 15}, {'product_id': 'E1003', 'name': 'Tablet', 'price': 300, 'stock_level': 25}]}] 
+        based on tool call: {'name': 'query_product_catalog', 'parameters': {'category': 'Electronics'}, 'generation_id': 'eaf955e3-623d-4796-bf51-23b07c66ed2c'}
+
+
+Yiha. You've used Cohere for Tool Use.  Tool use opens up a wide range of new use cases. Here are a few examples:
+
+- **Function calling**: It's now possible to ask the model to output a JSON object with specific function parameters.
+For instance, this allows your chatbot to interact with your CRM to change the status of a deal, or to engage with a Python interpreter to conduct data science analyses.
+
+- **Query transformation**: You can transform a user message into a search query for a vector database or any search engine.
+For instance, this enables your work assistant to automatically retrieve the appropriate data from your company's documentation by creating the right query for your vector database.
+
+- **Advanced searches**: You can transform a user message into one-or-many queries, to do multiple subtasks based on the content of the message.
+For instance, this allows your chatbot to search across different databases and platforms to retrieve relevant information or to conduct comparative analysis.
+
+
+
+
+```python
+
 ```
-On the **29th of September 2023**[1], there were **10,000 sales with 250 units sold.**[1]
-
-The Electronics category contains **three products.**[2] There are details below:
-
-| Product Name | Price | Stock Level |
-| ------------ | ----- | ----------- |
-| **Smartphone**[2] | **500**[2] | **20**[2] |
-| **Laptop**[2] | **1000**[2] | **15**[2] |
-| **Tablet**[2] | **300**[2] | **25**[2] |
-
-The total stock level for Electronics items is 50.
-
-[1] source: [{'date': '2023-09-29', 'summary': 'Total Sales Amount: 10000, Total Units Sold: 250'}]
-    based on tool call: {'name': 'query_daily_sales_report', 'parameters': {'day': '2023-09-29'}, 'generation_id': 'eaf955e3-623d-4796-bf51-23b07c66ed2c'}
-[2] source: [{'category': 'Electronics', 'products': [{'product_id': 'E1001', 'name': 'Smartphone', 'price': 500, 'stock_level': 20}, {'product_id': 'E1002', 'name': 'Laptop', 'price': 1000, 'stock_level': 15}, {'product_id': 'E1003', 'name': 'Tablet', 'price': 300, 'stock_level': 25}]}]
-    based on tool call: {'name': 'query_product_catalog', 'parameters': {'category': 'Electronics'}, 'generation_id': 'eaf955e3-623d-4796-bf51-23b07c66ed2c'}
-```
-
-Now, you've used Cohere for Tool Use. Tool use opens up a wide range of new use cases. Here are a few examples:
-
-- **Function calling**: It's now possible to ask the model to output a JSON object with specific function parameters.  
-  For instance, this allows your chatbot to interact with your CRM to change the status of a deal, or to engage with a Python interpreter to conduct data science analyses.
-
-- **Query transformation**: You can transform a user message into a search query for a vector database or any search engine.  
-  For instance, this enables your work assistant to automatically retrieve the appropriate data from your company's documentation by creating the right query for your vector database.
-
-- **Advanced searches**: You can transform a user message into one-or-many queries, to do multiple subtasks based on the content of the message.  
-  For instance, this allows your chatbot to search across different databases and platforms to retrieve relevant information or to conduct comparative analysis.

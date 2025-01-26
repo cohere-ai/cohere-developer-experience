@@ -3,28 +3,41 @@ title: Grounded Summarization Using Command R
 slug: /page/grounded-summarization
 
 description: "This page contains a basic tutorial on how to do grounded summarization with Cohere's models."
-image: "../../assets/images/f1cc130-cohere_meta_image.jpg"  
+image: "../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "Cohere, summarization, grounded generations, RAG, retrieval-augmented generation"
 ---
 
 import { AuthorsContainer } from "../../components/authors-container";
 import { CookbookHeader } from "../../components/cookbook-header";
 
-<CookbookHeader href="https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/Grounded_summarisation_using_Command_R.ipynb" />
+
+
+<CookbookHeader href="https://github.com/cohere-ai/notebooks/blob/main/notebooks/guides/Grounded_summarisation_using_Command_R.ipynb" />
 
 Note: we are in the process of updating the links in this notebook. If a link doesn't work, please open an issue and we'll rectify it ASAP. Thanks for your understanding!
 
 Links to add:
+* Cell 1: long-form, grounded summarisation blog post
+* Section 4: to text-rank method (context filtering)
 
-- Cell 1: long-form, grounded summarisation blog post
-- Section 4: to text-rank method (context filtering)
 
 This notebook provides the code to produce the outputs described in [this blog post](https://docs.google.com/document/d/1Eeakpz_FZoeMzJnQieqQWCpPtQuNiTGW4fueU9J0QHA/edit).
 
-## 1. Setup [#setup]
+## Table of contents
 
-```python PYTHON
+1. [Setup](#setup)
+2. [Out-of-the-box summarization with Command-R](#out-of-the-box-summarization-with-command-r)
+3. [Introduce citations to the summary for grounding](#introduce-citations-to-the-summary-for-grounding)
+4. [Reduce the cost of summarization calls](#reduce-the-cost-of-summarization-calls)
+
+<a id="setup"></a>
+<a name="setup"></a>
+## 1. Setup
+
+
+```python
 %%capture
+# TODO: upgrade to "cohere>5"!pip install "cohere<5" networkx
 
 import cohere
 import networkx as nx
@@ -39,13 +52,16 @@ from getpass import getpass
 import re
 from typing import List, Tuple
 
+# Set up Cohere client
 co_api_key = getpass("Enter your Cohere API key: ")
 co_model = "command-r"
 co = cohere.Client(co_api_key)
 
 ```
 
-```python PYTHON
+
+```python
+# Read IMF report
 
 from google.colab import drive
 drive.mount("/content/drive", force_remount=True)
@@ -62,8 +78,11 @@ print(f"Loaded IMF report with {num_tokens} tokens")
 
 ### Aside: define utils
 
-```python PYTHON
 
+```python
+# Utils!
+
+# --- for chunking ---
 def split_text_into_sentences(text: str) -> List[str]:
     sentences =  sent_tokenize(text)
     return sentences
@@ -90,6 +109,7 @@ def build_simple_chunks(text, n_sentences: int = 10):
     return chunks
 
 
+# --- for visualising citations ---
 
 def insert_citations(text: str, citations: List[dict]):
     """
@@ -111,6 +131,7 @@ def insert_citations(text: str, citations: List[dict]):
     return text
 
 
+# --- for reducing number of tokens sent to model intelligently ---
 
 def textrank(text: str, co, max_tokens: int, n_sentences_per_passage: int) -> str:
     """
@@ -189,11 +210,14 @@ def _add_chunks_by_priority(
 
 ```
 
-## 2. Out-of-the-box summarization with Command-R [#out-of-the-box-summarization-with-command-r]
+<a id="out-of-the-box-summarization-with-command-r"></a>
+<a name="out-of-the-box-summarization-with-command-r"></a>
+## 2. Out-of-the-box summarization with Command-R
 
 First, let's see Command-R's out-of-the-box performance. It's a 128k-context model, so we can pass the full IMF report in a single call. We replicate the exact instructions from the original tweet (correcting for a minor typo) for enabling fair comparisons.
 
-```python PYTHON
+
+```python
 prompt_template = """\
 ## text
 {text}
@@ -223,12 +247,14 @@ print(resp.text)
 
 ```
 
-# 3. Introduce citations to the summary for grounding [#introduce-citations-to-the-summary-for-grounding]
+<a id="introduce-citations-to-the-summary-for-grounding"></a>
+<a name="introduce-citations-to-the-summary-for-grounding"></a>
+## 3. Introduce citations to the summary for grounding
 
 When summarizing long documents, introducing citations is one simple method for checking the factuality of the summary without needing to read the full document.
 
-We've trained Command-R to introduce citations whenever prompted by our grounded generations instructions. Triggering this grounded mode is straightforward. Starting from the previous snippet, we only need to make two changes:
 
+We've trained Command-R to introduce citations whenever prompted by our grounded generations instructions. Triggering this grounded mode is straightforward. Starting from the previous snippet, we only need to make two changes:
 1. Pass our text to the `documents` argument
 2. Pass our instructions to the `message` argument
 
@@ -236,7 +262,8 @@ For more information on how to enable grounded generation via our `co.chat` API,
 
 Finally, note that we chunk the IMF report into multiple documents before passing them to `co.chat`. This isn't necessary (`co.chat` annotates citations at the character level), but allows for more human-readable citations.
 
-```python PYTHON
+
+```python
 summarize_preamble = """\
 You will receive a series of text fragments from an article that are presented in chronological order. \
 As the assistant, you must generate responses to user's requests based on the information given in the fragments. \
@@ -250,7 +277,9 @@ Step 1. Read the entire text from the first to the last page.
 Step 2. Create a summary of every chapter from the first to the last page.
 """
 
+# Chunk long text into multiple chunks for readable citations
 chunked = build_simple_chunks(text, n_sentences=30)
+# Use `message` and `documents` arguments to trigger grounded generation
 resp = co.chat(
   preamble=summarize_preamble,
   message=instructions,
@@ -259,6 +288,8 @@ resp = co.chat(
   temperature=0.3,
   return_prompt=True
 )
+# Note: the grounded generation pipeline takes longer when documents are chunked
+# more finely. For latency-sensitive applications, try tuning the size of chunks!
 
 num_tokens_in = co.tokenize(resp.prompt).length
 num_tokens_out = resp.meta["billed_units"]["output_tokens"]
@@ -272,37 +303,43 @@ print(resp.text)
 
 Let's display the citations inside our answer:
 
-```python PYTHON
+
+```python
 print(insert_citations(resp.text, resp.citations))
 ```
 
 We can now visualise which section of the answer is based on which passage in the main text. Verifying factuality is straightforward: pick a section and verify that the relevant information is contained in the cited chunk.
 
 For instance, let's verify the statement
-
 ```
 Around 40% of employment worldwide is exposed to AI [1, 6]
 ```
-
 by checking its chunk:
 
-```python PYTHON
+
+```python
 print(chunked[6])
 ```
 
 Seems convincing!
 By repeating such checks, it's straightforward to build trust in your summaries.
 
-# 4. Reduce the cost of summarization calls [#reduce-the-cost-of-summarization-calls]
+<a id="reduce-the-cost-of-summarization-calls"></a>
+<a name="reduce-the-cost-of-summarization-calls"></a>
+## 4. Reduce the cost of summarization calls
 
 Even though Command-R is an efficient, light-weight model, for some applications we may accept trading off some summarization quality for lower costs. To do this, we must reduce the amount of tokens sent to the model -- but how do we select the most relevant bits?
 
 We have a whole notebook dedicated to methods for reducing context length. Here, we call our 'text-rank' method to select maximally central chunks in a graph based on the chunk-to-chunk similarties. For more detail, please refer [to this cookbook](https://colab.research.google.com/drive/1zxSAbruOWwWJHNsj3N56uxZtUeiS7Evd).
 
-```python PYTHON
+
+```python
+# First, we filter the original text down to a smaller amount of tokens.
+# This will reduce cost and improve latency
 num_tokens = 8192
 shortened = textrank(text, co, num_tokens, n_sentences_per_passage=30)
 
+# Then, we apply grounded generation to keep citations on our (now shorter) report
 chunked = build_simple_chunks(shortened)
 resp = co.chat(
   message=instructions,

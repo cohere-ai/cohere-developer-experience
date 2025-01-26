@@ -3,7 +3,7 @@ title: Analysis of Form 10-K/10-Q Using Cohere and RAG
 slug: /page/analysis-of-financial-forms
 
 description: "This page describes how to use Cohere's large language models to build an agent able to analyze financial forms like a 10-K or a 10-Q."
-image: "../../assets/images/f1cc130-cohere_meta_image.jpg"  
+image: "../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "Cohere, AI assistant for finance"
 ---
 
@@ -14,12 +14,14 @@ import { CookbookHeader } from "../../components/cookbook-header";
   authors={[
     {
       name: "Alex Barbet",
-      imageSrc: "https://fern-image-hosting.s3.amazonaws.com/cohere/bf2c763-Alex.jpg",
-    },
+      imageSrc: "https://fern-image-hosting.s3.amazonaws.com/cohere/bf2c763-Alex.jpg"
+    }
   ]}
 />
 
-<CookbookHeader href="https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/Analysis_of_Form_10_K_Using_Cohere_and_RAG.ipynb" />
+
+<CookbookHeader href="https://github.com/cohere-ai/notebooks/blob/main/notebooks/guides/Analysis_of_Form_10_K_Using_Cohere_and_RAG.ipynb" />
+
 
 ## **Getting Started**
 
@@ -27,13 +29,15 @@ You may use this script to jumpstart financial analysis of 10-Ks or 10-Qs with C
 
 This cookbook relies on helpful tooling from LlamaIndex, as well as our Cohere SDK. If you're familiar with LlamaIndex, it should be easy to slot this process into your own productivity flows.
 
-```python PYTHON
+
+```python
 %%capture
 !sudo apt install tesseract-ocr poppler-utils
 !pip install "cohere<5" langchain llama-index llama-index-embeddings-cohere llama-index-postprocessor-cohere-rerank pytesseract pdf2image
 ```
 
-```python PYTHON
+
+```python
 # Due to compatibility issues, we need to do imports like this
 from llama_index.core.schema import TextNode
 
@@ -41,7 +45,8 @@ from llama_index.core.schema import TextNode
 !pip install unstructured
 ```
 
-```python PYTHON
+
+```python
 import cohere
 from getpass import getpass
 
@@ -53,9 +58,18 @@ co = cohere.Client(COHERE_API_KEY)
 
 ```
 
-```txt title="Output"
-Enter your Cohere API key: ··········
-```
+
+
+<style>
+  pre {
+      white-space: pre-wrap;
+  }
+</style>
+
+
+
+    Enter your Cohere API key: ··········
+
 
 ## **Step 1: Loading a 10-K**
 
@@ -63,7 +77,8 @@ You may run the following cells to load a 10-K that has already been preprocesse
 
 > 💡 If you'd like to run the OCR pipeline yourself, you can find more info in the section titled **PDF to Text using OCR and `pdf2image`**.
 
-```python PYTHON
+
+```python
 # Using langchain here since they have access to the Unstructured Data Loader powered by unstructured.io
 from langchain_community.document_loaders import UnstructuredURLLoader
 
@@ -79,11 +94,20 @@ edgar_10k = documents[0].page_content
 nodes = [TextNode(text=document.page_content, id_=f"doc_{i}") for i, document in enumerate(documents)]
 ```
 
-```txt title="Output"
-[nltk_data] Downloading package averaged_perceptron_tagger to
-[nltk_data]     /root/nltk_data...
-[nltk_data]   Unzipping taggers/averaged_perceptron_tagger.zip.
-```
+
+
+<style>
+  pre {
+      white-space: pre-wrap;
+  }
+</style>
+
+
+
+    [nltk_data] Downloading package averaged_perceptron_tagger to
+    [nltk_data]     /root/nltk_data...
+    [nltk_data]   Unzipping taggers/averaged_perceptron_tagger.zip.
+
 
 We'll need to convert the text into chunks of a certain size in order for the Cohere embedding model to properly ingest them down the line.
 
@@ -91,7 +115,8 @@ We choose to use LlamaIndex's `SentenceSplitter` in this case in order to get th
 
 You may also apply further transformations from the LlamaIndex repo if you so choose. Take a look at the [docs](https://docs.llamaindex.ai/en/stable/understanding/loading/loading.html) for inspiration on what is possible with transformations.
 
-```python PYTHON
+
+```python
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.node_parser import SentenceSplitter
 
@@ -114,52 +139,62 @@ pipeline = IngestionPipeline(
 nodes = pipeline.run(nodes=nodes)
 ```
 
-```txt title="Output"
-/usr/local/lib/python3.10/dist-packages/huggingface_hub/utils/_token.py:88: UserWarning:
-The secret `HF_TOKEN` does not exist in your Colab secrets.
-To authenticate with the Hugging Face Hub, create a token in your settings tab (https://huggingface.co/settings/tokens), set it as secret in your Google Colab and restart your session.
-You will be able to reuse this secret in all of your notebooks.
-Please note that authentication is recommended but still optional to access public models or datasets.
-    warnings.warn(
+
+
+<style>
+  pre {
+      white-space: pre-wrap;
+  }
+</style>
 
 
 
-tokenizer_config.json:   0%|          | 0.00/7.92k [00:00<?, ?B/s]
+    /usr/local/lib/python3.10/dist-packages/huggingface_hub/utils/_token.py:88: UserWarning: 
+    The secret `HF_TOKEN` does not exist in your Colab secrets.
+    To authenticate with the Hugging Face Hub, create a token in your settings tab (https://huggingface.co/settings/tokens), set it as secret in your Google Colab and restart your session.
+    You will be able to reuse this secret in all of your notebooks.
+    Please note that authentication is recommended but still optional to access public models or datasets.
+      warnings.warn(
 
 
 
-tokenization_cohere_fast.py:   0%|          | 0.00/43.7k [00:00<?, ?B/s]
+    tokenizer_config.json:   0%|          | 0.00/7.92k [00:00<?, ?B/s]
 
 
 
-configuration_cohere.py:   0%|          | 0.00/7.37k [00:00<?, ?B/s]
-
-
-A new version of the following files was downloaded from https://huggingface.co/CohereForAI/c4ai-command-r-v01:
-- configuration_cohere.py
-. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
-A new version of the following files was downloaded from https://huggingface.co/CohereForAI/c4ai-command-r-v01:
-- tokenization_cohere_fast.py
-- configuration_cohere.py
-. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+    tokenization_cohere_fast.py:   0%|          | 0.00/43.7k [00:00<?, ?B/s]
 
 
 
-tokenizer.json:   0%|          | 0.00/12.8M [00:00<?, ?B/s]
+    configuration_cohere.py:   0%|          | 0.00/7.37k [00:00<?, ?B/s]
+
+
+    A new version of the following files was downloaded from https://huggingface.co/CohereForAI/c4ai-command-r-v01:
+    - configuration_cohere.py
+    . Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+    A new version of the following files was downloaded from https://huggingface.co/CohereForAI/c4ai-command-r-v01:
+    - tokenization_cohere_fast.py
+    - configuration_cohere.py
+    . Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
 
 
 
-special_tokens_map.json:   0%|          | 0.00/429 [00:00<?, ?B/s]
+    tokenizer.json:   0%|          | 0.00/12.8M [00:00<?, ?B/s]
 
 
-Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
-```
+
+    special_tokens_map.json:   0%|          | 0.00/429 [00:00<?, ?B/s]
+
+
+    Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+
 
 ## **Step 2: Load document into a LlamaIndex vector store**
 
 Loading the document into a LlamaIndex vector store will allow us to use the Cohere embedding model and rerank model to retrieve the relevant parts of the form to pass into Command.
 
-```python PYTHON
+
+```python
 from llama_index.core import Settings, VectorStoreIndex
 
 from llama_index.postprocessor.cohere_rerank import CohereRerank
@@ -185,13 +220,24 @@ rerank = CohereRerank(api_key=COHERE_API_KEY, top_n=15)
 retrieve = lambda query: rerank.postprocess_nodes(retriever.retrieve(query), query_str=query)
 ```
 
+
+
+<style>
+  pre {
+      white-space: pre-wrap;
+  }
+</style>
+
+
+
 ## **Step 3: Query generation and retrieval**
 
 In order to do RAG, we need a query or a set of queries to actually _do_ the retrieval step. As is standard in RAG settings, we'll use Command to generate those queries for us. Then, we'll use those queries along with the LlamaIndex retriever we built earlier to retrieve the most relevant pieces of the 10-K.
 
 To learn more about document mode and query generation, check out [our documentation](https://docs.cohere.com/docs/retrieval-augmented-generation-rag).
 
-```python PYTHON
+
+```python
 PROMPT = "List the overall revenue numbers for 2021, 2022, and 2023 in the 10-K as bullet points, then explain the revenue growth trends."
 
 # Get queries to run against our index from the command-nightly model
@@ -202,9 +248,20 @@ else:
     print("No queries returned by the model")
 ```
 
+
+
+<style>
+  pre {
+      white-space: pre-wrap;
+  }
+</style>
+
+
+
 Now, with the queries in hand, we search against our vector index.
 
-```python PYTHON
+
+```python
 # Convenience function for formatting documents
 def format_for_cohere_client(nodes_):
     return [
@@ -228,6 +285,16 @@ for query in queries:
 documents = [dict(t, id=f"doc_{i}") for i, t in enumerate({tuple(d.items()) for d in documents})]
 ```
 
+
+
+<style>
+  pre {
+      white-space: pre-wrap;
+  }
+</style>
+
+
+
 ## **Step 4: Make a RAG request to Command using document mode**
 
 Now that we have our nicely formatted chunks from the 10-K, we can pass them directly into Command using the Cohere SDK. By passing the chunks into the `documents` kwarg, we enable document mode, which will perform grounded inference on the documents you pass in.
@@ -236,7 +303,8 @@ You can see this for yourself by inspecting the `response.citations` field to ch
 
 You can learn more about the `chat` endpoint by checking out the API reference [here](https://docs.cohere.com/reference/chat).
 
-```python PYTHON
+
+```python
 # Make a request to the model
 response = co.chat(
     message=PROMPT,
@@ -249,20 +317,30 @@ response = co.chat(
 print(response.text)
 ```
 
-```txt title="Output"
-Here are the overall revenue numbers for the years 2021, 2022, and 2023 as bullet points:
-- 2021: $5,992 million
-- 2022: $8,399 million
-- 2023: $9,917 million
 
-Revenue increased by 18% in 2023 compared to 2022, primarily due to a 14% increase in Nights and Experiences Booked, which reached 54.5 million. This, combined with higher average daily rates, resulted in a 16% increase in Gross Booking Value, which reached $10.0 billion.
 
-The revenue growth trend demonstrates sustained strong travel demand. On a constant-currency basis, revenue increased by 17% in 2023 compared to the previous year.
+<style>
+  pre {
+      white-space: pre-wrap;
+  }
+</style>
 
-Other factors influencing the company's financial performance are described outside of the revenue growth trends.
-```
 
-```python PYTHON
+
+    Here are the overall revenue numbers for the years 2021, 2022, and 2023 as bullet points:
+    - 2021: $5,992 million
+    - 2022: $8,399 million
+    - 2023: $9,917 million
+    
+    Revenue increased by 18% in 2023 compared to 2022, primarily due to a 14% increase in Nights and Experiences Booked, which reached 54.5 million. This, combined with higher average daily rates, resulted in a 16% increase in Gross Booking Value, which reached $10.0 billion. 
+    
+    The revenue growth trend demonstrates sustained strong travel demand. On a constant-currency basis, revenue increased by 17% in 2023 compared to the previous year.
+    
+    Other factors influencing the company's financial performance are described outside of the revenue growth trends.
+
+
+
+```python
 # Helper function for displaying response WITH citations
 def insert_citations(text: str, citations: list[dict]):
     """
@@ -291,18 +369,27 @@ def insert_citations(text: str, citations: list[dict]):
 print(insert_citations(response.text, response.citations))
 ```
 
-```txt title="Output"
-Here are the overall revenue numbers for the years 2021, 2022, and 2023 as bullet points:
-- 2021: $5,992 million [13]
-- 2022: $8,399 million [13]
-- 2023: $9,917 million [13]
 
-Revenue increased by 18% in 2023 [11] compared to 2022, primarily due to a 14% increase in Nights and Experiences Booked [11], which reached 54.5 million. [11] This, combined with higher average daily rates [11], resulted in a 16% increase in Gross Booking Value [11], which reached $10.0 billion. [11]
 
-The revenue growth trend demonstrates sustained strong travel demand. [11] On a constant-currency basis [11], revenue increased by 17% in 2023 [11] compared to the previous year.
+<style>
+  pre {
+      white-space: pre-wrap;
+  }
+</style>
 
-Other factors [8, 14] influencing the company's financial performance are described outside of the revenue growth trends. [8, 14]
-```
+
+
+    Here are the overall revenue numbers for the years 2021, 2022, and 2023 as bullet points:
+    - 2021: $5,992 million [13]
+    - 2022: $8,399 million [13]
+    - 2023: $9,917 million [13]
+    
+    Revenue increased by 18% in 2023 [11] compared to 2022, primarily due to a 14% increase in Nights and Experiences Booked [11], which reached 54.5 million. [11] This, combined with higher average daily rates [11], resulted in a 16% increase in Gross Booking Value [11], which reached $10.0 billion. [11] 
+    
+    The revenue growth trend demonstrates sustained strong travel demand. [11] On a constant-currency basis [11], revenue increased by 17% in 2023 [11] compared to the previous year.
+    
+    Other factors [8, 14] influencing the company's financial performance are described outside of the revenue growth trends. [8, 14]
+
 
 # **Appendix**
 
@@ -316,7 +403,8 @@ To go from PDF to text with PyTesseract, there is an intermediary step of conver
 
 To do this, we use `pdf2image`, which uses `poppler` behind the scenes to convert the PDF into a PNG. From there, we can pass the image (which is a PIL Image object) directly into the OCR tool.
 
-```python PYTHON
+
+```python
 import pytesseract
 from pdf2image import convert_from_path
 
@@ -330,7 +418,8 @@ pages = [pytesseract.image_to_string(page) for page in pages]
 
 ## Token count / price comparison and latency
 
-```python PYTHON
+
+```python
 def get_response(prompt, rag):
     if rag:
         # Get queries to run against our index from the command-nightly model
@@ -368,7 +457,18 @@ def get_response(prompt, rag):
     return response
 ```
 
-```python PYTHON
+
+
+<style>
+  pre {
+      white-space: pre-wrap;
+  }
+</style>
+
+
+
+
+```python
 prompt_template = """# financial form 10-K
 {tenk}
 
@@ -378,39 +478,106 @@ prompt_template = """# financial form 10-K
 full_context_prompt = prompt_template.format(tenk=edgar_10k, question=PROMPT)
 ```
 
-```python PYTHON
+
+
+<style>
+  pre {
+      white-space: pre-wrap;
+  }
+</style>
+
+
+
+
+```python
 r1 = get_response(PROMPT, rag=True)
 r2 = get_response(full_context_prompt, rag=False)
 ```
 
-```python PYTHON
+
+
+<style>
+  pre {
+      white-space: pre-wrap;
+  }
+</style>
+
+
+
+
+```python
 def get_price(r):
     return (r.token_count["prompt_tokens"] * 0.5 / 10e6) + (r.token_count["response_tokens"] * 1.5 / 10e6)
 ```
 
-```python PYTHON
+
+
+<style>
+  pre {
+      white-space: pre-wrap;
+  }
+</style>
+
+
+
+
+```python
 rag_price = get_price(r1)
 full_context_price = get_price(r2)
 
 print(f"RAG is {(full_context_price - rag_price) / full_context_price:.0%} cheaper than full context")
 ```
 
-```txt title="Output"
-RAG is 93% cheaper than full context
-```
 
-```python PYTHON
+
+<style>
+  pre {
+      white-space: pre-wrap;
+  }
+</style>
+
+
+
+    RAG is 93% cheaper than full context
+
+
+
+```python
 %timeit get_response(PROMPT, rag=True)
 ```
 
-```txt title="Output"
-14.9 s ± 1.4 s per loop (mean ± std. dev. of 7 runs, 1 loop each)
-```
 
-```python PYTHON
+
+<style>
+  pre {
+      white-space: pre-wrap;
+  }
+</style>
+
+
+
+    14.9 s ± 1.4 s per loop (mean ± std. dev. of 7 runs, 1 loop each)
+
+
+
+```python
 %timeit get_response(full_context_prompt, rag=False)
 ```
 
-```txt title="Output"
-22.7 s ± 7.43 s per loop (mean ± std. dev. of 7 runs, 1 loop each)
+
+
+<style>
+  pre {
+      white-space: pre-wrap;
+  }
+</style>
+
+
+
+    22.7 s ± 7.43 s per loop (mean ± std. dev. of 7 runs, 1 loop each)
+
+
+
+```python
+
 ```
