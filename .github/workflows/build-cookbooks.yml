@@ -36,8 +36,8 @@ jobs:
         run: |
           poetry install
 
-            - name: Check for mypy in pyproject.toml
-      id: check_mypy
+      - name: Check for mypy in pyproject.toml
+        id: check_mypy
         run: |
           if grep -q 'mypy' pyproject.toml; then
             echo "mypy is specified in pyproject.toml, running..."
@@ -46,13 +46,11 @@ jobs:
           else
             echo "mypy is not specified in pyproject.toml, exiting."
             echo "::set-output name=mypy_run::false"
-          fi
 
       - name: Build MDX Files
         if: steps.check_mypy.outputs.mypy_run == 'true'
         shell: bash
         run: poetry run python .github/scripts/build_cookbooks.py
-
 
       - name: Check for Changes in build-mdx Folder
         id: check_changes
