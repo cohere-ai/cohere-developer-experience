@@ -1,0 +1,136 @@
+---
+title: Create Your First Index
+slug: "docs/first-index-creation"
+hidden: false
+description: >-
+  Create your First Compass Index
+image: ../../assets/images/6c1b0e4-cohere_meta_image.jpg
+keywords: 'compass search api unstructured search lexical symantic keyword rerank dense sparse'
+createdAt: 'Mon Jan 27 2024 10:14:00 MST (U.S. Mountain Time)'
+updatedAt: 'Mon Jan 27 2024 10:14:00 MST (U.S. Mountain Time)'
+---
+
+# Step 1: Import dependencies
+```python PYTHON
+from cohere.compass.clients.compass import CompassClient
+from cohere.compass.clients.parser import CompassParserClient
+from cohere.compass.clients import ParserConfig, scan_folder
+```
+
+# Step 2: Create Clients
+
+```python PYTHON
+# Create Clients
+api_url = "http://compass-api-stg-compass:8080"
+parser_url = "http://compass-parser-stg-compass:8083"
+
+# Your bearer token
+user_token = "{Your API Token}"
+
+co_compass = CompassClient(index_url=api_url, bearer_token=user_token)
+
+# Here we are going to instatiate a second parser where we set the parsing strategy to the high-quality pipeline
+parserConfig=ParserConfig(pdf_parsing_strategy="ImageToMarkdown")
+co_parser = CompassParserClient(parser_url=parser_url, parser_config=parserConfig)
+```
+
+# Step 3: Create your Index and Index your PDFs
+
+```python PYTHON
+# Create the index
+index="mixed_modality_index"
+
+res=co_compass.create_index(index_name=index)
+
+index_data='{Path to the Folder holding PDF}'
+
+
+for file in files:
+    # Each file should call the parser 
+    parsed_chunks=co_parser.process_file(filename=file)
+    # Each file is pre-processed into Compass Chunks which are then inserted into the Index
+    res=co_compass.insert_docs(
+        index_name=index,
+        docs=parsed_chunks
+    )
+```
+
+Now that you’ve created your index, you should check that index exists
+
+```python PYTHON
+# Check to see if your index has been created
+res = co_compass.list_indexes()
+
+result = next((d for d in res.result['indexes'] if d['name'] == index), None)
+
+result
+```
+
+At this point in time you should received something like this: 
+
+`{'name': 'my_first_compass_index', 'count': 0, 'parent_doc_count': 0}`
+
+At this point you should have your first index created which is empty. The count refers to the number of chunks in the index, and the parent_doc_count refers to the number of files inserted into the index. For now, both should be 0.
+
+# Step 4: Parse and Insert Documents into your Index
+
+Download the sample files and put them into a local directory
+
+```python PYTHON
+# Get your file directory
+index_data = '{Your File Path}'
+
+# Grabbing the file paths to each file in our local folder
+files = scan_folder(folder_path=index_data, recursive=True)
+
+for file in files:
+    # Each file should call the parser to be processed
+    parsed_chunks=co_parser.process_file(filename=file)
+    # Each file is pre-processed into Compass Chunks which are then inserted into the Index
+    res=co_compass.insert_docs(
+        index_name=index,
+        docs=parsed_chunks
+    )
+```
+
+Now that the documents have been inserted into your index, you can check the status of your index
+
+```python PYTHON
+# Check to see if the files have been indexed
+res = co_compass.list_indexes()
+
+result = next((d for d in res.result['indexes'] if d['name'] == index), None)
+
+result
+```
+
+At this point in time, if you indexed the sample documents you should receive something like this: 
+
+`{'name': 'my_first_compass_index', 'count': 258, 'parent_doc_count': 3}`
+
+# Step 5: Searching
+
+We will conduct a preliminary search against your index using the `search_chunks` method
+
+```python PYTHON
+# Conducting your first search
+query = "How do I set up a new android device if I already have one?"
+
+results = co_compass.search_chunks(query=query,index_name=index,top_k=3)
+
+for index, i in enumerate (results.hits):
+    print (f"Position: {index} | File Name: {i.origin['filename']} | Page Number: {i.origin['page_number']}")
+    print(f"Content: {i.content['text']}\n")
+```
+
+# Step 6: Clean-Up
+
+```python PYTHON
+# Clean up the index
+res=co_compass.delete_index(index_name=index)
+res
+```
+
+# Conclusion:
+
+You have now inserted your first documents into a Compass index. The total number of chunks will differ from the total number of parent documents which respects the number of files inserted into an index.
