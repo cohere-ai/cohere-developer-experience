@@ -1,5 +1,5 @@
 ---
-title: Building an Agent with Cohere
+title: Building a Generative AI Agent with Cohere
 slug: /docs/building-an-agent-with-cohere
 
 description: "This page describes building a generative-AI powered agent with Cohere."
@@ -35,7 +35,8 @@ To get started, first we need to install the `cohere` library and create a Coher
 import numpy as np
 import cohere
 
-co = cohere.Client("COHERE_API_KEY") # Get your API key: https://dashboard.cohere.com/api-keys
+# Get your API key: https://dashboard.cohere.com/api-keys
+co = cohere.Client("COHERE_API_KEY")  
 ```
 
 ## Creating tools
@@ -52,27 +53,48 @@ Here, we are defining a Python function for each tool, but more broadly, the too
 # Create the tools
 def search_faqs(query):
     faqs = [
-        {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
-        {"text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."}
+        {
+            "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+        },
+        {
+            "text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."
+        },
     ]
-    return  {"faqs" : faqs}
+    return {"faqs": faqs}
+
 
 def search_emails(query):
     emails = [
-        {"from": "it@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "Setting Up Your IT Needs", "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts."},
-        {"from": "john@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "First Week Check-In", "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!"}
+        {
+            "from": "it@co1t.com",
+            "to": "david@co1t.com",
+            "date": "2024-06-24",
+            "subject": "Setting Up Your IT Needs",
+            "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.",
+        },
+        {
+            "from": "john@co1t.com",
+            "to": "david@co1t.com",
+            "date": "2024-06-24",
+            "subject": "First Week Check-In",
+            "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!",
+        },
     ]
-    return  {"emails" : emails}
-    
+    return {"emails": emails}
+
+
 def create_calendar_event(date: str, time: str, duration: int):
     # You can implement any logic here
-    return {"is_success": True,
-            "message": f"Created a {duration} hour long event at {time} on {date}"}
-    
+    return {
+        "is_success": True,
+        "message": f"Created a {duration} hour long event at {time} on {date}",
+    }
+
+
 functions_map = {
     "search_faqs": search_faqs,
     "search_emails": search_emails,
-    "create_calendar_event": create_calendar_event
+    "create_calendar_event": create_calendar_event,
 }
 ```
 
@@ -84,48 +106,48 @@ This schema informs the LLM about what the tool does, and the LLM decides whethe
 # Define the tools
 tools = [
     {
-      "name": "search_faqs",
-      "description": "Given a user query, searches a company's frequently asked questions (FAQs) list and returns the most relevant matches to the query.",
-      "parameter_definitions": {
-        "query": {
-          "description": "The query from the user",
-          "type": "str",
-          "required": True
-        }
-      }
-    }, 
-    {
-      "name": "search_emails",
-      "description": "Given a user query, searches a person's emails and returns the most relevant matches to the query.",
-      "parameter_definitions": {
-        "query": {
-          "description": "The query from the user",
-          "type": "str",
-          "required": True
-        }
-      }
-    }, 
-    {
-      "name": "create_calendar_event",
-      "description": "Creates a new calendar event of the specified duration at the specified time and date. A new event cannot be created on the same time as an existing event.",
-      "parameter_definitions": {
-        "date": {
-          "description": "the date on which the event starts, formatted as mm/dd/yy",
-          "type": "str",
-          "required": True
+        "name": "search_faqs",
+        "description": "Given a user query, searches a company's frequently asked questions (FAQs) list and returns the most relevant matches to the query.",
+        "parameter_definitions": {
+            "query": {
+                "description": "The query from the user",
+                "type": "str",
+                "required": True,
+            }
         },
-        "time": {
-          "description": "the time of the event, formatted using 24h military time formatting",
-          "type": "str",
-          "required": True
+    },
+    {
+        "name": "search_emails",
+        "description": "Given a user query, searches a person's emails and returns the most relevant matches to the query.",
+        "parameter_definitions": {
+            "query": {
+                "description": "The query from the user",
+                "type": "str",
+                "required": True,
+            }
         },
-        "duration": {
-          "description": "the number of hours the event lasts for",
-          "type": "float",
-          "required": True
-        }
-      }
-    }
+    },
+    {
+        "name": "create_calendar_event",
+        "description": "Creates a new calendar event of the specified duration at the specified time and date. A new event cannot be created on the same time as an existing event.",
+        "parameter_definitions": {
+            "date": {
+                "description": "the date on which the event starts, formatted as mm/dd/yy",
+                "type": "str",
+                "required": True,
+            },
+            "time": {
+                "description": "the time of the event, formatted using 24h military time formatting",
+                "type": "str",
+                "required": True,
+            },
+            "duration": {
+                "description": "the number of hours the event lasts for",
+                "type": "float",
+                "required": True,
+            },
+        },
+    },
 ]
 ```
 
@@ -149,22 +171,21 @@ At its most basic, these four components interact in a workflow through four ste
 # Step 1: Get user message
 message = "Any messages about getting setup with IT?"
 
-preamble="""## Task & Context
+preamble = """## Task & Context
 You are an assistant who assist new employees of Co1t with their first week. You respond to their questions and assist them with their needs. Today is Monday, June 24, 2024"""
 
 # Step 2: Tool planning and calling
-response = co.chat(
-    message=message,
-    preamble=preamble,
-    tools=tools)
+response = co.chat(message=message, preamble=preamble, tools=tools)
 
 if response.tool_calls:
     print("Tool plan:")
-    print(response.text,"\n")
-        
+    print(response.text, "\n")
+
     print("Tool calls:")
     for call in response.tool_calls:
-        print(f"Tool name: {call.name} | Parameters: {call.parameters}")
+        print(
+            f"Tool name: {call.name} | Parameters: {call.parameters}"
+        )
 ```
 
 ```
@@ -189,7 +210,7 @@ for tc in response.tool_calls:
     tool_output = functions_map[tc.name](**tc.parameters)
     tool_results.append({"call": tool_call, "outputs": [tool_output]})
 
-print("Tool results:") 
+print("Tool results:")
 for result in tool_results:
     print(result)
 ```
@@ -204,17 +225,17 @@ Tool results:
 ```python PYTHON
 # Step 4: Response and citation generation
 response = co.chat(
-    message="", # In response generation, we set the message as empty
+    message="",  # In response generation, we set the message as empty
     preamble=preamble,
     tools=tools,
     tool_results=tool_results,
-    chat_history=response.chat_history
+    chat_history=response.chat_history,
 )
 
 # Print final response
 print("Final response:")
 print(response.text)
-print("="*50)
+print("=" * 50)
 
 # Print citations (if any)
 if response.citations:
@@ -250,60 +271,65 @@ Let's create a function to called `run_assistant` to implement these steps, and 
 ```python PYTHON
 model = "command-r-plus-08-2024"
 
-preamble="""## Task & Context
+preamble = """## Task & Context
 You are an assistant who assists new employees of Co1t with their first week. You respond to their questions and assist them with their needs. Today is Monday, June 24, 2024"""
+
 
 # A function that runs multi-step tool use
 def run_assistant(message, chat_history=[]):
     # Step 1: get user message
     print(f"Question:\n{message}")
-    print("="*50)
+    print("=" * 50)
 
-    # Step 2: Generate tool calls (if any)    
+    # Step 2: Generate tool calls (if any)
     response = co.chat(
         message=message,
         model=model,
         preamble=preamble,
         tools=tools,
-        chat_history=chat_history
+        chat_history=chat_history,
     )
 
     # Tool execution loop
     while response.tool_calls:
         tool_calls = response.tool_calls
-        
+
         if response.text:
             print("Intermediate response:")
-            print(response.text,"\n")
+            print(response.text, "\n")
         print("Tool calls:")
         for call in tool_calls:
-            print(f"Tool name: {call.name} | Parameters: {call.parameters}")
-        print("="*50)
-        
+            print(
+                f"Tool name: {call.name} | Parameters: {call.parameters}"
+            )
+        print("=" * 50)
+
         # Step 3: Get tool results
         tool_results = []
         for tc in tool_calls:
             tool_call = {"name": tc.name, "parameters": tc.parameters}
             tool_output = functions_map[tc.name](**tc.parameters)
-            tool_results.append({"call": tool_call, "outputs": [tool_output]})
-        
-        # Step 4: Generate response and citations                
+            tool_results.append(
+                {"call": tool_call, "outputs": [tool_output]}
+            )
+
+        # Step 4: Generate response and citations
         response = co.chat(
             message="",
             model=model,
             preamble=preamble,
             tools=tools,
             tool_results=tool_results,
-            chat_history=response.chat_history
+            chat_history=response.chat_history,
         )
 
         chat_history = response.chat_history
-        
+
     # Print final response
     print("Final response:")
     print(response.text)
-    print("="*50)
-    
+    print("=" * 50)
+
     # Print citations (if any)
     if response.citations:
         print("\nCITATIONS:")
@@ -313,7 +339,7 @@ def run_assistant(message, chat_history=[]):
         print("\nCITED REFERENCES:")
         for document in response.documents:
             print(document)
-                
+
     return chat_history
 ```
 
@@ -327,7 +353,9 @@ This requires tasks to happen over multiple steps in a sequence. Here, we see th
 This is also an example of tool use enabling a write operation instead of just a read operation that we saw with RAG.
 
 ```python PYTHON
-chat_history = run_assistant("Can you check if there are any lunch invites, and for those days, block an hour on my calendar from 12-1PM.")
+chat_history = run_assistant(
+    "Can you check if there are any lunch invites, and for those days, block an hour on my calendar from 12-1PM."
+)
 ```
 
 ```

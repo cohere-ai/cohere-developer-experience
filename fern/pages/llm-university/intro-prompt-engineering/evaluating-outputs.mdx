@@ -102,12 +102,14 @@ The example below uses the Command model to perform an A/B testing evaluation fo
 ```python PYTHON
 # Add text to evaluate
 ref_answer = "Because the sound quality is the best out there"
-gen_answers = ["Because the audio experience is unrivaled",
-                     "Because the microphone has the best quality"]
+gen_answers = [
+    "Because the audio experience is unrivaled",
+    "Because the microphone has the best quality",
+]
 
 # Run evaluation
 for gen_answer in gen_answers:
-    prompt=f"""User review: The CO-1T is a great pair of headphones! The sound quality is the \
+    prompt = f"""User review: The CO-1T is a great pair of headphones! The sound quality is the \
     best out there, and I can hear every detail of my music.
     Question: Why is the CO-1T a great headphone?
     Answer #1: {gen_answers[0]}
@@ -116,7 +118,11 @@ for gen_answer in gen_answers:
     Given the question about the user review, state whether Answer #1 or Answer #2 provides \
     the more accurate answer."""
 
-    response = co.generate(prompt=prompt,max_tokens=50, temperature=0).generations[0].text
+    response = (
+        co.generate(prompt=prompt, max_tokens=50, temperature=0)
+        .generations[0]
+        .text
+    )
     print(response)
 ```
 
@@ -150,6 +156,7 @@ Here is an example using ROUGE:
 ```python PYTHON
 from collections import Counter
 
+
 def rouge_1(reference, candidate):
     # Turn into unigrams
     reference_words = reference.split()
@@ -158,8 +165,11 @@ def rouge_1(reference, candidate):
     # Compute the number of overlapping words
     reference_count = Counter(reference_words)
     candidate_count = Counter(candidate_words)
-    overlap = sum(min(candidate_count[w], reference_count[w]) for w in candidate_count)
-    
+    overlap = sum(
+        min(candidate_count[w], reference_count[w])
+        for w in candidate_count
+    )
+
     # Compute precision, recall, and F1 score
     recall = overlap / len(reference_words)
     precision = overlap / len(candidate_words)
@@ -169,7 +179,7 @@ def rouge_1(reference, candidate):
     return {"recall": recall, "precision": precision, "f1": f1}
 
 
-for idx,gen_answer in enumerate(gen_answers):
+for idx, gen_answer in enumerate(gen_answers):
     result = rouge_1(ref_answer, gen_answer)
     print(f"Answer #{idx+1}")
     print(f"Precision: {result['precision']:.2f}")

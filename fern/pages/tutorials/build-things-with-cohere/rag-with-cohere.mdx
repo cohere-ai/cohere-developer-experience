@@ -1,5 +1,5 @@
 ---
-title: RAG with Cohere
+title: Building RAG models with Cohere
 slug: /docs/rag-with-cohere
 
 description: "This page walks through building a retrieval-augmented generation model with Cohere."
@@ -37,7 +37,8 @@ To get started, first we need to install the `cohere` library and create a Coher
 import numpy as np
 import cohere
 
-co = cohere.Client("COHERE_API_KEY") # Get your API key: https://dashboard.cohere.com/api-keys
+# Get your API key: https://dashboard.cohere.com/api-keys
+co = cohere.Client("COHERE_API_KEY")  
 ```
 
 ## Basic RAG
@@ -49,10 +50,18 @@ In this example, each document is a dictionary with one field, `text`. But we ca
 ```python PYTHON
 # Define the documents
 faqs_short = [
-    {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
-    {"text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."},
-    {"text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."},
-    {"text": "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year."}
+    {
+        "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+    },
+    {
+        "text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."
+    },
+    {
+        "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+    },
+    {
+        "text": "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year."
+    },
 ]
 ```
 
@@ -71,22 +80,23 @@ query = "Are there fitness-related perks?"
 
 # Generate the response
 response = co.chat(
-                message=query,
-                model="command-r-plus-08-2024",
-                documents=faqs_short)
+    message=query,
+    model="command-r-plus-08-2024",
+    documents=faqs_short,
+)
 
 # Display the response
 print(response.text)
 
 # Display the citations and source documents
 if response.citations:
-  print("\nCITATIONS:")
-  for citation in response.citations:
-    print(citation)
+    print("\nCITATIONS:")
+    for citation in response.citations:
+        print(citation)
 
-  print("\nDOCUMENTS:")
-  for document in response.documents:
-    print(document)
+    print("\nDOCUMENTS:")
+    for document in response.documents:
+        print(document)
 ```
 
 ```
@@ -131,13 +141,12 @@ In the example below, the resulting queries breaks down the user message into tw
 query = "How to stay connected with the company and do you organize team events?"
 
 # Generate the search queries
-response = co.chat(message=query,
-                  search_queries_only=True)
+response = co.chat(message=query, search_queries_only=True)
 
 queries = []
 for r in response.search_queries:
     queries.append(r.text)
-    
+
 print(queries)
 ```
 
@@ -152,13 +161,12 @@ And in the example below, the model decides that one query is sufficient.
 query = "How flexible are the working hours"
 
 # Generate the search queries
-response = co.chat(message=query,
-                  search_queries_only=True)
+response = co.chat(message=query, search_queries_only=True)
 
 queries = []
 for r in response.search_queries:
     queries.append(r.text)
-    
+
 print(queries)
 ```
 
@@ -183,23 +191,44 @@ First, we need to embed the documents to search from. We call the Embed endpoint
 ```python PYTHON
 # Define the documents
 faqs_long = [
-    {"text": "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged."},
-    {"text": "Finding Coffee Spots: For your caffeine fix, head to the break room's coffee machine or cross the street to the café for artisan coffee."},
-    {"text": "Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!"},
-    {"text": "Working Hours Flexibility: We prioritize work-life balance. While our core hours are 9 AM to 5 PM, we offer flexibility to adjust as needed."},
-    {"text": "Side Projects Policy: We encourage you to pursue your passions. Just be mindful of any potential conflicts of interest with our business."},
-    {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
-    {"text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."},
-    {"text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."},
-    {"text": "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year."},
-    {"text": "Proposing New Ideas: Innovation is welcomed! Share your brilliant ideas at our weekly team meetings or directly with your team lead."},
+    {
+        "text": "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged."
+    },
+    {
+        "text": "Finding Coffee Spots: For your caffeine fix, head to the break room's coffee machine or cross the street to the café for artisan coffee."
+    },
+    {
+        "text": "Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!"
+    },
+    {
+        "text": "Working Hours Flexibility: We prioritize work-life balance. While our core hours are 9 AM to 5 PM, we offer flexibility to adjust as needed."
+    },
+    {
+        "text": "Side Projects Policy: We encourage you to pursue your passions. Just be mindful of any potential conflicts of interest with our business."
+    },
+    {
+        "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+    },
+    {
+        "text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."
+    },
+    {
+        "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+    },
+    {
+        "text": "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year."
+    },
+    {
+        "text": "Proposing New Ideas: Innovation is welcomed! Share your brilliant ideas at our weekly team meetings or directly with your team lead."
+    },
 ]
 
 # Embed the documents
 doc_emb = co.embed(
-            model="embed-english-v3.0",
-            input_type="search_document",
-            texts=[doc['text'] for doc in faqs_long]).embeddings
+    model="embed-english-v3.0",
+    input_type="search_document",
+    texts=[doc["text"] for doc in faqs_long],
+).embeddings
 ```
 
 Next, we add a query, which asks about how to get to know the team.
@@ -211,15 +240,15 @@ We choose `search_query` as the `input_type` to ensure the model treats this as 
 query = "How to get to know my teammates"
 
 # Generate the search query
-response = co.chat(message=query,
-                  search_queries_only=True)
+response = co.chat(message=query, search_queries_only=True)
 query_optimized = response.search_queries[0].text
 
 # Embed the search query
 query_emb = co.embed(
     model="embed-english-v3.0",
     input_type="search_query",
-    texts=[query_optimized]).embeddings
+    texts=[query_optimized],
+).embeddings
 ```
 
 Now, we want to search for the most relevant documents to the query. For this, we make use of the `numpy` library to compute the similarity between each query-document pair using the dot product approach.
@@ -232,7 +261,9 @@ Here, we show the most relevant documents with their similarity scores.
 # Compute dot product similarity and display results
 n = 5
 scores = np.dot(query_emb, np.transpose(doc_emb))[0]
-scores_sorted = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)[:n]
+scores_sorted = sorted(
+    enumerate(scores), key=lambda x: x[1], reverse=True
+)[:n]
 
 retrieved_documents = [faqs_long[item[0]] for item in scores_sorted]
 
@@ -287,18 +318,22 @@ Here we select `top_n` to be 2, which will be the documents we will pass next fo
 
 ```python PYTHON
 # Rerank the documents
-results = co.rerank(query=query_optimized,
-                    documents=retrieved_documents,
-                    top_n=2,
-                    model='rerank-english-v3.0')
+results = co.rerank(
+    query=query_optimized,
+    documents=retrieved_documents,
+    top_n=2,
+    model="rerank-english-v3.0",
+)
 
 # Display the reranking results
 for idx, result in enumerate(results.results):
-    print(f"Rank: {idx+1}") 
+    print(f"Rank: {idx+1}")
     print(f"Score: {result.relevance_score}")
     print(f"Document: {retrieved_documents[result.index]}\n")
-    
-reranked_documents = [retrieved_documents[result.index] for result in results.results]
+
+reranked_documents = [
+    retrieved_documents[result.index] for result in results.results
+]
 ```
 
 ```
@@ -330,22 +365,23 @@ RAG introduces additional objects in the Chat response. Here we display two:
 ```python PYTHON
 # Generate the response
 response = co.chat(
-                message=query_optimized,
-                model="command-r-plus-08-2024",
-                documents=reranked_documents)
+    message=query_optimized,
+    model="command-r-plus-08-2024",
+    documents=reranked_documents,
+)
 
 # Display the response
 print(response.text)
 
 # Display the citations and source documents
 if response.citations:
-  print("\nCITATIONS:")
-  for citation in response.citations:
-    print(citation)
+    print("\nCITATIONS:")
+    for citation in response.citations:
+        print(citation)
 
-  print("\nDOCUMENTS:")
-  for document in response.documents:
-    print(document)
+    print("\nDOCUMENTS:")
+    for document in response.documents:
+        print(document)
 ```
 
 ```

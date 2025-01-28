@@ -108,21 +108,20 @@ user_message = "Make the text coherent: Pimelodella kronei is a species of three
 preamble = "You are a writing assistant that helps the user write coherent text."
 
 # Get default model response
-response_pretrained=co.chat(
-    	message=user_message,
-    	preamble=preamble,
-    	)
+response_pretrained = co.chat(
+    message=user_message,
+    preamble=preamble,
+)
 
 # Get fine-tuned model response
 response_finetuned = co.chat(
-    	message=user_message,
-    	model='acb944bb-fb49-4c29-a15b-e6a245a7bdf9-ft',
-    	preamble=preamble,
-    	)
+    message=user_message,
+    model="acb944bb-fb49-4c29-a15b-e6a245a7bdf9-ft",
+    preamble=preamble,
+)
 
-print(f"Default response: {response_pretrained.text}","\n-----")
+print(f"Default response: {response_pretrained.text}", "\n-----")
 print(f"Fine-tuned response: {response_finetuned.text}")
-
 ```
 
 For this example, the output appears as follows:
@@ -148,33 +147,36 @@ To see this, we will borrow from the code in the [Building a Chatbot chapter](/d
 ```python PYTHON
 # Create a conversation ID
 import uuid
+
 conversation_id = str(uuid.uuid4())
 
 print('Starting the chat. Type "quit" to end.\n')
 
 while True:
-    
-	# User message
-	message = input("User: ")
-    
-	# Typing "quit" ends the conversation
-	if message.lower() == 'quit':
-    	print("Ending chat.")
-    	break
-    
-	# Chatbot response
-	stream = co.chat_stream(message=message,
-      model='acb944bb-fb49-4c29-a15b-e6a245a7bdf9-ft',
-      preamble=preamble,
-      conversation_id=conversation_id)
-    
-	print("Chatbot: ", end='')
 
-	for event in stream:
+    # User message
+    message = input("User: ")
+
+    # Typing "quit" ends the conversation
+    if message.lower() == "quit":
+        print("Ending chat.")
+        break
+
+        # Chatbot response
+        stream = co.chat_stream(
+            message=message,
+            model="acb944bb-fb49-4c29-a15b-e6a245a7bdf9-ft",
+            preamble=preamble,
+            conversation_id=conversation_id,
+        )
+
+        print("Chatbot: ", end="")
+
+    for event in stream:
         if event.event_type == "text-generation":
-            print(event.text, end='')
+            print(event.text, end="")
 
-	print("\n","-"*50)
+        print("\n", "-" * 50)
 ```
 
 We can use the code above to have a conversation with the fine-tuned model.

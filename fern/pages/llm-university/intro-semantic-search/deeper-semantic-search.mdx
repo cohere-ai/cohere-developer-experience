@@ -30,7 +30,7 @@ As you've seen before, semantic search goes way beyond keyword search. The appli
 ### 1. Download the Dependencies
 
 ```python PYTHON
-#title Import libraries (Run this cell to execute required code) {display-mode: "form"}
+# title Import libraries (Run this cell to execute required code) {display-mode: "form"}
 
 import cohere
 import numpy as np
@@ -43,8 +43,9 @@ import altair as alt
 from sklearn.metrics.pairwise import cosine_similarity
 from annoy import AnnoyIndex
 import warnings
-warnings.filterwarnings('ignore')
-pd.set_option('display.max_colwidth', None)
+
+warnings.filterwarnings("ignore")
+pd.set_option("display.max_colwidth", None)
 ```
 
 ### 2. Get the Archive of Questions
@@ -83,14 +84,15 @@ To get a thousand embeddings of this length should take a few seconds.
 
 ```python PYTHON
 # Paste your API key here. Remember to not share publicly
-api_key = ''
+api_key = ""
 
 # Create and retrieve a Cohere API key from dashboard.cohere.ai/welcome/register
 co = cohere.Client(api_key)
 
 # Get the embeddings
-embeds = co.embed(texts=list(df['text']),
-                  model='embed-english-v2.0').embeddings
+embeds = co.embed(
+    texts=list(df["text"]), model="embed-english-v2.0"
+).embeddings
 ```
 
 ### 4. Build the Index, search Using an Index and Conduct Nearest Neighbour Search
@@ -101,12 +103,12 @@ Let's build an index using the library called <a target="_blank" href="https://g
 
 ```python PYTHON
 # Create the search index, pass the size of embedding
-search_index = AnnoyIndex(np.array(embeds).shape[1], 'angular')
+search_index = AnnoyIndex(np.array(embeds).shape[1], "angular")
 # Add all the vectors to the search index
 for i in range(len(embeds)):
     search_index.add_item(i, embeds[i])
-search_index.build(10) # 10 trees
-search_index.save('test.ann')
+search_index.build(10)  # 10 trees
+search_index.save("test.ann")
 ```
 
 After building the index, we can use it to retrieve the nearest neighbours either of existing questions (section 3.1), or of new questions that we embed (section 3.2).
@@ -119,19 +121,24 @@ If we're only interested in measuring the similarities between the questions in 
 # Choose an example (we'll retrieve others similar to it)
 example_id = 92
 # Retrieve nearest neighbors
-similar_item_ids = search_index.get_nns_by_item(example_id,10,
-                                                include_distances=True)
+similar_item_ids = search_index.get_nns_by_item(
+    example_id, 10, include_distances=True
+)
 # Format and print the text and distances
-results = pd.DataFrame(data={'texts': df.iloc[similar_item_ids[0]]['text'],
-                             'distance': similar_item_ids[1]}).drop(example_id)
+results = pd.DataFrame(
+    data={
+        "texts": df.iloc[similar_item_ids[0]]["text"],
+        "distance": similar_item_ids[1],
+    }
+).drop(example_id)
 print(f"Question:'{df.iloc[example_id]['text']}'\nNearest neighbors:")
 results
 ```
 
 ```python PYTHON
 # Output:
-Question:'What are bear and bull markets ?'
-Nearest neighbors:
+"Question:'What are bear and bull markets ?'"
+"Nearest neighbors:"
 ```
 
 |     | texts                                          | distance |
@@ -154,15 +161,21 @@ We're not limited to searching using existing items. If we get a query, we can e
 query = "What is the tallest mountain in the world?"
 
 # Get the query's embedding
-query_embed = co.embed(texts=[query],
-                  model="embed-english-v2.0").embeddings
+query_embed = co.embed(
+    texts=[query], model="embed-english-v2.0"
+).embeddings
 
 # Retrieve the nearest neighbors
-similar_item_ids = search_index.get_nns_by_vector(query_embed[0],10,
-                                                include_distances=True)
+similar_item_ids = search_index.get_nns_by_vector(
+    query_embed[0], 10, include_distances=True
+)
 # Format the results
-results = pd.DataFrame(data={'texts': df.iloc[similar_item_ids[0]]['text'], 
-                             'distance': similar_item_ids[1]})
+results = pd.DataFrame(
+    data={
+        "texts": df.iloc[similar_item_ids[0]]["text"],
+        "distance": similar_item_ids[1],
+    }
+)
 
 
 print(f"Query:'{query}'\nNearest neighbors:")
@@ -185,31 +198,27 @@ results
 ### 5. Visualize the archive
 
 ```python PYTHON
-#@title Plot the archive {display-mode: "form"}
+# @title Plot the archive {display-mode: "form"}
 
 # UMAP reduces the dimensions from 1024 to 2 dimensions that we can plot
-reducer = umap.UMAP(n_neighbors=20) 
+reducer = umap.UMAP(n_neighbors=20)
 umap_embeds = reducer.fit_transform(embeds)
 # Prepare the data to plot and interactive visualization
 # using Altair
-df_explore = pd.DataFrame(data={'text': df['text']})
-df_explore['x'] = umap_embeds[:,0]
-df_explore['y'] = umap_embeds[:,1]
+df_explore = pd.DataFrame(data={"text": df["text"]})
+df_explore["x"] = umap_embeds[:, 0]
+df_explore["y"] = umap_embeds[:, 1]
 
 # Plot
-chart = alt.Chart(df_explore).mark_circle(size=60).encode(
-    x=#'x',
-    alt.X('x',
-        scale=alt.Scale(zero=False)
-    ),
-    y=
-    alt.Y('y',
-        scale=alt.Scale(zero=False)
-    ),
-    tooltip=['text']
-).properties(
-    width=700,
-    height=400
+chart = (
+    alt.Chart(df_explore)
+    .mark_circle(size=60)
+    .encode(
+        x=alt.X("x", scale=alt.Scale(zero=False)),  #'x',
+        y=alt.Y("y", scale=alt.Scale(zero=False)),
+        tooltip=["text"],
+    )
+    .properties(width=700, height=400)
 )
 chart.interactive()
 ```

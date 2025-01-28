@@ -31,8 +31,21 @@ def format_python_snippets_in_mdx(file_path, line_length=DEFAULT_LINE_LENGTH):
 
     def format_with_black(match):
         code = match.group(1)
-        formatted_code = black.format_str(code, mode=black_mode)
-        return f"```python\n{formatted_code.strip()}\n```"
+
+        # Comment out lines starting with '!'
+        processed_code = re.sub(r"^\s*!(.*)", r"# TEMP_COMMENT !\1", code, flags=re.MULTILINE)
+
+        try:
+            # Format the code with Black
+            formatted_code = black.format_str(processed_code, mode=black_mode)
+        except black.NothingChanged:
+            # If Black doesn't change anything, use original
+            formatted_code = processed_code  
+
+        # Revert the commented lines starting with '!'
+        reverted_code = re.sub(r"^\s*# TEMP_COMMENT !(.*)", r"!\1", formatted_code, flags=re.MULTILINE)
+
+        return f"```python\n{reverted_code.strip()}\n```"
 
     new_content = code_block_pattern.sub(format_with_black, original_content)
 

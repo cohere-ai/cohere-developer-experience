@@ -134,9 +134,10 @@ Using a custom model is as simple as substituting the baseline model with the mo
 
 ```python PYTHON
 response = co.generate(
-  model='26db2994-cf88-4243-898d-31258411c120-ft', # REPLACE WITH YOUR MODEL ID
-  prompt="""Turn the following message to a virtual assistant into the correct action:
-	Send a message to Alison to ask if she can pick me up tonight to go to the concert together""")
+    model="26db2994-cf88-4243-898d-31258411c120-ft",  # REPLACE WITH YOUR MODEL ID
+    prompt="""Turn the following message to a virtual assistant into the correct action:
+	Send a message to Alison to ask if she can pick me up tonight to go to the concert together""",
+)
 ```
 
 But of course, we need to know if this model is performing better than the baseline in the first place. For this, there are a couple of ways we can evaluate our model.
@@ -178,17 +179,19 @@ We run the following code for each of the baseline (`command`) and the finetuned
 
 ```python PYTHON
 # Create a function to call the endpoint
-def generate_text(prompt,temperature,num_gens):
-  response = co.generate(
-    model='command', # Repeat with the custom model
-    prompt=prompt,
-    temperature=temperature,
-    num_generations = num_gens,
-    stop_sequences=["\n\n"])
-  return response
+def generate_text(prompt, temperature, num_gens):
+    response = co.generate(
+        model="command",  # Repeat with the custom model
+        prompt=prompt,
+        temperature=temperature,
+        num_generations=num_gens,
+        stop_sequences=["\n\n"],
+    )
+    return response
+
 
 # Define the prompt
-prompt="""Turn the following message to a virtual assistant into the correct action:
+prompt = """Turn the following message to a virtual assistant into the correct action:
 Send a message to Alison to ask if she can pick me up tonight to go to the concert together"""
 
 # Define the range of temperature values and num_generations
@@ -198,14 +201,14 @@ num_gens = 3
 # Iterate generation over the range of temperature values
 print(f"Temperature range: {temperatures}")
 for temperature in temperatures:
-  response = generate_text(prompt,temperature,num_gens)
-  print("-"*10)
-  print(f'Temperature: {temperature}')
-  print("-"*10)
-  for i in range(3):
-    text = response.generations[i].text
-    print(f'Generation #{i+1}')
-    print(f'Text: {text}\n')
+    response = generate_text(prompt, temperature, num_gens)
+    print("-" * 10)
+    print(f"Temperature: {temperature}")
+    print("-" * 10)
+    for i in range(3):
+        text = response.generations[i].text
+        print(f"Generation #{i+1}")
+        print(f"Text: {text}\n")
 ```
 
 Here are the responses.

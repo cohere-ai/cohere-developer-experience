@@ -85,7 +85,9 @@ model_package_map = {
 region = boto3.Session().region_name
 
 if region not in model_package_map.keys():
-    raise Exception(f"Current boto3 session region {region} is not supported.")
+    raise Exception(
+        f"Current boto3 session region {region} is not supported."
+    )
 
 model_package_arn = model_package_map[region]
 ```
@@ -95,7 +97,12 @@ model_package_arn = model_package_map[region]
 ```python PYTHON
 co = Client(region_name=region)
 
-co.create_endpoint(arn=model_package_arn, endpoint_name="cohere-gpt-xlarge", instance_type="ml.p4d.24xlarge", n_instances=1)
+co.create_endpoint(
+    arn=model_package_arn,
+    endpoint_name="cohere-gpt-xlarge",
+    instance_type="ml.p4d.24xlarge",
+    n_instances=1,
+)
 
 # You will get "---------!" as the output. This is expected.
 ```
@@ -103,7 +110,7 @@ co.create_endpoint(arn=model_package_arn, endpoint_name="cohere-gpt-xlarge", ins
 ### Step 4: Run Inference on the Endpoint
 
 ```python PYTHON
-prompt="Write a creative product description for a wireless headphone product named the CO-1T"
+prompt = "Write a creative product description for a wireless headphone product named the CO-1T"
 
 response = co.generate(prompt=prompt, max_tokens=100, temperature=0.9)
 
