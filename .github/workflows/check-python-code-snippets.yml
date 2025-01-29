@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -34,6 +36,18 @@ jobs:
 
       - name: Run Python MDX Snippet Formatter
         shell: bash
-        env:
-          CI: true
         run: poetry run python .github/scripts/check_python_code_snippets.py fern/pages
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git diff --exit-code || echo "::set-output name=changes::true"
+
+      - name: Commit and Push Changes
+        if: steps.diff.outputs.changes == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -u
+          git commit -m "Format Python snippets in MDX files"
+          git push
