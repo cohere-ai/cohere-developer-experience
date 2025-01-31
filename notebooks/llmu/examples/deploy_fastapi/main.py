@@ -1,5 +1,5 @@
+import json
 import cohere
-from cohere import ClassifyExample
 from fastapi import FastAPI
 from pydantic import BaseModel, conlist
 
@@ -8,30 +8,65 @@ co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key: https://dashboar
 
 app = FastAPI()
 
+def classify_sentiment(product_review):
+        # Create prompt with examples
+        prompt = """Classify this text into positive, negative, or neutral sentiment. Here are some examples:
+
+        Positive examples:
+        - "The order came 5 days early"
+        - "The item exceeded my expectations" 
+        - "I ordered more for my friends"
+        - "I would buy this again"
+        - "I would recommend this to others"
+
+        Negative examples:
+        - "The package was damaged"
+        - "The order is 5 days late"
+        - "The order was incorrect" 
+        - "I want to return my item"
+        - "The item's material feels low quality"
+
+        Neutral examples:
+        - "The item was nothing special"
+        - "I would not buy this again but it wasn't a waste of money"
+        - "The item was neither amazing or terrible"
+        - "The item was okay"
+        - "I have no emotions towards this item"
+
+        Text to classify:
+        {}"""
+
+        res = co.chat(
+            model="command-r-plus-08-2024",
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt.format(product_review)
+                }
+            ],
+            temperature=0.0,
+            response_format={
+                "type": "json_object",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "class": {
+                            "type": "string",
+                            "enum": ["positive", "negative", "neutral"]
+                        }
+                    },
+                    "required": ["class"]
+                }
+            }
+        )
+        return json.loads(res.message.content[0].text)["class"]
+    
 class ProductReviews(BaseModel):
     reviews: conlist(str, min_length=1)
 
 @app.post("/prediction")
 def predict_sentiment(product_reviews: ProductReviews):
-    examples=[ClassifyExample(text="The order came 5 days early", label="positive"), 
-            ClassifyExample(text="The item exceeded my expectations", label="positive"), 
-            ClassifyExample(text="I ordered more for my friends", label="positive"), 
-            ClassifyExample(text="I would buy this again", label="positive"), 
-            ClassifyExample(text="I would recommend this to others", label="positive"), 
-            ClassifyExample(text="The package was damaged", label="negative"), 
-            ClassifyExample(text="The order is 5 days late", label="negative"), 
-            ClassifyExample(text="The order was incorrect", label="negative"), 
-            ClassifyExample(text="I want to return my item", label="negative"), 
-            ClassifyExample(text="The item's material feels low quality", label="negative"), 
-            ClassifyExample(text="The item was nothing special", label="neutral"), 
-            ClassifyExample(text="I would not buy this again but it wasn't a waste of money", label="neutral"), 
-            ClassifyExample(text="The item was neither amazing or terrible", label="neutral"), 
-            ClassifyExample(text="The item was okay", label="neutral"), 
-            ClassifyExample(text="I have no emotions towards this item", label="neutral")]
-    
-    response = co.classify(
-        model="embed-english-v2.0",
-        inputs=product_reviews.reviews,
-        examples=examples)
-
-    return response.classifications
+    sentiments = []
+    for review in product_reviews.reviews:
+        sentiments.append(classify_sentiment(review))
+    return sentiments
