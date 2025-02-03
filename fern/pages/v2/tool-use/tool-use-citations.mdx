@@ -13,19 +13,279 @@ updatedAt: "Tue Jun 18 2024 07:20:15 GMT+0000 (Coordinated Universal Time)"
 ---
 
 ## Accessing citations
-[[TODO - describe citations and how to access them, what do they contain]]
+
+The Chat endpoint generates fine-grained citations for its tool use response. This capability is included out-of-the-box with the Command family of models.
+
+The following sections describe how to access the citations in both the non-streaming and streaming modes.
 
 ### Non-streaming
-[[TODO - show how to access citations from the response object in a non-streaming scenario]]
 
+First, define the tool and its associated schema.
+
+```python PYTHON
+# ! pip install -U cohere
+import cohere
+import json
+
+co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+
+def get_weather(location):
+    temperature = {
+        "bern": "22°C",
+        "madrid": "24°C",
+        "brasilia": "28°C"
+    }
+    loc = location.lower()
+    if loc in temperature:
+        return [{"temperature": {loc: temperature[loc]}}]
+    return [{"temperature": {loc: "Unknown"}}]
+
+functions_map = {"get_weather": get_weather}
+
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "gets the weather of a given location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "the location to get weather. Provide just the city name without the country name.",
+                    }
+                },
+                "required": ["location"],
+            },
+        },
+    }
+]
+```
+
+Next, run the tool calling and execution steps.
+
+```python PYTHON
+messages = [{"role": "user", "content": "What's the weather in Madrid and Brasilia?"}]
+
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=messages,
+    tools=tools
+)
+
+if response.message.tool_calls:
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_plan": response.message.tool_plan,
+            "tool_calls": response.message.tool_calls,
+        }
+    )
+    
+    for tc in response.message.tool_calls:
+        tool_result = functions_map[tc.function.name](
+            **json.loads(tc.function.arguments)
+        )
+        tool_content = []
+        for data in tool_result:
+            tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+        messages.append(
+            {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
+        )
+```
+
+In the non-streaming mode (using `chat` to generate the model response), the citations are provided in the `message.citations` field of the response object.
+
+Each citation object contains:
+- `start` and `end`: the start and end indices of the text that cites a source(s)
+- `text`: its corresponding span of text
+- `sources`: the source(s) that it references
+
+```python PYTHON
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=messages,
+    tools=tools
+)
+
+messages.append(
+    {"role": "assistant", "content": response.message.content[0].text}
+)
+
+print(response.message.content[0].text)
+
+for citation in response.message.citations:
+    print(citation, "\n")
+```
+
+```mdx wordWrap
+It is currently 24°C in Madrid and 28°C in Brasilia.
+
+start=16 end=20 text='24°C' sources=[ToolSource(type='tool', id='get_weather_14brd1n2kfqj:0', tool_output={'temperature': '{"madrid":"24°C"}'})] type='TEXT_CONTENT' 
+
+start=35 end=39 text='28°C' sources=[ToolSource(type='tool', id='get_weather_vdr9cvj619fk:0', tool_output={'temperature': '{"brasilia":"28°C"}'})] type='TEXT_CONTENT'
+```
 ### Streaming
-[[TODO - show how to access citations from the response object in a streaming scenario]]
+In a streaming scenario (using `chat_stream` to generate the model response), the citations are provided in the `citation-start` events.
+
+Each citation object contains the same fields as the [non-streaming scenario](###non-streaming).
+
+```python PYTHON
+response = co.chat_stream(
+    model="command-r-plus-08-2024",
+    messages=messages,
+    tools=tools
+)
+
+response_text = ""
+citations  = []
+for chunk in response:
+    if chunk:
+        if chunk.type == "content-delta":
+            response_text += chunk.delta.message.content.text
+            print(chunk.delta.message.content.text, end="")
+        if chunk.type == "citation-start":
+            citations.append(chunk.delta.message.citations)
+                        
+messages.append(
+    {"role": "assistant", "content": response_text}
+)
+
+for citation in citations:
+    print(citation, "\n")
+```
+
+```mdx wordWrap
+It is currently 24°C in Madrid and 28°C in Brasilia.
+
+start=16 end=20 text='24°C' sources=[ToolSource(type='tool', id='get_weather_dkf0akqdazjb:0', tool_output={'temperature': '{"madrid":"24°C"}'})] type='TEXT_CONTENT' 
+
+start=35 end=39 text='28°C' sources=[ToolSource(type='tool', id='get_weather_gh65bt2tcdy1:0', tool_output={'temperature': '{"brasilia":"28°C"}'})] type='TEXT_CONTENT' 
+```
 
 ## Citation modes
-[[TODO - describe citation modes - fast, accurate, etc]]
+When ruuning tool use in streaming mode, it’s possible to configure how citations are generated and presented. You can choose between fast citations or accurate citations, depending on your latency and precision needs:
 
 ### Accurate citations
-[[TODO - show code example of fast citations]]
+The model produces its answer first, and then, after the entire response is generated, it provides citations that map to specific segments of the response text. This approach may incur slightly higher latency, but it ensures the citation indices are more precisely aligned with the final text segments of the model’s answer. This is the default option, or you can explicitly specify it by adding the `citation_options={"mode": "accurate"}` argument in the API call.
+
+Here is an example. To make things concise, let's start with a pre-defined list of `messages` with the user query, tool calling, and tool results are already available.
+
+```python PYTHON
+# ! pip install -U cohere
+import cohere
+import json
+
+co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+
+from cohere import ToolCallV2, ToolCallV2Function
+
+messages = [
+    {"role": "user", "content": "What's the weather in Madrid and Brasilia?"},
+    {
+        "role": "assistant",
+        "tool_plan": "I will search for the weather in Madrid and Brasilia.",
+        "tool_calls": [
+            ToolCallV2(
+                id="get_weather_dkf0akqdazjb",
+                type="function",
+                function=ToolCallV2Function(
+                    name="get_weather", arguments='{"location":"Madrid"}'
+                ),
+            ),
+            ToolCallV2(
+                id="get_weather_gh65bt2tcdy1",
+                type="function",
+                function=ToolCallV2Function(
+                    name="get_weather", arguments='{"location":"Brasilia"}'
+                ),
+            ),
+        ],
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "get_weather_dkf0akqdazjb",
+        "content": [
+            {
+                "type": "document",
+                "document": {
+                    "data": '{"temperature": {"madrid": "24\\u00b0C"}}',
+                    "id" : "1"
+                },
+            }
+        ],
+    },
+    {
+        "role": "tool",
+        "tool_call_id": "get_weather_gh65bt2tcdy1",
+        "content": [
+            {
+                "type": "document",
+                "document": {
+                    "data": '{"temperature": {"brasilia": "28\\u00b0C"}}',
+                    "id" : "2"
+                },
+            }
+        ],
+    },
+]
+```
+
+With the `citation_options` mode set to `accurate`, we get the citations after the entire response is generated.
+
+```python PYTHON
+response = co.chat_stream(
+    model="command-r-plus-08-2024",
+    messages=messages,
+    tools=tools,
+    citation_options={"mode": "accurate"}
+)
+
+response_text = ""
+citations  = []
+for chunk in response:
+    if chunk:
+        if chunk.type == "content-delta":
+            response_text += chunk.delta.message.content.text
+            print(chunk.delta.message.content.text, end="")
+        if chunk.type == "citation-start":
+            citations.append(chunk.delta.message.citations)
+
+print("\n")            
+for citation in citations:
+    print(citation, "\n")
+```
+```mdx wordWrap
+It is currently 24°C in Madrid and 28°C in Brasilia.
+
+start=16 end=20 text='24°C' sources=[ToolSource(type='tool', id='1', tool_output={'temperature': '{"madrid":"24°C"}'})] type='TEXT_CONTENT' 
+
+start=35 end=39 text='28°C' sources=[ToolSource(type='tool', id='2', tool_output={'temperature': '{"brasilia":"28°C"}'})] type='TEXT_CONTENT' 
+```
 
 ### Fast citations
-[[TODO - show code example of fast citations]]
+The model generates citations inline, as the response is being produced. In streaming mode, you will see citations injected at the exact moment the model uses a particular piece of external context. This approach provides immediate traceability at the expense of slightly less precision in citation relevance. You can specify it by adding the `citation_options={"mode": "fast"}` argument in the API call.
+
+Here is an example using the same list of pre-defined`messages` as the above. With the `citation_options` mode set to `fast`, we get the citations inlineas the model generates the response.
+
+```python PYTHON
+response = co.chat_stream(
+    model="command-r-plus-08-2024",
+    messages=messages,
+    tools=tools,
+    citation_options={"mode": "fast"}
+)
+
+response_text = ""
+for chunk in response:
+    if chunk:
+        if chunk.type == "content-delta":
+            response_text += chunk.delta.message.content.text
+            print(chunk.delta.message.content.text, end="")
+        if chunk.type == "citation-start":
+            print(f" [{chunk.delta.message.citations.sources[0].id}]", end="")
+```
+```mdx wordWrap
+It is currently 24°C [1] in Madrid and 28°C [2] in Brasilia.
+```

@@ -59,7 +59,7 @@ functions_map = {"get_weather": get_weather}
 
 ### Defining the tool schema
 
-We also need to define the tool schemas in a format that can be passed to the Chat endpoint. The schema follows the JSON Schema specification and must contain the following fields: 
+We also need to define the tool schemas in a format that can be passed to the Chat endpoint. The schema follows the [JSON Schema specification](https://json-schema.org/) and must contain the following fields: 
 - `name`: the name of the tool.
 - `description`: a description of what the tool is and what it is used for.
 - `parameters`: a list of parameters that the tool accepts. For each parameter, we need to define the following fields:
@@ -69,7 +69,7 @@ We also need to define the tool schemas in a format that can be passed to the Ch
     - `description`: a description of what the parameter is and what it is used for.
   - `required`: a list of required parameters from the `properties` field.
 
-This schema informs the LLM about what the tool does, and the LLM decides whether to use a particular tool based on the information that it contains. Therefore, the more descriptive and clear the schema, the more likely the LLM will make the right tool call decisions.
+This schema informs the LLM about what the tool does, and the LLM decides whether to use a particular tool based on the information that it contains. Therefore, the more descriptive and clear the schema, the more likely the LLM will make the right tool call decisions. In a typical development cycle, some fields such as `name`, `description`, and `properties` will likely require a few rounds of iterations in order to get the best results (a similar idea to prompt engineering).
 
 ```python PYTHON
 tools = [
@@ -238,106 +238,12 @@ print(response.message.citations)
 [Citation(start=5, end=9, text='20°C', sources=[ToolSource(type='tool', id='get_weather_1byjy32y4hvq:0', tool_output={'temperature': '20C'})], type='TEXT_CONTENT')]
 ```
 
-## Parallel tool calling
-The LLM can also determine that more than one tool call is required, where it will call multiple tools in parallel. This can be calling the same tool multiple times or different tools for any number of calls.
 
-In the example below, the user asks for the weather in Toronto and New York. This requires calling the `get_weather` function twice, one for each location. This is reflected in the model's response, where two parallel tool calls are generated.
-
-```python PYTHON
-messages = [{"role": "user", "content": "What's the weather in Toronto and New York?"}]
-
-response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
-)
-
-if response.message.tool_calls:
-    messages.append(
-        {
-            "role": "assistant",
-            "tool_plan": response.message.tool_plan,
-            "tool_calls": response.message.tool_calls,
-        }
-    )
-    print(response.message.tool_plan, "\n")
-    print(response.message.tool_calls)
-```
-```mdx wordWrap
-I will search for the weather in Toronto and New York.
-
-[
-    ToolCallV2(
-        id="get_weather_9b0nr4kg58a8",
-        type="function",
-        function=ToolCallV2Function(
-            name="get_weather", arguments='{"location":"Toronto"}'
-        ),
-    ),
-    ToolCallV2(
-        id="get_weather_0qq0mz9gwnqr",
-        type="function",
-        function=ToolCallV2Function(
-            name="get_weather", arguments='{"location":"New York"}'
-        ),
-    ),
-]
-```
-
-## Directly answering
-A key attribute of tool use systems is the model’s ability to choose the right tools for a task. This includes the ability to decide to *not* use any tool, and instead, respond to a user message directly.
-
-In the example below, the user asks for a simple arithmetic question. The model determines that it does not need to use any of the available tools (only one, `get_weather`, in this case), and instead, directly answers the user.
-
-```python PYTHON
-messages = [{"role": "user", "content": "What's 2+2?"}]
-
-response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
-)
-
-if response.message.tool_calls:
-    print(response.message.tool_plan, "\n")
-    print(response.message.tool_calls)
-
-else:
-    print(response.message.content[0].text)
-```
-```mdx wordWrap
-The answer to 2+2 is 4.
-```
-
-## Forcing tool usage
-
-<Note>This feature is only compatible with the [Command R7B](https://docs.cohere.com/v2/docs/command-r7b) and newer models.</Note>
-
-As we saw in the previous examples, during the tool calling step, the model may decide to either:
-- make tool call(s)
-- or, respond to a user message directly.
-
-You can, however, force the model to choose one of these options. This is done via the `tool_choice` parameter.
-- You can force the model to make tool call(s), i.e. to not respond directly, by setting the `tool_choice` parameter to `REQUIRED`.
-- Alternatively, you can force the model to respond directly, i.e. to not make tool call(s), by setting the `tool_choice` parameter to `NONE`.
-
-By default, if you don’t specify the `tool_choice` parameter, then the model will decide between making tool calls or responding directly.
-
-```python PYTHON {5}
-response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools,
-    tool_choice="REQUIRED" # optional, to force tool calls
-    # tool_choice="NONE" # optional, to force a direct response
-)
-```
 ## State management
 This section gives a more detailed look at how the state is managed via the `messages` list.
 
 As described in the [tool use workflow](#tool-use-workflow) section above, at each step of the workflow, the endpoint requires that we append specific types of information to the `messages` list. This is to ensure that the model has the necessary context to generate its response at a given point.
 
-### Single turn
 In summary, each single turn of a conversation that involves tool calling consists of:
 1. a `user` message containing the user message (`content`)
 2. an `assistant` message, containing the tool calling information (`tool_plan` and `tool_calls`)
@@ -385,68 +291,25 @@ for message in messages:
 }
 ```
 
-Note that this sequence of messages will be different in these scenarios:
-- **Multi-step**: In a multi-step tool use scenario, instead of just one occurence of assistant-tool messages (items 2 and 3 above), there will be a sequence of assistant-tool messages to reflect the multiple steps of tool calling involved. This is further described in the [multi-step tool use documentation]([[TODO - add link]])
-- **Directly answering**: When the model decides to respond directly to the user, there will be no items 2 and 3 above (the tool calling and tool response messages). Instead, the final `assistant` message will contain the model's direct response to the user.
+The sequence of messages is represented in the diagram below.
 
-### Chatbots
+```mermaid
+%%{init: {'htmlLabels': true}}%%
+flowchart TD
+    A["<div style='width:150px; text-align:center; color:black;'>User (query)</div>"]
+    B["<div style='width:150px; text-align:center; color:black;'>Assistant (tool call)</div>"]
+    C["<div style='width:150px; text-align:center; color:black;'>Tool (tool result)</div>"]
+    D["<div style='width:150px; text-align:center; color:black;'>Assistant (response)</div>"]
 
-When building chatbots, we'll need to maintain the state of a conversation over multiple turns. In this case, we can keep appending to the `messages` list with the sequence of described in the [state management](#state-management) section above.
+    A -.-> B
+    B -.-> C
+    C -.-> D
 
-As an example, here's the messages list from the first conversation turn.
-```python PYTHON
-from cohere import ToolCallV2, ToolCallV2Function
-
-messages = [
-    {"role": "user", "content": "What's the weather in Toronto?"},
-    {
-        "role": "assistant",
-        "tool_plan": "I will search for the weather in Toronto.",
-        "tool_calls": [
-            ToolCallV2(
-                id="get_weather_1byjy32y4hvq",
-                type="function",
-                function=ToolCallV2Function(
-                    name="get_weather", arguments='{"location":"Toronto"}'
-                ),
-            )
-        ],
-    },
-    {
-        "role": "tool",
-        "tool_call_id": "get_weather_1byjy32y4hvq",
-        "content": [
-            {"type": "document", "document": {"data": '{"temperature": "20C"}'}}
-        ],
-    },
-    {"role": "assistant", "content": "It's 20°C in Toronto."},
-]
+    style A fill:#fff,stroke:#000,color:#000
+    style B fill:#fff,stroke:#000,color:#000
+    style C fill:#fff,stroke:#000,color:#000
+    style D fill:#fff,stroke:#000,color:#000
 ```
-Then, given a follow-up user message, the model correctly infers that the context of the user's message is about the weather.
 
-```python PYTHON
-messages.append({"role": "user", "content": "What about London?"})
-
-response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
-)
-
-if response.message.tool_calls:
-    messages.append(
-        {
-            "role": "assistant",
-            "tool_plan": response.message.tool_plan,
-            "tool_calls": response.message.tool_calls,
-        }
-    )
-    print(response.message.tool_plan, "\n")
-    print(response.message.tool_calls)
-```
-```mdx wordWrap
-I will search for the weather in London. 
-
-[ToolCallV2(id='get_weather_8hwpm7d4wr14', type='function', function=ToolCallV2Function(name='get_weather', arguments='{"location":"London"}'))]
-```
+Note that this sequence of messages represents a basic usage pattern in tool use. The next page [[TODO - add link]] will describe how this will be adapted for other scenarios.
 
