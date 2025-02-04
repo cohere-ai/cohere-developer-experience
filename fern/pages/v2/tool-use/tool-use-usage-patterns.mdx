@@ -12,11 +12,14 @@ createdAt: "Thu Feb 29 2024 18:05:29 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Tue Jun 18 2024 07:20:15 GMT+0000 (Coordinated Universal Time)"
 ---
 
-The tool use feature of the Chat endpoint comes with a set of capabilities that enable developers to implement a variety of tool use scenarios. This section describes the different patterns of tool use implementation supported by these capabilities. Each pattern can be implemented in isolation or in combination with the others.
+The tool use feature of the Chat endpoint comes with a set of capabilities that enable developers to implement a variety of tool use scenarios. This section describes the different patterns of tool use implementation supported by these capabilities. Each pattern can be implemented on its own or in combination with the others.
 
 ## Setup
 
 First, import the Cohere library and create a client.
+
+<Tabs>
+<Tab title="Cohere platform">
 
 ```python PYTHON
 # ! pip install -U cohere
@@ -24,8 +27,22 @@ import cohere
 
 co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
 ```
+</Tab>
 
-Let's also use the same tool defined from the example in the previous example[[TODO - link to basic example page]].
+<Tab title="Private deployment">
+```python PYTHON
+# ! pip install -U cohere
+import cohere
+
+co = cohere.ClientV2(
+    api_key="", # Leave this blank
+    base_url="<YOUR_DEPLOYMENT_URL>"
+)
+```
+</Tab>
+</Tabs>
+
+Let's use the same `get_weather` tool as in the previous example[[TODO - link to basic example page]].
 
 ```python PYTHON
 def get_weather(location):
@@ -127,12 +144,14 @@ The sequence of messages is represented in the diagram below.
 ```mermaid
 %%{init: {'htmlLabels': true}}%%
 flowchart TD
-    A["<div style='width:150px; text-align:center; color:black;'>User (query)</div>"]
-    B["<div style='width:150px; text-align:center; color:black;'>Assistant (tool calls)</div>"]
-    C["<div style='width:150px; text-align:center; color:black;'>Tool (tool result 1)</div>"]
-    D["<div style='width:150px; text-align:center; color:black;'>Tool (tool result 2)</div>"]
-    E["<div style='width:150px; text-align:center; color:black;'>Tool (tool result N)</div>"]
-    F["<div style='width:150px; text-align:center; color:black;'>Assistant (response)</div>"]
+    classDef defaultStyle fill:#fff,stroke:#000,color:#000;
+
+    A["<div><b>USER</b><br>Query</div>"]
+    B["<div><b>ASSISTANT</b><br>Tool calls</div>"]
+    C["<div><b>TOOL</b><br>Tool result #1</div>"]
+    D["<div><b>TOOL</b><br>Tool result #2</div>"]
+    E["<div><b>TOOL</b><br>Tool result #N</div>"]
+    F["<div><b>ASSISTANT</b><br>Response</div>"]
 
     A -.-> B
     B -.-> C
@@ -140,12 +159,7 @@ flowchart TD
     D -.-> E
     E -.-> F
 
-    style A fill:#fff,stroke:#000,color:#000
-    style B fill:#fff,stroke:#000,color:#000
-    style C fill:#fff,stroke:#000,color:#000
-    style D fill:#fff,stroke:#000,color:#000
-    style E fill:#fff,stroke:#000,color:#000
-    style F fill:#fff,stroke:#000,color:#000
+    class A,B,C,D,E,F defaultStyle;
 ```
 
 ## Directly answering
@@ -180,13 +194,14 @@ When the model opts to respond directly to the user, there will be no items 2 an
 ```mermaid
 %%{init: {'htmlLabels': true}}%%
 flowchart TD
-    A["<div style='width:150px; text-align:center; color:black;'>User (query)</div>"]
-    B["<div style='width:150px; text-align:center; color:black;'>Assistant (response)</div>"]
+    classDef defaultStyle fill:#fff,stroke:#000,color:#000;
+
+    A["<div><b>USER</b><br>Query</div>"]
+    B["<div><b>ASSISTANT</b><br>Response</div>"]
 
     A -.-> B
 
-    style A fill:#fff,stroke:#000,color:#000
-    style B fill:#fff,stroke:#000,color:#000
+    class A,B defaultStyle;
 ```
 
 ## Multi-step tool use
@@ -367,9 +382,9 @@ if response.message.citations:
                 print(f"{source.tool_output}")
         print("\n")
 ```
-The model first determines that it first needs to find out the capital city of Brazil. Using this information, it can proceed with the next step in the sequence, which is to look up the temperature of that city.
+The model first determines that it needs to find out the capital city of Brazil. Once it has this information, it proceeds with the next step in the sequence, which is to look up the temperature of that city.
 
-This is reflected in the model's response, where two tool calls are generated in a sequence.
+This is reflected in the model's response, where two tool calling-result pairs are generated in a sequence.
 
 ```mdx wordWrap
 TOOL PLAN:
@@ -406,43 +421,39 @@ Sources:
 ```
 
 **State management**
-In a multi-step tool use scenario, instead of just one occurence of assistant-tool messages, there will be a sequence of assistant-tool messages to reflect the multiple steps of tool calling involved.
+
+In a multi-step tool use scenario, instead of just one occurence of `assistant`-`tool` messages, there will be a sequence of `assistant`-`tool` messages to reflect the multiple steps of tool calling involved.
 
 ```mermaid
 %%{init: {'htmlLabels': true}}%%
 flowchart TD
-    A["<div style='width:300px; text-align:center; color:black;'>User (query)</div>"]
-    B["<div style='width:300px; text-align:center; color:black;'>Assistant (tool call(s) - step 1)</div>"]
-    C["<div style='width:300px; text-align:center; color:black;'>Tool (tool result(s) - step 1)</div>"]
-    D["<div style='width:300px; text-align:center; color:black;'>Assistant (tool call(s) - step 2)</div>"]
-    E["<div style='width:300px; text-align:center; color:black;'>Tool (tool result(s) - step 2)</div>"]
-    F["<div style='width:300px; text-align:center; color:black;'>Assistant (tool call(s) - step N)</div>"]
-    G["<div style='width:300px; text-align:center; color:black;'>Tool (tool result(s) - step N)</div>"]
-    H["<div style='width:300px; text-align:center; color:black;'>Assistant (response)</div>"]
+    classDef defaultStyle fill:#fff,stroke:#000,color:#000;
 
-    A -.-> B
-    B -.-> C
-    C -.-> D
-    D -.-> E
-    E -.-> F
-    F -.-> G
-    G -.-> H
+    A["<div style='color:black;'><b>USER</b><br>Query</div>"]
+    B1["<div style='color:black;'><b>ASSISTANT</b><br>Tool call step #1</div>"]
+    C1["<div style='color:black;'><b>TOOL</b><br>Tool result step #1</div>"]
+    B2["<div style='color:black;'><b>ASSISTANT</b><br>Tool call step #2</div>"]
+    C2["<div style='color:black;'><b>TOOL</b><br>Tool result step #2</div>"]
+    BN["<div style='color:black;'><b>ASSISTANT</b><br>Tool call step #N</div>"]
+    CN["<div style='color:black;'><b>TOOL</b><br>Tool result step #N</div>"]
+    D["<div style='color:black;'><b>ASSISTANT</b><br>Response</div>"]
 
-    style A fill:#fff,stroke:#000,color:#000
-    style B fill:#fff,stroke:#000,color:#000
-    style C fill:#fff,stroke:#000,color:#000
-    style D fill:#fff,stroke:#000,color:#000
-    style E fill:#fff,stroke:#000,color:#000
-    style F fill:#fff,stroke:#000,color:#000
-    style G fill:#fff,stroke:#000,color:#000
-    style H fill:#fff,stroke:#000,color:#000
+    A -.-> B1
+    B1 -.-> C1
+    C1 -.-> B2
+    B2 -.-> C2
+    C2 -.-> BN
+    BN -.-> CN
+    CN -.-> D
+
+    class A,B1,C1,B2,C2,BN,CN,D defaultStyle;
 ```
 
 ## Forcing tool usage
 
 <Note>This feature is only compatible with the [Command R7B](https://docs.cohere.com/v2/docs/command-r7b) and newer models.</Note>
 
-As we saw in the previous examples, during the tool calling step, the model may decide to either:
+As shown in the previous examples, during the tool calling step, the model may decide to either:
 - make tool call(s)
 - or, respond to a user message directly.
 
@@ -450,7 +461,7 @@ You can, however, force the model to choose one of these options. This is done v
 - You can force the model to make tool call(s), i.e. to not respond directly, by setting the `tool_choice` parameter to `REQUIRED`.
 - Alternatively, you can force the model to respond directly, i.e. to not make tool call(s), by setting the `tool_choice` parameter to `NONE`.
 
-By default, if you don’t specify the `tool_choice` parameter, then the model will decide between making tool calls or responding directly.
+By default, if you don’t specify the `tool_choice` parameter, then it is up to the model to decide whether to make tool calls or respond directly.
 
 ```python PYTHON {5}
 response = co.chat(
@@ -468,19 +479,18 @@ Here's the sequence of messages when `tool_choice` is set to `REQUIRED`.
 ```mermaid
 %%{init: {'htmlLabels': true}}%%
 flowchart TD
-    A["<div style='width:150px; text-align:center; color:black;'>User (query)</div>"]
-    B["<div style='width:150px; text-align:center; color:black;'>Assistant (tool call(s))</div>"]
-    C["<div style='width:150px; text-align:center; color:black;'>Tool (tool result(s))</div>"]
-    D["<div style='width:150px; text-align:center; color:black;'>Assistant (response)</div>"]
+    classDef defaultStyle fill:#fff,stroke:#000,color:#000;
+
+    A["<div><b>USER</b><br>Query</div>"]
+    B["<div><b>ASSISTANT</b><br>Tool call</div>"]
+    C["<div><b>TOOL</b><br>Tool result</div>"]
+    D["<div><b>ASSISTANT</b><br>Response</div>"]
 
     A -.-> B
     B -.-> C
     C -.-> D
 
-    style A fill:#fff,stroke:#000,color:#000
-    style B fill:#fff,stroke:#000,color:#000
-    style C fill:#fff,stroke:#000,color:#000
-    style D fill:#fff,stroke:#000,color:#000
+    class A,B,C,D defaultStyle;
 ```
 
 Here's the sequence of messages when `tool_choice` is set to `NONE`.
@@ -488,19 +498,20 @@ Here's the sequence of messages when `tool_choice` is set to `NONE`.
 ```mermaid
 %%{init: {'htmlLabels': true}}%%
 flowchart TD
-    A["<div style='width:150px; text-align:center; color:black;'>User (query)</div>"]
-    B["<div style='width:150px; text-align:center; color:black;'>Assistant (response)</div>"]
+    classDef defaultStyle fill:#fff,stroke:#000,color:#000;
+
+    A["<div><b>USER</b><br>Query</div>"]
+    B["<div><b>ASSISTANT</b><br>Response</div>"]
 
     A -.-> B
 
-    style A fill:#fff,stroke:#000,color:#000
-    style B fill:#fff,stroke:#000,color:#000
+    class A,B defaultStyle;
 ```
 
 
 ## Chatbots (multi-turn)
 
-When building chatbots, we'll need to maintain the memory or state of a conversation over multiple turns. In this case, we can keep appending each turn of a conversation to the `messages` list.
+Building chatbots requires maintaining the memory or state of a conversation over multiple turns. To do this, we can keep appending each turn of a conversation to the `messages` list.
 
 As an example, here's the messages list from the first turn of a conversation.
 
@@ -532,7 +543,7 @@ messages = [
     {"role": "assistant", "content": "It's 20°C in Toronto."},
 ]
 ```
-Then, in the second turn, given a rather vague follow-up user message, the model correctly infers that the context of the user's message is about the weather.
+Then, in the second turn, when provided with a rather vague follow-up user message, the model correctly infers that the context is about the weather.
 
 ```python PYTHON
 messages.append({"role": "user", "content": "What about London?"})
@@ -567,15 +578,17 @@ The sequence of messages is represented in the diagram below.
 ```mermaid
 %%{init: {'htmlLabels': true}}%%
 flowchart TD
-    A["<div style='width:300px; text-align:center; color:black;'>User (query) - #1</div>"]
-    B["<div style='width:300px; text-align:center; color:black;'>Assistant (tool call(s) - #1)</div>"]
-    C["<div style='width:300px; text-align:center; color:black;'>Tool (tool result(s) - #1)</div>"]
-    D["<div style='width:300px; text-align:center; color:black;'>Assistant (response - #1)</div>"]
-    E["<div style='width:300px; text-align:center; color:black;'>User (query) - #2</div>"]
-    F["<div style='width:300px; text-align:center; color:black;'>Assistant (tool call(s) - #2)</div>"]
-    G["<div style='width:300px; text-align:center; color:black;'>Tool (tool result(s) - #2)</div>"]
-    H["<div style='width:300px; text-align:center; color:black;'>Assistant (response - #2)</div>"]
-    I["<div style='width:300px; text-align:center; color:black;'>...</div>"]
+    classDef defaultStyle fill:#fff,stroke:#000,color:#000;
+
+    A["<div><b>USER</b><br>Query - turn #1</div>"]
+    B["<div><b>ASSISTANT</b><br>Tool call - turn #1</div>"]
+    C["<div><b>TOOL</b><br>Tool result - turn #1</div>"]
+    D["<div><b>ASSISTANT</b><br>Response - turn #1</div>"]
+    E["<div><b>USER</b><br>Query - turn #2</div>"]
+    F["<div><b>ASSISTANT</b><br>Tool call - turn #2</div>"]
+    G["<div><b>TOOL</b><br>Tool result - turn #2</div>"]
+    H["<div><b>ASSISTANT</b><br>Response - turn #2</div>"]
+    I["<div><b>USER</b><br>...</div>"]
 
     A -.-> B
     B -.-> C
@@ -586,13 +599,6 @@ flowchart TD
     G -.-> H
     H -.-> I
 
-    style A fill:#fff,stroke:#000,color:#000
-    style B fill:#fff,stroke:#000,color:#000
-    style C fill:#fff,stroke:#000,color:#000
-    style D fill:#fff,stroke:#000,color:#000
-    style E fill:#fff,stroke:#000,color:#000
-    style F fill:#fff,stroke:#000,color:#000
-    style G fill:#fff,stroke:#000,color:#000
-    style H fill:#fff,stroke:#000,color:#000
-    style I fill:#fff,stroke:#000,color:#000
+    class A,B,C,D,E,F,G,H,I defaultStyle;
 ```
+

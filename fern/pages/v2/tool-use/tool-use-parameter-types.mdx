@@ -33,17 +33,14 @@ With `strict_tools` enabled, the API will ensure that the tool names and tool pa
 
 Additionally, this results in faster development. You don’t need to spend a lot of time prompt engineering the model to avoid hallucinations.
 
-In the example below, we create a tool that can retrieve weather data for a given location. The tool is called `get_weather` which contains a parameter called `location`. We then invoke the Chat API with `strict_tools` set to `True` to ensure that the generated tool calls always include the correct function and parameter names.
-
 When the `strict_tools` parameter is set to `True`, you can define a maximum of 200 fields across all tools being passed to an API call.
 
 ```python PYTHON {4}
 response = co.chat(model="command-r-plus-08-2024",
-                   messages=[{"role": "user", "content": "What's the weather in Toronto?"}],
-                   tools=tools,
-                   strict_tools=True)
-
-print(response.message.tool_calls)
+    messages=[{"role": "user", "content": "What's the weather in Toronto?"}],
+    tools=tools,
+    strict_tools=True
+)
 ```
 
 
@@ -66,11 +63,33 @@ This section provides usage examples of the JSON Schema [parameters that are sup
 
 The examples on this page each provide a tool schema and a `message` (the user message). To get an output, pass those values to a Chat endpoint call, as shown in the helper code below.
 
-```python PYTHON PYTHON
-import cohere
-co = cohere.ClientV2(api_key="YOUR API KEY")
+<Tabs>
+<Tab title="Cohere platform">
 
-res = co.chat(
+```python PYTHON
+# ! pip install -U cohere
+import cohere
+
+co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+```
+</Tab>
+
+<Tab title="Private deployment">
+```python PYTHON
+# ! pip install -U cohere
+import cohere
+
+co = cohere.ClientV2(
+    api_key="", # Leave this blank
+    base_url="<YOUR_DEPLOYMENT_URL>"
+)
+```
+</Tab>
+</Tabs>
+
+
+```python PYTHON
+response = co.chat(
     # The model name. Example: command-r-plus-08-2024
     model="MODEL_NAME",  
     # The user message. Optional - you can first add a `system_message` role

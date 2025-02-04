@@ -13,13 +13,13 @@ updatedAt: "Tue Jun 18 2024 07:20:15 GMT+0000 (Coordinated Universal Time)"
 ---
 ## Overview
 
-To enable response streaming in tool use, use the `chat_stream` endpoint instead of `chat` when making the API call.
+To enable response streaming in tool use, use the `chat_stream` endpoint instead of `chat`.
 
-You can stream responses in both the tool calling and the response generation steps. This allows your application to receive token streams as the model plans and executes tool calls and generates its response using the tool results.
+You can stream responses in both the tool calling and the response generation steps. This allows your application to receive token streams as the model plans and executes tool calls and finally generates its response.
 
 ## Events stream 
 
-In tool use, the events streamed by the endpoint follows the structure of a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events) but contains additional events for tool calling and response generation together with the corresponding contents. This section describes the stream of events and their contents.
+In tool use, the events streamed by the endpoint follows the structure of a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events) but contains additional events for tool calling and response generation with the associated contents. This section describes the stream of events and their contents.
 
 ### Tool calling step
 
@@ -219,11 +219,14 @@ type='message-end' id=None delta=ChatMessageEndEventDelta(finish_reason='COMPLET
 
 ## Usage example
 
-This section provides an example of handling streamed objects in the response generation step in tool use.
+This section provides an example of handling streamed objects in the tool use response generation step.
 
 ### Setup
 
 First, import the Cohere library and create a client.
+
+<Tabs>
+<Tab title="Cohere platform">
 
 ```python PYTHON
 # ! pip install -U cohere
@@ -231,6 +234,21 @@ import cohere
 
 co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
 ```
+</Tab>
+
+<Tab title="Private deployment">
+```python PYTHON
+# ! pip install -U cohere
+import cohere
+
+co = cohere.ClientV2(
+    api_key="", # Leave this blank
+    base_url="<YOUR_DEPLOYMENT_URL>"
+)
+```
+</Tab>
+</Tabs>
+
 ### Tool definition
 
 Next, define the tool and its associated schema.
@@ -316,9 +334,9 @@ I will use the get_weather tool to find the weather in Madrid and Brasilia.
 [ToolCallV2(id='get_weather_15c2p6g19s8f', type='function', function=ToolCallV2Function(name='get_weather', arguments='{"location":"Madrid"}')), ToolCallV2(id='get_weather_n01pkywy0p2w', type='function', function=ToolCallV2Function(name='get_weather', arguments='{"location":"Brasilia"}'))]
 ```
 
-Once the tool results have been received, we can now stream the response using the `chat_stream` endpoint. The events are passed as `chunk` objects.
+Once the tool results have been received, we can now stream the response using the `chat_stream` endpoint.
 
-In the example below, out of all the `chunk` stream of events, we pick `content-delta` to display the text response and `citation-start` to display the citations.
+The events are streamed as `chunk` objects. In the example below, we pick `content-delta` to display the text response and `citation-start` to display the citations.
 
 ```python PYTHON
 response = co.chat_stream(

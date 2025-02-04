@@ -22,13 +22,33 @@ The following sections describe how to access the citations in both the non-stre
 
 First, define the tool and its associated schema.
 
+<Tabs>
+<Tab title="Cohere platform">
+
 ```python PYTHON
 # ! pip install -U cohere
 import cohere
 import json
 
 co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+```
+</Tab>
 
+<Tab title="Private deployment">
+```python PYTHON
+# ! pip install -U cohere
+import cohere
+import json
+
+co = cohere.ClientV2(
+    api_key="", # Leave this blank
+    base_url="<YOUR_DEPLOYMENT_URL>"
+)
+```
+</Tab>
+</Tabs>
+
+```python PYTHON
 def get_weather(location):
     temperature = {
         "bern": "22°C",
@@ -129,7 +149,7 @@ start=35 end=39 text='28°C' sources=[ToolSource(type='tool', id='get_weather_vd
 ### Streaming
 In a streaming scenario (using `chat_stream` to generate the model response), the citations are provided in the `citation-start` events.
 
-Each citation object contains the same fields as the [non-streaming scenario](###non-streaming).
+Each citation object contains the same fields as the [non-streaming scenario](#non-streaming).
 
 ```python PYTHON
 response = co.chat_stream(
@@ -165,12 +185,14 @@ start=35 end=39 text='28°C' sources=[ToolSource(type='tool', id='get_weather_gh
 ```
 
 ## Citation modes
-When ruuning tool use in streaming mode, it’s possible to configure how citations are generated and presented. You can choose between fast citations or accurate citations, depending on your latency and precision needs:
+When running tool use in streaming mode, it’s possible to configure how citations are generated and presented. You can choose between fast citations or accurate citations, depending on your latency and precision needs.
 
 ### Accurate citations
-The model produces its answer first, and then, after the entire response is generated, it provides citations that map to specific segments of the response text. This approach may incur slightly higher latency, but it ensures the citation indices are more precisely aligned with the final text segments of the model’s answer. This is the default option, or you can explicitly specify it by adding the `citation_options={"mode": "accurate"}` argument in the API call.
+The model produces its answer first, and then, after the entire response is generated, it provides citations that map to specific segments of the response text. This approach may incur slightly higher latency, but it ensures the citation indices are more precisely aligned with the final text segments of the model’s answer.
 
-Here is an example. To make things concise, let's start with a pre-defined list of `messages` with the user query, tool calling, and tool results are already available.
+This is the default option, or you can explicitly specify it by adding the `citation_options={"mode": "accurate"}` argument in the API call.
+
+Here is an example. To keep it concise, let's start with a pre-defined list of `messages` with the user query, tool calling, and tool results are already available.
 
 ```python PYTHON
 # ! pip install -U cohere
@@ -265,9 +287,11 @@ start=35 end=39 text='28°C' sources=[ToolSource(type='tool', id='2', tool_outpu
 ```
 
 ### Fast citations
-The model generates citations inline, as the response is being produced. In streaming mode, you will see citations injected at the exact moment the model uses a particular piece of external context. This approach provides immediate traceability at the expense of slightly less precision in citation relevance. You can specify it by adding the `citation_options={"mode": "fast"}` argument in the API call.
+The model generates citations inline, as the response is being produced. In streaming mode, you will see citations injected at the exact moment the model uses a particular piece of external context. This approach provides immediate traceability at the expense of slightly less precision in citation relevance.
 
-Here is an example using the same list of pre-defined`messages` as the above. With the `citation_options` mode set to `fast`, we get the citations inlineas the model generates the response.
+You can specify it by adding the `citation_options={"mode": "fast"}` argument in the API call.
+
+Here is an example using the same list of pre-defined`messages` as the above. With the `citation_options` mode set to `fast`, we get the citations inline as the model generates the response.
 
 ```python PYTHON
 response = co.chat_stream(
