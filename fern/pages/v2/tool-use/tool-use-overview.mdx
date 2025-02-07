@@ -4,7 +4,7 @@ slug: "v2/docs/tool-use-overview"
 
 hidden: false 
 description: >-
-  TBD
+  An overview of using Cohere's Command family models to integrate with external tools, enabling developers to enhance application functionality and build agentic workflows (API v2).
 image: "../../../assets/images/4a5325a-cohere_meta_image.jpg"  
 keywords: "Cohere, text generation, LLMs, generative AI"
 
@@ -296,10 +296,21 @@ This section provides a more detailed look at how the state is managed via the `
 At each step of the workflow, the endpoint requires that we append specific types of information to the `messages` list. This is to ensure that the model has the necessary context to generate its response at a given point.
 
 In summary, each single turn of a conversation that involves tool calling consists of:
-1. a `user` message containing the user message (`content`)
-2. an `assistant` message, containing the tool calling information (`tool_plan` and `tool_calls`)
-3. a `tool` message, containing the tool results (`tool_call_id` and `content`)
-4. a final `assistant` message, containing the response to the user (`content`)
+1. A `user` message containing the user message
+    - `content`
+2. An `assistant` message, containing the tool calling information
+    - `tool_plan`
+    - `tool_calls`
+        - `id`
+        - `type`
+        - `function` (consisting of `name` and `arguments`)
+3. A `tool` message, containing the tool results
+    - `tool_call_id`
+    - `content` containing a list of documents where each document contains the following fields:
+        - `type`
+        - `document` (consisting of `data` and optionally `id`)
+4. A final `assistant` message, containing the model's response
+    - `content`
 
 These correspond to the four steps described above. The list of `messages` is shown below.
 
