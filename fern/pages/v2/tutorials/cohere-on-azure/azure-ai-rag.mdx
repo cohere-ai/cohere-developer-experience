@@ -39,17 +39,17 @@ import cohere
 
 co_chat = cohere.ClientV2(
     api_key="AZURE_API_KEY_CHAT",
-    base_url="AZURE_ENDPOINT_CHAT" # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
+    base_url="AZURE_ENDPOINT_CHAT",  # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
 )
 
 co_embed = cohere.ClientV2(
     api_key="AZURE_API_KEY_EMBED",
-    base_url="AZURE_ENDPOINT_EMBED" # example: "https://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/"
+    base_url="AZURE_ENDPOINT_EMBED",  # example: "https://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/"
 )
 
 co_rerank = cohere.ClientV2(
     api_key="AZURE_API_KEY_RERANK",
-    base_url="AZURE_ENDPOINT_RERANK" # example: "https://cohere-rerank-v3-multilingual-xyz.eastus.models.ai.azure.com/"
+    base_url="AZURE_ENDPOINT_RERANK",  # example: "https://cohere-rerank-v3-multilingual-xyz.eastus.models.ai.azure.com/"
 )
 ```
 
@@ -88,16 +88,16 @@ The model leverages the provided documents as context for its response. Specific
 message = "What are the tallest living penguins?"
 
 response = co_chat.chat(
-    model="model", # Pass a dummy string
+    model="model",  # Pass a dummy string
     messages=[{"role": "user", "content": message}],
-    documents=[{"data": doc} for doc in documents]
+    documents=[{"data": doc} for doc in documents],
 )
 
 print("\nRESPONSE:\n")
 print(response.message.content[0].text)
 
 if response.message.citations:
-    print("\nCITATIONS:\n") 
+    print("\nCITATIONS:\n")
     for citation in response.message.citations:
         print(citation)
 ```
@@ -186,7 +186,6 @@ class Vectorstore:
         self.embed()
         self.index()
 
-
     def load_and_chunk(self) -> None:
         """
         Loads the text from the sources and chunks the HTML content.
@@ -222,7 +221,7 @@ class Vectorstore:
                 texts=texts,
                 model="embed-multilingual-v3.0",
                 input_type="search_document",
-                embedding_types=["float"]
+                embedding_types=["float"],
             ).embeddings.float
             self.docs_embs.extend(docs_embs_batch)
 
@@ -233,10 +232,16 @@ class Vectorstore:
         print("Indexing document chunks...")
 
         self.idx = hnswlib.Index(space="ip", dim=1024)
-        self.idx.init_index(max_elements=self.docs_len, ef_construction=512, M=64)
-        self.idx.add_items(self.docs_embs, list(range(len(self.docs_embs))))
+        self.idx.init_index(
+            max_elements=self.docs_len, ef_construction=512, M=64
+        )
+        self.idx.add_items(
+            self.docs_embs, list(range(len(self.docs_embs)))
+        )
 
-        print(f"Indexing complete with {self.idx.get_current_count()} document chunks.")
+        print(
+            f"Indexing complete with {self.idx.get_current_count()} document chunks."
+        )
 
     def retrieve(self, query: str) -> List[Dict[str, str]]:
         """
@@ -254,27 +259,35 @@ class Vectorstore:
             texts=[query],
             model="embed-multilingual-v3.0",
             input_type="search_query",
-            embedding_types=["float"]
+            embedding_types=["float"],
         ).embeddings.float
-        
-        doc_ids = self.idx.knn_query(query_emb, k=self.retrieve_top_k)[0][0]
+
+        doc_ids = self.idx.knn_query(
+            query_emb, k=self.retrieve_top_k
+        )[0][0]
 
         # Reranking
-        docs_to_rerank = [self.docs[doc_id]["data"] for doc_id in doc_ids]
-        yaml_docs = [yaml.dump(doc, sort_keys=False) for doc in docs_to_rerank] 
+        docs_to_rerank = [
+            self.docs[doc_id]["data"] for doc_id in doc_ids
+        ]
+        yaml_docs = [
+            yaml.dump(doc, sort_keys=False) for doc in docs_to_rerank
+        ]
         rerank_results = co_rerank.rerank(
             query=query,
             documents=yaml_docs,
-            model="model", # Pass a dummy string
-            top_n=self.rerank_top_k
+            model="model",  # Pass a dummy string
+            top_n=self.rerank_top_k,
         )
 
-        doc_ids_reranked = [doc_ids[result.index] for result in rerank_results.results]
+        doc_ids_reranked = [
+            doc_ids[result.index] for result in rerank_results.results
+        ]
 
         docs_retrieved = []
         for doc_id in doc_ids_reranked:
             docs_retrieved.append(self.docs[doc_id]["data"])
-            
+
         return docs_retrieved
 ```
 
@@ -329,34 +342,41 @@ def run_chatbot(query, messages=None):
     documents = vectorstore.retrieve(query)
     documents_formatted = []
     for doc in documents:
-        documents_formatted.append({
-            "data": doc
-        })
+        documents_formatted.append({"data": doc})
 
     # Use document chunks to respond
     response = co_chat.chat(
-        model="model", # Pass a dummy string
+        model="model",  # Pass a dummy string
         messages=messages,
-        documents=documents_formatted
+        documents=documents_formatted,
     )
-        
+
     # Print the chatbot response, citations, and documents
     print("\nRESPONSE:\n")
     print(response.message.content[0].text)
-        
+
     if response.message.citations:
-        print("\nCITATIONS:\n")           
+        print("\nCITATIONS:\n")
         for citation in response.message.citations:
-            print("-"*20)
-            print("start:", citation.start, "end:", citation.end, "text:", citation.text)
+            print("-" * 20)
+            print(
+                "start:",
+                citation.start,
+                "end:",
+                citation.end,
+                "text:",
+                citation.text,
+            )
             print("SOURCES:")
             print(citation.sources)
-            
+
     # Add assistant response to messages
-    messages.append({
-        "role": "assistant",
-        "content": response.message.content[0].text
-    })
+    messages.append(
+        {
+            "role": "assistant",
+            "content": response.message.content[0].text,
+        }
+    )
 
     return messages
 ```
@@ -418,7 +438,9 @@ SOURCES:
 
 
 ```python PYTHON
-messages = run_chatbot("What do you know about 5G networks?", messages)
+messages = run_chatbot(
+    "What do you know about 5G networks?", messages
+)
 ```
 ```mdx
 RESPONSE:

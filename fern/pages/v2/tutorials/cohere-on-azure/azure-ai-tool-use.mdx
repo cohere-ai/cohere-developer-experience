@@ -30,8 +30,8 @@ To create a client, you need to provide the API key and the model's base URL for
 import cohere
 
 co = cohere.ClientV2(
-  api_key="AZURE_API_KEY_CHAT",
-  base_url="AZURE_ENDPOINT_CHAT" # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
+    api_key="AZURE_API_KEY_CHAT",
+    base_url="AZURE_ENDPOINT_CHAT",  # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
 )
 ```
 
@@ -197,40 +197,49 @@ Let's create a function called `run_assistant` to implement these steps and prin
 ```python PYTHON
 import json
 
-system_message="""## Task and Context
+system_message = """## Task and Context
 You are an assistant who assists new employees of Co1t with their first week. You respond to their questions and assist them with their needs. Today is Monday, June 24, 2024"""
+
 
 def run_assistant(query, messages=None):
     if messages is None:
         messages = []
-        
+
     if "system" not in {m.get("role") for m in messages}:
         messages.append({"role": "system", "content": system_message})
-    
+
     # Step 1: get user message
     print(f"Question:\n{query}")
-    print("="*50)
-    
+    print("=" * 50)
+
     messages.append({"role": "user", "content": query})
 
     # Step 2: Generate tool calls (if any)
     response = co.chat(
-        model="model", # Pass a dummy string
+        model="model",  # Pass a dummy string
         messages=messages,
-        tools=tools
+        tools=tools,
     )
 
     while response.message.tool_calls:
-        
+
         print("Tool plan:")
-        print(response.message.tool_plan,"\n")
+        print(response.message.tool_plan, "\n")
         print("Tool calls:")
         for tc in response.message.tool_calls:
-            print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
-        print("="*50)
+            print(
+                f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}"
+            )
+        print("=" * 50)
 
-        messages.append({"role": "assistant", "tool_calls": response.message.tool_calls, "tool_plan": response.message.tool_plan})        
-        
+        messages.append(
+            {
+                "role": "assistant",
+                "tool_calls": response.message.tool_calls,
+                "tool_plan": response.message.tool_plan,
+            }
+        )
+
         # Step 3: Get tool results
         for idx, tc in enumerate(response.message.tool_calls):
             tool_result = functions_map[tc.function.name](
@@ -238,32 +247,46 @@ def run_assistant(query, messages=None):
             )
             tool_content = []
             for data in tool_result:
-                tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+                tool_content.append(
+                    {
+                        "type": "document",
+                        "document": {"data": json.dumps(data)},
+                    }
+                )
                 # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
             messages.append(
-                {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
+                {
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": tool_content,
+                }
             )
-        
-        # Step 4: Generate response and citations 
+
+        # Step 4: Generate response and citations
         response = co.chat(
-            model="model", # Pass a dummy string
+            model="model",  # Pass a dummy string
             messages=messages,
-            tools=tools
+            tools=tools,
         )
-    
-    messages.append({"role": "assistant", "content": response.message.content[0].text})
-        
+
+    messages.append(
+        {
+            "role": "assistant",
+            "content": response.message.content[0].text,
+        }
+    )
+
     # Print final response
     print("Response:")
     print(response.message.content[0].text)
-    print("="*50)
-    
+    print("=" * 50)
+
     # Print citations (if any)
     if response.message.citations:
         print("\nCITATIONS:")
         for citation in response.message.citations:
             print(citation, "\n")
-    
+
     return messages
 ```
 
@@ -277,7 +300,9 @@ Additionally, the model also generates fine-grained citations in tool use mode b
 
 
 ```python PYTHON
-messages = run_assistant("Any doc on how do I submit travel expenses? Also, any emails about setting up IT access?")
+messages = run_assistant(
+    "Any doc on how do I submit travel expenses? Also, any emails about setting up IT access?"
+)
 ```
 ```mdx
 Question:

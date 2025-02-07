@@ -43,8 +43,8 @@ import re
 import cohere
 
 co = cohere.ClientV2(
-  api_key="AZURE_API_KEY_EMBED",
-  base_url="AZURE_ENDPOINT_EMBED" # example: "https://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/"
+    api_key="AZURE_API_KEY_EMBED",
+    base_url="AZURE_ENDPOINT_EMBED",  # example: "https://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/"
 )
 ```
 
@@ -117,19 +117,23 @@ Finally, we'll build a search index with the `hnsw` vector library to store thes
 ```python PYTHON
 # Embed documents
 # Embed documents
-docs = top_80_df['text'].to_list()
-docs_lang = top_80_df['lang'].to_list()
-translated_docs = top_80_df['translation'].to_list() #for reference when returning non-English results
+docs = top_80_df["text"].to_list()
+docs_lang = top_80_df["lang"].to_list()
+translated_docs = top_80_df[
+    "translation"
+].to_list()  # for reference when returning non-English results
 doc_embs = co.embed(
     model="embed-multilingual-v3.0",
     texts=docs,
-    input_type='search_document',
-    embedding_types=["float"]
+    input_type="search_document",
+    embedding_types=["float"],
 ).embeddings.float
 
 # Create a search index
-index = hnswlib.Index(space='ip', dim=1024)
-index.init_index(max_elements=len(doc_embs), ef_construction=512, M=64)
+index = hnswlib.Index(space="ip", dim=1024)
+index.init_index(
+    max_elements=len(doc_embs), ef_construction=512, M=64
+)
 index.add_items(doc_embs, list(range(len(doc_embs))))
 ```
 
@@ -141,25 +145,27 @@ Next, we build a function that takes a query as input, embeds it, and finds the 
 ```python PYTHON
 # Retrieval of 4 closest docs to query
 def retrieval(query):
-    # Embed query and retrieve results    
+    # Embed query and retrieve results
     query_emb = co.embed(
-        model="embed-multilingual-v3.0", # Pass a dummy string
+        model="embed-multilingual-v3.0",  # Pass a dummy string
         texts=[query],
-        input_type='search_query',
-        embedding_types=["float"]
+        input_type="search_query",
+        embedding_types=["float"],
     ).embeddings.float
-    
-    doc_ids = index.knn_query(query_emb, k=3)[0][0] # we will retrieve 3 closest neighbors
-    
+
+    doc_ids = index.knn_query(query_emb, k=3)[0][
+        0
+    ]  # we will retrieve 3 closest neighbors
+
     # Print and append results
     print(f"QUERY: {query.upper()} \n")
     retrieved_docs, translated_retrieved_docs = [], []
-    
+
     for doc_id in doc_ids:
         # Append results
         retrieved_docs.append(docs[doc_id])
         translated_retrieved_docs.append(translated_docs[doc_id])
-    
+
         # Print results
         print(f"ORIGINAL ({docs_lang[doc_id]}): {docs[doc_id]}")
         if docs_lang[doc_id] != "English":

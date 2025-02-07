@@ -40,9 +40,8 @@ import cohere
 
 co = cohere.ClientV2(
     api_key="AZURE_API_KEY_RERANK",
-    base_url="AZURE_ENDPOINT_RERANK" # example: "https://cohere-rerank-v3-multilingual-xyz.eastus.models.ai.azure.com/"
+    base_url="AZURE_ENDPOINT_RERANK",  # example: "https://cohere-rerank-v3-multilingual-xyz.eastus.models.ai.azure.com/"
 )
-
 ```
 
 ## Retrieve documents
@@ -109,15 +108,15 @@ When passing documents that contain multiple fields like in this case, for best 
 ```python PYTHON
 import yaml
 
-yaml_docs = [yaml.dump(doc, sort_keys=False) for doc in documents] 
+yaml_docs = [yaml.dump(doc, sort_keys=False) for doc in documents]
 
-query = 'What emails have been about refunds?'
+query = "What emails have been about refunds?"
 
 results = co.rerank(
-    model="model", # Pass a dummy string
+    model="model",  # Pass a dummy string
     documents=yaml_docs,
     query=query,
-    top_n=3
+    top_n=3,
 )
 ```
 
@@ -126,12 +125,13 @@ Since we set `top_n=3`, the response will return the three documents most releva
 Let's examine the reranked results below.
 
 ```python PYTHON
-def return_results(results, documents):    
+def return_results(results, documents):
     for idx, result in enumerate(results.results):
-        print(f"Rank: {idx+1}") 
+        print(f"Rank: {idx+1}")
         print(f"Score: {result.relevance_score}")
         print(f"Document: {documents[result.index]}\n")
-    
+
+
 return_results(results, documents)
 ```
 ```mdx
@@ -197,7 +197,7 @@ query = "Any email about check ins?"
 
 # Rerank the documents
 results = co.rerank(
-    model="model", # Pass a dummy string
+    model="model",  # Pass a dummy string
     query=query,
     documents=yaml_emails,
     top_n=2,
