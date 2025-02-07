@@ -278,7 +278,7 @@ tools = [
                 "properties": {
                     "location": {
                         "type": "string",
-                        "description": "the location to get weather. Provide just the city name without the country name.",
+                        "description": "the location to get the weather, example: San Francisco.",
                     }
                 },
                 "required": ["location"],
@@ -321,8 +321,8 @@ if response.message.tool_calls:
         )
         tool_content = []
         for data in tool_result:
+            # Optional: the "document" object can take an "id" field for use in citations, otherwise auto-generated
             tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
-            # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
         messages.append(
             {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
         )
@@ -331,7 +331,22 @@ if response.message.tool_calls:
 ```mdx wordWrap
 I will use the get_weather tool to find the weather in Madrid and Brasilia. 
 
-[ToolCallV2(id='get_weather_15c2p6g19s8f', type='function', function=ToolCallV2Function(name='get_weather', arguments='{"location":"Madrid"}')), ToolCallV2(id='get_weather_n01pkywy0p2w', type='function', function=ToolCallV2Function(name='get_weather', arguments='{"location":"Brasilia"}'))]
+[
+    ToolCallV2(
+        id="get_weather_15c2p6g19s8f",
+        type="function",
+        function=ToolCallV2Function(
+            name="get_weather", arguments='{"location":"Madrid"}'
+        ),
+    ),
+    ToolCallV2(
+        id="get_weather_n01pkywy0p2w",
+        type="function",
+        function=ToolCallV2Function(
+            name="get_weather", arguments='{"location":"Brasilia"}'
+        ),
+    ),
+]
 ```
 
 Once the tool results have been received, we can now stream the response using the `chat_stream` endpoint.
