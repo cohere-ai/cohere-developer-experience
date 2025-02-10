@@ -166,7 +166,10 @@ Next, we call the Chat endpoint to generate the list of tool calls. This is done
 
 The endpoint will send back a list of tool calls to be made if the model determines that tools are required. If it does, it will return two types of information:
 - `tool_plan`: its reflection on the next steps it should take, given the user query.
-- `tool_calls`: a list of tool calls to be made (if any), together with auto-generated tool call IDs.
+- `tool_calls`: a list of tool calls to be made (if any), together with auto-generated tool call IDs. Each generated tool call contains:
+    - `id`: the tool call ID
+    - `type`: the type of the tool call (`function`)
+    - `function`: the function to be called, which contains the function's `name` and `arguments` to be passed to the function.
 
 We then append these to the `messages` list with the `role` set to `assistant`.
 
@@ -202,6 +205,74 @@ I will search for the weather in Toronto.
     )
 ]
 ```
+
+By default, when using the Python SDK, the endpoint passes the tool calls as objects of type `ToolCallV2` and `ToolCallV2Function`. With these, you get built-in type safety and validation that helps prevent common errors during development.
+
+Alternatively, you can use plain dictionaries to structure the tool call message.
+
+These two options are shown below.
+
+<Tabs>
+<Tab title="Python objects">
+```python PYTHON
+messages = [
+    {"role": "user", "content": "What's the weather in Madrid and Brasilia?"},
+    {
+        "role": "assistant",
+        "tool_plan": "I will search for the weather in Madrid and Brasilia.",
+        "tool_calls": [
+            ToolCallV2(
+                id="get_weather_dkf0akqdazjb",
+                type="function",
+                function=ToolCallV2Function(
+                    name="get_weather", arguments='{"location":"Madrid"}'
+                ),
+            ),
+            ToolCallV2(
+                id="get_weather_gh65bt2tcdy1",
+                type="function",
+                function=ToolCallV2Function(
+                    name="get_weather", arguments='{"location":"Brasilia"}'
+                ),
+            ),
+        ],
+    },
+]
+```
+
+</Tab>
+
+<Tab title="Plain dictionaries">
+```python PYTHON
+messages = [
+    {"role": "user", "content": "What's the weather in Madrid and Brasilia?"},
+    {
+        "role": "assistant",
+        "tool_plan": "I will search for the weather in Madrid and Brasilia.",
+        "tool_calls": [
+            {
+                "id": "get_weather_dkf0akqdazjb",
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    "arguments": '{"location":"Madrid"}'
+                },
+            },
+            {
+                "id": "get_weather_gh65bt2tcdy1",
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    "arguments": '{"location":"Brasilia"}'
+                },
+            },
+        ],
+    },
+]
+```
+
+</Tab>
+</Tabs>
 
 <AccordionGroup>
 <Accordion title='Directly responding'>
