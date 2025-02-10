@@ -68,10 +68,20 @@ In this example, we define a `get_weather` function that returns the temperature
 ```python PYTHON
 def get_weather(location):
     # Implement any logic here 
-    return [{"temperature": "20C"}]
-    # Return a list of objects e.g. [{"url": "abc.com", "text": "..."}, {"url": "xyz.com", "text": "..."}]
+    return [{"temperature": "20°C"}]
+    # Return a JSON object string, or a list of tool content blocks e.g. [{"url": "abc.com", "text": "..."}, {"url": "xyz.com", "text": "..."}]
 
 functions_map = {"get_weather": get_weather}
+```
+The Chat endpoint accepts [a string or a list of objects](https://docs.cohere.com/reference/chat#request.body.messages.tool.content) as the tool content. Thus, you should format the return value in this way. The following are some examples.
+
+```python PYTHON
+# Example: String
+weather_search_results = "20°C"
+
+# Example: List of objects
+weather_search_results = [{"city": "Toronto", "date": "250207", "temperature": "20°C"},
+                          {"city": "Toronto", "date": "250208", "temperature": "21°C"}]
 ```
 
 ### Defining the tool schema
@@ -126,11 +136,18 @@ We can think of a tool use system as consisting of four components:
 - The tools
 
 At its most basic, these four components interact in a workflow through four steps:
-
 - Step 1: **Get user message**: The LLM gets the user message (via the application).
 - Step 2: **Generate tool calls**: The LLM decides which tools to call (if any) and generates the tool calls.
 - Step 3: **Get tool results**: The application executes the tools, and the results are sent to the LLM.
 - Step 4: **Generate response and citations**: The LLM generates the response and citations back to the user.
+
+As an example, a weather search workflow might looks like the following:
+- Step 1: **Get user message**: A user asks, "What's the weather in Toronto?"
+- Step 2: **Generate tool calls**: A tool call is made to an external weather service with something like `get_weather(“toronto”)`.
+- Step 3: **Get tool results**: The weather service returns the results, e.g. "20°C".
+- Step 4: **Generate response and citations**: The model provides the answer, "The weather in Toronto is 20 degrees Celcius".
+
+The following sections go through the implementation of these steps in detail.
 
 <img src="https://cohere.com/_next/image?url=https%3A%2F%2Fcohere-ai.ghost.io%2Fcontent%2Fimages%2F2024%2F07%2Ftool-use-workflow-2.png&w=3840&q=75" alt="Tool use workflow" />
 
