@@ -73,7 +73,7 @@ def get_weather(location):
 
 functions_map = {"get_weather": get_weather}
 ```
-The Chat endpoint accepts [a string or a list of objects](https://docs.cohere.com/reference/chat#request.body.messages.tool.content) as the tool content. Thus, you should format the return value in this way. The following are some examples.
+The Chat endpoint accepts [a string or a list of objects](https://docs.cohere.com/reference/chat#request.body.messages.tool.content) as the tool results. Thus, you should format the return value in this way. The following are some examples.
 
 ```python PYTHON
 # Example: String
@@ -209,6 +209,7 @@ if response.message.tool_calls:
     print(response.message.tool_calls)
 ```
 
+Example response:
 ```mdx wordWrap
 I will search for the weather in Toronto. 
 
@@ -339,10 +340,6 @@ if response.message.tool_calls:
         )
 ```
 
-<Accordion title='Multi-step tool use (agents)'>
-The Chat endpoint supports multi-step tool use, allowing the model to perform agentic tasks that require sequential reasoning. This means that steps 2 and 3 will run multiple times in loop. This is described [here](https://docs.cohere.com/docs/tool-use-usage-patterns#multi-step-tool-use).
-</Accordion>
-
 ### Step 4: Generate response and citations
 By this time, the tool call has already been executed, and the result has been returned to the LLM.
 
@@ -365,6 +362,7 @@ messages.append(
 
 print(response.message.content[0].text)
 ```
+Example response:
 ```mdx wordWrap
 It's 20°C in Toronto.
 ```
@@ -373,10 +371,14 @@ It also generates fine-grained citations, which are included out-of-the-box with
 ```python PYTHON
 print(response.message.citations)
 ```
+Example response:
 ```mdx wordWrap
 [Citation(start=5, end=9, text='20°C', sources=[ToolSource(type='tool', id='get_weather_1byjy32y4hvq:0', tool_output={'temperature': '20C'})], type='TEXT_CONTENT')]
 ```
 
+<Accordion title='Multi-step tool use (agents)'>
+Above, we assume the model performs tool calling only once (either single call or parallel calls), and then generates its response. This is not always the case: the model might decide to do a sequence of tool calls in order to answer the user request. This means that steps 2 and 3 will run multiple times in loop. It is called multi-step tool use and is described [here](https://docs.cohere.com/docs/tool-use-usage-patterns#multi-step-tool-use).
+</Accordion>
 
 ### State management
 This section provides a more detailed look at how the state is managed via the `messages` list as described in the [tool use workflow](#tool-use-workflow) above.
@@ -459,5 +461,5 @@ flowchart TD
 ```
 
 
-Note that this sequence represents a basic usage pattern in tool use. The next page [[TODO - add link]] will describe how this is adapted for other scenarios.
+Note that this sequence represents a basic usage pattern in tool use. The [next page](https://docs.cohere.com/v2/docs/tool-use-usage-patterns) describes how this is adapted for other scenarios.
 
