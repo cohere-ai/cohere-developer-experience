@@ -4,35 +4,32 @@ slug: "v2/docs/retrieval-augmented-generation-rag"
 
 hidden: false
 description: >-
-  Generate text with external data and inline citations using Retrieval
-  Augmented Generation and Cohere's Chat API.
+  Guide on using Cohere's Retrieval Augmented Generation (RAG) capabilities such as document grounding and citations.
 image: "../../../assets/images/1edd35f-cohere_meta_image.jpg"  
 keywords: "retrieval augmented generation, RAG, grounded replies, text generation"
 
 createdAt: "Fri Aug 18 2023 19:13:29 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Wed Jun 19 2024 13:01:22 GMT+0000 (Coordinated Universal Time)"
 ---
-Retrieval Augmented Generation (RAG) is a method for generating text using additional information fetched from an external data source, which can greatly increase the accuracy of the response. When used in conjunction with [Command](https://docs.cohere.com/docs/command-beta), [Command R](https://docs.cohere.com/docs/command-r), or [Command R+](https://docs.cohere.com/docs/command-r-plus), the [Chat API](https://docs.cohere.com/reference/chat) makes it easy to generate text that is grounded on supplementary documents.
+Retrieval Augmented Generation (RAG) is a method for generating text using additional information fetched from an external data source, which can greatly increase the accuracy of the response. When used in conjunction with [Command](https://docs.cohere.com/docs/models#command) family of models, the [Chat API](https://docs.cohere.com/reference/chat) makes it easy to generate text that is grounded on supplementary documents, thus minimizing hallucinations.
+
+## A quick example
 
 To call the Chat API with RAG, pass the following parameters as a minimum:
 - `model` for the model ID
 - `messages` for the user's query.
-- `documents` for defining the documents.
-
-A document can be a simple string, or it can consist of different fields, such as `title`, `text`, and `url` for a web search document.
+- `documents` for defining the documents to be used as the context for the response. 
 
 The Chat API supports a few different options for structuring documents in the `documents` parameter:
-    - List of objects with `data` object: Each document is passed as a `data` object (with an optional `id` field to be used in citations).
-    - List of objects with `data` string: Each document is passed as a `data` string (with an optional `id` field to be used in citations).
-    - List of strings: Each document is passed as a string.
+- List of objects with `data` object: Each document is passed as a `data` object (with an optional `id` field to be used in citations). The `data` object is a string-any dictionary containing the document's contents. For example, a web search document can contain a `title`, `text`, and `url` for the document's title, text, and URL.
+- List of objects with `data` string: Each document is passed as a `data` string (with an optional `id` field to be used in citations).
+- List of strings: Each document is passed as a string.
 
-The `id` field will be used in citation generation as the reference document IDs. If no `id` field is passed in an API call, the API will automatically generate the IDs based on the documents position in the list.
+The `id` field will be used in citation generation as the reference document IDs. If no `id` field is passed in an API call, the API will automatically generate the IDs based on the documents position in the list. For more information, see the guide on [using custom IDs](https://docs.cohere.com/docs/rag/rag-citations).
 
 The code snippet below, for example, will produce a grounded answer to `"Where do the tallest penguins live?"`, along with inline citations based on the provided documents.
 
-**Request**
-
-```python
+```python PYTHON
 import cohere
 
 co = cohere.ClientV2(api_key="<YOUR API KEY>")
@@ -61,12 +58,13 @@ documents = [
 
 # Add the user message
 message = "Where do the tallest penguins live?"
+
 messages = [{"role": "user", "content": message}]
 
 response = co.chat(
     model="command-r-plus-08-2024",
     messages=messages,
-    documents=documents,
+    documents=documents
 )
 
 print(response.message.content[0].text)
@@ -78,9 +76,9 @@ The resulting generation is`"The tallest penguins are emperor penguins, which li
 
 Nice :penguin:❄️!
 
-**Response**
+Example response:
 
-```
+```mdx
 # response.message.content[0].text
 Emperor penguins are the tallest penguins. They only live in Antarctica.
 
@@ -103,8 +101,6 @@ The response also includes **inline citations**  that reference the first two do
 
 ![](../../../assets/images/0062bc8-image.png)
 
-
-You can find more code and context in [this colab notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/Vanilla_RAG_v2.ipynb).
 
 ### Three steps of RAG
 
@@ -188,8 +184,8 @@ For example, you can customize the preamble to encourage a longer list of search
 ```python PYTHON
 instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
 ```
-```
-# Sample response
+Example response:
+```mdx
 ['NSync popularity', 'Backstreet Boys popularity', 'NSync vs Backstreet Boys popularity comparison', 'Which boy band is more popular NSync or Backstreet Boys', 'NSync and Backstreet Boys fan base size comparison', 'Who has sold more albums NSync or Backstreet Boys', 'NSync and Backstreet Boys chart performance comparison']
 ```
 
@@ -204,9 +200,7 @@ We won't go into details of fetching data in this guide, since it's very specifi
 
 In the final step, we will be calling the Chat API again, but this time passing along the `documents` you acquired in Step 2. A `document` object is a dictionary containing the content and the metadata of the text. We recommend using a few descriptive keys such as `"title"`, `"snippet"`, or `"last updated"` and only including semantically relevant data. The keys and the values will be formatted into the prompt and passed to the model.
 
-**Request**
-
-```python
+```python PYTHON
 import cohere
 
 co = cohere.ClientV2(api_key="<YOUR API KEY>")
@@ -253,9 +247,8 @@ print(response.message.content[0].text)
 print(response.message.citations)
 ```
 
-**Response**
-
-```
+Example response:
+```mdx
 # response.message.content[0].text
 Both NSYNC and Backstreet Boys were huge in the US at the turn of the millennium. However, Backstreet Boys achieved a greater level of success than NSYNC. They dominated the music business for a few years all over the world, including in some countries that were traditionally hard to penetrate for Western artists. Their success included massive album sales across the globe, great singles sales, plenty of chart-topping releases, hugely hyped tours and tremendous media coverage.
 
@@ -278,112 +271,6 @@ Citation(start=160,
 Not only will we discover that the Backstreet Boys were the more popular band, but the model can also _Tell Me Why_, by providing details [supported by citations](https://docs.cohere.com/docs/documents-and-citations).
 
 
-### Citation modes
-
-When using Retrieval Augmented Generation (RAG) in streaming mode, it’s possible to configure how citations are generated and presented. You can choose between fast citations or accurate citations, depending on your latency and precision needs:
-
-- Accurate citations: The model produces its answer first, and then, after the entire response is generated, it provides citations that map to specific segments of the response text. This approach may incur slightly higher latency, but it ensures the citation indices are more precisely aligned with the final text segments of the model’s answer. This is the default option, though you can explicitly specify it by adding the `citation_options={"mode": "accurate"}` argument in the API call.
-
-- Fast citations: The model generates citations inline, as the response is being produced. In streaming mode, you will see citations injected at the exact moment the model uses a particular piece of external context. This approach provides immediate traceability at the expense of slightly less precision in citation relevance. You can specify it by adding the `citation_options={"mode": "fast"}` argument in the API call.
-
-Below are example code snippets demonstrating both approaches.
-
-<Accordion title='Accurate citations'>
-
-```python PYTHON
-documents = [
-    {
-        "data": {
-            "title": "Tall penguins",
-            "snippet": "Emperor penguins are the tallest.",
-            "doc_id": "100",
-        }
-    },
-    {
-        "data": {
-            "title": "Penguin habitats",
-            "snippet": "Emperor penguins only live in Antarctica.",
-            "doc_id": "101",
-        }
-    },
-]
-
-messages = [
-    {"role": "user", "content": "Where do the tallest penguins live?"}
-]
-
-response = co.chat_stream(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    documents=documents,
-    citation_options={"mode": "accurate"},
-)
-
-for chunk in response:
-    if chunk:
-        if chunk.type == "content-delta":
-            print(chunk.delta.message.content.text, end="")
-        elif chunk.type == "citation-start":
-            print(
-                f" [{chunk.delta.message.citations.sources[0].document['doc_id']}]",
-                end="",
-            )
-```
-Example response:
-```mdx wordWrap
-The tallest penguins are the Emperor penguins, which only live in Antarctica. [100] [101]
-```
-
-</Accordion>
-
-<Accordion title='Fast citations'>
-
-```python PYTHON
-documents = [
-    {
-        "data": {
-            "title": "Tall penguins",
-            "snippet": "Emperor penguins are the tallest.",
-            "doc_id": "100",
-        }
-    },
-    {
-        "data": {
-            "title": "Penguin habitats",
-            "snippet": "Emperor penguins only live in Antarctica.",
-            "doc_id": "101",
-        }
-    },
-]
-
-messages = [
-    {"role": "user", "content": "Where do the tallest penguins live?"}
-]
-
-response = co.chat_stream(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    documents=documents,
-    citation_options={"mode": "fast"},
-)
-
-for chunk in response:
-    if chunk:
-        if chunk.type == "content-delta":
-            print(chunk.delta.message.content.text, end="")
-        elif chunk.type == "citation-start":
-            print(
-                f" [{chunk.delta.message.citations.sources[0].document['doc_id']}]",
-                end="",
-            )
-```
-Example response:
-```mdx wordWrap
-The tallest penguins [100] are the Emperor penguins, [100] which only live in Antarctica. [101]
-
-```
-
-</Accordion>
 ### Caveats
 
 It’s worth underscoring that RAG does not guarantee accuracy. It involves giving a model context which informs its replies, but if the provided documents are themselves out-of-date, inaccurate, or biased, whatever the model generates might be as well. What’s more, RAG doesn’t guarantee that a model won’t hallucinate. It greatly reduces the risk, but doesn’t necessarily eliminate it altogether. This is why we put an emphasis on including inline citations, which allow users to verify the information.

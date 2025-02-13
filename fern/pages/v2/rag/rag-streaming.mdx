@@ -1,0 +1,201 @@
+---
+title: "RAG Streaming"
+slug: "v2/docs/rag-streaming"
+
+hidden: false
+description: >-
+  Guide on implementing streaming for RAG with Cohere and details on the events stream (API v2).
+image: "../../../assets/images/1edd35f-cohere_meta_image.jpg"  
+keywords: "retrieval augmented generation, RAG, grounded replies, text generation"
+
+createdAt: "Fri Aug 18 2023 19:13:29 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Wed Jun 19 2024 13:01:22 GMT+0000 (Coordinated Universal Time)"
+---
+## Overview
+
+To enable response streaming in RAG, use the `chat_stream` endpoint instead of `chat`.
+
+This allows your application to receive token streams as the model generates its response.
+
+## Events stream 
+
+In RAG, the events streamed by the endpoint follows the structure of a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events) but contains additional events for tool calling and response generation with the associated contents. This section describes the stream of events and their contents.
+
+### Event types
+
+`message-start`
+
+Same as in a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events).
+
+`content-start`
+
+Same as in a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events).
+
+`content-delta`
+
+Same as in a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events).
+
+`citation-start`
+
+Emitted for every citation generated in the response. This event contains the details about a citation such as the `start` and `end` indices of the text that cites a source(s), the corresponding `text`, and the list of `sources`.
+
+`citation-end`
+
+Emitted to indicate the end of a citation. If there are multiple citations generated, the events will come as a sequence of `citation-start` and `citation-end` pairs.
+
+`content-end`
+
+Same as in a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events).
+
+`message-end`
+
+Same as in a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events).
+
+### Example stream
+
+The following is an example stream with RAG.
+
+```mdx wordWrap
+"Where do the tallest penguins live?"
+
+type='message-start' id='d93f187e-e9ac-44a9-a2d9-bdf2d65fee94' delta=ChatMessageStartEventDelta(message=ChatMessageStartEventDeltaMessage(role='assistant', content=[], tool_plan='', tool_calls=[], citations=[])) 
+ --------------------------------------------------
+type='content-start' index=0 delta=ChatContentStartEventDelta(message=ChatContentStartEventDeltaMessage(content=ChatContentStartEventDeltaMessageContent(text='', type='text'))) 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text='The'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' tallest'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' penguins'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' are'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' the'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' Emperor'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' penguins'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text='.'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' They'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' only'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' live'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' in'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' Antarctica'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text='.'))) logprobs=None 
+ --------------------------------------------------
+type='citation-start' index=0 delta=CitationStartEventDelta(message=CitationStartEventDeltaMessage(citations=Citation(start=29, end=46, text='Emperor penguins.', sources=[DocumentSource(type='document', id='doc:0', document={'id': 'doc:0', 'snippet': 'Emperor penguins are the tallest.', 'title': 'Tall penguins'})], type='TEXT_CONTENT'))) 
+ --------------------------------------------------
+type='citation-end' index=0 
+ --------------------------------------------------
+type='citation-start' index=1 delta=CitationStartEventDelta(message=CitationStartEventDeltaMessage(citations=Citation(start=65, end=76, text='Antarctica.', sources=[DocumentSource(type='document', id='doc:1', document={'id': 'doc:1', 'snippet': 'Emperor penguins only live in Antarctica.', 'title': 'Penguin habitats'})], type='TEXT_CONTENT'))) 
+ --------------------------------------------------
+type='citation-end' index=1 
+ --------------------------------------------------
+type='content-end' index=0 
+ --------------------------------------------------
+type='message-end' id=None delta=ChatMessageEndEventDelta(finish_reason='COMPLETE', usage=Usage(billed_units=UsageBilledUnits(input_tokens=34.0, output_tokens=14.0, search_units=None, classifications=None), tokens=UsageTokens(input_tokens=721.0, output_tokens=59.0))) 
+ --------------------------------------------------
+```
+
+## Usage example
+
+This section provides an example of handling streamed objects in the tool use response generation step.
+
+### Setup
+
+First, import the Cohere library and create a client.
+
+<Tabs>
+<Tab title="Cohere platform">
+
+```python PYTHON
+# ! pip install -U cohere
+import cohere
+
+co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+```
+</Tab>
+
+<Tab title="Private deployment">
+```python PYTHON
+# ! pip install -U cohere
+import cohere
+
+co = cohere.ClientV2(
+    api_key="", # Leave this blank
+    base_url="<YOUR_DEPLOYMENT_URL>"
+)
+```
+</Tab>
+</Tabs>
+
+### Define documents
+
+Next, define the documents to be passed to the endpoint.
+
+```python PYTHON
+documents = [
+    {
+        "data": {
+            "title": "Tall penguins",
+            "snippet": "Emperor penguins are the tallest.",
+        }
+    },
+    {
+        "data": {
+            "title": "Penguin habitats",
+            "snippet": "Emperor penguins only live in Antarctica.",
+        }
+    },
+]
+```
+
+### Streaming the response
+
+We can now stream the response using the `chat_stream` endpoint.
+
+The events are streamed as `chunk` objects. In the example below, we pick `content-delta` to display the text response and `citation-start` to display the citations.
+
+```python PYTHON
+messages = [{"role": "user", "content": "Where do the tallest penguins live?"}]
+
+response = co.chat_stream(
+    model="command-r-plus-08-2024", 
+    messages=messages, 
+    documents=documents
+)
+
+response_text = ""
+citations  = []
+for chunk in response:
+    if chunk:
+        if chunk.type == "content-delta":
+            response_text += chunk.delta.message.content.text
+            print(chunk.delta.message.content.text, end="")
+        if chunk.type == "citation-start":
+            citations.append(chunk.delta.message.citations)
+```
+
+Example response:
+```mdx wordWrap
+The tallest penguins are the Emperor penguins, which only live in Antarctica.
+```
+
+```python PYTHON
+for citation in citations:
+    print(citation, "\n")
+```
+
+Example response:
+```mdx wordWrap
+start=29 end=45 text='Emperor penguins' sources=[DocumentSource(type='document', id='doc:0', document={'id': 'doc:0', 'snippet': 'Emperor penguins are the tallest.', 'title': 'Tall penguins'})] type='TEXT_CONTENT' 
+
+start=66 end=77 text='Antarctica.' sources=[DocumentSource(type='document', id='doc:1', document={'id': 'doc:1', 'snippet': 'Emperor penguins only live in Antarctica.', 'title': 'Penguin habitats'})] type='TEXT_CONTENT' 
+```
