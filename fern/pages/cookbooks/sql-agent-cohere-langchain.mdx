@@ -36,6 +36,15 @@ The database contains two tables:
 - [Create the agent](#toc1_5_)    
 - [Run the agent](#toc1_6_)    
 
+<!-- vscode-jupyter-toc-config
+	numbering=false
+	anchor=true
+	flat=false
+	minLevel=1
+	maxLevel=6
+	/vscode-jupyter-toc-config -->
+<!-- THIS CELL WILL BE REPLACED ON TOC UPDATE. DO NOT WRITE YOUR TEXT IN THIS CELL -->
+
 ## <a id='toc1_1_'></a>[Import the required libraries](#toc0_)
 
 First, let's import the necessary libraries for creating a SQL agent using Cohere and LangChain. These libraries enable natural language interaction with databases and provide tools for building AI-powered agents.
@@ -120,24 +129,10 @@ db.run("SELECT * FROM status LIMIT 5;")
 ```
 
 
-
-
-    "[('2024-05-09 19:28:00', 'Canada/Toronto', '2024-05-09', '19', '28', 'stn3', 'downtime'), ('2024-04-21 06:57:00', 'Canada/Toronto', '2024-04-21', '6', '57', 'stn3', 'productive'), ('2024-04-11 23:52:00', 'Canada/Toronto', '2024-04-11', '23', '52', 'stn4', 'productive'), ('2024-04-03 21:52:00', 'Canada/Toronto', '2024-04-03', '21', '52', 'stn2', 'downtime'), ('2024-04-30 05:01:00', 'Canada/Toronto', '2024-04-30', '5', '1', 'stn4', 'productive')]"
-
-
-
-
 ```python
 # Test the connection
 db.run("SELECT * FROM product_tracking LIMIT 5;")
 ```
-
-
-
-
-    "[('2024-05-27 17:22:00', '2024-05-27 17:57:00', 'Canada/Toronto', '2024-05-27', '17', 'stn2', 'wip', '187', '35'), ('2024-04-26 15:56:00', '2024-04-26 17:56:00', 'Canada/Toronto', '2024-04-26', '15', 'stn4', 'wip', '299', '120'), ('2024-04-12 04:36:00', '2024-04-12 05:12:00', 'Canada/Toronto', '2024-04-12', '4', 'stn3', 'wip', '60', '36'), ('2024-04-19 15:15:00', '2024-04-19 15:22:00', 'Canada/Toronto', '2024-04-19', '15', 'stn4', 'wait', '227', '7'), ('2024-04-24 19:10:00', '2024-04-24 21:07:00', 'Canada/Toronto', '2024-04-24', '19', 'stn4', 'wait', '169', '117')]"
-
-
 
 ## <a id='toc1_3_'></a>[Setup the LangChain SQL Toolkit](#toc0_)
 
@@ -163,10 +158,6 @@ tools = toolkit.get_tools()
 print('**List of pre-defined Langchain Tools**')
 print([tool.name for tool in tools])
 ```
-
-    **List of pre-defined Langchain Tools**
-    ['sql_db_query', 'sql_db_schema', 'sql_db_list_tables', 'sql_db_query_checker']
-
 
 ## <a id='toc1_4_'></a>[Create a prompt template](#toc0_)
 
@@ -236,33 +227,6 @@ prompt_val = full_prompt.invoke({
     })
 print(prompt_val.to_string())
 ```
-
-    System: You are an agent designed to interact with a SQL database.
-    You are an expert at answering questions about manufacturing data.
-    Given an input question, create a syntactically correct SQLite query to run, then look at the results of the query and return the answer.
-    Always start with checking the schema of the available tables.
-    Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most 5 results.
-    You can order the results by a relevant column to return the most interesting examples in the database.
-    Never query for all the columns from a specific table, only ask for the relevant columns given the question.
-    You have access to tools for interacting with the database.
-    Only use the given tools. Only use the information returned by the tools to construct your final answer.
-    You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
-    
-    DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
-    
-    The current date is 2025-02-10 09:13:19.026413.
-    
-    For questions regarding productive time, downtime, productive or productivity, use minutes as units.
-    
-    For questions regarding productive time, downtime, productive or productivity use the status table.
-    
-    For questions regarding processing time and average processing time, use minutes as units.
-    
-    For questions regarding bottlenecks, processing time and average processing time use the product_tracking table.
-    
-    If the question does not seem related to the database, just return "I don't know" as the answer.
-    Human: What was the productive time for all stations today?
-
 
 ## <a id='toc1_4_'></a>[Create a few-shot prompt template](#toc0_)
 
@@ -393,51 +357,6 @@ prompt_val = full_prompt.invoke(
 print(prompt_val.to_string())
 ```
 
-    System: You are an agent designed to interact with a SQL database.
-    You are an expert at answering questions about manufacturing data.
-    Given an input question, create a syntactically correct SQLite query to run, then look at the results of the query and return the answer.
-    Always start with checking the schema of the available tables.
-    Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most 5 results.
-    You can order the results by a relevant column to return the most interesting examples in the database.
-    Never query for all the columns from a specific table, only ask for the relevant columns given the question.
-    You have access to tools for interacting with the database.
-    Only use the given tools. Only use the information returned by the tools to construct your final answer.
-    You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
-    
-    DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
-    
-    The current date is 2025-02-10 09:13:19.679288.
-    
-    For questions regarding productive time, downtime, productive or productivity, use minutes as units.
-    
-    For questions regarding productive time, downtime, productive or productivity use the status table.
-    
-    For questions regarding processing time and average processing time, use minutes as units.
-    
-    For questions regarding bottlenecks, processing time and average processing time use the product_tracking table.
-    
-    If the question does not seem related to the database, just return "I don't know" as the answer.
-    
-    Here are some examples of user inputs and their corresponding SQL queries:
-    
-    
-    User input: What were the productive time and downtime numbers for all stations on April 3rd 2024?
-    SQL query: SELECT station_name, station_status, COUNT(*) as total_time FROM status WHERE date = '2024-04-03' GROUP BY station_name, station_status;
-    
-    User input: What was the average processing time for all stations on April 3rd 2024?
-    SQL query: SELECT station_name, AVG(CAST(duration AS INTEGER)) AS avg_processing_time FROM product_tracking WHERE date = '2024-04-03' AND zone = 'wip' GROUP BY station_name ORDER BY station_name;
-    
-    User input: What was the average processing time for all stations on April 3rd 2024 between 4pm and 6pm?
-    SQL query: SELECT station_name, AVG(CAST(duration AS INTEGER)) AS avg_processing_time FROM product_tracking WHERE date = '2024-04-03' AND CAST(hour AS INTEGER) BETWEEN 16 AND 18 AND zone = 'wip' GROUP BY station_name ORDER BY station_name;
-    
-    User input: What was the bottleneck station on April 3rd 2024?
-    SQL query: SELECT station_name, AVG(CAST(duration AS INTEGER)) AS avg_processing_time FROM product_tracking WHERE date = '2024-04-03' AND zone = 'wip' GROUP BY station_name ORDER BY avg_processing_time DESC LIMIT 1;
-    
-    User input: What was the average processing time for stn4 on April 3rd 2024?
-    SQL query: SELECT AVG(CAST(duration AS INTEGER)) AS avg_processing_time FROM product_tracking WHERE date = '2024-04-03' AND station_name = 'stn4' AND zone = 'wip';
-    Human: What was the productive time for all stations today?
-
-
 ## <a id='toc1_5_'></a>[Create the agent](#toc0_)
 
 Next, we create an instance of the SQL agent using the LangChain framework, specifically using `create_sql_agent`.
@@ -470,46 +389,6 @@ print(output['output'])
 # Answer: stn2, stn3 and stn5 had some downtime in the month of May 2024.
 ```
 
-    
-    
-    [1m> Entering new Cohere SQL Agent Executor chain...[0m
-    [32;1m[1;3m
-    Invoking: `sql_db_schema` with `{'table_names': 'status'}`
-    responded: I will first check the schema of the available tables to see which one contains the relevant information. Then, I will write and execute a query to find the stations that had some downtime in May 2024.
-    
-    [0m[33;1m[1;3m
-    CREATE TABLE status (
-    	timestamp_event TEXT, 
-    	timezone TEXT, 
-    	date TEXT, 
-    	hour TEXT, 
-    	minute TEXT, 
-    	station_name TEXT, 
-    	station_status TEXT
-    )
-    
-    /*
-    3 rows from status table:
-    timestamp_event	timezone	date	hour	minute	station_name	station_status
-    2024-05-09 19:28:00	Canada/Toronto	2024-05-09	19	28	stn3	downtime
-    2024-04-21 06:57:00	Canada/Toronto	2024-04-21	6	57	stn3	productive
-    2024-04-11 23:52:00	Canada/Toronto	2024-04-11	23	52	stn4	productive
-    */[0m[32;1m[1;3m
-    Invoking: `sql_db_query_checker` with `{'query': "SELECT DISTINCT station_name FROM status WHERE date LIKE '2024-05-%' AND station_status = 'downtime'"}`
-    responded: The status table contains the relevant information. I will now write and execute a query to find the stations that had some downtime in May 2024.
-    
-    [0m[36;1m[1;3m```sql
-    SELECT DISTINCT station_name FROM status WHERE date LIKE '2024-05-%' AND station_status = 'downtime'
-    ```[0m[32;1m[1;3m
-    Invoking: `sql_db_query` with `{'query': "SELECT DISTINCT station_name FROM status WHERE date LIKE '2024-05-%' AND station_status = 'downtime'"}`
-    responded: The query is correct. I will now execute it.
-    
-    [0m[36;1m[1;3m[('stn3',), ('stn5',), ('stn2',)][0m[32;1m[1;3mThe stations that had some downtime in May 2024 were stn2, stn3 and stn5.[0m
-    
-    [1m> Finished chain.[0m
-    The stations that had some downtime in May 2024 were stn2, stn3 and stn5.
-
-
 
 ```python
 output=agent.invoke({
@@ -520,79 +399,6 @@ print(output['output'])
 
 # Answer: 39.17 minutes
 ```
-
-    
-    
-    [1m> Entering new Cohere SQL Agent Executor chain...[0m
-    [32;1m[1;3m
-    Invoking: `sql_db_list_tablessql_db_list_tables` with `{}`
-    responded: I will first check the schema of the available tables. Then, I will write and execute a query to find the average processing duration at stn5 in the wip zone.
-    
-    [0msql_db_list_tablessql_db_list_tables is not a valid tool, try one of [sql_db_query, sql_db_schema, sql_db_list_tables, sql_db_query_checker].[32;1m[1;3m
-    Invoking: `sql_db_list_tables` with `{}`
-    responded: I will first check the schema of the available tables. Then, I will write and execute a query to find the average processing duration at stn5 in the wip zone.
-    
-    [0m[38;5;200m[1;3mproduct_tracking, status[0m[32;1m[1;3m
-    Invoking: `sql_db_schema` with `{'table_names': 'product_tracking,status'}`
-    responded: The relevant tables are product_tracking and status.
-    
-    I will now write and execute a query to find the average processing duration at stn5 in the wip zone.
-    
-    [0m[33;1m[1;3m
-    CREATE TABLE product_tracking (
-    	timestamp_start TEXT, 
-    	timestamp_end TEXT, 
-    	timezone TEXT, 
-    	date TEXT, 
-    	hour TEXT, 
-    	station_name TEXT, 
-    	zone TEXT, 
-    	product_id TEXT, 
-    	duration TEXT
-    )
-    
-    /*
-    3 rows from product_tracking table:
-    timestamp_start	timestamp_end	timezone	date	hour	station_name	zone	product_id	duration
-    2024-05-27 17:22:00	2024-05-27 17:57:00	Canada/Toronto	2024-05-27	17	stn2	wip	187	35
-    2024-04-26 15:56:00	2024-04-26 17:56:00	Canada/Toronto	2024-04-26	15	stn4	wip	299	120
-    2024-04-12 04:36:00	2024-04-12 05:12:00	Canada/Toronto	2024-04-12	4	stn3	wip	60	36
-    */
-    
-    
-    CREATE TABLE status (
-    	timestamp_event TEXT, 
-    	timezone TEXT, 
-    	date TEXT, 
-    	hour TEXT, 
-    	minute TEXT, 
-    	station_name TEXT, 
-    	station_status TEXT
-    )
-    
-    /*
-    3 rows from status table:
-    timestamp_event	timezone	date	hour	minute	station_name	station_status
-    2024-05-09 19:28:00	Canada/Toronto	2024-05-09	19	28	stn3	downtime
-    2024-04-21 06:57:00	Canada/Toronto	2024-04-21	6	57	stn3	productive
-    2024-04-11 23:52:00	Canada/Toronto	2024-04-11	23	52	stn4	productive
-    */[0m[32;1m[1;3m
-    Invoking: `sql_db_query_checker` with `{'query': "SELECT AVG(CAST(duration AS INTEGER)) AS avg_processing_time FROM product_tracking WHERE station_name = 'stn5' AND zone = 'wip';"}`
-    responded: The relevant columns are duration from the product_tracking table and station_name from the status table.
-    
-    I will now write and execute a query to find the average processing duration at stn5 in the wip zone.
-    
-    [0m[36;1m[1;3mSELECT AVG(CAST(duration AS INTEGER)) AS avg_processing_time
-    FROM product_tracking
-    WHERE station_name = 'stn5' AND zone = 'wip';[0m[32;1m[1;3m
-    Invoking: `sql_db_query` with `{'query': "SELECT AVG(CAST(duration AS INTEGER)) AS avg_processing_time FROM product_tracking WHERE station_name = 'stn5' AND zone = 'wip';"}`
-    responded: The query is correct. I will now execute it.
-    
-    [0m[36;1m[1;3m[(39.166666666666664,)][0m[32;1m[1;3mThe average processing duration at stn5 in the wip zone is 39.17 minutes.[0m
-    
-    [1m> Finished chain.[0m
-    The average processing duration at stn5 in the wip zone is 39.17 minutes.
-
 
 
 ```python
@@ -605,75 +411,6 @@ print(output['output'])
 # Answer: stn4 - 251 minutes
 
 ```
-
-    
-    
-    [1m> Entering new Cohere SQL Agent Executor chain...[0m
-    [32;1m[1;3m
-    Invoking: `sql_db_list_tablessql_db_list_tables` with `{}`
-    responded: I will first check the schema of the available tables to understand the structure of the data. Then, I will write and execute a query to find the station with the highest total duration in the wait zone.
-    
-    [0msql_db_list_tablessql_db_list_tables is not a valid tool, try one of [sql_db_query, sql_db_schema, sql_db_list_tables, sql_db_query_checker].[32;1m[1;3m
-    Invoking: `sql_db_list_tables` with `{}`
-    responded: I will first check the schema of the available tables to understand the structure of the data. Then, I will write and execute a query to find the station with the highest total duration in the wait zone.
-    
-    [0m[38;5;200m[1;3mproduct_tracking, status[0m[32;1m[1;3m
-    Invoking: `sql_db_schema` with `{'table_names': 'product_tracking,status'}`
-    responded: The relevant tables are 'product_tracking' and 'status'. I will now write and execute a query to find the station with the highest total duration in the wait zone.
-    
-    [0m[33;1m[1;3m
-    CREATE TABLE product_tracking (
-    	timestamp_start TEXT, 
-    	timestamp_end TEXT, 
-    	timezone TEXT, 
-    	date TEXT, 
-    	hour TEXT, 
-    	station_name TEXT, 
-    	zone TEXT, 
-    	product_id TEXT, 
-    	duration TEXT
-    )
-    
-    /*
-    3 rows from product_tracking table:
-    timestamp_start	timestamp_end	timezone	date	hour	station_name	zone	product_id	duration
-    2024-05-27 17:22:00	2024-05-27 17:57:00	Canada/Toronto	2024-05-27	17	stn2	wip	187	35
-    2024-04-26 15:56:00	2024-04-26 17:56:00	Canada/Toronto	2024-04-26	15	stn4	wip	299	120
-    2024-04-12 04:36:00	2024-04-12 05:12:00	Canada/Toronto	2024-04-12	4	stn3	wip	60	36
-    */
-    
-    
-    CREATE TABLE status (
-    	timestamp_event TEXT, 
-    	timezone TEXT, 
-    	date TEXT, 
-    	hour TEXT, 
-    	minute TEXT, 
-    	station_name TEXT, 
-    	station_status TEXT
-    )
-    
-    /*
-    3 rows from status table:
-    timestamp_event	timezone	date	hour	minute	station_name	station_status
-    2024-05-09 19:28:00	Canada/Toronto	2024-05-09	19	28	stn3	downtime
-    2024-04-21 06:57:00	Canada/Toronto	2024-04-21	6	57	stn3	productive
-    2024-04-11 23:52:00	Canada/Toronto	2024-04-11	23	52	stn4	productive
-    */[0m[32;1m[1;3m
-    Invoking: `sql_db_query_checker` with `{'query': "SELECT station_name, SUM(CAST(duration AS INTEGER)) AS total_duration FROM product_tracking WHERE zone = 'wait' GROUP BY station_name ORDER BY total_duration DESC LIMIT 1;"}`
-    responded: The relevant columns are 'station_name' and 'duration' from the 'product_tracking' table. I will now write and execute a query to find the station with the highest total duration in the wait zone.
-    
-    [0m[36;1m[1;3m```sql
-    SELECT station_name, SUM(CAST(duration AS INTEGER)) AS total_duration FROM product_tracking WHERE zone = 'wait' GROUP BY station_name ORDER BY total_duration DESC LIMIT 1;
-    ```[0m[32;1m[1;3m
-    Invoking: `sql_db_query` with `{'query': "SELECT station_name, SUM(CAST(duration AS INTEGER)) AS total_duration FROM product_tracking WHERE zone = 'wait' GROUP BY station_name ORDER BY total_duration DESC LIMIT 1;"}`
-    responded: The query is correct. I will now execute it.
-    
-    [0m[36;1m[1;3m[('stn4', 251)][0m[32;1m[1;3mThe station with the highest total duration in the wait zone is stn4, with a total duration of 251 minutes.[0m
-    
-    [1m> Finished chain.[0m
-    The station with the highest total duration in the wait zone is stn4, with a total duration of 251 minutes.
-
 
 ## Memory in the sql agent
 We may want the agent to hold memory of our previous messages so that we're able to coherently engage with the agent to answer our queries. In this section, let's take a look at how we can add memory to the agent so that we're able to achieve this outcome!
@@ -723,79 +460,6 @@ print(output["output"])
 # Answer: sstn2, with duration of 35 mins.
 ```
 
-    
-    
-    [1m> Entering new Cohere SQL Agent Executor chain...[0m
-    [32;1m[1;3m
-    Invoking: `sql_db_list_tablessql_db_list_tables` with `{}`
-    responded: I will first check the schema of the available tables. Then, I will write and execute a query to find the station with the longest duration on 27th May 2024.
-    
-    [0msql_db_list_tablessql_db_list_tables is not a valid tool, try one of [sql_db_query, sql_db_schema, sql_db_list_tables, sql_db_query_checker].[32;1m[1;3m
-    Invoking: `sql_db_list_tables` with `{}`
-    responded: I will first check the schema of the available tables. Then, I will write and execute a query to find the station with the longest duration on 27th May 2024.
-    
-    [0m[38;5;200m[1;3mproduct_tracking, status[0m[32;1m[1;3m
-    Invoking: `sql_db_schema` with `{'table_names': 'product_tracking, status'}`
-    responded: The relevant tables are product_tracking and status.
-    
-    I will now write and execute a query to find the station with the longest duration on 27th May 2024.
-    
-    [0m[33;1m[1;3m
-    CREATE TABLE product_tracking (
-    	timestamp_start TEXT, 
-    	timestamp_end TEXT, 
-    	timezone TEXT, 
-    	date TEXT, 
-    	hour TEXT, 
-    	station_name TEXT, 
-    	zone TEXT, 
-    	product_id TEXT, 
-    	duration TEXT
-    )
-    
-    /*
-    3 rows from product_tracking table:
-    timestamp_start	timestamp_end	timezone	date	hour	station_name	zone	product_id	duration
-    2024-05-27 17:22:00	2024-05-27 17:57:00	Canada/Toronto	2024-05-27	17	stn2	wip	187	35
-    2024-04-26 15:56:00	2024-04-26 17:56:00	Canada/Toronto	2024-04-26	15	stn4	wip	299	120
-    2024-04-12 04:36:00	2024-04-12 05:12:00	Canada/Toronto	2024-04-12	4	stn3	wip	60	36
-    */
-    
-    
-    CREATE TABLE status (
-    	timestamp_event TEXT, 
-    	timezone TEXT, 
-    	date TEXT, 
-    	hour TEXT, 
-    	minute TEXT, 
-    	station_name TEXT, 
-    	station_status TEXT
-    )
-    
-    /*
-    3 rows from status table:
-    timestamp_event	timezone	date	hour	minute	station_name	station_status
-    2024-05-09 19:28:00	Canada/Toronto	2024-05-09	19	28	stn3	downtime
-    2024-04-21 06:57:00	Canada/Toronto	2024-04-21	6	57	stn3	productive
-    2024-04-11 23:52:00	Canada/Toronto	2024-04-11	23	52	stn4	productive
-    */[0m[32;1m[1;3m
-    Invoking: `sql_db_query_checker` with `{'query': "SELECT station_name, duration FROM product_tracking WHERE date = '2024-05-27' ORDER BY duration DESC LIMIT 1;"}`
-    responded: The relevant columns are product_tracking.station_name and product_tracking.duration.
-    
-    I will now write and execute a query to find the station with the longest duration on 27th May 2024.
-    
-    [0m[36;1m[1;3m```sql
-    SELECT station_name, duration FROM product_tracking WHERE date = '2024-05-27' ORDER BY duration DESC LIMIT 1;
-    ```[0m[32;1m[1;3m
-    Invoking: `sql_db_query` with `{'query': "SELECT station_name, duration FROM product_tracking WHERE date = '2024-05-27' ORDER BY duration DESC LIMIT 1;"}`
-    responded: The query is correct. I will now execute it.
-    
-    [0m[36;1m[1;3m[('stn2', '35')][0m[32;1m[1;3mThe station with the longest duration on 27th May 2024 was stn2, with a duration of 35.[0m
-    
-    [1m> Finished chain.[0m
-    The station with the longest duration on 27th May 2024 was stn2, with a duration of 35.
-
-
 
 ```python
 output = agent_with_chat_history.invoke({"input": "Can you tell me when this station had downtime on 2024-04-03?", "date": datetime.now()},  config={"configurable": {"session_id": "foo"}})
@@ -804,69 +468,7 @@ print(output["output"])
 # Answer: 21:52:00
 ```
 
-    
-    
-    [1m> Entering new Cohere SQL Agent Executor chain...[0m
-    [32;1m[1;3m
-    Invoking: `sql_db_schema` with `{'table_names': 'status,product_tracking'}`
-    responded: I will first check the schema of the tables to see which columns are available. Then, I will write a query to find the downtime for the station on 2024-04-03.
-    
-    [0m[33;1m[1;3m
-    CREATE TABLE product_tracking (
-    	timestamp_start TEXT, 
-    	timestamp_end TEXT, 
-    	timezone TEXT, 
-    	date TEXT, 
-    	hour TEXT, 
-    	station_name TEXT, 
-    	zone TEXT, 
-    	product_id TEXT, 
-    	duration TEXT
-    )
-    
-    /*
-    3 rows from product_tracking table:
-    timestamp_start	timestamp_end	timezone	date	hour	station_name	zone	product_id	duration
-    2024-05-27 17:22:00	2024-05-27 17:57:00	Canada/Toronto	2024-05-27	17	stn2	wip	187	35
-    2024-04-26 15:56:00	2024-04-26 17:56:00	Canada/Toronto	2024-04-26	15	stn4	wip	299	120
-    2024-04-12 04:36:00	2024-04-12 05:12:00	Canada/Toronto	2024-04-12	4	stn3	wip	60	36
-    */
-    
-    
-    CREATE TABLE status (
-    	timestamp_event TEXT, 
-    	timezone TEXT, 
-    	date TEXT, 
-    	hour TEXT, 
-    	minute TEXT, 
-    	station_name TEXT, 
-    	station_status TEXT
-    )
-    
-    /*
-    3 rows from status table:
-    timestamp_event	timezone	date	hour	minute	station_name	station_status
-    2024-05-09 19:28:00	Canada/Toronto	2024-05-09	19	28	stn3	downtime
-    2024-04-21 06:57:00	Canada/Toronto	2024-04-21	6	57	stn3	productive
-    2024-04-11 23:52:00	Canada/Toronto	2024-04-11	23	52	stn4	productive
-    */[0m[32;1m[1;3m
-    Invoking: `sql_db_query_checker` with `{'query': "SELECT station_name, station_status, COUNT(*) as total_time FROM status WHERE date = '2024-04-03' AND station_status = 'downtime' GROUP BY station_name, station_status;"}`
-    responded: The relevant columns are 'station_name' and 'station_status' in the 'status' table. I will now write a query to find the downtime for the station on 2024-04-03.
-    
-    [0m[36;1m[1;3m```sql
-    SELECT station_name, station_status, COUNT(*) as total_time FROM status WHERE date = '2024-04-03' AND station_status = 'downtime' GROUP BY station_name, station_status;
-    ```[0m[32;1m[1;3m
-    Invoking: `sql_db_query` with `{'query': "SELECT station_name, station_status, COUNT(*) as total_time FROM status WHERE date = '2024-04-03' AND station_status = 'downtime' GROUP BY station_name, station_status;"}`
-    responded: The query is correct. I will now execute it.
-    
-    [0m[36;1m[1;3m[('stn2', 'downtime', 1)][0m[32;1m[1;3mThe station had downtime on 2024-04-03.[0m
-    
-    [1m> Finished chain.[0m
-    The station had downtime on 2024-04-03.
-
-
 We can see from the above code snippets that the agent is automatically able to infer and query with respect to 'stn2' in the above question without us having to specify it explicitly. This allows us to have more coherent conversations with the agent.
 
 ## Conclusion
 This tutorial demonstrated how to create a SQL agent using Cohere and LangChain. The agent can translate natural language queries coming from users into SQL, and execute them against a database. This powerful combination allows for intuitive interaction with databases without requiring direct SQL knowledge.
-
