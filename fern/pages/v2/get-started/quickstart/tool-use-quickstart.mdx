@@ -28,7 +28,9 @@ Next, import the library and create a client.
 ```python PYTHON
 import cohere
 
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
 ```
 
 </Tab>
@@ -38,8 +40,7 @@ co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://das
 import cohere
 
 co = cohere.ClientV2(
-    api_key="", # Leave this blank
-    base_url="<YOUR_DEPLOYMENT_URL>"
+    api_key="", base_url="<YOUR_DEPLOYMENT_URL>"  # Leave this blank
 )
 ```
 
@@ -98,29 +99,30 @@ We also need to define the tool schemas in a format that can be passed to the Ch
 
 ```python PYTHON
 def get_weather(location):
-    # Implement your tool calling logic here 
+    # Implement your tool calling logic here
     return [{"temperature": "20C"}]
     # Return a list of objects e.g. [{"url": "abc.com", "text": "..."}, {"url": "xyz.com", "text": "..."}]
+
 
 functions_map = {"get_weather": get_weather}
 
 tools = [
     {
-    "type": "function",
-    "function": {
+        "type": "function",
+        "function": {
             "name": "get_weather",
-            "description" : "gets the weather of a given location",
+            "description": "gets the weather of a given location",
             "parameters": {
                 "type": "object",
                 "properties": {
-                "location": {
-                    "type" : "string",
-                    "description": "the location to get weather, example: San Fransisco, CA"
-                }
+                    "location": {
+                        "type": "string",
+                        "description": "the location to get weather, example: San Fransisco, CA",
+                    }
                 },
-                "required": ["location"]
-            }
-            }
+                "required": ["location"],
+            },
+        },
     },
 ]
 ```
@@ -133,12 +135,12 @@ The LLM will then generate the tool calls (if any) and return the `tool_plan` an
 <Tabs>
 <Tab title="Cohere Platform">
 ```python PYTHON
-messages = [{"role": "user", "content": "What's the weather in Toronto?"}]
+messages = [
+    {"role": "user", "content": "What's the weather in Toronto?"}
+]
 
 response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-r-plus-08-2024", messages=messages, tools=tools
 )
 
 if response.message.tool_calls:
@@ -155,12 +157,12 @@ if response.message.tool_calls:
 
 <Tab title="Private Deployment">
 ```python PYTHON
-messages = [{"role": "user", "content": "What's the weather in Toronto?"}]
+messages = [
+    {"role": "user", "content": "What's the weather in Toronto?"}
+]
 
 response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-r-plus-08-2024", messages=messages, tools=tools
 )
 
 if response.message.tool_calls:
@@ -177,12 +179,12 @@ if response.message.tool_calls:
 
 <Tab title="Bedrock">
 ```python PYTHON
-messages = [{"role": "user", "content": "What's the weather in Toronto?"}]
+messages = [
+    {"role": "user", "content": "What's the weather in Toronto?"}
+]
 
 response = co.chat(
-    model="YOUR_MODEL_NAME",
-    messages=messages,
-    tools=tools
+    model="YOUR_MODEL_NAME", messages=messages, tools=tools
 )
 
 if response.message.tool_calls:
@@ -199,12 +201,12 @@ if response.message.tool_calls:
 
 <Tab title="SageMaker">
 ```python PYTHON
-messages = [{"role": "user", "content": "What's the weather in Toronto?"}]
+messages = [
+    {"role": "user", "content": "What's the weather in Toronto?"}
+]
 
 response = co.chat(
-    model="YOUR_ENDPOINT_NAME",
-    messages=messages,
-    tools=tools
+    model="YOUR_ENDPOINT_NAME", messages=messages, tools=tools
 )
 
 if response.message.tool_calls:
@@ -221,12 +223,14 @@ if response.message.tool_calls:
 
 <Tab title="Azure AI">
 ```python PYTHON
-messages = [{"role": "user", "content": "What's the weather in Toronto?"}]
+messages = [
+    {"role": "user", "content": "What's the weather in Toronto?"}
+]
 
 response = co.chat(
-    model="model", # Pass a dummy string
+    model="model",  # Pass a dummy string
     messages=messages,
-    tools=tools
+    tools=tools,
 )
 
 if response.message.tool_calls:
@@ -260,10 +264,19 @@ if response.message.tool_calls:
         )
         tool_content = []
         for data in tool_result:
-            tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+            tool_content.append(
+                {
+                    "type": "document",
+                    "document": {"data": json.dumps(data)},
+                }
+            )
             # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
         messages.append(
-            {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
+            {
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": tool_content,
+            }
         )
 ```
 
@@ -274,9 +287,7 @@ The results are passed back to the LLM, which generates the final response.
 <Tab title="Cohere Platform">
 ```python PYTHON
 response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-r-plus-08-2024", messages=messages, tools=tools
 )
 print(response.message.content[0].text)
 ```
@@ -285,9 +296,7 @@ print(response.message.content[0].text)
 <Tab title="Private Deployment">
 ```python PYTHON
 response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-r-plus-08-2024", messages=messages, tools=tools
 )
 print(response.message.content[0].text)
 ```
@@ -296,9 +305,7 @@ print(response.message.content[0].text)
 <Tab title="Bedrock">
 ```python PYTHON
 response = co.chat(
-    model="YOUR_MODEL_NAME",
-    messages=messages,
-    tools=tools
+    model="YOUR_MODEL_NAME", messages=messages, tools=tools
 )
 print(response.message.content[0].text)
 ```
@@ -307,9 +314,7 @@ print(response.message.content[0].text)
 <Tab title="SageMaker">
 ```python PYTHON
 response = co.chat(
-    model="YOUR_ENDPOINT_NAME",
-    messages=messages,
-    tools=tools
+    model="YOUR_ENDPOINT_NAME", messages=messages, tools=tools
 )
 print(response.message.content[0].text)
 ```
@@ -318,9 +323,9 @@ print(response.message.content[0].text)
 <Tab title="Azure AI">
 ```python PYTHON
 response = co.chat(
-    model="model", # Pass a dummy string
+    model="model",  # Pass a dummy string
     messages=messages,
-    tools=tools
+    tools=tools,
 )
 print(response.message.content[0].text)
 ```
