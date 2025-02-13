@@ -29,7 +29,9 @@ First, define the documents to be passed as the context of the model's response.
 import cohere
 import json
 
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
 ```
 </Tab>
 
@@ -39,8 +41,7 @@ co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://das
 import cohere
 
 co = cohere.ClientV2(
-    api_key="", # Leave this blank
-    base_url="<YOUR_DEPLOYMENT_URL>"
+    api_key="", base_url="<YOUR_DEPLOYMENT_URL>"  # Leave this blank
 )
 ```
 </Tab>
@@ -71,12 +72,14 @@ Each citation object contains:
 - `sources`: the source(s) that it references
 
 ```python PYTHON
-messages = [{"role": "user", "content": "Where do the tallest penguins live?"}]
+messages = [
+    {"role": "user", "content": "Where do the tallest penguins live?"}
+]
 
 response = co.chat(
     model="command-r-plus-08-2024",
     messages=messages,
-    documents=documents
+    documents=documents,
 )
 
 print(response.message.content[0].text)
@@ -100,16 +103,18 @@ In a streaming scenario (using `chat_stream` to generate the model response), th
 Each citation object contains the same fields as the [non-streaming scenario](#non-streaming).
 
 ```python PYTHON
-messages = [{"role": "user", "content": "Where do the tallest penguins live?"}]
+messages = [
+    {"role": "user", "content": "Where do the tallest penguins live?"}
+]
 
 response = co.chat_stream(
     model="command-r-plus-08-2024",
     messages=messages,
-    documents=documents
+    documents=documents,
 )
 
 response_text = ""
-citations  = []
+citations = []
 for chunk in response:
     if chunk:
         if chunk.type == "content-delta":
@@ -117,7 +122,7 @@ for chunk in response:
             print(chunk.delta.message.content.text, end="")
         if chunk.type == "citation-start":
             citations.append(chunk.delta.message.citations)
-                        
+
 for citation in citations:
     print(citation, "\n")
 ```
@@ -143,7 +148,9 @@ Here is an example of using custom IDs. Here, we are adding custom IDs `100` and
 import cohere
 import json
 
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
 
 documents = [
     {
@@ -166,12 +173,14 @@ documents = [
 When document IDs are provided, the citation will refer to the documents using these IDs.
 
 ```python PYTHON
-messages = [{"role": "user", "content": "Where do the tallest penguins live?"}]
+messages = [
+    {"role": "user", "content": "Where do the tallest penguins live?"}
+]
 
 response = co.chat(
     model="command-r-plus-08-2024",
     messages=messages,
-    documents=documents
+    documents=documents,
 )
 
 print(response.message.content[0].text)
@@ -230,17 +239,19 @@ documents = [
     },
 ]
 
-messages = [{"role": "user", "content": "Where do the tallest penguins live?"}]
+messages = [
+    {"role": "user", "content": "Where do the tallest penguins live?"}
+]
 
 response = co.chat_stream(
     model="command-r-plus-08-2024",
     messages=messages,
     documents=documents,
-    citation_options={"mode": "accurate"}
+    citation_options={"mode": "accurate"},
 )
 
 response_text = ""
-citations  = []
+citations = []
 for chunk in response:
     if chunk:
         if chunk.type == "content-delta":
@@ -249,7 +260,7 @@ for chunk in response:
         if chunk.type == "citation-start":
             citations.append(chunk.delta.message.citations)
 
-print("\n")            
+print("\n")
 for citation in citations:
     print(citation, "\n")
 ```
@@ -287,13 +298,15 @@ documents = [
     },
 ]
 
-messages = [{"role": "user", "content": "Where do the tallest penguins live?"}]
+messages = [
+    {"role": "user", "content": "Where do the tallest penguins live?"}
+]
 
 response = co.chat_stream(
     model="command-r-plus-08-2024",
     messages=messages,
     documents=documents,
-    citation_options={"mode": "fast"}
+    citation_options={"mode": "fast"},
 )
 
 response_text = ""
@@ -303,7 +316,10 @@ for chunk in response:
             response_text += chunk.delta.message.content.text
             print(chunk.delta.message.content.text, end="")
         if chunk.type == "citation-start":
-            print(f" [{chunk.delta.message.citations.sources[0].id}]", end="")
+            print(
+                f" [{chunk.delta.message.citations.sources[0].id}]",
+                end="",
+            )
 ```
 Example response:
 ```mdx wordWrap

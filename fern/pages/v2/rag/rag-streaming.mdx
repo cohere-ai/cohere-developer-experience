@@ -119,7 +119,9 @@ First, import the Cohere library and create a client.
 # ! pip install -U cohere
 import cohere
 
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
 ```
 </Tab>
 
@@ -129,8 +131,7 @@ co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://das
 import cohere
 
 co = cohere.ClientV2(
-    api_key="", # Leave this blank
-    base_url="<YOUR_DEPLOYMENT_URL>"
+    api_key="", base_url="<YOUR_DEPLOYMENT_URL>"  # Leave this blank
 )
 ```
 </Tab>
@@ -164,16 +165,18 @@ We can now stream the response using the `chat_stream` endpoint.
 The events are streamed as `chunk` objects. In the example below, we pick `content-delta` to display the text response and `citation-start` to display the citations.
 
 ```python PYTHON
-messages = [{"role": "user", "content": "Where do the tallest penguins live?"}]
+messages = [
+    {"role": "user", "content": "Where do the tallest penguins live?"}
+]
 
 response = co.chat_stream(
-    model="command-r-plus-08-2024", 
-    messages=messages, 
-    documents=documents
+    model="command-r-plus-08-2024",
+    messages=messages,
+    documents=documents,
 )
 
 response_text = ""
-citations  = []
+citations = []
 for chunk in response:
     if chunk:
         if chunk.type == "content-delta":
