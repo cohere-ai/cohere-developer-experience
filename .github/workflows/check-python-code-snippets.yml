@@ -43,11 +43,22 @@ jobs:
         run: |
           git diff --exit-code || echo "::set-output name=changes::true"
 
-      - name: Commit and Push Changes
+          # Commit and push changes if there are any changes
+      - name: Commit and push changes
         if: steps.diff.outputs.changes == 'true'
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add -u
-          git commit -m "Format Python snippets in MDX files"
-          git push https://${{ secrets.MY_PAT }}@github.com/${{ github.repository }} ${GITHUB_REF}
+        uses: stefanzweifel/git-auto-commit-action@v5.1.0
+        with:
+          commit_message: Regenerate SDKs
+          commit_user_email: platform-endpoints@cohere.ai
+          commit_user_name: platform-endpoints
+          file_pattern: './*.mdx'  # Adjust this pattern to match the files you expect to change
+          skip_fetch: true
+          token: ${{ secrets.MY_PAT }}  # Use the PAT stored in GitHub Secrets
+
+      # Upload git diff as a patch file if there are changes and some failure
+      - name: Upload git diff as a patch file
+        if: failure() && steps.diff.outputs.changes == 'true'
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: fern-updates
+          path: fern-updates.patch
