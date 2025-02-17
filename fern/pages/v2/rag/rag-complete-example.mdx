@@ -28,7 +28,9 @@ import cohere
 import json
 import numpy as np
 
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
 ```
 </Tab>
 
@@ -40,8 +42,7 @@ import json
 import numpy as np
 
 co = cohere.ClientV2(
-    api_key="", # Leave this blank
-    base_url="<YOUR_DEPLOYMENT_URL>"
+    api_key="", base_url="<YOUR_DEPLOYMENT_URL>"  # Leave this blank
 )
 ```
 </Tab>
@@ -53,7 +54,7 @@ Next, we create a search query generation tool for generating search queries fro
 
 ```python PYTHON
 def generate_search_queries(messages):
-    
+
     # Define the query generation tool
     query_gen_tool = [
         {
@@ -78,14 +79,14 @@ def generate_search_queries(messages):
 
     # Generate search queries (if any)
     search_queries = []
-    
+
     res = co.chat(
         model="command-r-08-2024",
         messages=messages,
         tools=query_gen_tool,
-        temperature=0.1
+        temperature=0.1,
     )
-        
+
     if res.message.tool_calls:
         for tc in res.message.tool_calls:
             queries = json.loads(tc.function.arguments)["queries"]
@@ -173,8 +174,8 @@ documents = [
 doc_emb = co.embed(
     model="embed-english-v3.0",
     input_type="search_document",
-    texts=[doc['data']['text'] for doc in documents],
-    embedding_types=["float"]
+    texts=[doc["data"]["text"] for doc in documents],
+    embedding_types=["float"],
 ).embeddings.float
 ```
 
@@ -185,7 +186,9 @@ We choose `search_query` as the `input_type` in the Embed endpoint call. This en
 
 ```python PYTHON
 # Add the user query
-messages = [{"role": "user", "content": "How to get to know my teammates"}]
+messages = [
+    {"role": "user", "content": "How to get to know my teammates"}
+]
 
 # Generate the search query
 # Note: For simplicity, we are assuming only one query generated. For actual implementations, you will need to perform search for each query.
@@ -268,19 +271,21 @@ Here we select `top_n` to be 2, which will be the documents we will pass next fo
 ```python PYTHON
 # Rerank the documents
 results = co.rerank(
-    model='rerank-v3.5',
+    model="rerank-v3.5",
     query=queries_for_search,
-    documents=[doc['data']['text'] for doc in retrieved_documents],
+    documents=[doc["data"]["text"] for doc in retrieved_documents],
     top_n=2,
 )
 
 # Display the reranking results
 for idx, result in enumerate(results.results):
-    print(f"Rank: {idx+1}") 
+    print(f"Rank: {idx+1}")
     print(f"Score: {result.relevance_score}")
     print(f"Document: {retrieved_documents[result.index]}\n")
-    
-reranked_documents = [retrieved_documents[result.index] for result in results.results]
+
+reranked_documents = [
+    retrieved_documents[result.index] for result in results.results
+]
 ```
 ```mdx
 Rank: 1
@@ -304,7 +309,7 @@ The response and citations are then generated based on the the query and the doc
 response = co.chat(
     model="command-r-plus-08-2024",
     messages=messages,
-    documents=reranked_documents
+    documents=reranked_documents,
 )
 
 # Display the response
@@ -341,9 +346,13 @@ From here, we can retain the context over multiple conversation turns by appendi
 
 
 ```python PYTHON
-messages.append({"role": "assistant", "content": response.message.content[0].text})
+messages.append(
+    {"role": "assistant", "content": response.message.content[0].text}
+)
 
-messages.append({"role": "user", "content": "Are they mostly remote?"})
+messages.append(
+    {"role": "user", "content": "Are they mostly remote?"}
+)
 
 queries_for_search = generate_search_queries(messages)[0]
 print("Search query: ", queries_for_search)
