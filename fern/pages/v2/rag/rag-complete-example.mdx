@@ -11,7 +11,7 @@ keywords: "retrieval augmented generation, RAG, grounded replies, text generatio
 createdAt: "Fri Aug 18 2023 19:13:29 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Wed Jun 19 2024 13:01:22 GMT+0000 (Coordinated Universal Time)"
 ---
-This section expands on the [basic RAG usage](https://docs.cohere.com/docs/retrieval-augmented-generation-rag) by showing a more complete example which includes:
+This section expands on the [basic RAG usage](https://docs.cohere.com/docs/retrieval-augmented-generation-rag) by demonstrating a more complete example that includes:
 - Retrieval and reranking of documents (via the Embed and Rerank endpoints).
 - Building RAG for chatbots (involving multi-turn conversations).
 
@@ -50,7 +50,6 @@ co = cohere.ClientV2(
 ## Step 1: Generating search queries
 
 Next, we create a search query generation tool for generating search queries from user queries.
-
 
 ```python PYTHON
 def generate_search_queries(messages):
@@ -269,7 +268,7 @@ Here we select `top_n` to be 2, which will be the documents we will pass next fo
 ```python PYTHON
 # Rerank the documents
 results = co.rerank(
-    model='rerank-v3.5'
+    model='rerank-v3.5',
     query=queries_for_search,
     documents=[doc['data']['text'] for doc in retrieved_documents],
     top_n=2,
@@ -292,6 +291,8 @@ Rank: 2
 Score: 0.058674112
 Document: {'data': {'text': 'Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.'}}
 ```
+
+## Step 3: Generating the response
 
 Finally, we call the Chat endpoint by passing the retrieved documents. This tells the model to run in RAG-mode and use these documents in its response.
 
@@ -346,6 +347,8 @@ messages.append({"role": "user", "content": "Are they mostly remote?"})
 
 queries_for_search = generate_search_queries(messages)[0]
 print("Search query: ", queries_for_search)
+
+# ...continue to retrieval, reranking, and response generation steps...
 ```
 
 ```mdx
