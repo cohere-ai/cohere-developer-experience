@@ -43,21 +43,8 @@ jobs:
         run: |
           git diff --exit-code || echo "::set-output name=changes::true"
 
-          # Commit and push changes if there are any changes
-      - name: Commit and push changes
+      - name: Fail if changes are detected
         if: steps.diff.outputs.changes == 'true'
-        uses: stefanzweifel/git-auto-commit-action@v5.1.0
-        with:
-          commit_message: Check python code snippets
-          commit_user_email: action@github.com
-          commit_user_name: "Github actions"
-          file_pattern: './*.mdx'  # Adjust this pattern to match the files you expect to change
-          skip_fetch: true
-
-      # Upload git diff as a patch file if there are changes and some failure
-      - name: Upload git diff as a patch file
-        if: failure() && steps.diff.outputs.changes == 'true'
-        uses: actions/upload-artifact@v4.6.0
-        with:
-          name: fern-updates
-          path: fern-updates.patch
+        run: |
+          echo "Changes in python code snippets are detected. Please run check-python-code-snippets locally and commit the changes."
+          exit 1
