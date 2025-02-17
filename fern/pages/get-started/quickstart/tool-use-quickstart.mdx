@@ -29,7 +29,9 @@ Next, import the library and create a client.
 ```python PYTHON
 import cohere
 
-co = cohere.Client("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+co = cohere.Client(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
 ```
 
 </Tab>
@@ -39,8 +41,7 @@ co = cohere.Client("COHERE_API_KEY") # Get your free API key here: https://dashb
 import cohere
 
 co = cohere.Client(
-    api_key="", # Leave this blank
-    base_url="<YOUR_DEPLOYMENT_URL>"
+    api_key="", base_url="<YOUR_DEPLOYMENT_URL>"  # Leave this blank
 )
 ```
 
@@ -97,22 +98,23 @@ We also need to define the tool schemas in a format that can be passed to the Ch
 
 ```python PYTHON
 def get_weather(location):
-    # Implement your tool calling logic here 
+    # Implement your tool calling logic here
     return {"temperature": "20C"}
-  
+
+
 functions_map = {"get_weather": get_weather}
 
 tools = [
     {
-      "name": "get_weather",
-      "description": "Gets the weather of a given location",
-      "parameter_definitions": {
-        "location": {
-          "description": "The location to get weather, example: San Francisco, CA",
-          "type": "str",
-          "required": True
-        }
-      }
+        "name": "get_weather",
+        "description": "Gets the weather of a given location",
+        "parameter_definitions": {
+            "location": {
+                "description": "The location to get weather, example: San Francisco, CA",
+                "type": "str",
+                "required": True,
+            }
+        },
     },
 ]
 ```
@@ -128,9 +130,7 @@ The LLM will then generate the tool calls (if any) and return the `tool_calls` o
 message = "What's the weather in Toronto?"
 
 response = co.chat(
-    model="command-r-plus-08-2024",
-    message=message,
-    tools=tools
+    model="command-r-plus-08-2024", message=message, tools=tools
 )
 
 print(response.tool_calls)
@@ -142,9 +142,7 @@ print(response.tool_calls)
 message = "What's the weather in Toronto?"
 
 response = co.chat(
-    model="command-r-plus-08-2024",
-    message=message,
-    tools=tools
+    model="command-r-plus-08-2024", message=message, tools=tools
 )
 
 print(response.tool_calls)
@@ -156,9 +154,7 @@ print(response.tool_calls)
 message = "What's the weather in Toronto?"
 
 response = co.chat(
-    model="YOUR_MODEL_NAME",
-    message=message,
-    tools=tools
+    model="YOUR_MODEL_NAME", message=message, tools=tools
 )
 
 print(response.tool_calls)
@@ -170,9 +166,7 @@ print(response.tool_calls)
 message = "What's the weather in Toronto?"
 
 response = co.chat(
-    model="YOUR_ENDPOINT_NAME",
-    message=message,
-    tools=tools
+    model="YOUR_ENDPOINT_NAME", message=message, tools=tools
 )
 
 print(response.tool_calls)
@@ -183,10 +177,7 @@ print(response.tool_calls)
 ```python PYTHON
 message = "What's the weather in Toronto?"
 
-response = co.chat(
-    message=message,
-    tools=tools
-)
+response = co.chat(message=message, tools=tools)
 
 print(response.tool_calls)
 ```
@@ -206,7 +197,9 @@ if response.tool_calls:
     for tc in response.tool_calls:
         tool_call = {"name": tc.name, "parameters": tc.parameters}
         tool_result = functions_map[tc.name](**tc.parameters)
-        tool_content.append({"call": tool_call, "outputs": [tool_result]})
+        tool_content.append(
+            {"call": tool_call, "outputs": [tool_result]}
+        )
 ```
 
 ### Response Generation
@@ -219,8 +212,8 @@ response = co.chat(
     model="command-r-plus-08-2024",
     message="",
     tools=tools,
-    tool_results=tool_content,   
-    chat_history=response.chat_history
+    tool_results=tool_content,
+    chat_history=response.chat_history,
 )
 
 print(response.text)
@@ -233,8 +226,8 @@ response = co.chat(
     model="command-r-plus-08-2024",
     message="",
     tools=tools,
-    tool_results=tool_content,   
-    chat_history=response.chat_history
+    tool_results=tool_content,
+    chat_history=response.chat_history,
 )
 
 print(response.text)
@@ -247,8 +240,8 @@ response = co.chat(
     model="YOUR_MODEL_NAME",
     message="",
     tools=tools,
-    tool_results=tool_content,   
-    chat_history=response.chat_history
+    tool_results=tool_content,
+    chat_history=response.chat_history,
 )
 
 print(response.text)
@@ -261,8 +254,8 @@ response = co.chat(
     model="YOUR_ENDPOINT_NAME",
     message="",
     tools=tools,
-    tool_results=tool_content,   
-    chat_history=response.chat_history
+    tool_results=tool_content,
+    chat_history=response.chat_history,
 )
 
 print(response.text)
@@ -274,8 +267,8 @@ print(response.text)
 response = co.chat(
     message="",
     tools=tools,
-    tool_results=tool_content,   
-    chat_history=response.chat_history
+    tool_results=tool_content,
+    chat_history=response.chat_history,
 )
 
 print(response.text)
