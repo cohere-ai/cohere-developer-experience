@@ -29,11 +29,31 @@ The `id` field will be used in citation generation as the reference document IDs
 
 The code snippet below, for example, will produce a grounded answer to `"Where do the tallest penguins live?"`, along with inline citations based on the provided documents.
 
+<Tabs>
+<Tab title="Cohere platform">
+
 ```python PYTHON
+# ! pip install -U cohere
 import cohere
 
-co = cohere.ClientV2(api_key="<YOUR API KEY>")
+co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+```
+</Tab>
 
+<Tab title="Private deployment">
+```python PYTHON
+# ! pip install -U cohere
+import cohere
+
+co = cohere.ClientV2(
+    api_key="", # Leave this blank
+    base_url="<YOUR_DEPLOYMENT_URL>"
+)
+```
+</Tab>
+</Tabs>
+
+```python PYTHON
 # Retrieve the documents
 documents = [
     {
@@ -201,10 +221,6 @@ We won't go into details of fetching data in this guide, since it's very specifi
 In the final step, we will be calling the Chat API again, but this time passing along the `documents` you acquired in Step 2. A `document` object is a dictionary containing the content and the metadata of the text. We recommend using a few descriptive keys such as `"title"`, `"snippet"`, or `"last updated"` and only including semantically relevant data. The keys and the values will be formatted into the prompt and passed to the model.
 
 ```python PYTHON
-import cohere
-
-co = cohere.ClientV2(api_key="<YOUR API KEY>")
-
 documents = [
     {
         "data": {
