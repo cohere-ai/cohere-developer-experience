@@ -43,11 +43,8 @@ jobs:
         run: |
           git diff --exit-code || echo "::set-output name=changes::true"
 
-      - name: Commit and Push Changes
+      - name: Fail if changes are detected
         if: steps.diff.outputs.changes == 'true'
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add -u
-          git commit -m "Format Python snippets in MDX files"
-          git push
+          echo "Changes in python code snippets are detected. Please run check-python-code-snippets locally and commit the changes."
+          exit 1
