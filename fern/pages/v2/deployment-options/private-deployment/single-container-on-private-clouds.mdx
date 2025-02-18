@@ -41,6 +41,22 @@ cat <<EOF > ~/.docker/config.json
 }
 EOF
 ```
+If you prefer to update your docker CLI configuration only for the current terminal session you can export an environment variable instead:
+
+```
+LICENSE_ID="<YOUR LICENSE ID>"
+
+export DOCKER_CONFIG=$(mktemp -d)
+cat <<EOF > "${DOCKER_CONFIG}/config.json"
+{
+    "auths": {
+        "proxy.replicated.com": {
+            "auth": "$(echo -n "${LICENSE_ID}:${LICENSE_ID}" | base64 | tr -d '\n')"
+        }
+    }
+}
+EOF
+```
 
 Validate that the authenticated image pull works correctly using the docker CLI:
 
