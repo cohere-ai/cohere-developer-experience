@@ -25,7 +25,9 @@ First, import the Cohere library and create a client.
 # ! pip install -U cohere
 import cohere
 
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
 ```
 </Tab>
 
@@ -35,8 +37,7 @@ co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://das
 import cohere
 
 co = cohere.ClientV2(
-    api_key="", # Leave this blank
-    base_url="<YOUR_DEPLOYMENT_URL>"
+    api_key="", base_url="<YOUR_DEPLOYMENT_URL>"  # Leave this blank
 )
 ```
 </Tab>
@@ -46,9 +47,10 @@ We'll use the same `get_weather` tool as in the [previous example](https://docs.
 
 ```python PYTHON
 def get_weather(location):
-    # Implement any logic here 
+    # Implement any logic here
     return [{"temperature": "20C"}]
     # Return a list of objects e.g. [{"url": "abc.com", "text": "..."}, {"url": "xyz.com", "text": "..."}]
+
 
 functions_map = {"get_weather": get_weather}
 
@@ -79,12 +81,15 @@ The model can determine that more than one tool call is required, where it will 
 In the example below, the user asks for the weather in Toronto and New York. This requires calling the `get_weather` function twice, one for each location. This is reflected in the model's response, where two parallel tool calls are generated.
 
 ```python PYTHON
-messages = [{"role": "user", "content": "What's the weather in Toronto and New York?"}]
+messages = [
+    {
+        "role": "user",
+        "content": "What's the weather in Toronto and New York?",
+    }
+]
 
 response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-r-plus-08-2024", messages=messages, tools=tools
 )
 
 if response.message.tool_calls:
@@ -134,9 +139,18 @@ if response.message.tool_calls:
         tool_content = []
         for data in tool_result:
             # Optional: the "document" object can take an "id" field for use in citations, otherwise auto-generated
-            tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+            tool_content.append(
+                {
+                    "type": "document",
+                    "document": {"data": json.dumps(data)},
+                }
+            )
         messages.append(
-            {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
+            {
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": tool_content,
+            }
         )
 ```
 
@@ -172,9 +186,7 @@ In the example below, the user asks for a simple arithmetic question. The model 
 messages = [{"role": "user", "content": "What's 2+2?"}]
 
 response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-r-plus-08-2024", messages=messages, tools=tools
 )
 
 if response.message.tool_calls:
@@ -224,27 +236,29 @@ def get_weather(location):
     temperature = {
         "bern": "22°C",
         "madrid": "24°C",
-        "brasilia": "28°C"
+        "brasilia": "28°C",
     }
     loc = location.lower()
     if loc in temperature:
         return [{"temperature": {loc: temperature[loc]}}]
     return [{"temperature": {loc: "Unknown"}}]
 
+
 def get_capital_city(country):
     capital_city = {
         "switzerland": "bern",
-        "spain": "madrid", 
-        "brazil": "brasilia"
+        "spain": "madrid",
+        "brazil": "brasilia",
     }
     country = country.lower()
     if country in capital_city:
         return [{"capital_city": {country: capital_city[country]}}]
     return [{"capital_city": {country: "Unknown"}}]
 
+
 functions_map = {
     "get_capital_city": get_capital_city,
-    "get_weather": get_weather
+    "get_weather": get_weather,
 }
 ```
 
@@ -269,7 +283,7 @@ tools = [
         },
     },
     {
-        "type": "function", 
+        "type": "function",
         "function": {
             "name": "get_capital_city",
             "description": "gets the capital city of a given country",
@@ -296,15 +310,17 @@ In this example, the user asks for the temperature in Brazil's capital city.
 
 ```python PYTHON
 # Step 1: Get the user message
-messages = [{"role": "user", "content": "What's the temperature in Brazil's capital city?"}]
+messages = [
+    {
+        "role": "user",
+        "content": "What's the temperature in Brazil's capital city?",
+    }
+]
 
 # Step 2: Generate tool calls (if any)
 model = "command-r-plus-08-2024"
 response = co.chat(
-    model=model, 
-    messages=messages, 
-    tools=tools, 
-    temperature=0.3
+    model=model, messages=messages, tools=tools, temperature=0.3
 )
 
 while response.message.tool_calls:
@@ -527,7 +543,8 @@ messages = [
                 id="get_weather_1byjy32y4hvq",
                 type="function",
                 function=ToolCallV2Function(
-                    name="get_weather", arguments='{"location":"Toronto"}'
+                    name="get_weather",
+                    arguments='{"location":"Toronto"}',
                 ),
             )
         ],
@@ -536,7 +553,10 @@ messages = [
         "role": "tool",
         "tool_call_id": "get_weather_1byjy32y4hvq",
         "content": [
-            {"type": "document", "document": {"data": '{"temperature": "20C"}'}}
+            {
+                "type": "document",
+                "document": {"data": '{"temperature": "20C"}'},
+            }
         ],
     },
     {"role": "assistant", "content": "It's 20°C in Toronto."},
@@ -548,9 +568,7 @@ Then, in the second turn, when provided with a rather vague follow-up user messa
 messages.append({"role": "user", "content": "What about London?"})
 
 response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-r-plus-08-2024", messages=messages, tools=tools
 )
 
 if response.message.tool_calls:

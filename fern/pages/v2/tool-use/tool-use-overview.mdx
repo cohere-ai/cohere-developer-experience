@@ -34,7 +34,9 @@ First, import the Cohere library and create a client.
 # ! pip install -U cohere
 import cohere
 
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
 ```
 </Tab>
 
@@ -44,8 +46,7 @@ co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://das
 import cohere
 
 co = cohere.ClientV2(
-    api_key="", # Leave this blank
-    base_url="<YOUR_DEPLOYMENT_URL>"
+    api_key="", base_url="<YOUR_DEPLOYMENT_URL>"  # Leave this blank
 )
 ```
 </Tab>
@@ -68,9 +69,10 @@ In this example, we define a `get_weather` function that returns the temperature
 
 ```python PYTHON
 def get_weather(location):
-    # Implement any logic here 
+    # Implement any logic here
     return [{"temperature": "20°C"}]
     # Return a JSON object string, or a list of tool content blocks e.g. [{"url": "abc.com", "text": "..."}, {"url": "xyz.com", "text": "..."}]
+
 
 functions_map = {"get_weather": get_weather}
 ```
@@ -81,8 +83,10 @@ The Chat endpoint accepts [a string or a list of objects](https://docs.cohere.co
 weather_search_results = "20°C"
 
 # Example: List of objects
-weather_search_results = [{"city": "Toronto", "date": "250207", "temperature": "20°C"},
-                          {"city": "Toronto", "date": "250208", "temperature": "21°C"}]
+weather_search_results = [
+    {"city": "Toronto", "date": "250207", "temperature": "20°C"},
+    {"city": "Toronto", "date": "250208", "temperature": "21°C"},
+]
 ```
 
 ### Defining the tool schema
@@ -157,7 +161,9 @@ The following sections go through the implementation of these steps in detail.
 In the first step, we get the user's message and append it to the `messages` list with the `role` set to `user`.
 
 ```python PYTHON
-messages = [{"role": "user", "content": "What's the weather in Toronto?"}]
+messages = [
+    {"role": "user", "content": "What's the weather in Toronto?"}
+]
 ```
 
 <Accordion title='System message'>
@@ -194,9 +200,7 @@ We then append these to the `messages` list with the `role` set to `assistant`.
 
 ```python PYTHON
 response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-r-plus-08-2024", messages=messages, tools=tools
 )
 
 if response.message.tool_calls:
@@ -236,7 +240,10 @@ These two options are shown below.
 <Tab title="Python objects">
 ```python PYTHON
 messages = [
-    {"role": "user", "content": "What's the weather in Madrid and Brasilia?"},
+    {
+        "role": "user",
+        "content": "What's the weather in Madrid and Brasilia?",
+    },
     {
         "role": "assistant",
         "tool_plan": "I will search for the weather in Madrid and Brasilia.",
@@ -245,14 +252,16 @@ messages = [
                 id="get_weather_dkf0akqdazjb",
                 type="function",
                 function=ToolCallV2Function(
-                    name="get_weather", arguments='{"location":"Madrid"}'
+                    name="get_weather",
+                    arguments='{"location":"Madrid"}',
                 ),
             ),
             ToolCallV2(
                 id="get_weather_gh65bt2tcdy1",
                 type="function",
                 function=ToolCallV2Function(
-                    name="get_weather", arguments='{"location":"Brasilia"}'
+                    name="get_weather",
+                    arguments='{"location":"Brasilia"}',
                 ),
             ),
         ],
@@ -265,7 +274,10 @@ messages = [
 <Tab title="Plain dictionaries">
 ```python PYTHON
 messages = [
-    {"role": "user", "content": "What's the weather in Madrid and Brasilia?"},
+    {
+        "role": "user",
+        "content": "What's the weather in Madrid and Brasilia?",
+    },
     {
         "role": "assistant",
         "tool_plan": "I will search for the weather in Madrid and Brasilia.",
@@ -275,7 +287,7 @@ messages = [
                 "type": "function",
                 "function": {
                     "name": "get_weather",
-                    "arguments": '{"location":"Madrid"}'
+                    "arguments": '{"location":"Madrid"}',
                 },
             },
             {
@@ -283,7 +295,7 @@ messages = [
                 "type": "function",
                 "function": {
                     "name": "get_weather",
-                    "arguments": '{"location":"Brasilia"}'
+                    "arguments": '{"location":"Brasilia"}',
                 },
             },
         ],
@@ -328,16 +340,14 @@ if response.message.tool_calls:
             tool_content.append(
                 {
                     "type": "document",
-                    "document": {
-                        "data": json.dumps(data)
-                    }
+                    "document": {"data": json.dumps(data)},
                 }
             )
         messages.append(
             {
                 "role": "tool",
                 "tool_call_id": tc.id,
-                "content": tool_content
+                "content": tool_content,
             }
         )
 ```
@@ -353,9 +363,7 @@ We then append the response to the `messages` list with the `role` set to `assis
 
 ```python PYTHON
 response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-r-plus-08-2024", messages=messages, tools=tools
 )
 
 messages.append(

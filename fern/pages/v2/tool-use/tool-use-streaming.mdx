@@ -232,7 +232,9 @@ First, import the Cohere library and create a client.
 # ! pip install -U cohere
 import cohere
 
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
 ```
 </Tab>
 
@@ -242,8 +244,7 @@ co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://das
 import cohere
 
 co = cohere.ClientV2(
-    api_key="", # Leave this blank
-    base_url="<YOUR_DEPLOYMENT_URL>"
+    api_key="", base_url="<YOUR_DEPLOYMENT_URL>"  # Leave this blank
 )
 ```
 </Tab>
@@ -258,12 +259,13 @@ def get_weather(location):
     temperature = {
         "bern": "22°C",
         "madrid": "24°C",
-        "brasilia": "28°C"
+        "brasilia": "28°C",
     }
     loc = location.lower()
     if loc in temperature:
         return [{"temperature": {loc: temperature[loc]}}]
     return [{"temperature": {loc: "Unknown"}}]
+
 
 functions_map = {"get_weather": get_weather}
 
@@ -293,12 +295,15 @@ tools = [
 Before streaming the response, first run through the tool calling and execution steps.
 
 ```python PYTHON
-messages = [{"role": "user", "content": "What's the weather in Madrid and Brasilia?"}]
+messages = [
+    {
+        "role": "user",
+        "content": "What's the weather in Madrid and Brasilia?",
+    }
+]
 
 response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-r-plus-08-2024", messages=messages, tools=tools
 )
 
 if response.message.tool_calls:
@@ -322,9 +327,18 @@ if response.message.tool_calls:
         tool_content = []
         for data in tool_result:
             # Optional: the "document" object can take an "id" field for use in citations, otherwise auto-generated
-            tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+            tool_content.append(
+                {
+                    "type": "document",
+                    "document": {"data": json.dumps(data)},
+                }
+            )
         messages.append(
-            {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
+            {
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": tool_content,
+            }
         )
 ```
 
@@ -356,13 +370,11 @@ The events are streamed as `chunk` objects. In the example below, we pick `conte
 
 ```python PYTHON
 response = co.chat_stream(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-r-plus-08-2024", messages=messages, tools=tools
 )
 
 response_text = ""
-citations  = []
+citations = []
 for chunk in response:
     if chunk:
         if chunk.type == "content-delta":
@@ -370,7 +382,7 @@ for chunk in response:
             print(chunk.delta.message.content.text, end="")
         if chunk.type == "citation-start":
             citations.append(chunk.delta.message.citations)
-                        
+
 for citation in citations:
     print(citation, "\n")
 ```
