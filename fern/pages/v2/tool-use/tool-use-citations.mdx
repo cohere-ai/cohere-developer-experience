@@ -30,7 +30,9 @@ First, define the tool and its associated schema.
 import cohere
 import json
 
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
 ```
 </Tab>
 
@@ -41,8 +43,7 @@ import cohere
 import json
 
 co = cohere.ClientV2(
-    api_key="", # Leave this blank
-    base_url="<YOUR_DEPLOYMENT_URL>"
+    api_key="", base_url="<YOUR_DEPLOYMENT_URL>"  # Leave this blank
 )
 ```
 </Tab>
@@ -53,12 +54,13 @@ def get_weather(location):
     temperature = {
         "bern": "22°C",
         "madrid": "24°C",
-        "brasilia": "28°C"
+        "brasilia": "28°C",
     }
     loc = location.lower()
     if loc in temperature:
         return [{"temperature": {loc: temperature[loc]}}]
     return [{"temperature": {loc: "Unknown"}}]
+
 
 functions_map = {"get_weather": get_weather}
 
@@ -86,12 +88,15 @@ tools = [
 Next, run the tool calling and execution steps.
 
 ```python PYTHON
-messages = [{"role": "user", "content": "What's the weather in Madrid and Brasilia?"}]
+messages = [
+    {
+        "role": "user",
+        "content": "What's the weather in Madrid and Brasilia?",
+    }
+]
 
 response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-r-plus-08-2024", messages=messages, tools=tools
 )
 
 if response.message.tool_calls:
@@ -102,16 +107,25 @@ if response.message.tool_calls:
             "tool_calls": response.message.tool_calls,
         }
     )
-    
+
     for tc in response.message.tool_calls:
         tool_result = functions_map[tc.function.name](
             **json.loads(tc.function.arguments)
         )
         tool_content = []
         for data in tool_result:
-            tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+            tool_content.append(
+                {
+                    "type": "document",
+                    "document": {"data": json.dumps(data)},
+                }
+            )
         messages.append(
-            {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
+            {
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": tool_content,
+            }
         )
 ```
 
@@ -124,9 +138,7 @@ Each citation object contains:
 
 ```python PYTHON
 response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-r-plus-08-2024", messages=messages, tools=tools
 )
 
 messages.append(
@@ -154,13 +166,11 @@ Each citation object contains the same fields as the [non-streaming scenario](#n
 
 ```python PYTHON
 response = co.chat_stream(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-r-plus-08-2024", messages=messages, tools=tools
 )
 
 response_text = ""
-citations  = []
+citations = []
 for chunk in response:
     if chunk:
         if chunk.type == "content-delta":
@@ -168,10 +178,8 @@ for chunk in response:
             print(chunk.delta.message.content.text, end="")
         if chunk.type == "citation-start":
             citations.append(chunk.delta.message.citations)
-                        
-messages.append(
-    {"role": "assistant", "content": response_text}
-)
+
+messages.append({"role": "assistant", "content": response_text})
 
 for citation in citations:
     print(citation, "\n")
@@ -198,10 +206,15 @@ Here is an example of using custom IDs. To keep it concise, let's start with a p
 import cohere
 import json
 
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
 
 messages = [
-    {"role": "user", "content": "What's the weather in Madrid and Brasilia?"},
+    {
+        "role": "user",
+        "content": "What's the weather in Madrid and Brasilia?",
+    },
     {
         "role": "assistant",
         "tool_plan": "I will search for the weather in Madrid and Brasilia.",
@@ -211,7 +224,7 @@ messages = [
                 "type": "function",
                 "function": {
                     "name": "get_weather",
-                    "arguments": '{"location":"Madrid"}'
+                    "arguments": '{"location":"Madrid"}',
                 },
             },
             {
@@ -219,7 +232,7 @@ messages = [
                 "type": "function",
                 "function": {
                     "name": "get_weather",
-                    "arguments": '{"location":"Brasilia"}'
+                    "arguments": '{"location":"Brasilia"}',
                 },
             },
         ],
@@ -232,7 +245,7 @@ messages = [
                 "type": "document",
                 "document": {
                     "data": '{"temperature": {"madrid": "24°C"}}',
-                    "id" : "1"
+                    "id": "1",
                 },
             }
         ],
@@ -245,7 +258,7 @@ messages = [
                 "type": "document",
                 "document": {
                     "data": '{"temperature": {"brasilia": "28°C"}}',
-                    "id" : "2"
+                    "id": "2",
                 },
             }
         ],
@@ -257,9 +270,7 @@ When document IDs are provided, the citation will refer to the documents using t
 
 ```python PYTHON
 response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-r-plus-08-2024", messages=messages, tools=tools
 )
 
 print(response.message.content[0].text)
@@ -307,17 +318,19 @@ With the `citation_options` mode set to `accurate`, we get the citations after t
 import cohere
 import json
 
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
 
 response = co.chat_stream(
     model="command-r-plus-08-2024",
     messages=messages,
     tools=tools,
-    citation_options={"mode": "accurate"}
+    citation_options={"mode": "accurate"},
 )
 
 response_text = ""
-citations  = []
+citations = []
 for chunk in response:
     if chunk:
         if chunk.type == "content-delta":
@@ -326,7 +339,7 @@ for chunk in response:
         if chunk.type == "citation-start":
             citations.append(chunk.delta.message.citations)
 
-print("\n")            
+print("\n")
 for citation in citations:
     print(citation, "\n")
 ```
@@ -351,7 +364,7 @@ response = co.chat_stream(
     model="command-r-plus-08-2024",
     messages=messages,
     tools=tools,
-    citation_options={"mode": "fast"}
+    citation_options={"mode": "fast"},
 )
 
 response_text = ""
@@ -361,7 +374,10 @@ for chunk in response:
             response_text += chunk.delta.message.content.text
             print(chunk.delta.message.content.text, end="")
         if chunk.type == "citation-start":
-            print(f" [{chunk.delta.message.citations.sources[0].id}]", end="")
+            print(
+                f" [{chunk.delta.message.citations.sources[0].id}]",
+                end="",
+            )
 ```
 Example response:
 ```mdx wordWrap
