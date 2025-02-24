@@ -1,0 +1,397 @@
+---
+title: "Streaming for tool use (function calling)"
+slug: "v2/docs/tool-use-streaming"
+
+hidden: false 
+description: >-
+  Guide on implementing streaming for tool use in Cohere's platform and details on the events stream (API v2).
+image: "../../../assets/images/4a5325a-cohere_meta_image.jpg"  
+keywords: "Cohere, text generation, LLMs, generative AI"
+
+createdAt: "Thu Feb 29 2024 18:05:29 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Tue Jun 18 2024 07:20:15 GMT+0000 (Coordinated Universal Time)"
+---
+## Overview
+
+To enable response streaming in tool use, use the `chat_stream` endpoint instead of `chat`.
+
+You can stream responses in both the tool calling and the response generation steps. This allows your application to receive token streams as the model plans and executes tool calls and finally generates its response.
+
+## Events stream 
+
+In tool use, the events streamed by the endpoint follows the structure of a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events) but contains additional events for tool calling and response generation with the associated contents. This section describes the stream of events and their contents.
+
+### Tool calling step
+
+#### Event types
+`message-start`
+
+Same as in a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events).
+
+`tool-plan-delta`
+
+Emitted when the next token of the tool plan is generated.
+
+`tool-call-start`
+
+Emitted when the model generates tool calls that require actioning upon. The event contains a list of `tool_calls` containing the tool name and tool call ID of the tool.
+
+`tool-call-delta`
+
+Emitted when the next token of the the tool call is generated.
+
+`tool-call-end`
+
+Emitted when the tool call is finished.
+
+When there are more than one tool calls being made (i.e. parallel tool calls), the sequence of `tool-call-start`, `tool-call-delta`, and `tool-call-end` events will repeat.
+
+`message-end`
+
+Same as in a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events).
+
+#### Example stream
+
+The following is an example stream in the tool calling step.
+
+```mdx wordWrap
+# User message
+"What's the weather in Madrid and Brasilia?"
+
+# Events stream
+type='message-start' id='fba98ad3-e5a1-413c-a8de-84fbf9baabf7' delta=ChatMessageStartEventDelta(message=ChatMessageStartEventDeltaMessage(role='assistant', content=[], tool_plan='', tool_calls=[], citations=[])) 
+ --------------------------------------------------
+type='tool-plan-delta' delta=ChatToolPlanDeltaEventDelta(message=ChatToolPlanDeltaEventDeltaMessage(tool_plan='I')) 
+ --------------------------------------------------
+type='tool-plan-delta' delta=ChatToolPlanDeltaEventDelta(message=ChatToolPlanDeltaEventDeltaMessage(tool_plan=' will')) 
+ --------------------------------------------------
+type='tool-plan-delta' delta=ChatToolPlanDeltaEventDelta(message=ChatToolPlanDeltaEventDeltaMessage(tool_plan=' search')) 
+ --------------------------------------------------
+type='tool-plan-delta' delta=ChatToolPlanDeltaEventDelta(message=ChatToolPlanDeltaEventDeltaMessage(tool_plan=' for')) 
+ --------------------------------------------------
+type='tool-plan-delta' delta=ChatToolPlanDeltaEventDelta(message=ChatToolPlanDeltaEventDeltaMessage(tool_plan=' the')) 
+ --------------------------------------------------
+type='tool-plan-delta' delta=ChatToolPlanDeltaEventDelta(message=ChatToolPlanDeltaEventDeltaMessage(tool_plan=' weather')) 
+ --------------------------------------------------
+type='tool-plan-delta' delta=ChatToolPlanDeltaEventDelta(message=ChatToolPlanDeltaEventDeltaMessage(tool_plan=' in')) 
+ --------------------------------------------------
+type='tool-plan-delta' delta=ChatToolPlanDeltaEventDelta(message=ChatToolPlanDeltaEventDeltaMessage(tool_plan=' Madrid')) 
+ --------------------------------------------------
+type='tool-plan-delta' delta=ChatToolPlanDeltaEventDelta(message=ChatToolPlanDeltaEventDeltaMessage(tool_plan=' and')) 
+ --------------------------------------------------
+type='tool-plan-delta' delta=ChatToolPlanDeltaEventDelta(message=ChatToolPlanDeltaEventDeltaMessage(tool_plan=' Brasilia')) 
+ --------------------------------------------------
+type='tool-plan-delta' delta=ChatToolPlanDeltaEventDelta(message=ChatToolPlanDeltaEventDeltaMessage(tool_plan='.')) 
+ --------------------------------------------------
+type='tool-call-start' index=0 delta=ChatToolCallStartEventDelta(message=ChatToolCallStartEventDeltaMessage(tool_calls=ToolCallV2(id='get_weather_p1t92w7gfgq7', type='function', function=ToolCallV2Function(name='get_weather', arguments='')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=0 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments='{\n    "')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=0 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments='location')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=0 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments='":')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=0 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments=' "')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=0 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments='Madrid')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=0 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments='"')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=0 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments='\n')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=0 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments='}')))) 
+ --------------------------------------------------
+type='tool-call-end' index=0 
+ --------------------------------------------------
+type='tool-call-start' index=1 delta=ChatToolCallStartEventDelta(message=ChatToolCallStartEventDeltaMessage(tool_calls=ToolCallV2(id='get_weather_ay6nmvjgp9vn', type='function', function=ToolCallV2Function(name='get_weather', arguments='')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=1 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments='{\n    "')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=1 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments='location')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=1 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments='":')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=1 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments=' "')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=1 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments='Bras')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=1 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments='ilia')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=1 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments='"')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=1 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments='\n')))) 
+ --------------------------------------------------
+type='tool-call-delta' index=1 delta=ChatToolCallDeltaEventDelta(message=ChatToolCallDeltaEventDeltaMessage(tool_calls=ChatToolCallDeltaEventDeltaMessageToolCalls(function=ChatToolCallDeltaEventDeltaMessageToolCallsFunction(arguments='}')))) 
+ --------------------------------------------------
+type='tool-call-end' index=1 
+ --------------------------------------------------
+type='message-end' id=None delta=ChatMessageEndEventDelta(finish_reason='TOOL_CALL', usage=Usage(billed_units=UsageBilledUnits(input_tokens=37.0, output_tokens=28.0, search_units=None, classifications=None), tokens=UsageTokens(input_tokens=913.0, output_tokens=83.0))) 
+ --------------------------------------------------
+```
+
+
+### Response generation step
+
+#### Event types
+
+`message-start`
+
+Same as in a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events).
+
+`content-start`
+
+Same as in a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events).
+
+`content-delta`
+
+Same as in a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events).
+
+`citation-start`
+
+Emitted for every citation generated in the response. This event contains the details about a citation such as the `start` and `end` indices of the text that cites a source(s), the corresponding `text`, and the list of `sources`.
+
+`citation-end`
+
+Emitted to indicate the end of a citation. If there are multiple citations generated, the events will come as a sequence of `citation-start` and `citation-end` pairs.
+
+`content-end`
+
+Same as in a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events).
+
+`message-end`
+
+Same as in a [basic chat stream event](https://docs.cohere.com/v2/docs/streaming#basic-chat-stream-events).
+
+#### Example stream
+
+The following is an example stream in the response generation step.
+
+```mdx wordWrap
+"What's the weather in Madrid and Brasilia?"
+
+type='message-start' id='e8f9afc1-0888-46f0-a9ed-eb0e5a51e17f' delta=ChatMessageStartEventDelta(message=ChatMessageStartEventDeltaMessage(role='assistant', content=[], tool_plan='', tool_calls=[], citations=[])) 
+ --------------------------------------------------
+type='content-start' index=0 delta=ChatContentStartEventDelta(message=ChatContentStartEventDeltaMessage(content=ChatContentStartEventDeltaMessageContent(text='', type='text'))) 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text='It'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' is'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' currently'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' 2'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text='4'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text='°'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text='C in'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' Madrid'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' and'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' 2'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text='8'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text='°'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text='C in'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text=' Brasilia'))) logprobs=None 
+ --------------------------------------------------
+type='content-delta' index=0 delta=ChatContentDeltaEventDelta(message=ChatContentDeltaEventDeltaMessage(content=ChatContentDeltaEventDeltaMessageContent(text='.'))) logprobs=None 
+ --------------------------------------------------
+type='citation-start' index=0 delta=CitationStartEventDelta(message=CitationStartEventDeltaMessage(citations=Citation(start=16, end=20, text='24°C', sources=[ToolSource(type='tool', id='get_weather_m3kdvxncg1p8:0', tool_output={'temperature': '{"madrid":"24°C"}'})], type='TEXT_CONTENT'))) 
+ --------------------------------------------------
+type='citation-end' index=0 
+ --------------------------------------------------
+type='citation-start' index=1 delta=CitationStartEventDelta(message=CitationStartEventDeltaMessage(citations=Citation(start=35, end=39, text='28°C', sources=[ToolSource(type='tool', id='get_weather_cfwfh3wzkbrs:0', tool_output={'temperature': '{"brasilia":"28°C"}'})], type='TEXT_CONTENT'))) 
+ --------------------------------------------------
+type='citation-end' index=1 
+ --------------------------------------------------
+type='content-end' index=0 
+ --------------------------------------------------
+type='message-end' id=None delta=ChatMessageEndEventDelta(finish_reason='COMPLETE', usage=Usage(billed_units=UsageBilledUnits(input_tokens=87.0, output_tokens=19.0, search_units=None, classifications=None), tokens=UsageTokens(input_tokens=1061.0, output_tokens=85.0))) 
+ --------------------------------------------------
+```
+
+## Usage example
+
+This section provides an example of handling streamed objects in the tool use response generation step.
+
+### Setup
+
+First, import the Cohere library and create a client.
+
+<Tabs>
+<Tab title="Cohere platform">
+
+```python PYTHON
+# ! pip install -U cohere
+import cohere
+
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
+```
+</Tab>
+
+<Tab title="Private deployment">
+```python PYTHON
+# ! pip install -U cohere
+import cohere
+
+co = cohere.ClientV2(
+    api_key="", base_url="<YOUR_DEPLOYMENT_URL>"  # Leave this blank
+)
+```
+</Tab>
+</Tabs>
+
+### Tool definition
+
+Next, define the tool and its associated schema.
+
+```python PYTHON
+def get_weather(location):
+    temperature = {
+        "bern": "22°C",
+        "madrid": "24°C",
+        "brasilia": "28°C",
+    }
+    loc = location.lower()
+    if loc in temperature:
+        return [{"temperature": {loc: temperature[loc]}}]
+    return [{"temperature": {loc: "Unknown"}}]
+
+
+functions_map = {"get_weather": get_weather}
+
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "gets the weather of a given location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "the location to get the weather, example: San Francisco.",
+                    }
+                },
+                "required": ["location"],
+            },
+        },
+    }
+]
+```
+
+### Streaming the response
+
+Before streaming the response, first run through the tool calling and execution steps.
+
+```python PYTHON
+messages = [
+    {
+        "role": "user",
+        "content": "What's the weather in Madrid and Brasilia?",
+    }
+]
+
+response = co.chat(
+    model="command-r-plus-08-2024", messages=messages, tools=tools
+)
+
+if response.message.tool_calls:
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_plan": response.message.tool_plan,
+            "tool_calls": response.message.tool_calls,
+        }
+    )
+    print(response.message.tool_plan, "\n")
+    print(response.message.tool_calls)
+
+import json
+
+if response.message.tool_calls:
+    for tc in response.message.tool_calls:
+        tool_result = functions_map[tc.function.name](
+            **json.loads(tc.function.arguments)
+        )
+        tool_content = []
+        for data in tool_result:
+            # Optional: the "document" object can take an "id" field for use in citations, otherwise auto-generated
+            tool_content.append(
+                {
+                    "type": "document",
+                    "document": {"data": json.dumps(data)},
+                }
+            )
+        messages.append(
+            {
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": tool_content,
+            }
+        )
+```
+
+Example response:
+```mdx wordWrap
+I will use the get_weather tool to find the weather in Madrid and Brasilia. 
+
+[
+    ToolCallV2(
+        id="get_weather_15c2p6g19s8f",
+        type="function",
+        function=ToolCallV2Function(
+            name="get_weather", arguments='{"location":"Madrid"}'
+        ),
+    ),
+    ToolCallV2(
+        id="get_weather_n01pkywy0p2w",
+        type="function",
+        function=ToolCallV2Function(
+            name="get_weather", arguments='{"location":"Brasilia"}'
+        ),
+    ),
+]
+```
+
+Once the tool results have been received, we can now stream the response using the `chat_stream` endpoint.
+
+The events are streamed as `chunk` objects. In the example below, we pick `content-delta` to display the text response and `citation-start` to display the citations.
+
+```python PYTHON
+response = co.chat_stream(
+    model="command-r-plus-08-2024", messages=messages, tools=tools
+)
+
+response_text = ""
+citations = []
+for chunk in response:
+    if chunk:
+        if chunk.type == "content-delta":
+            response_text += chunk.delta.message.content.text
+            print(chunk.delta.message.content.text, end="")
+        if chunk.type == "citation-start":
+            citations.append(chunk.delta.message.citations)
+
+for citation in citations:
+    print(citation, "\n")
+```
+
+Example response:
+```mdx wordWrap
+It's currently 24°C in Madrid and 28°C in Brasilia.
+
+start=5 end=9 text='24°C' sources=[ToolSource(type='tool', id='get_weather_15c2p6g19s8f:0', tool_output={'temperature': '{"madrid":"24°C"}'})] type='TEXT_CONTENT' 
+
+start=24 end=28 text='28°C' sources=[ToolSource(type='tool', id='get_weather_n01pkywy0p2w:0', tool_output={'temperature': '{"brasilia":"28°C"}'})] type='TEXT_CONTENT' 
+```
