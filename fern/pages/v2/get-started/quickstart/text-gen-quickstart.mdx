@@ -1,0 +1,420 @@
+---
+title: Text Generation
+slug: /docs/v2/text-gen-quickstart
+
+description: "A quickstart guide for performing text generation with Cohere's Command models (v2 API)."
+image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, text generation, chatbot, command models"
+---
+Cohere's Command family of LLMs are available via the Chat endpoint. This endpoint enables you to build generative AI applications and facilitates a conversational interface for building chatbots.
+
+This quickstart guide shows you how to perform text generation with the Chat endpoint.
+
+<Steps>
+### Setup
+First, install the Cohere Python SDK with the following command.
+
+```bash
+pip install -U cohere
+```
+
+Next, import the library and create a client.
+
+<Tabs>
+<Tab title="Cohere Platform">
+
+```python PYTHON
+import cohere
+
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
+```
+
+</Tab>
+<Tab title="Private Deployment">
+
+```python PYTHON
+import cohere
+
+co = cohere.ClientV2(
+    api_key="", base_url="<YOUR_DEPLOYMENT_URL>"  # Leave this blank
+)
+```
+
+</Tab>
+
+<Tab title="Bedrock">
+
+```python PYTHON
+import cohere
+
+co = cohere.BedrockClientV2(
+    aws_region="AWS_REGION",
+    aws_access_key="AWS_ACCESS_KEY_ID",
+    aws_secret_key="AWS_SECRET_ACCESS_KEY",
+    aws_session_token="AWS_SESSION_TOKEN",
+)
+
+# Get the model name: https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
+```
+</Tab>
+
+<Tab title="SageMaker">
+
+```python PYTHON
+import cohere
+
+co = cohere.SagemakerClientV2(
+    aws_region="AWS_REGION",
+    aws_access_key="AWS_ACCESS_KEY_ID",
+    aws_secret_key="AWS_SECRET_ACCESS_KEY",
+    aws_session_token="AWS_SESSION_TOKEN",
+)
+```
+</Tab>
+
+<Tab title="Azure AI">
+
+```python PYTHON
+import cohere
+
+co = cohere.ClientV2(
+    api_key="AZURE_API_KEY",
+    base_url="AZURE_ENDPOINT",
+)
+```
+</Tab>
+
+
+</Tabs>
+
+
+### Basic Text Generation
+To perform a basic text generation, call the Chat endpoint by passing the `messages` parameter containing the `user` message.
+
+<Tabs>
+<Tab title="Cohere Platform">
+```python PYTHON
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=[
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        }
+    ],
+)
+
+print(response.message.content[0].text)
+```
+</Tab>
+
+<Tab title="Private Deployment">
+```python PYTHON
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=[
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        }
+    ],
+)
+
+print(response.message.content[0].text)
+```
+</Tab>
+
+<Tab title="Bedrock">
+```python PYTHON
+response = co.chat(
+    model="YOUR_MODEL_NAME",
+    messages=[
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        }
+    ],
+)
+
+print(response.message.content[0].text)
+```
+</Tab>
+
+<Tab title="SageMaker">
+```python PYTHON
+response = co.chat(
+    model="YOUR_ENDPOINT_NAME",
+    messages=[
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        }
+    ],
+)
+
+print(response.message.content[0].text)
+```
+</Tab>
+
+<Tab title="Azure AI">
+```python PYTHON
+response = co.chat(
+    model="model",  # Pass a dummy string
+    messages=[
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        }
+    ],
+)
+```
+</Tab>
+
+</Tabs>
+
+```mdx wordWrap
+"Excited to be part of the Co1t team, I'm [Your Name], a [Your Role], passionate about [Your Area of Expertise] and looking forward to contributing to the company's success."
+```
+
+### State Management
+To maintain the state of a conversation, such as for building chatbots, append a sequence of `user` and `assistant` messages to the `messages` list. You can also include a `system` message at the start of the list to set the context of the conversation.
+
+<Tabs>
+<Tab title="Cohere Platform">
+```python PYTHON
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=[
+        {
+            "role": "system",
+            "content": "You respond in concise sentences.",
+        },
+        {"role": "user", "content": "Hello"},
+        {
+            "role": "assistant",
+            "content": "Hi, how can I help you today?",
+        },
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        },
+    ],
+)
+
+print(response.message.content[0].text)
+```
+</Tab>
+
+<Tab title="Private Deployment">
+```python PYTHON
+response = co.chat(
+    model="command-r-plus-08-2024",
+    messages=[
+        {
+            "role": "system",
+            "content": "You respond in concise sentences.",
+        },
+        {"role": "user", "content": "Hello"},
+        {
+            "role": "assistant",
+            "content": "Hi, how can I help you today?",
+        },
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        },
+    ],
+)
+
+print(response.message.content[0].text)
+```
+</Tab>
+
+<Tab title="Bedrock">
+```python PYTHON
+response = co.chat(
+    model="YOUR_MODEL_NAME",
+    messages=[
+        {
+            "role": "system",
+            "content": "You respond in concise sentences.",
+        },
+        {"role": "user", "content": "Hello"},
+        {
+            "role": "assistant",
+            "content": "Hi, how can I help you today?",
+        },
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        },
+    ],
+)
+```
+</Tab>
+
+<Tab title="SageMaker">
+```python PYTHON
+response = co.chat(
+    model="YOUR_ENDPOINT_NAME",
+    messages=[
+        {
+            "role": "system",
+            "content": "You respond in concise sentences.",
+        },
+        {"role": "user", "content": "Hello"},
+        {
+            "role": "assistant",
+            "content": "Hi, how can I help you today?",
+        },
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        },
+    ],
+)
+```
+</Tab>
+
+<Tab title="Azure AI">
+```python PYTHON
+response = co.chat(
+    model="model",  # Pass a dummy string
+    messages=[
+        {
+            "role": "system",
+            "content": "You respond in concise sentences.",
+        },
+        {"role": "user", "content": "Hello"},
+        {
+            "role": "assistant",
+            "content": "Hi, how can I help you today?",
+        },
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        },
+    ],
+)
+```
+</Tab>
+
+</Tabs>
+```mdx wordWrap
+"Excited to join the team at Co1t, looking forward to contributing my skills and collaborating with everyone!"
+```
+
+### Streaming
+
+To stream text generation, call the Chat endpoint using `chat_stream` instead of `chat`. This returns a generator that yields `chunk` objects, which you can access the generated text from.
+
+<Tabs>
+<Tab title="Cohere Platform">
+```python PYTHON
+res = co.chat_stream(
+    model="command-r-plus-08-2024",
+    messages=[
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        }
+    ],
+)
+
+for chunk in res:
+    if chunk:
+        if chunk.type == "content-delta":
+            print(chunk.delta.message.content.text, end="")
+```
+</Tab>
+
+<Tab title="Private Deployment">
+```python PYTHON
+res = co.chat_stream(
+    model="command-r-plus-08-2024",
+    messages=[
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        }
+    ],
+)
+
+for chunk in res:
+    if chunk:
+        if chunk.type == "content-delta":
+            print(chunk.delta.message.content.text, end="")
+```
+</Tab>
+
+<Tab title="Bedrock">
+```python PYTHON
+res = co.chat_stream(
+    model="YOUR_MODEL_NAME",
+    messages=[
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        }
+    ],
+)
+
+for chunk in res:
+    if chunk:
+        if chunk.type == "content-delta":
+            print(chunk.delta.message.content.text, end="")
+```
+</Tab>
+
+<Tab title="SageMaker">
+```python PYTHON
+res = co.chat_stream(
+    model="YOUR_ENDPOINT_NAME",
+    messages=[
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        }
+    ],
+)
+
+for chunk in res:
+    if chunk:
+        if chunk.type == "content-delta":
+            print(chunk.delta.message.content.text, end="")
+```
+</Tab>
+
+<Tab title="Azure AI">
+```python PYTHON
+res = co.chat_stream(
+    model="model",  # Pass a dummy string
+    messages=[
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        }
+    ],
+)
+
+for chunk in res:
+    if chunk:
+        if chunk.type == "content-delta":
+            print(chunk.delta.message.content.text, end="")
+```
+</Tab>
+
+</Tabs>
+```mdx wordWrap
+"Excited to be part of the Co1t team, I'm [Your Name], a [Your Role/Position], looking forward to contributing my skills and collaborating with this talented group to drive innovation and success."
+```
+
+
+</Steps>
+
+## Further Resources
+- [Chat endpoint API reference](https://docs.cohere.com/reference/chat)
+- [Documentation on text generation](https://docs.cohere.com/docs/introduction-to-text-generation-at-cohere)
+- [LLM University module on text generation](https://cohere.com/llmu#text-generation)

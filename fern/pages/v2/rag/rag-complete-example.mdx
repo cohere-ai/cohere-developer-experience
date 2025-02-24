@@ -28,7 +28,9 @@ import cohere
 import json
 import numpy as np
 
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key here: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
 ```
 </Tab>
 
@@ -40,8 +42,8 @@ import json
 import numpy as np
 
 co = cohere.ClientV2(
-    api_key="", # Leave this blank
-    base_url="<YOUR_DEPLOYMENT_URL>"
+    api_key="", 
+    base_url="<YOUR_DEPLOYMENT_URL>"  # Leave this blank
 )
 ```
 </Tab>
@@ -82,8 +84,6 @@ query_gen_tool = [
 instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
 
 # Generate search queries (if any)
-import json
-
 search_queries = []
 
 res = co.chat(
@@ -112,8 +112,6 @@ Example response:
 ### Retrieval with Embed
 
 Given the search query, we need a way to retrieve the most relevant documents from a large collection of documents.
-
-Note: For simplicity, in this example, we are assuming only one query being generated. For actual implementations, multiple queries may be generated and that means you will need to perform retrieval for each query.
 
 This is where we can leverage text embeddings through the [Embed endpoint](https://docs.cohere.com/reference/embed). 
 
@@ -188,11 +186,10 @@ documents = [
 doc_emb = co.embed(
     model="embed-english-v3.0",
     input_type="search_document",
-    texts=[doc['data']['text'] for doc in documents],
-    embedding_types=["float"]
+    texts=[doc["data"]["text"] for doc in documents],
+    embedding_types=["float"],
 ).embeddings.float
 ```
-
 
 We choose `search_query` as the `input_type` in the Embed endpoint call. This ensures the model treats this as the query (instead of the documents) for search.
 
@@ -207,9 +204,6 @@ query_emb = co.embed(
 ).embeddings.float
 ```
 
-```mdx
-Search query:  how to get to know your teammates
-```
 
 Now, we want to search for the most relevant documents to the query. For this, we make use of the `numpy` library to compute the similarity between each query-document pair using the dot product approach.
 
@@ -254,6 +248,9 @@ Score: 0.13022396595682814
 Document: {'data': {'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}}
 ```
 
+<Note>
+For simplicity, in this example, we are assuming only one query being generated. For practical implementations, multiple queries may be generated. For those scenarios, you will need to perform retrieval for each query.
+</Note>
 
 ### Reranking with Rerank
 
@@ -282,11 +279,13 @@ results = co.rerank(
 
 # Display the reranking results
 for idx, result in enumerate(results.results):
-    print(f"Rank: {idx+1}") 
+    print(f"Rank: {idx+1}")
     print(f"Score: {result.relevance_score}")
     print(f"Document: {retrieved_documents[result.index]}\n")
-    
-reranked_documents = [retrieved_documents[result.index] for result in results.results]
+
+reranked_documents = [
+    retrieved_documents[result.index] for result in results.results
+]
 ```
 ```mdx
 Rank: 1
@@ -312,7 +311,7 @@ messages = [{"role": "user", "content": message}]
 response = co.chat(
     model="command-r-plus-08-2024",
     messages=messages,
-    documents=reranked_documents
+    documents=reranked_documents,
 )
 
 # Display the response
