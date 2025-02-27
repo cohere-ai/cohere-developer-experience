@@ -28,12 +28,17 @@ model = AutoModelForCausalLM.from_pretrained(model_id)
 
 # Format message with the c4ai-command-r7b-12-2024 chat template
 messages = [{"role": "user", "content": "مرحبا، كيف حالك؟"}]
-input_ids = tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt")
+input_ids = tokenizer.apply_chat_template(
+    messages,
+    tokenize=True,
+    add_generation_prompt=True,
+    return_tensors="pt",
+)
 
 gen_tokens = model.generate(
-    input_ids, 
-    max_new_tokens=100, 
-    do_sample=True, 
+    input_ids,
+    max_new_tokens=100,
+    do_sample=True,
     temperature=0.3,
 )
 
@@ -59,16 +64,33 @@ RAG with C4AI Command R7B Arabic is supported through chat templates in Transfor
 
 ```python
 # Define conversation input
-conversation = [{"role": "user", "content": "اقترح طبقًا يمزج نكهات من عدة دول عربية"}]
+conversation = [
+    {
+        "role": "user",
+        "content": "اقترح طبقًا يمزج نكهات من عدة دول عربية",
+    }
+]
 
 # Define documents for retrieval-based generation
-documents = [ 
-{"heading": "المطبخ العربي: أطباقنا التقليدية", "body": "يشتهر المطبخ العربي بأطباقه الغنية والنكهات الفريدة. في هذا المقال، سنستكشف ..."},
-    	{"heading": "وصفة اليوم: مقلوبة", "body": "المقلوبة هي طبق فلسطيني تقليدي، يُحضر من الأرز واللحم أو الدجاج والخضروات. في وصفتنا اليوم ..."} 
+documents = [
+    {
+        "heading": "المطبخ العربي: أطباقنا التقليدية",
+        "body": "يشتهر المطبخ العربي بأطباقه الغنية والنكهات الفريدة. في هذا المقال، سنستكشف ...",
+    },
+    {
+        "heading": "وصفة اليوم: مقلوبة",
+        "body": "المقلوبة هي طبق فلسطيني تقليدي، يُحضر من الأرز واللحم أو الدجاج والخضروات. في وصفتنا اليوم ...",
+    },
 ]
 
 # Get the RAG prompt
-input_prompt = tokenizer.apply_chat_template(conversation=conversation,documents=documents, tokenize=False, add_generation_prompt=True, return_tensors="pt")
+input_prompt = tokenizer.apply_chat_template(
+    conversation=conversation,
+    documents=documents,
+    tokenize=False,
+    add_generation_prompt=True,
+    return_tensors="pt",
+)
 # Tokenize the prompt
 input_ids = tokenizer.encode_plus(input_prompt, return_tensors="pt")
 ```
