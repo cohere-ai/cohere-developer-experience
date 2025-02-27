@@ -56,13 +56,13 @@ This document describes the steps taken during a POC install. Where North is in 
 
 Access to the following domains:
 
-| Domain | Required | Purpose |
-| ------ | -------- | ------- |
-| `helm.cohere.com` | no*     | Pulling the helm chart. * This is only required during installation, but not required in the cluster’s firewall. |
-| `registry.cohere.com` | yes | Pulling Cohere’s container images. |
-| `ghcr.io`  | yes | Pulling public container images hosted on GitHub’s container registry. |
-| `docker.io` | yes | Pulling public container images hosted on the Docker Hub container registry. |
-| `api.cohere.com` | no** | Making model API calls. ** Required if using the Cohere platform as the model provider. |
+| Domain                | Required | Purpose                                                                                                          |
+|-----------------------|----------|------------------------------------------------------------------------------------------------------------------|
+| `helm.cohere.com`     | no*      | Pulling the helm chart. * This is only required during installation, but not required in the cluster’s firewall. |
+| `registry.cohere.com` | yes      | Pulling Cohere’s container images.                                                                               |
+| `ghcr.io`             | yes      | Pulling public container images hosted on GitHub’s container registry.                                           |
+| `docker.io`           | yes      | Pulling public container images hosted on the Docker Hub container registry.                                     |
+| `api.cohere.com`      | no**     | Making model API calls. ** Required if using the Cohere platform as the model provider.                          |
 
 ## Installation
 
@@ -377,15 +377,10 @@ The defaults are set up to expect a secret named `credentials` in your installat
     	-f values.yaml --timeout 10m \
       --set global.config.postgres.host="<host>" \
       --set global.config.postgres.user="<user>" \
-      --set global.config.postgres.tls.caCerts.secretName="<name>" \
-      --set global.config.postgres.tls.caCerts.secretKey="<key>" \
-      --set global.config.redis.host="<host>" \
-      --set global.config.redis.tls.caCerts.secretName="<name>" \
-      --set global.config.redis.tls.caCerts.secretKey="<key>" \
       --set toolkit.config.publicFrontendURL="https://<domain>" \
       --set toolkit.config.publicBackendURL="https://<domain>/api"
     ```
-    
+
 7. **Create the ingress routes.**
     
     This installation excludes setting up any ingress to the cluster, and it won’t be complete without it. 
@@ -424,7 +419,7 @@ It’s up to the user to create an OIDC application with an identity provider (e
 
 Start by creating a secret in Kubernetes with the client ID and secret:
 
-```yaml
+```bash
 (cat <<EOF
 apiVersion: v1
 kind: Secret
@@ -449,18 +444,18 @@ Add these values to your `values.yaml`file. This option is preferred if you’re
 toolkit:
   config:
     auth:
-	    basic:
-		    enabled: false
+      basic:
+        enabled: false
       oidc:
-	      enabled: true
+        enabled: true
         clientID:
-          secretKeyRef: 
-	          name: "north-oidc"
-	          key: "OIDC_CLIENT_ID"
+          secretKeyRef:
+            name: "north-oidc"
+            key: "OIDC_CLIENT_ID"
         clientSecret:
           secretKeyRef:
-	          name: "north-oidc"
-	          key: "OIDC_CLIENT_SECRET"
+            name: "north-oidc"
+            key: "OIDC_CLIENT_SECRET"
         wellKnownEndpoint: "<YOUR_WELL_KNOWN_ENDPOINT>"
 ```
 
@@ -517,8 +512,8 @@ global:
 global:
   config:
     redis:
-	    scheme: "rediss"
-	    connectionOptions: "<opts>"  # comma separated list of connection options
+      scheme: "rediss"
+      connectionOptions: "<opts>"  # comma separated list of connection options
       tls:
         caCerts:
           secretName: "<name>"
@@ -574,7 +569,7 @@ global:
 
 ```yaml
 global:
-	config:
+  config:
     cohere:
       apiKey:
         secretKeyRef:
@@ -582,11 +577,11 @@ global:
           key: "<key>"
 
 models:
-	enabled: false
+  enabled: false
 
 toolkit:
-	config:
-		modelDeploymentType: cohere_platform
+  config:
+    modelDeploymentType: cohere_platform
 ```
 
 **Option 2): Use Helm `--set` flags**
