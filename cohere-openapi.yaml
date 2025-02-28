@@ -22624,15 +22624,45 @@ components:
             - text
         text:
           type: string
+    ContentType:
+      x-fern-audiences:
+        - public
+      description: |
+        Type of message content
+      type: string
+      enum:
+        - text
+        - image_url
+    ImageUrl:
+      type: object
+      description: Base64 url of image.
+      required:
+        - url
+      properties:
+        url:
+          type: string
+    ImageContent:
+      type: object
+      description: Image content of the message.
+      required:
+        - type
+        - image_url
+      properties:
+        type:
+          $ref: "#/components/schemas/ContentType"
+        image_url:
+          $ref: "#/components/schemas/ImageUrl"
     Content:
       description: A Content block which contains information about the content type
         and the content itself.
       oneOf:
         - $ref: "#/components/schemas/TextContent"
+        - $ref: "#/components/schemas/ImageContent"
       discriminator:
         propertyName: type
         mapping:
           text: "#/components/schemas/TextContent"
+          image_url: "#/components/schemas/ImageContent"
     UserMessage:
       type: object
       title: User Message
