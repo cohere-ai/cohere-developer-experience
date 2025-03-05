@@ -25,7 +25,7 @@ describe.each(config.languages.map(o => [o.name, o] as [string, Language]))("Tes
     const filePaths = glob.globSync(lang.glob, { cwd })
 
     test.concurrent.each(filePaths)('testing file %s', async (filePath) => {
-        const { error } = await execCmd(lang.exec(filePath), cwd)
+        const { error } = await execCmd(lang.exec(filePath, cwd), cwd)
 
         expect(error).toMatchSnapshot()
     }, 1000000);
