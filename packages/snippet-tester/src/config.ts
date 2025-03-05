@@ -39,7 +39,7 @@ export const config: {
         {
             "name": "Python code snippets",
             "exec": execPythonSnippet,
-            "snippetRoot": (base: string) => path.join(base, "./fern/pages/cohere-for-ai"),
+            "snippetRoot": (base: string) => path.join(base, "./fern/pages"),
             "glob": "**/*.mdx",
         },
         {
