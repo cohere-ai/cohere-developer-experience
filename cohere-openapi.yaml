@@ -22624,15 +22624,45 @@ components:
             - text
         text:
           type: string
+    ContentType:
+      x-fern-audiences:
+        - public
+      description: |
+        Type of message content
+      type: string
+      enum:
+        - text
+        - image_url
+    ImageUrl:
+      type: object
+      description: Base64 url of image.
+      required:
+        - url
+      properties:
+        url:
+          type: string
+    ImageContent:
+      type: object
+      description: Image content of the message.
+      required:
+        - type
+        - image_url
+      properties:
+        type:
+          $ref: "#/components/schemas/ContentType"
+        image_url:
+          $ref: "#/components/schemas/ImageUrl"
     Content:
       description: A Content block which contains information about the content type
         and the content itself.
       oneOf:
         - $ref: "#/components/schemas/TextContent"
+        - $ref: "#/components/schemas/ImageContent"
       discriminator:
         propertyName: type
         mapping:
           text: "#/components/schemas/TextContent"
+          image_url: "#/components/schemas/ImageContent"
     UserMessage:
       type: object
       title: User Message
@@ -22913,6 +22943,15 @@ components:
             Dictates the approach taken to generating citations as part of the RAG flow by allowing the user to specify whether they want `"accurate"` results, `"fast"` results or no results.
 
             **Note**: `command-r7b-12-2024` only supports `"fast"` and `"off"` modes. Its default is `"fast"`.
+    TruncationStrategy:
+      description: Describes the truncation strategy for when the prompt exceeds the
+        context length. Defaults to 'none'
+      oneOf: []
+      discriminator:
+        propertyName: type
+        mapping:
+          auto: "#/components/schemas/TruncationStrategyAutoPreserveOrder"
+          none: "#/components/schemas/TruncationStrategyNone"
     ResponseFormatTypeV2:
       x-fern-audiences:
         - public
@@ -27234,6 +27273,11 @@ components:
           x-fern-audiences:
             - public
           description: Public URL to the tokenizer's configuration file.
+        supports_vision:
+          type: boolean
+          x-fern-audiences:
+            - public
+          description: Whether the model supports image inputs or not.
         default_endpoints:
           type: array
           x-fern-audiences:
