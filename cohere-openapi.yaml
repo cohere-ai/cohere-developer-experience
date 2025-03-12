@@ -5972,6 +5972,8 @@ paths:
                   x-fern-audiences:
                     - public
                   $ref: "#/components/schemas/ChatMessages"
+                reasoning_effort:
+                  $ref: "#/components/schemas/ReasoningEffort"
                 tools:
                   x-fern-audiences:
                     - public
@@ -22905,6 +22907,14 @@ components:
         Messages can be from `User`, `Assistant`, `Tool` and `System` roles. Learn more about messages and roles in [the Chat API guide](https://docs.cohere.com/v2/docs/chat-api).
       items:
         $ref: "#/components/schemas/ChatMessageV2"
+    ReasoningEffort:
+      description: |
+        The reasoning effort level of the model. This affects the model's performance and the time it takes to generate a response.
+      type: string
+      enum:
+        - low
+        - medium
+        - high
     ToolV2:
       type: object
       properties:
@@ -22943,6 +22953,15 @@ components:
             Dictates the approach taken to generating citations as part of the RAG flow by allowing the user to specify whether they want `"accurate"` results, `"fast"` results or no results.
 
             **Note**: `command-r7b-12-2024` only supports `"fast"` and `"off"` modes. Its default is `"fast"`.
+    TruncationStrategy:
+      description: Describes the truncation strategy for when the prompt exceeds the
+        context length. Defaults to 'none'
+      oneOf: []
+      discriminator:
+        propertyName: type
+        mapping:
+          auto: "#/components/schemas/TruncationStrategyAutoPreserveOrder"
+          none: "#/components/schemas/TruncationStrategyNone"
     ResponseFormatTypeV2:
       x-fern-audiences:
         - public
