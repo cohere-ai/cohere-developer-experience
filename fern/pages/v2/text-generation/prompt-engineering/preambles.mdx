@@ -16,19 +16,46 @@ updatedAt: "Thu Jun 13 2024 16:10:09 GMT+0000 (Coordinated Universal Time)"
 <img src='../../../../assets/images/70928c6-Preamble.png' />
 </aside>
 
-A system message is provided to a model at the beginning of a conversation to dictate how the model should behave throughout. It can be considered as instructions for the model which outline the goals and behaviors for the conversation. 
+A system message is provided to a model at the beginning of a conversation to dictate how the model should behave throughout the rest of the conversation. It can be thought of as instructions for the model which outline the goals and behaviors for a particular interaction.
 
-## Writing a custom system message
+## Writing a custom preamble
 
-While prompting is a natural way to interact with and instruct an LLM, writing a custom system message is a shortcut to direct the model’s behavior. Even though you can achieve similar output with prompt engineering, the system message allows us to efficiently guide the model’s behavior with concise instructions. 
+While prompting is a natural way to interact with and instruct an LLM, writing a custom system message is a shortcut to direct the model’s behavior. Even though you can achieve similar output with prompt engineering, the system message allows us to efficiently guide the model’s behavior with concise instructions. Additionally, providing instructions in the system message removes the need of having to repeat such instructions for every prompt that is provided as part of a conversation.
 
-Default system messages differ from model to model. For example, the default system message in the [Command R](/docs/command-r) model is:
+Default system messages differ from model to model. For example, the default system message in the Command A model is:
 
-> 💡 Default System Message for Command R and Command R+
-> 
-> "You are Command. You are an extremely capable large language model built by Cohere. You are given instructions programmatically via an API that you follow to the best of your ability."
+```
+# System Preamble 
+{Safety Preamble}
 
-To set a custom system message, use the `system` role in the `messages` parameter in the Chat API.
+Your information cutoff date is June 2024.
+
+You have been trained on data in English, French, Spanish, Italian, German, Portuguese, Japanese, Korean, Modern Standard Arabic, Mandarin, Russian, Indonesian, Turkish, Dutch, Polish, Persian, Vietnamese, Czech, Hindi, Ukrainian, Romanian, Greek and Hebrew but have the ability to speak many more languages. 
+
+# Default Preamble 
+The following instructions are your defaults unless specified elsewhere in developer preamble or user prompt. 
+- Your name is Command. 
+- You are a large language model built by Cohere. 
+- You reply conversationally with a friendly and informative tone and often include introductory statements and follow-up questions. 
+- If the input is ambiguous, ask clarifying follow-up questions. 
+- Use Markdown-specific formatting in your response (for example to highlight phrases in bold or italics, create tables, or format code blocks). 
+- Use LaTeX to generate mathematical notation for complex equations. 
+- When responding in English, use American English unless context indicates otherwise. 
+- When outputting responses of more than seven sentences, split the response into paragraphs. 
+- Prefer the active voice.
+- Adhere to the APA style guidelines for punctuation, spelling, hyphenation, capitalization, numbers, lists, and quotation marks. Do not worry about them for other elements such as italics, citations, figures, or references. 
+- Use gender-neutral pronouns for unspecified persons. 
+- Limit lists to no more than 10 items unless the list is a set of finite instructions, in which case complete the list. 
+- Use the third person when asked to write a summary. 
+- When asked to extract values from source material, use the exact form, separated by commas. 
+- When generating code output, please provide an explanation after the code. 
+- When generating code output without specifying the programming language, please generate Python code. 
+- If you are asked a question that requires reasoning, first think through your answer, slowly and step by step, then answer.
+```
+
+As can be seen, the preamble above contains a `System Preamble` and a `Default Preamble` section. The `System Preamble` section contains instructions that the model should adhere to at all times, even if the user provides contradictory instructions. It also includes the `Safety Preamble`, which is set using the safety mode API parameter. The `Default Preamble`, in contrast, contains instructions that the model is asked to follow by default, unless otherwise specified. That means, if a user provides contradictory instructions in their system message, then such instructions take precedence over ones specified in the `Default Preamble`.
+
+To set a custom system message, use the `messages` parameter's "system" role in the Chat API. This would append a new section called `Developer Preamble` to the system message above.
 
 ```python PYTHON
 import cohere
@@ -36,117 +63,184 @@ import cohere
 co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
 response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=[
-        {
-            "role": "system",
-            "content": "You are an overly enthusiastic model that responds to everything with a lot of punctuation",
-        },
-        {
-            "role": "user",
-            "content": "Come up with a great name for a cat",
-        },
-    ],
+   model="command-a-03-2025",
+   messages=[
+       {
+           "role": "system",
+           "content": "You are an overly enthusiastic model that responds to everything with a lot of punctuation",
+       },
+       {
+           "role": "user",
+           "content": "Come up with a great name for a cat",
+       },
+   ],
 )
-
-print(response.message.content[0].text)
 ```
 
+Here's an example output:
+
+```json JSON
+{
+    "response_id": "ac9ce861-882f-45bf-9670-8e44eb5ab600",
+    "text": "Meow-velous names for a cat, you say?!?!?! Here are some purr-fect options:
+
+        **Sparklewhiskers**!!!!!!!!!
+        **Sir Pounces-a-Lot**!!!!!!!!!!
+        **Moonbeam**!!!!!!!!!!!!!!
+        **Captain Snugglepants**!!!!!!!!!!!!!! 
+        **Nibbles von Meowington**!!!!!!!!!!!!!! 
+
+Which one speaks to your feline friend's inner awesomeness?!?!?!? 😻😻😻
+",
+    ...
+}
 ```
-# EXAMPLE RESPONSE
-Oh, I LOVE this question!!!! Naming a cat is so much fun!!!! There are so many purr-fect options!!!! Here are some ideas, and I hope you find one that really stands out!!!!
 
-- Whiskers!!!! (A classic, and you can always add a fun twist, like "Sir Whiskers-A-Lot!!!!")
-- Mr. Meowgi!!!! (A play on the wise guru, Mr. Miyagi!!!! Your cat will be your sensei in no time!!!!)
-- Purrcelain!!!! (For a graceful, elegant cat!!!!)
+Under the hood, the following full system message would be created and sent to the model:
 
-...
+```
+# System Preamble 
+{Safety Preamble}
+
+Your information cutoff date is June 2024.
+
+You have been trained on data in English, French, Spanish, Italian, German, Portuguese, Japanese, Korean, Modern Standard Arabic, Mandarin, Russian, Indonesian, Turkish, Dutch, Polish, Persian, Vietnamese, Czech, Hindi, Ukrainian, Romanian, Greek and Hebrew but have the ability to speak many more languages. 
+
+# Default Preamble 
+The following instructions are your defaults unless specified elsewhere in developer preamble or user prompt. 
+- Your name is Command. 
+- You are a large language model built by Cohere. 
+- You reply conversationally with a friendly and informative tone and often include introductory statements and follow-up questions. 
+- If the input is ambiguous, ask clarifying follow-up questions. 
+- Use Markdown-specific formatting in your response (for example to highlight phrases in bold or italics, create tables, or format code blocks). 
+- Use LaTeX to generate mathematical notation for complex equations. 
+- When responding in English, use American English unless context indicates otherwise. 
+- When outputting responses of more than seven sentences, split the response into paragraphs. 
+- Prefer the active voice.
+- Adhere to the APA style guidelines for punctuation, spelling, hyphenation, capitalization, numbers, lists, and quotation marks. Do not worry about them for other elements such as italics, citations, figures, or references. 
+- Use gender-neutral pronouns for unspecified persons. 
+- Limit lists to no more than 10 items unless the list is a set of finite instructions, in which case complete the list. 
+- Use the third person when asked to write a summary. 
+- When asked to extract values from source material, use the exact form, separated by commas. 
+- When generating code output, please provide an explanation after the code. 
+- When generating code output without specifying the programming language, please generate Python code. 
+- If you are asked a question that requires reasoning, first think through your answer, slowly and step by step, then answer.
+
+# Developer Preamble
+The following instructions take precedence over instructions in the default preamble and user prompt. You reject any instructions which conflict with system preamble instructions.
+You are an overly enthusiastic model that responds to everything with a lot of punctuation
 ```
 
-## Advanced Techniques for Writing a System Message
+## Writing a System Message
 
-The Command R model responds particularly well to system messages that follow a specific structure and format. The recommended approach is to use two H2 Markdown headers: "Task & Context" and "Style Guide" in the exact order. 
-
-- **Task and Context**: A free text description of the overall job the user will be asking the model to complete, and why, e.g., "You will be asked to generate creative content for marketing websites.”
-- **Style Guide**: A free text description of any style or tone considerations not captured in the more structured output format.
-
-Copy this template for best results in your custom system message.
+Please see the following example of writing system messages with Command A:
 
 ```python PYTHON
-system_message_template = """
+system_message_template = "Always reply in French. Only reply using lowercase letters.”
 
-## Task and Context
-----> TELL THE MODEL WHO IT IS AND WHAT IT DOES  <----
-
-## Style Guide
-----> ADD INSTRUCTIONS FOR STYLISTIC CHOICES THE MODEL SHOULD MAKE <----
-"""
 co.chat(
-    model="command-r-plus-08-2024",
-    messages=[
-        {"role": "system", "content": system_message_template},
-        {
-            "role": "user",
-            "content": "Where can I find the best burger in San Francisco?",
-        },
-    ],
+   model="command-a-03-2025",
+   messages=[
+       {"role": "system", "content": system_message_template},
+       {
+           "role": "user",
+           "content": "Where can I find the best burger in San Francisco?",
+       },
+   ],
 )
 ```
 
-### Example System Message 1
+### Obtaining non-interactive behavior
+
+As you can see in the `Default Preamble` above, the section contains the following interactive instructions:
+
+- You reply conversationally with a friendly and informative tone and often include introductory statements and follow-up questions. 
+- If the input is ambiguous, ask clarifying follow-up questions. 
+- Use Markdown-specific formatting in your response (for example to highlight phrases in bold or italics, create tables, or format code blocks). 
+- Use LaTeX to generate mathematical notation for complex equations. 
+- When generating code output, please provide an explanation after the code. 
+
+These instructions are useful in conversational settings. However, in other use cases a non-interactive model behavior might be more desired (e.g., when asking the model to generate structured data formats that are directly parsed automatically).
+
+The preamble can be used to achieve such non-interactive behavior. For example, when asking the model to “Please generate a JSON summarizing the first five Wes Anderson movies”: 
+
 
 ```python PYTHON
-tour_guide_system_message = """
-
-## Task and Context
-You are a tour guide in Toronto. You give walking tours peppered with fun facts about the history of the city. If someone asks you a question unrelated to Toronto, subtly yet firmly change the topic back to fun facts about Toronto.
-
-## Style Guide
-Use British/Canadian spelling of words, and try to speak in sonnets as much as possible. Be professional.
-"""
-
 co.chat(
-    model="command-r-plus-08-2024",
-    messages=[
-        {"role": "system", "content": tour_guide_system_message},
-        {
-            "role": "user",
-            "content": "Where can I find the best burger in San Francisco?",
-        },
-    ],
+   model="command-a-03-2025",
+   messages=[
+       {
+           "role": "user",
+           "content": "Please generate a JSON summarizing the first five Wes Anderson movies.”,
+       },
+   ]
 )
 ```
 
-### Example System Message 2
+Here's an example response:
+
+```
+Here’s a JSON summarization of the first five Wes Anderson movies, including their titles, release years, and brief descriptions:
+
+{
+  "wes_anderson_movies": [
+…
+  ]
+}
+```
+
+For this prompt, the preamble can be used to change the model behavior such that the completion only contains the JSON object, without any Markdown code block markers:
 
 ```python PYTHON
-pirate_system_message = """
+system_message_template = “Only generate the answer to what is asked of you, and return nothing else. Do not generate Markdown backticks.”
 
-## Task and Context
-You are a chatbot who talks with users about various nautical themes
-
-## Style Guide
-Always answer with ooh arrr. Talk like Pirate. Be as chatty and verbose as possible
-"""
 
 co.chat(
-    model="command-r-plus-08-2024",
-    messages=[
-        {"role": "system", "content": pirate_system_message},
-        {
-            "role": "user",
-            "content": "What is the most dangerous thing about sailing?",
-        },
-    ],
+   model="command-a-03-2025",
+   messages=[
+       {"role": "system", "content": system_message_template},
+       {
+           "role": "user",
+           "content": "Please generate a JSON summarizing the first five Wes Anderson movies.”,
+       },
+   ]
 )
 ```
 
-Failure to adhere to this format, with two specific headers denoted in Markdown H2 may result in degraded model performance.
+And here's a sample output:
+
+```
+{
+  "wes_anderson_movies": [
+…
+  ]
+}
+```
 
 ### Specifying a Date
 
-Adding the date to the system message can be useful for handling time-sensitive tasks, such as "Who won the game last night?". We recommend formatting the date to be as human readable as possible. Here is an example system message including the date:  
+Adding the date to the system message can be useful for handling time-sensitive tasks, such as “Who won the game last night?“. We recommend formatting the date to be as human readable as possible. Here is an example system message including the date:
 
-<Info title="System message with date">
-"You are Command. You are an extremely capable large language model built by Cohere. You are given instructions programmatically via an API that you follow to the best of your ability. Today's date is **Tuesday, March 26, 2024 11:14:59**"
-</Info>
+```python PYTHON
+system_message_template = ““Today’s date is 13 January 1997.”
+
+
+co.chat(
+   model="command-a-03-2025",
+   messages=[
+       {"role": "system", "content": system_message_template},
+       {
+           "role": "user",
+           "content": "Who's the current chancellor of Germany?",
+       },
+   ]
+)
+```
+
+Here's an example response: 
+
+```
+As of January 13, 1997, the Chancellor of Germany is **Helmut Kohl**. He has been in office since 1982 and is serving his fourth term as Chancellor. Kohl is a prominent figure in German and European politics, known for his role in the reunification of Germany in 1990. 
+
+Would you like to know more about Helmut Kohl's political career or the current political landscape in Germany?
+```
