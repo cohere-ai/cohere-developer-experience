@@ -16,7 +16,7 @@ updatedAt: "Thu Jun 13 2024 16:10:09 GMT+0000 (Coordinated Universal Time)"
 <img src='../../../assets/images/70928c6-Preamble.png' />
 </aside>
 
-A system message is provided to a model at the beginning of a conversation to dictate how the model should behave throughout the rest of the conversation. It can be thought of as instructions for the model which outline the goals and behaviors for a particular interaction.
+A system message is provided to a model at the beginning of a conversation to dictate how it should behave throughout the rest of the conversation. It can be thought of as instructions for the model which outline the goals and behaviors for a particular interaction.
 
 ## Writing a custom preamble
 
@@ -25,8 +25,7 @@ While prompting is a natural way to interact with and instruct an LLM, writing a
 Default system messages differ from model to model. For example, the default system message in the Command A model is:
 
 ```python PYTHON
-"""
-# System Preamble 
+"""# System Preamble 
 {Safety Preamble} 
 
 Your information cutoff date is June 2024. 
@@ -54,7 +53,7 @@ The following instructions are your defaults unless specified elsewhere in devel
 - If you are asked a question that requires reasoning, first think through your answer, slowly and step by step, then answer.
 ```
 
-As can be seen, this contains a `System Preamble` and a `Default Preamble` section. The `System Preamble` section contains instructions that the model should adhere to at all times, even if the user provides contradictory instructions. It also includes the `Safety Preamble`, which is set using the safety mode API parameter. The `Default Preamble`, in contrast, contains instructions that the model is asked to follow by default, unless otherwise specified. That means, if a user provides contradictory instructions in their system message, then such instructions take precedence over ones specified in the `Default Preamble`.
+As can be seen, this contains a `System Preamble` and a `Default Preamble` section. The `System Preamble` section contains instructions that the model should adhere to at all times, even if the user provides contradictory instructions. It also includes the `Safety Preamble`, which is set using the [safety mode](https://docs.cohere.com/docs/safety-modes) API parameter. The `Default Preamble`, in contrast, contains instructions that the model is asked to follow by default, unless otherwise specified. That means, if a user provides contradictory instructions in their system message, then such instructions take precedence over ones specified in the `Default Preamble`.
 
 The default system message for Command R and Command R+, by contrast is:
 
@@ -107,8 +106,7 @@ Which one speaks to your feline friend's inner awesomeness?!?!?!? 😻😻😻
 Under the hood, the following full system message would be created and sent to the model (this example build's off of Command A's system message structure, but the principle is the same for other models):
 
 ```python PYTHON 
-"""
-# System Preamble 
+"""# System Preamble 
 {Safety Preamble}
 
 Your information cutoff date is June 2024.
@@ -163,7 +161,7 @@ co.chat(
 
 ### Obtaining non-interactive behavior
 
-As you can see in the `Default Preamble` above, the section contains the following interactive instructions:
+The `Default Preamble` presented above contains instructions explicitly targeted at increasing interactivity:
 
 - You reply conversationally with a friendly and informative tone and often include introductory statements and follow-up questions. 
 - If the input is ambiguous, ask clarifying follow-up questions. 
@@ -171,9 +169,9 @@ As you can see in the `Default Preamble` above, the section contains the followi
 - Use LaTeX to generate mathematical notation for complex equations. 
 - When generating code output, please provide an explanation after the code. 
 
-These instructions are useful in conversational settings. However, in other use cases a non-interactive model behavior might be more desired (e.g., when asking the model to generate structured data formats that are directly parsed automatically).
+These instructions are useful in conversational settings. However, in other use cases a non-interactive model behavior might be preferrable, such as when asking the model to generate structured data formats that are parsed directly and automatically.
 
-The preamble can be used to achieve such non-interactive behavior. For example, when asking the model to “Please generate a JSON summarizing the first five Wes Anderson movies”: 
+The system message can be used to achieve such non-interactive behavior. For example, when asking the model to “Please generate a JSON summarizing the first five Wes Anderson movies”: 
 
 
 ```python PYTHON
@@ -200,7 +198,7 @@ Here’s a JSON summarization of the first five Wes Anderson movies, including t
 }
 ```
 
-For this prompt, the preamble can be used to change the model behavior such that the completion only contains the JSON object, without any Markdown code block markers:
+For this prompt, the system message can be used to change the model behavior such that the completion only contains the JSON object, without any Markdown code block markers:
 
 ```python PYTHON
 system_message_template = "Only generate the answer to what is asked of you, and return nothing else. Do not generate Markdown backticks."

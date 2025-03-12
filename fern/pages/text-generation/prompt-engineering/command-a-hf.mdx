@@ -20,9 +20,9 @@ This page contains detailed instructions about:
 
 ### Conversational Mode
 
-Command A is configured as a conversational model. Concretely, a preamble conditions the model on interactive behaviour, meaning it is expected to reply in a conversational fashion, provide introductory statements and follow-up questions, and use Markdown as well as LaTeX where appropriate. It is optimized for interactive experiences, such as chatbots, where the model engages in dialogue.
+Command A is configured as a conversational model, meaning it is optimized for interactive experiences, such as chatbots, where the model engages in dialogue. This kind of behavior is conditioned with a system message; system messages vary for different models, and in the case of Command A, it is written such that the model will reply in a conversational fashion, provide introductory statements and follow-up questions, and use Markdown as well as LaTeX where appropriate. 
 
-The (conversational) system preamble for Command A is as follows:
+The (conversational) system message for Command A looks like this:
 
 ````mdx wordWrap
 # System Preamble
@@ -53,11 +53,11 @@ The following instructions are your defaults unless specified elsewhere in devel
 - If you are asked a question that requires reasoning, first think through your answer, slowly and step by step, then answer.
 ````
 
-In the above, `{Safety Preamble}` can represent either the contextual or the strict safety mode preamble.
+In the above, `{Safety Preamble}` can represent either the contextual or the strict safety mode preamble, about which more below.
 
 ### Obtaining non-interactive behavior
 
-As you can see, the system message contains the following interactive instructions:
+Observe that the system message contains the following instructions explicitly asking for interactivity:
 
 - You reply conversationally with a friendly and informative tone and often include introductory statements and follow-up questions.
 - If the input is ambiguous, ask clarifying follow-up questions.
@@ -65,10 +65,9 @@ As you can see, the system message contains the following interactive instructio
 - Use LaTeX to generate mathematical notation for complex equations.
 - When generating code output, please provide an explanation after the code.
 
-These instructions are useful in conversational settings. However, in other use cases a non-interactive model behavior might be more desired (e.g., when asking the model to generate structured data formats that are directly parsed automatically).
+These instructions are useful in conversational settings. However, in other circumstances a non-interactive model might be preferred, such as when asking the model to generate structured data formats that are parsed directly and automatically.
 
 System messages can be used to achieve such non-interactive behavior. For example, when asking the model to “Please generate a JSON summarizing the first five Wes Anderson movies”, the model might output something along these lines
-
 
 Here’s a JSON summarization of the first five Wes Anderson movies, including their titles, release years, and brief descriptions:
 
@@ -112,9 +111,9 @@ Safety Modes define what model behaviors will look like under specific scenarios
 
 By default, Command A is configured in contextual mode. Under the hood, the following `{Safety Preamble}` paragraph is added to Command A’s standard preamble:
 
-````mdx wordWrap
+```mdx wordWrap
 You are in contextual safety mode. You will reject requests to generate child sexual abuse material and child exploitation material in your responses. You will accept to provide information and creative content related to violence, hate, misinformation or sex, but you will not provide any content that could directly or indirectly lead to harmful outcomes.
-````
+```
 
 Here’s a code snippet to configure Command A in contextual safety mode.
 
@@ -310,7 +309,7 @@ These tool use capabilities unlock two use cases:
 1. **Function Calling**: A single inference where Command A selects relevant tools to fulfill a user request.
 2. **Agents**: Several inference cycles where Command A iterates through Plan → Action → Observation loops until it arrives at a final response.
 
-Both Function Calling and Agents work in the same way. Given a conversation as input (with an optional preamble), along with a list of available tools, the model will generate one of the following:
+Both [function calling](https://docs.cohere.com/docs/tool-use-overview) and [agents](https://docs.cohere.com/v1/docs/multi-step-tool-use) work in the same way. Given a conversation as input (with an optional preamble), along with a list of available tools, the model will generate one of the following:
 
 - **Tool Selection**:  A high-level plan followed by a json-formatted list of actions to execute on a subset of the supplied tools. Command A may select multiple tools in parallel, and it may select a tool more than once. It is then up to the developer to execute these tool calls and obtain tool results.
 - **Or, a Response**: A final response to the user. This can occur if the model chooses not to use any tools, such as when greeting the user or asking clarifying questions, or after processing tool results to formulate a final answer. 
@@ -481,7 +480,7 @@ In this case, the model decides to select tools.
 ]<|END_ACTION|>
 ```
 
-Below is what the answer would have looked like, if the model had decided to respond directly, for example to ask the user a follow up question.
+Below is what the answer would have looked like, if the model had decided to respond directly (by, for example, asking the user a follow up question.)
 
 ```mdx wordWrap
 I can find the sales summary for 29th September 2023 as well as the details about the products in the 'Electronics' category. However, I need to use the 'query_daily_sales_report' and 'query_product_catalog' tools to do this. Are you sure you would you like me to use these tools?
