@@ -36,15 +36,17 @@ To get started, first we need to install the `cohere` library and create a Coher
 
 
 ```python PYTHON
+! pip install cohere -qq
+```
+
+
+```python PYTHON
 import json
 import os
 import cohere
 
-# Get your free API key: https://dashboard.cohere.com/api-keys
-co = cohere.ClientV2("COHERE_API_KEY")
+co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
 ```
-
-Important: the source code for tool definitions can be [found here](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/agentic-rag/tool_def.py). Make sure to have the tool_def.py file in the same directory as this notebook for the imports to work correctly.
 
 ## Defining the function for data querying
 
@@ -59,6 +61,10 @@ We'll use these parameters as the metadata to filter the code examples and tutor
 Let's rename the function to `search_code_examples_detailed` to reflect this change.
 
 And as in Part 1, for simplicity, we create `query` as just a mock parameter and no actual search logic will be performed based on it.
+
+**IMPORTANT:**
+
+The source code for tool definitions can be [found here](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/agentic-rag/tool_def.py). Make sure to have the `tool_def.py` file in the same directory as this notebook for the imports to work correctly.
 
 
 ```python PYTHON
@@ -77,40 +83,13 @@ functions_map = {
 
 ## Creating the tool for generating multi-faceted queries
 
-With the `search_code_examples` modified, we now need to modify the tool definition as well. Here, we are adding two new properties to the tool definition:
-- `programming_language`: This is a string property which we provide a list of options for the model to choose. We do this by adding "Possible enum values" to the description, which in our case is `py, js`.
+With the `search_code_examples` modified, we now need to modify the tool definition as well. Here, we are adding the two new properties to the tool definition:
+- `programming_language`: This is a string property which we provide a list of options for the model to choose from. We do this by adding "Possible enum values" to the description, which in our case is `py, js`.
 - `endpoints`: We want the model to be able to choose from more than one endpoint, and so here we define an array property. When defining an array property, we need to specify the type of the items in the array using the `items` key, which in our case is `string`. We also provide a list of endpoint options for the model to choose from, which is `chat, embed, rerank, classify`.
 
-We set only the `query` parameter as required, while the other two parameters are optional.
+We make only the `query` parameter required, while the other two parameters are optional.
 
-```python
-search_code_examples_detailed_tool = {
-    "type": "function",
-    "function": {
-        "name": "search_code_examples_detailed",
-        "description": "Searches code examples or tutorials of using Cohere.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "query": {
-                    "type": "string",
-                    "description": "The search query.",
-                },
-                "programming_language": {
-                    "type": "string",
-                    "description": "The programming language of the code example or tutorial. Only use this property when specified by the user. Possible enum values: py, js.",
-                },
-                "endpoints": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "The Cohere endpoints used in the code example or tutorial. Only use this property when asked by the user. Possible enum values: chat, embed, rerank, classify.",
-                },
-            },
-            "required": ["query"],
-        },
-    },
-}
-```
+
 ```python PYTHON
 tools = [search_code_examples_detailed_tool]
 ```
@@ -123,111 +102,83 @@ The only change we are making here is to make the system message simpler and mor
 
 
 ```python PYTHON
-system_message = """## Task and Context
+system_message="""## Task and Context
 You are an assistant who helps developers find code examples and tutorials on using Cohere."""
 ```
 
 
 ```python PYTHON
-model = "command-r-plus-08-2024"
-
+model = "command-a-03-2025"
 
 def run_agent(query, messages=None):
     if messages is None:
         messages = []
-
+        
     if "system" not in {m.get("role") for m in messages}:
         messages.append({"role": "system", "content": system_message})
-
+    
     # Step 1: get user message
     print(f"QUESTION:\n{query}")
-    print("=" * 50)
-
+    print("="*50)
+    
     messages.append({"role": "user", "content": query})
 
     # Step 2: Generate tool calls (if any)
     response = co.chat(
-        model=model, messages=messages, tools=tools, temperature=0.1
+        model=model,
+        messages=messages,
+        tools=tools,
+        temperature=0.3
     )
 
     while response.message.tool_calls:
-
+        
         print("TOOL PLAN:")
-        print(response.message.tool_plan, "\n")
+        print(response.message.tool_plan,"\n")
         print("TOOL CALLS:")
         for tc in response.message.tool_calls:
-            print(
-                f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}"
-            )
-        print("=" * 50)
+            print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
+        print("="*50)
 
-        messages.append(
-            {
-                "role": "assistant",
-                "tool_calls": response.message.tool_calls,
-                "tool_plan": response.message.tool_plan,
-            }
-        )
-
+        messages.append({"role": "assistant", "tool_calls": response.message.tool_calls, "tool_plan": response.message.tool_plan})        
+        
         # Step 3: Get tool results
         for tc in response.message.tool_calls:
-            tool_result = functions_map[tc.function.name](
-                **json.loads(tc.function.arguments)
-            )
+            tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
             tool_content = []
             for data in tool_result:
-                tool_content.append(
-                    {
-                        "type": "document",
-                        "document": {"data": json.dumps(data)},
-                    }
-                )
+                tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
                 # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
-            messages.append(
-                {
-                    "role": "tool",
-                    "tool_call_id": tc.id,
-                    "content": tool_content,
-                }
-            )
-
-        # Step 4: Generate response and citations
+            messages.append({"role": "tool", "tool_call_id": tc.id, "content": tool_content})
+        
+        # Step 4: Generate response and citations 
         response = co.chat(
             model=model,
             messages=messages,
             tools=tools,
-            temperature=0.1,
+            temperature=0.3
         )
-
-    messages.append(
-        {
-            "role": "assistant",
-            "content": response.message.content[0].text,
-        }
-    )
-
+    
+    messages.append({"role": "assistant", "content": response.message.content[0].text})
+        
     # Print final response
     print("RESPONSE:")
     print(response.message.content[0].text)
-    print("=" * 50)
-
+    print("="*50)
+    
     # Print citations (if any)
-    verbose_source = (
-        False  # Change to True to display the contents of a source
-    )
+    verbose_source = False # Change to True to display the contents of a source
     if response.message.citations:
         print("CITATIONS:\n")
         for citation in response.message.citations:
-            print(
-                f"Start: {citation.start}| End:{citation.end}| Text:'{citation.text}' "
-            )
+            print(f"Start: {citation.start}| End:{citation.end}| Text:'{citation.text}' ")
             print("Sources:")
             for idx, source in enumerate(citation.sources):
                 print(f"{idx+1}. {source.id}")
                 if verbose_source:
                     print(f"{source.tool_output}")
             print("\n")
-
+                    
     return messages
 ```
 
@@ -244,7 +195,7 @@ And this is shown by the agent's response, which provides only one parameter, `q
 messages = run_agent("Do you have any RAG code examples")
 # Tool name: search_code_examples | Parameters: {"query":"RAG code examples"}
 ```
-```
+```mdx
 QUESTION:
 Do you have any RAG code examples
 ==================================================
@@ -255,13 +206,13 @@ TOOL CALLS:
 Tool name: search_code_examples_detailed | Parameters: {"query":"RAG"}
 ==================================================
 RESPONSE:
-Yes, we have a code example for RAG with Chat Embed and Rerank via Pinecone.
+I found one code example for RAG with Chat, Embed and Rerank via Pinecone.
 ==================================================
 CITATIONS:
 
-Start: 32| End:76| Text:'RAG with Chat Embed and Rerank via Pinecone.' 
+Start: 38| End:74| Text:'Chat, Embed and Rerank via Pinecone.' 
 Sources:
-1. search_code_examples_detailed_bqm9ww9cp4nw:2
+1. search_code_examples_detailed_kqa6j5x92e3k:2
 ```
     
 
@@ -275,25 +226,26 @@ This time, the agent uses the `programming_language` parameter and passed the va
 messages = run_agent("Javascript tutorials on summarization")
 # Tool name: search_code_examples | Parameters: {"programming_language":"js","query":"..."}
 ```
-```
+```mdx
 QUESTION:
 Javascript tutorials on summarization
 ==================================================
 TOOL PLAN:
-I will search for 'summarization' in the 'js' programming language. 
+I will search for Javascript tutorials on summarization. 
 
 TOOL CALLS:
-Tool name: search_code_examples_detailed | Parameters: {"programming_language":"js","query":"summarization"}
+Tool name: search_code_examples_detailed | Parameters: {"query":"summarization","programming_language":"js"}
 ==================================================
 RESPONSE:
-Here is a tutorial on building a Chrome extension to summarize web pages using JavaScript.
+I found one JavaScript tutorial on summarization:
+- Build a Chrome extension to summarize web pages
 ==================================================
 CITATIONS:
 
-Start: 22| End:72| Text:'building a Chrome extension to summarize web pages' 
+Start: 52| End:99| Text:'Build a Chrome extension to summarize web pages' 
 Sources:
-1. search_code_examples_detailed_hf9rv18987vp:0
-``` 
+1. search_code_examples_detailed_mz15bkavd7r1:0
+```
     
 
 
@@ -303,21 +255,19 @@ And since we have set up the `endpoints` parameter to be an array, the agent is 
 
 
 ```python PYTHON
-messages = run_agent(
-    "Code examples of using embed and rerank endpoints."
-)
+messages = run_agent("Code examples of using embed and rerank endpoints.")
 
 # Tool name: search_code_examples | Parameters: {"endpoints":["embed","rerank"],"query":"..."}
 ```
-```
+```mdx
 QUESTION:
 Code examples of using embed and rerank endpoints.
 ==================================================
 TOOL PLAN:
-I will search for code examples of using the embed and rerank endpoints. 
+I will search for code examples of using embed and rerank endpoints. 
 
 TOOL CALLS:
-Tool name: search_code_examples_detailed | Parameters: {"endpoints":["embed","rerank"],"query":"embed and rerank"}
+Tool name: search_code_examples_detailed | Parameters: {"query":"code examples","endpoints":["embed","rerank"]}
 ==================================================
 RESPONSE:
 Here are some code examples of using the embed and rerank endpoints:
@@ -329,17 +279,17 @@ CITATIONS:
 
 Start: 71| End:127| Text:'Wikipedia Semantic Search with Cohere Embedding Archives' 
 Sources:
-1. search_code_examples_detailed_d3br7bwd05bp:0
+1. search_code_examples_detailed_qjtk4xbt5g4n:0
 
 
 Start: 130| End:173| Text:'RAG With Chat Embed and Rerank via Pinecone' 
 Sources:
-1. search_code_examples_detailed_d3br7bwd05bp:1
+1. search_code_examples_detailed_qjtk4xbt5g4n:1
 
 
 Start: 176| End:238| Text:'Build Chatbots That Know Your Business with MongoDB and Cohere' 
 Sources:
-1. search_code_examples_detailed_d3br7bwd05bp:2
+1. search_code_examples_detailed_qjtk4xbt5g4n:2
 ```
     
 
@@ -352,9 +302,9 @@ And the agent correctly uses both parameters to query the code examples.
 ```python PYTHON
 messages = run_agent("Python examples of using the chat endpoint.")
 
-# Tool name: search_code_examples | Parameters: {"endpoints":["chat"],"programming_language":"py","query":"..."}
+#Tool name: search_code_examples | Parameters: {"endpoints":["chat"],"programming_language":"py","query":"..."}
 ```
-```
+```mdx
 QUESTION:
 Python examples of using the chat endpoint.
 ==================================================
@@ -362,7 +312,7 @@ TOOL PLAN:
 I will search for Python examples of using the chat endpoint. 
 
 TOOL CALLS:
-Tool name: search_code_examples_detailed | Parameters: {"endpoints":["chat"],"programming_language":"py","query":"Python examples of using the chat endpoint"}
+Tool name: search_code_examples_detailed | Parameters: {"query":"chat endpoint","programming_language":"py","endpoints":["chat"]}
 ==================================================
 RESPONSE:
 Here are some Python examples of using the chat endpoint:
@@ -374,18 +324,19 @@ CITATIONS:
 
 Start: 60| End:102| Text:'Calendar Agent with Native Multi Step Tool' 
 Sources:
-1. search_code_examples_detailed_kp25g4k49ej5:0
+1. search_code_examples_detailed_79er2w6sycvr:0
 
 
 Start: 105| End:148| Text:'RAG With Chat Embed and Rerank via Pinecone' 
 Sources:
-1. search_code_examples_detailed_kp25g4k49ej5:2
+1. search_code_examples_detailed_79er2w6sycvr:2
 
 
 Start: 151| End:213| Text:'Build Chatbots That Know Your Business with MongoDB and Cohere' 
 Sources:
-1. search_code_examples_detailed_kp25g4k49ej5:3
-```  
+1. search_code_examples_detailed_79er2w6sycvr:3
+``` 
+    
 
 
 ## Summary

@@ -9,29 +9,34 @@ keywords: "Cohere, RAG, agents, function calling,tool use"
 
 <a target="_blank" href="https://colab.research.google.com/github/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/agentic-rag/agentic_rag_pt2_parallel_queries.ipynb">Open in Colab</a>
 
-Compare two user queries posed to a RAG chatbot:
-- "What was Apple's revenue in 2023?"
-- "What were Apple's and Google's revenue in 2023?".
+Compare two user queries to a RAG chatbot, "What was Apple's revenue in 2023?" and "What were Apple's and Google's revenue in 2023?".
 
-The first query is straightforward, as we can perform retrieval using pretty much the same query.
+The first query is straightforward as we can perform retrieval using pretty much the same query we get.
 
 But the second query is more complex. We need to break it down into two separate queries, one for Apple and one for Google.
 
-This is an example that requires query expansion, in which the agentic RAG application will expand a single query into a set of queries and then run them in parallel. Here are some of the ways in which that can work:
+This is an example that requires query expansion. Here, the agentic RAG will need to transform the query into a more optimized set of queries it should use to perform the retrieval.
 
-- Basic query expansion
+In this part, we'll learn how to create an agentic RAG system that can perform query expansion and then run those queries in parallel:
+- Query expansion
 - Query expansion over multiple data sources
 - Query expansion in multi-turn conversations
 
-We'll learn about these options by building an agent that answers questions about using Cohere.
+We'll learn these by building an agent that answers questions about using Cohere.
 
 ## Setup
 
 To get started, first we need to install the `cohere` library and create a Cohere client.
 
-We also need to import the tool definitions from the `tool_def.py` file.
+We also need to import the tool definitions that we'll use in this tutorial.
 
-<Info> Important: the source code for tool definitions can be [found here](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/agentic-rag/tool_def.py). Make sure to have the `tool_def.py` file in the same directory as this notebook for the imports to work correctly. </Info>
+<Note> Important: the source code for tool definitions can be [found here](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/agentic-rag/tool_def.py). Make sure to have the `tool_def.py` file in the same directory as this notebook for the imports to work correctly. </Note>
+
+
+```python PYTHON
+! pip install cohere langchain langchain-community pydantic -qq
+```
+
 
 ```python PYTHON
 import json
@@ -47,10 +52,10 @@ from tool_def import (
     search_code_examples_tool,
 )
 
-# Get your free API key: https://dashboard.cohere.com/api-keys
-co = cohere.ClientV2("COHERE_API_KEY")
+co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
+
+os.environ["TAVILY_API_KEY"] = "TAVILY_API_KEY" # We'll need the Tavily API key to perform internet search. Get your API key: https://app.tavily.com/home
 ```
-Note: the source code for tool definitions can be [found here](https://colab.research.google.com/github/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/agentic-rag/tool_def.py)
 
 ## Setting up the tools
 
@@ -67,124 +72,96 @@ functions_map = {
 
 ## Running an agentic RAG workflow
 
-We create a `run_agent` function to run the agentic RAG workflow, just as we did in Part 1. If you want further details on how to set up the tools, check out Part 1.
+We create a `run_agent` function to run the agentic RAG workflow, the same as in Part 1. If you want further details on how to set up the tools, check out Part 1.
 
 
 ```python PYTHON
 tools = [
     search_developer_docs_tool,
     search_internet_tool,
-    search_code_examples_tool,
+    search_code_examples_tool
 ]
 ```
 
 
 ```python PYTHON
-system_message = """## Task and Context
+system_message="""## Task and Context
 You are an assistant who helps developers use Cohere. You are equipped with a number of tools that can provide different types of information. If you can't find the information you need from one tool, you should try other tools if there is a possibility that they could provide the information you need."""
 ```
 
 
 ```python PYTHON
-model = "command-r-plus-08-2024"
-
+model = "command-a-03-2025"
 
 def run_agent(query, messages=None):
     if messages is None:
         messages = []
-
+        
     if "system" not in {m.get("role") for m in messages}:
         messages.append({"role": "system", "content": system_message})
-
+    
     # Step 1: get user message
     print(f"QUESTION:\n{query}")
-    print("=" * 50)
-
+    print("="*50)
+    
     messages.append({"role": "user", "content": query})
 
     # Step 2: Generate tool calls (if any)
     response = co.chat(
-        model=model, messages=messages, tools=tools, temperature=0.1
+        model=model,
+        messages=messages,
+        tools=tools,
+        temperature=0.3
     )
 
     while response.message.tool_calls:
-
+        
         print("TOOL PLAN:")
-        print(response.message.tool_plan, "\n")
+        print(response.message.tool_plan,"\n")
         print("TOOL CALLS:")
         for tc in response.message.tool_calls:
-            print(
-                f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}"
-            )
-        print("=" * 50)
+            print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
+        print("="*50)
 
-        messages.append(
-            {
-                "role": "assistant",
-                "tool_calls": response.message.tool_calls,
-                "tool_plan": response.message.tool_plan,
-            }
-        )
-
+        messages.append({"role": "assistant", "tool_calls": response.message.tool_calls, "tool_plan": response.message.tool_plan})        
+        
         # Step 3: Get tool results
         for tc in response.message.tool_calls:
-            tool_result = functions_map[tc.function.name](
-                **json.loads(tc.function.arguments)
-            )
+            tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
             tool_content = []
             for data in tool_result:
-                tool_content.append(
-                    {
-                        "type": "document",
-                        "document": {"data": json.dumps(data)},
-                    }
-                )
+                tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
                 # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
-            messages.append(
-                {
-                    "role": "tool",
-                    "tool_call_id": tc.id,
-                    "content": tool_content,
-                }
-            )
-
-        # Step 4: Generate response and citations
+            messages.append({"role": "tool", "tool_call_id": tc.id, "content": tool_content})
+        
+        # Step 4: Generate response and citations 
         response = co.chat(
             model=model,
             messages=messages,
             tools=tools,
-            temperature=0.1,
+            temperature=0.3
         )
-
-    messages.append(
-        {
-            "role": "assistant",
-            "content": response.message.content[0].text,
-        }
-    )
-
+    
+    messages.append({"role": "assistant", "content": response.message.content[0].text})
+        
     # Print final response
     print("RESPONSE:")
     print(response.message.content[0].text)
-    print("=" * 50)
-
+    print("="*50)
+    
     # Print citations (if any)
-    verbose_source = (
-        False  # Change to True to display the contents of a source
-    )
+    verbose_source = False # Change to True to display the contents of a source
     if response.message.citations:
         print("CITATIONS:\n")
         for citation in response.message.citations:
-            print(
-                f"Start: {citation.start}| End:{citation.end}| Text:'{citation.text}' "
-            )
+            print(f"Start: {citation.start}| End:{citation.end}| Text:'{citation.text}' ")
             print("Sources:")
             for idx, source in enumerate(citation.sources):
                 print(f"{idx+1}. {source.id}")
                 if verbose_source:
                     print(f"{source.tool_output}")
             print("\n")
-
+                    
     return messages
 ```
 
@@ -194,7 +171,7 @@ Let's ask the agent a few questions, starting with this one about the Chat endpo
 
 Firstly, the agent rightly chooses the `search_developer_docs` tool to retrieve the information it needs.
 
-Additionally, because the question asks about two different things, retrieving information using the same query as the user's may not be the most optimal approach. Instead, the query needs to be expanded or split into multiple parts, each retrieving its own set of documents.
+Additionally, because the question asks about two different things, retrieving information using the same query as the user's may not be the optimal approach. Instead, the query needs to be expanded or split into multiple parts, each retrieving its own set of documents.
 
 Thus, the agent expands the original query into two queries.
 
@@ -203,18 +180,16 @@ This is enabled by the parallel tool calling feature that comes with the Chat en
 This results in a richer and more representative list of documents retrieved, and therefore a more accurate and comprehensive answer.
 
 
-
-
 ```python PYTHON
 messages = run_agent("Explain the Chat endpoint and the RAG feature")
 ```
+```mdx
 
-```
 QUESTION:
 Explain the Chat endpoint and the RAG feature
 ==================================================
 TOOL PLAN:
-I will search for 'Chat endpoint' and 'RAG feature' to find the information I need to answer the question. 
+I will search the Cohere developer documentation for the Chat endpoint and the RAG feature. 
 
 TOOL CALLS:
 Tool name: search_developer_docs | Parameters: {"query":"Chat endpoint"}
@@ -227,59 +202,36 @@ Retrieval Augmented Generation (RAG) is a method for generating text using addit
 ==================================================
 CITATIONS:
 
-Start: 4| End:17| Text:'Chat endpoint' 
+Start: 18| End:56| Text:'facilitates a conversational interface' 
 Sources:
-1. search_developer_docs_7qmwn64d2e8v:3
-2. search_developer_docs_0tyvan5t0f7t:3
+1. search_developer_docs_c059cbhr042g:3
+2. search_developer_docs_beycjq0ejbvx:3
 
 
-Start: 32| End:56| Text:'conversational interface' 
+Start: 58| End:130| Text:'allowing users to send messages to the model and receive text responses.' 
 Sources:
-1. search_developer_docs_7qmwn64d2e8v:3
-2. search_developer_docs_0tyvan5t0f7t:3
-
-
-Start: 67| End:102| Text:'users to send messages to the model' 
-Sources:
-1. search_developer_docs_7qmwn64d2e8v:3
-2. search_developer_docs_0tyvan5t0f7t:3
-
-
-Start: 107| End:130| Text:'receive text responses.' 
-Sources:
-1. search_developer_docs_7qmwn64d2e8v:3
-2. search_developer_docs_0tyvan5t0f7t:3
+1. search_developer_docs_c059cbhr042g:3
+2. search_developer_docs_beycjq0ejbvx:3
 
 
 Start: 132| End:162| Text:'Retrieval Augmented Generation' 
 Sources:
-1. search_developer_docs_7qmwn64d2e8v:4
-2. search_developer_docs_0tyvan5t0f7t:4
+1. search_developer_docs_c059cbhr042g:4
+2. search_developer_docs_beycjq0ejbvx:4
 
 
-Start: 163| End:168| Text:'(RAG)' 
+Start: 174| End:266| Text:'method for generating text using additional information fetched from an external data source' 
 Sources:
-1. search_developer_docs_7qmwn64d2e8v:4
-2. search_developer_docs_0tyvan5t0f7t:4
-
-
-Start: 174| End:200| Text:'method for generating text' 
-Sources:
-1. search_developer_docs_7qmwn64d2e8v:4
-2. search_developer_docs_0tyvan5t0f7t:4
-
-
-Start: 207| End:266| Text:'additional information fetched from an external data source' 
-Sources:
-1. search_developer_docs_7qmwn64d2e8v:4
-2. search_developer_docs_0tyvan5t0f7t:4
+1. search_developer_docs_c059cbhr042g:4
+2. search_developer_docs_beycjq0ejbvx:4
 
 
 Start: 278| End:324| Text:'greatly increase the accuracy of the response.' 
 Sources:
-1. search_developer_docs_7qmwn64d2e8v:4
-2. search_developer_docs_0tyvan5t0f7t:4
+1. search_developer_docs_c059cbhr042g:4
+2. search_developer_docs_beycjq0ejbvx:4
 ```
+
     
 
 
@@ -295,86 +247,64 @@ Its response then contains information referenced from both data sources.
 
 
 ```python PYTHON
-messages = run_agent(
-    "What is the Embed endpoint? Give me some code tutorials"
-)
+messages = run_agent("What is the Embed endpoint? Give me some code tutorials")
 ```
-```
+```mdx
+
 QUESTION:
 What is the Embed endpoint? Give me some code tutorials
 ==================================================
 TOOL PLAN:
-I will search for 'What is the Embed endpoint?' and 'code tutorials for Embed endpoint'. 
+I will search for 'what is the Embed endpoint' and 'Embed endpoint code tutorials' at the same time. 
 
 TOOL CALLS:
-Tool name: search_developer_docs | Parameters: {"query":"What is the Embed endpoint?"}
-Tool name: search_code_examples | Parameters: {"query":"code tutorials for Embed endpoint"}
+Tool name: search_developer_docs | Parameters: {"query":"what is the Embed endpoint"}
+Tool name: search_code_examples | Parameters: {"query":"Embed endpoint code tutorials"}
 ==================================================
 RESPONSE:
 The Embed endpoint returns text embeddings. An embedding is a list of floating point numbers that captures semantic information about the text that it represents.
 
-In addition to embed-english-v3.0, we offer a best-in-class multilingual model embed-multilingual-v3.0 with support for over 100 languages.
-
-Here are some code tutorials for the Embed endpoint:
-- Wikipedia Semantic Search with Cohere Embedding Archives
-- RAG With Chat Embed and Rerank via Pinecone
+I'm afraid I couldn't find any code tutorials for the Embed endpoint.
 ==================================================
 CITATIONS:
 
 Start: 19| End:43| Text:'returns text embeddings.' 
 Sources:
-1. search_developer_docs_n6n5ka20389e:1
+1. search_developer_docs_pgzdgqd3k0sd:1
 
 
-Start: 47| End:162| Text:'embedding is a list of floating point numbers that captures semantic information about the text that it represents.' 
+Start: 62| End:162| Text:'list of floating point numbers that captures semantic information about the text that it represents.' 
 Sources:
-1. search_developer_docs_n6n5ka20389e:1
-
-
-Start: 179| End:197| Text:'embed-english-v3.0' 
-Sources:
-1. search_developer_docs_n6n5ka20389e:2
-
-
-Start: 210| End:303| Text:'best-in-class multilingual model embed-multilingual-v3.0 with support for over 100 languages.' 
-Sources:
-1. search_developer_docs_n6n5ka20389e:2
-
-
-Start: 360| End:416| Text:'Wikipedia Semantic Search with Cohere Embedding Archives' 
-Sources:
-1. search_code_examples_680znd4ycmm3:1
-
-
-Start: 419| End:462| Text:'RAG With Chat Embed and Rerank via Pinecone' 
-Sources:
-1. search_code_examples_680znd4ycmm3:2
+1. search_developer_docs_pgzdgqd3k0sd:1
 ```
-    
+
+
 ## Query expansion in multi-turn conversations
 
-A RAG chatbot needs to be able to infer the user's intent for a given query, which is sometimes based on vague context.
+A RAG chatbot needs to be able to infer the user's intent for a given query, sometimes based on a vague context.
 
 This is especially important in multi-turn conversations, where the user's intent may not be clear from a single query. 
 
-For example, in the first turn, a user might ask "What is A" and in the second, they might ask "Compare that with B and C". So, the agent needs to be able to infer that the user's intent is to compare A with B and C.
+For example, in the first turn, a user might ask "What is A" and in the second turn, they might ask "Compare that with B and C". So, the agent needs to be able to infer that the user's intent is to compare A with B and C.
 
-Let's see an illustration of this. First, note that the `run_agent` function is already set up to handle multi-turn conversations. It can take messages from the previous conversation turns and append them to the `messages` list.
+Let's see an example of this. First, note that the `run_agent` function is already set up to handle multi-turn conversations. It can take messages from the previous conversation turns and append them to the `messages` list.
 
 In the first turn, the user asks about the Chat endpoint, to which the agent duly responds.
+
 
 ```python PYTHON
 messages = run_agent("What is the Chat endpoint?")
 ```
-```
+```mdx
+
 QUESTION:
 What is the Chat endpoint?
 ==================================================
 TOOL PLAN:
-I will search for 'What is the Chat endpoint?' 
+I will search the Cohere developer documentation for 'Chat endpoint'. 
 
 TOOL CALLS:
-Tool name: search_developer_docs | Parameters: {"query":"What is the Chat endpoint?"}
+Tool name: search_developer_docs | Parameters: {"query":"Chat endpoint"}
 ==================================================
 RESPONSE:
 The Chat endpoint facilitates a conversational interface, allowing users to send messages to the model and receive text responses.
@@ -383,8 +313,9 @@ CITATIONS:
 
 Start: 18| End:130| Text:'facilitates a conversational interface, allowing users to send messages to the model and receive text responses.' 
 Sources:
-1. search_developer_docs_91yqedvwtgkj:3
-```
+1. search_developer_docs_qx7dht277mg7:3
+```  
+    
 
 
 In the second turn, the user asks a question that has two parts: first, how it's different from RAG, and then, for code examples.
@@ -397,81 +328,37 @@ The agent then expands the query into two separate queries, one for the `search_
 
 
 ```python PYTHON
-messages = run_agent(
-    "How is it different from RAG? Also any code tutorials?", messages
-)
+messages = run_agent("How is it different from RAG? Also any code tutorials?", messages)
 ```
+```mdx
 
-```
 QUESTION:
 How is it different from RAG? Also any code tutorials?
 ==================================================
 TOOL PLAN:
-I will search for 'How is Chat endpoint different from RAG?' and 'Chat endpoint code tutorials'. 
+I will search the Cohere developer documentation for 'Chat endpoint vs RAG' and 'Chat endpoint code tutorials'. 
 
 TOOL CALLS:
-Tool name: search_developer_docs | Parameters: {"query":"How is Chat endpoint different from RAG?"}
-Tool name: search_code_examples | Parameters: {"query":"Chat endpoint code tutorials"}
+Tool name: search_developer_docs | Parameters: {"query":"Chat endpoint vs RAG"}
+Tool name: search_code_examples | Parameters: {"query":"Chat endpoint"}
 ==================================================
 RESPONSE:
-The Chat endpoint facilitates a conversational interface, allowing users to send messages to the model and receive text responses. Retrieval Augmented Generation (RAG) is a method for generating text using additional information fetched from an external data source, which can greatly increase the accuracy of the response.
+The Chat endpoint facilitates a conversational interface, allowing users to send messages to the model and receive text responses.
 
-Here are some code tutorials:
-- RAG with Chat Embed and Rerank via Pinecone
-- Build chatbots that know your business with MongoDB and Cohere
+RAG (Retrieval Augmented Generation) is a method for generating text using additional information fetched from an external data source, which can greatly increase the accuracy of the response.
+
+I could not find any code tutorials for the Chat endpoint, but I did find a tutorial on RAG with Chat Embed and Rerank via Pinecone.
 ==================================================
 CITATIONS:
 
-Start: 32| End:56| Text:'conversational interface' 
+Start: 414| End:458| Text:'RAG with Chat Embed and Rerank via Pinecone.' 
 Sources:
-1. search_developer_docs_93b1gz27dq9d:3
-
-
-Start: 76| End:102| Text:'send messages to the model' 
-Sources:
-1. search_developer_docs_93b1gz27dq9d:3
-
-
-Start: 107| End:130| Text:'receive text responses.' 
-Sources:
-1. search_developer_docs_93b1gz27dq9d:3
-
-
-Start: 131| End:161| Text:'Retrieval Augmented Generation' 
-Sources:
-1. search_developer_docs_93b1gz27dq9d:4
-
-
-Start: 162| End:167| Text:'(RAG)' 
-Sources:
-1. search_developer_docs_93b1gz27dq9d:4
-
-
-Start: 184| End:199| Text:'generating text' 
-Sources:
-1. search_developer_docs_93b1gz27dq9d:4
-
-
-Start: 206| End:265| Text:'additional information fetched from an external data source' 
-Sources:
-1. search_developer_docs_93b1gz27dq9d:4
-
-
-Start: 277| End:323| Text:'greatly increase the accuracy of the response.' 
-Sources:
-1. search_developer_docs_93b1gz27dq9d:4
-
-
-Start: 357| End:400| Text:'RAG with Chat Embed and Rerank via Pinecone' 
-Sources:
-1. search_code_examples_qj3q45zxk8gz:2
-
-
-Start: 403| End:465| Text:'Build chatbots that know your business with MongoDB and Cohere' 
-Sources:
-1. search_code_examples_qj3q45zxk8gz:3
+1. search_code_examples_h8mn6mdqbrc3:2
 ```
+
     
+
+
 ## Summary
 
 In this tutorial, we learned about:
@@ -479,6 +366,6 @@ In this tutorial, we learned about:
 - How query expansion works over multiple data sources
 - How query expansion works in multi-turn conversations
 
-Having said that, we may encounter even more complex queries--especially those that require sequential reasoning over multiple steps.
+Having said that, we may encounter even more complex queries than what we've seen so far. In particular, some queries require sequential reasoning where the retrieval needs to happen over multiple steps.
 
 In Part 3, we'll learn how the agentic RAG system can perform sequential reasoning.
