@@ -3,7 +3,7 @@ title: PDF Extractor with Native Multi Step Tool Use
 slug: /page/pdf-extractor
 
 description: "This page describes how to create an AI agent able to extract information from PDFs."
-image: "../../assets/images/f1cc130-cohere_meta_image.jpg"  
+image: "../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "Cohere, PDF extraction, LLMs, AI agents"
 ---
 
@@ -14,12 +14,14 @@ import { CookbookHeader } from "../../components/cookbook-header";
   authors={[
     {
       name: "Jason Jung",
-      imageSrc: "https://fern-image-hosting.s3.amazonaws.com/cohere/0803e3d-Jason_Jung.jpg",
-    },
+      imageSrc: "https://fern-image-hosting.s3.amazonaws.com/cohere/0803e3d-Jason_Jung.jpg"
+    }
   ]}
 />
 
-<CookbookHeader href="https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/agents/pdf-extractor/pdf_extractor.ipynb" />
+
+<CookbookHeader href="https://github.com/cohere-ai/notebooks/blob/main/notebooks/agents/pdf-extractor/pdf_extractor.ipynb" />
+
 
 ## Objective
 
@@ -27,14 +29,16 @@ Generally, users are limited to text inputs when using large language models (LL
 
 In the directory, we have a simple_invoice.pdf file. Everytime a user uploads the document, the agent will extract key information total_amount and invoice_number and then save it as CSV which then can be used in another application. We only extract two pieces of information in this demo, but users can extend the example and extract a lot more information.
 
-## Steps
+## Steps 
 
-1. extract_pdf() function extracts text data from the PDF using [unstructured](https://unstructured.io/) package. You can use other packages like PyPDF2 as well.
-2. This extracted text is added to the prompt so the model can "see" the document.
-3. The agent summarizes the document and passes that information to convert_to_json() function. This function makes another call to command model to convert the summary to json output. This separation of tasks is useful when the text document is complicated and long. Therefore, we first distill the information and ask another model to convert the text into json object. This is useful so each model or agent focuses on its own task without suffering from long context.
-4. Then the json object goes through a check to make sure all keys are present and gets saved as a csv file. When the document is too long or the task is too complex, the model may fail to extract all information. These checks are then very useful because they give feedback to the model so it can adjust it's parameters to retry.
+* extract_pdf() function extracts text data from the PDF using [unstructured](https://unstructured.io/) package. You can use other packages like PyPDF2 as well.
+* This extracted text is added to the prompt so the model can "see" the document.
+* The agent summarizes the document and passes that information to convert_to_json() function. This function makes another call to command model to convert the summary to json output. This separation of tasks is useful when the text document is complicated and long. Therefore, we first distill the information and ask another model to convert the text into json object. This is useful so each model or agent focuses on its own task without suffering from long context.
+* Then the json object goes through a check to make sure all keys are present and gets saved as a csv file. When the document is too long or the task is too complex, the model may fail to extract all information. These checks are then very useful because they give feedback to the model so it can adjust it's parameters to retry.
 
-```python PYTHON
+
+
+```python
 import os
 
 import cohere
@@ -43,37 +47,44 @@ import json
 from unstructured.partition.pdf import partition_pdf
 ```
 
-```python PYTHON
+
+```python
 # uncomment to install dependencies
 # !pip install cohere unstructured
 ```
 
-```python PYTHON
+
+```python
 # versions
 print('cohere version:', cohere.__version__)
 ```
 
-```txt title="Output"
-cohere version: 5.5.1
-```
+    cohere version: 5.5.1
 
-## Setup
 
-```python PYTHON
+## Setup 
+
+
+```python
 COHERE_API_KEY = os.environ.get("CO_API_KEY")
 COHERE_MODEL = 'command-r-plus'
 co = cohere.Client(api_key=COHERE_API_KEY)
 ```
 
-## Data
+## Data 
 
-The sample invoice data is from https://unidoc.io/media/simple-invoices/simple_invoice.pdf.
+The sample invoice data is from https://unidoc.io/media/simple-invoices/simple_invoice.pdf. 
 
-## Tool
 
-Here we define the tool which converts summary of the pdf into json object. Then, it checks to make sure all necessary keys are present and saves it as csv.
 
-```python PYTHON
+
+
+## Tool 
+
+Here we define the tool which converts summary of the pdf into json object. Then, it checks to make sure all necessary keys are present and saves it as csv. 
+
+
+```python
 def convert_to_json(text: str) -> dict:
     """
     Given text files, convert to json object and saves to csv.
@@ -96,8 +107,8 @@ def convert_to_json(text: str) -> dict:
 
     # Output format json:
     {{
-        "total_amount": "<extracted amount="" invoice="" total="">",
-        "invoice_number": "<extracted invoice="" number="">",
+        "total_amount": "<extracted invoice total amount>",
+        "invoice_number": "<extracted invoice number>",
     }}
 
     Do not output code blocks.
@@ -125,11 +136,12 @@ def convert_to_json(text: str) -> dict:
 
 ```
 
-### Cohere Agent
+### Cohere Agent 
 
-Below is a cohere agent that leverages multi-step API. It is equipped with convert_to_json tool.
+Below is a cohere agent that leverages multi-step API. It is equipped with convert_to_json tool. 
 
-```python PYTHON
+
+```python
 def cohere_agent(
     message: str,
     preamble: str,
@@ -215,9 +227,10 @@ def cohere_agent(
     return response.text
 ```
 
-### main
+### Extract PDF
 
-```python PYTHON
+
+```python
 def extract_pdf(path):
     """
     Function to extract text from a PDF file.
@@ -259,20 +272,20 @@ pdf_extractor('simple_invoice.pdf')
 
 ```
 
-```txt title="Output"
-running step 0
-I will summarise the text and then use the convert_to_json tool to format the summary.
+    
+    running step 0
+    I will summarise the text and then use the convert_to_json tool to format the summary.
+    
+    running step 1
+    tool_call.parameters: {'text': 'Total amount billed: $115.00\nInvoice number: 0852'}
+    = running tool convert_to_json, with parameters: {'text': 'Total amount billed: $115.00\nInvoice number: 0852'}
+    == tool results: [{'result': 'SUCCESS. All steps have been completed.'}]
+    SUCCESS.
+    Finished extracting: simple_invoice.pdf
+    Please check the output below
+      total_amount  invoice_number
+    0      $115.00             852
 
-running step 1
-tool_call.parameters: {'text': 'Total amount billed: $115.00\nInvoice number: 0852'}
-= running tool convert_to_json, with parameters: {'text': 'Total amount billed: $115.00\nInvoice number: 0852'}
-== tool results: [{'result': 'SUCCESS. All steps have been completed.'}]
-SUCCESS.
-Finished extracting: simple_invoice.pdf
-Please check the output below
-    total_amount  invoice_number
-0      $115.00             852
-```
 
-As shown above, the model first summarized the extracted pdf as `Total amount: $115.00\nInvoice number: 0852` and sent this to `conver_to_json()` function.
-`conver_to_json()` then converts it to json format and saves it into a csv file.
+As shown above, the model first summarized the extracted pdf as `Total amount: $115.00\nInvoice number: 0852` and sent this to `conver_to_json()` function. 
+`conver_to_json()` then converts it to json format and saves it into a csv file. 

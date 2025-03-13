@@ -1,0 +1,72 @@
+name: generate-mdx-files
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'fern/pages/cookbooks/**/*.mdx'
+      - 'scripts/build-cookbooks/**/*'
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        shell: bash
+        run: |
+          pipx install poetry
+
+
+      - name: Install Project Dependencies with Poetry
+        shell: bash
+        run: |
+          poetry install
+
+      # - name: Run mypy
+      #   id: check_mypy
+      #   run: |
+      #     if grep -q 'mypy' pyproject.toml; then
+      #       echo "mypy is specified in pyproject.toml, running..."
+      #       poetry run mypy .
+      #       echo "mypy_run=true" >> $GITHUB_ENV
+      #     else
+      #       echo "mypy is not specified in pyproject.toml, exiting."
+      #       echo "mypy_run=false" >> $GITHUB_ENV
+      #     fi
+      #   shell: bash
+
+      - name: Build Cookbooks MDX Files
+        #if: env.mypy_run == 'true'
+        run: poetry run python scripts/build-cookbooks/build.py
+        shell: bash
+
+      - name: Check for Changes
+        id: check_changes
+        shell: bash
+        run: |
+          git add fern/pages/cookbooks*  # Ensure this path is correct
+          git diff --cached --exit-code || echo "::set-output name=changes_detected::true"
+        continue-on-error: true
+
+      - name: Commit and Push Changes
+        if: steps.check_changes.outputs.changes_detected == 'true'
+        shell: bash
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git commit -m "Update cookbooks"
+          git push origin HEAD:refs/heads/${{ github.head_ref }}

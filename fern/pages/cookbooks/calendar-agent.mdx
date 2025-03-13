@@ -3,22 +3,27 @@ title: Calendar Agent with Native Multi Step Tool
 slug: /page/calendar-agent
 
 description: "This page describes how to use cohere Chat API with list_calendar_events and create_calendar_event tools to book appointments."
-image: "../../assets/images/f1cc130-cohere_meta_image.jpg"  
+image: "../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "Cohere, AI agents"
 ---
 
 import { AuthorsContainer } from "../../components/authors-container";
 import { CookbookHeader } from "../../components/cookbook-header";
 
-<CookbookHeader href="https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/agents/Tool_Use.ipynb" />
+
+
+<CookbookHeader href="https://github.com/cohere-ai/notebooks/blob/main/notebooks/agents/Tool_Use.ipynb" />
+
 
 In the example below, we demonstrate how to use the cohere Chat API with the `list_calendar_events` and `create_calendar_event` tools to book appointments. Booking the correct appointment requires the model to first check for an available slot by listing existing events, reasoning about the correct slot to book the new appointment and then finally invoking the right tool to create the calendar event. To learn more about Tool Use, read the official [multi-step tool use guide](https://docs.cohere.com/docs/multi-step-tool-use).
 
-```python PYTHON
+
+```python
 # !pip install cohere==5.5.3
 ```
 
-```python PYTHON
+
+```python
 # Instantiate the Cohere client
 
 import cohere
@@ -28,7 +33,8 @@ COHERE_API_KEY = os.environ["COHERE_API_KEY"]
 co = cohere.Client(api_key=COHERE_API_KEY)
 ```
 
-```python PYTHON
+
+```python
 # Define the tools
 
 import json
@@ -95,7 +101,8 @@ def invoke_tool(tool_call: cohere.ToolCall):
     raise f"Unknown tool name '{tool_call.name}'"
 ```
 
-```python PYTHON
+
+```python
 # Check what tools the model wants to use and how to use them
 res = co.chat(
     model="command-r-plus",
@@ -125,10 +132,9 @@ while res.tool_calls:
 print(res.text) # print the final answer
 ```
 
-```txt title="Output"
-I will check the user's calendar for today after 3pm and book an hour-long appointment in the first available slot.
-Listing events: [{"start": "14:00", "end": "15:00"}, {"start": "15:00", "end": "16:00"}, {"start": "17:00", "end": "18:00"}]
-The user has events scheduled from 2pm to 4pm and from 5pm to 6pm. I will book an hour-long appointment from 4pm to 5pm.
-Creating a 1 hour long event at 16:00 on 05/23/2024
-I've booked an hour-long appointment for you today from 4pm to 5pm.
-```
+    I will check the user's calendar for today after 3pm and book an hour-long appointment in the first available slot.
+    Listing events: [{"start": "14:00", "end": "15:00"}, {"start": "15:00", "end": "16:00"}, {"start": "17:00", "end": "18:00"}]
+    The user has events scheduled from 2pm to 4pm and from 5pm to 6pm. I will book an hour-long appointment from 4pm to 5pm.
+    Creating a 1 hour long event at 16:00 on 05/23/2024
+    I've booked an hour-long appointment for you today from 4pm to 5pm.
+
