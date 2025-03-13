@@ -41,7 +41,9 @@ import cohere
 import sqlite3
 import pandas as pd
 
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key: https://dashboard.cohere.com/api-keys
 ```
 
 ## Creating a SQLite database
@@ -56,13 +58,13 @@ Next, we'll create a SQLite database to store our evaluation results. SQLite is 
 
 
 ```python PYTHON
-
 # Create a connection to a new SQLite database (or connect to an existing one)
-conn = sqlite3.connect('evaluation_results.db')
+conn = sqlite3.connect("evaluation_results.db")
 cursor = conn.cursor()
 
 # Execute the CREATE TABLE command
-cursor.execute('''
+cursor.execute(
+    """
 CREATE TABLE evaluation_results (
     usecase TEXT,
     run TEXT,
@@ -71,25 +73,28 @@ CREATE TABLE evaluation_results (
     tokens INTEGER,
     latency FLOAT
 )
-''')
+"""
+)
 
 # Execute the INSERT commands
 data = [
-    ('extract_names', 'A', 0.5, 0.3, 103, 1.12),
-    ('draft_email', 'A', 0.6, 0.3, 252, 2.5),
-    ('summarize_article', 'A', 0.8, 0.3, 350, 4.2),
-    ('extract_names', 'B', 0.2, 0.3, 101, 2.85),
-    ('draft_email', 'B', 0.4, 0.3, 230, 3.2),
-    ('summarize_article', 'B', 0.6, 0.3, 370, 4.2),
-    ('extract_names', 'C', 0.7, 0.3, 101, 2.22),
-    ('draft_email', 'C', 0.5, 0.3, 221, 2.5),
-    ('summarize_article', 'C', 0.1, 0.3, 361, 3.9),
-    ('extract_names', 'D', 0.7, 0.5, 120, 3.2),
-    ('draft_email', 'D', 0.8, 0.5, 280, 3.4),
-    ('summarize_article', 'D', 0.9, 0.5, 342, 4.8)
+    ("extract_names", "A", 0.5, 0.3, 103, 1.12),
+    ("draft_email", "A", 0.6, 0.3, 252, 2.5),
+    ("summarize_article", "A", 0.8, 0.3, 350, 4.2),
+    ("extract_names", "B", 0.2, 0.3, 101, 2.85),
+    ("draft_email", "B", 0.4, 0.3, 230, 3.2),
+    ("summarize_article", "B", 0.6, 0.3, 370, 4.2),
+    ("extract_names", "C", 0.7, 0.3, 101, 2.22),
+    ("draft_email", "C", 0.5, 0.3, 221, 2.5),
+    ("summarize_article", "C", 0.1, 0.3, 361, 3.9),
+    ("extract_names", "D", 0.7, 0.5, 120, 3.2),
+    ("draft_email", "D", 0.8, 0.5, 280, 3.4),
+    ("summarize_article", "D", 0.9, 0.5, 342, 4.8),
 ]
 
-cursor.executemany('INSERT INTO evaluation_results VALUES (?,?,?,?,?,?)', data)
+cursor.executemany(
+    "INSERT INTO evaluation_results VALUES (?,?,?,?,?,?)", data
+)
 
 # Commit the changes and close the connection
 conn.commit()
@@ -108,45 +113,46 @@ This function will enable us to retrieve and analyze data from our evaluation_re
 def sql_table_query(query: str) -> dict:
     """
     Execute an SQL query on the evaluation_results table and return the result as a dictionary.
-    
+
     Args:
     query (str): SQL query to execute on the evaluation_results table
-    
+
     Returns:
     dict: Result of the SQL query
     """
     try:
         # Connect to the SQLite database
-        conn = sqlite3.connect('evaluation_results.db')
-        
+        conn = sqlite3.connect("evaluation_results.db")
+
         # Execute the query and fetch the results into a DataFrame
         df = pd.read_sql_query(query, conn)
-        
+
         # Close the connection
         conn.close()
-        
+
         # Convert DataFrame to dictionary
-        result_dict = df.to_dict(orient='records')
-        
+        result_dict = df.to_dict(orient="records")
+
         return result_dict
-    
+
     except sqlite3.Error as e:
         print(f"An error occurred: {e}")
         return str(e)
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         return str(e)
-    
-functions_map = {
-    "sql_table_query": sql_table_query
-}
+
+
+functions_map = {"sql_table_query": sql_table_query}
 ```
 
 We can test the function by running a simple query:
 
 
 ```python PYTHON
-result = sql_table_query("SELECT * FROM evaluation_results WHERE usecase = 'extract_names'")
+result = sql_table_query(
+    "SELECT * FROM evaluation_results WHERE usecase = 'extract_names'"
+)
 print(result)
 ```
 ```mdx
@@ -161,21 +167,21 @@ Next, we'll create a tool that will allow the agent to interact with the SQLite 
 
 ```python PYTHON
 sql_table_query_tool = {
-        "type": "function",
-        "function": {
-            "name": "sql_table_query",
-            "description": "Execute an SQL query on the evaluation_results table in the SQLite database. The table has columns 'usecase', 'run', 'score', 'temperature', 'tokens', and 'latency'.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "SQL query to execute on the evaluation_results table"
-                    }
-                },
-                "required": ["query"]
-            }
-        }
+    "type": "function",
+    "function": {
+        "name": "sql_table_query",
+        "description": "Execute an SQL query on the evaluation_results table in the SQLite database. The table has columns 'usecase', 'run', 'score', 'temperature', 'tokens', and 'latency'.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "SQL query to execute on the evaluation_results table",
+                }
+            },
+            "required": ["query"],
+        },
+    },
 }
 
 tools = [sql_table_query_tool]
@@ -191,7 +197,7 @@ The only change we are making here is to make the system message more specific a
 
 
 ```python PYTHON
-system_message="""## Task and Context
+system_message = """## Task and Context
 You are an assistant who helps developers analyze LLM application evaluation results from a SQLite database. The database contains a table named 'evaluation_results' with the following schema:
 
 - usecase (TEXT): The type of task being evaluated
@@ -208,79 +214,118 @@ You can use SQL queries to analyze this data and provide insights to the develop
 ```python PYTHON
 model = "command-a-03-2025"
 
+
 def run_agent(query, messages=None):
     if messages is None:
         messages = []
-        
+
     if "system" not in {m.get("role") for m in messages}:
         messages.append({"role": "system", "content": system_message})
-    
+
     # Step 1: get user message
     print(f"Question:\n{query}")
-    print("="*50)
-    
+    print("=" * 50)
+
     messages.append({"role": "user", "content": query})
 
     # Step 2: Generate tool calls (if any)
     response = co.chat(
-        model=model,
-        messages=messages,
-        tools=tools,
-        temperature=0.3
+        model=model, messages=messages, tools=tools, temperature=0.3
     )
 
     while response.message.tool_calls:
-        
+
         print("Tool plan:")
-        print(response.message.tool_plan,"\n")
+        print(response.message.tool_plan, "\n")
         print("Tool calls:")
         for tc in response.message.tool_calls:
             # print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
             if tc.function.name == "analyze_evaluation_results":
                 print(f"Tool name: {tc.function.name}")
-                tool_call_prettified = print("\n".join(f"  {line}" for line_num, line in enumerate(json.loads(tc.function.arguments)["code"].splitlines())))
+                tool_call_prettified = print(
+                    "\n".join(
+                        f"  {line}"
+                        for line_num, line in enumerate(
+                            json.loads(tc.function.arguments)[
+                                "code"
+                            ].splitlines()
+                        )
+                    )
+                )
                 print(tool_call_prettified)
             else:
-                print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
-        print("="*50)
+                print(
+                    f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}"
+                )
+        print("=" * 50)
 
-        messages.append({"role": "assistant", "tool_calls": response.message.tool_calls, "tool_plan": response.message.tool_plan})        
-        
+        messages.append(
+            {
+                "role": "assistant",
+                "tool_calls": response.message.tool_calls,
+                "tool_plan": response.message.tool_plan,
+            }
+        )
+
         # Step 3: Get tool results
         for tc in response.message.tool_calls:
-            tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
-            tool_content = [({"type": "document", "document": {"data": json.dumps(tool_result)}})]
-                
-            messages.append({"role": "tool", "tool_call_id": tc.id, "content": tool_content})
-        
-        # Step 4: Generate response and citations 
+            tool_result = functions_map[tc.function.name](
+                **json.loads(tc.function.arguments)
+            )
+            tool_content = [
+                (
+                    {
+                        "type": "document",
+                        "document": {"data": json.dumps(tool_result)},
+                    }
+                )
+            ]
+
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": tool_content,
+                }
+            )
+
+        # Step 4: Generate response and citations
         response = co.chat(
             model=model,
             messages=messages,
             tools=tools,
-            temperature=0.3
+            temperature=0.3,
         )
-    
-    messages.append({"role": "assistant", "content": response.message.content[0].text})
-        
+
+    messages.append(
+        {
+            "role": "assistant",
+            "content": response.message.content[0].text,
+        }
+    )
+
     # Print final response
     print("Response:")
     print(response.message.content[0].text)
-    print("="*50)
-    
+    print("=" * 50)
+
     # Print citations (if any)
-    verbose_source = False # Change to True to display the contents of a source
+    verbose_source = (
+        False  # Change to True to display the contents of a source
+    )
     if response.message.citations:
         print("CITATIONS:\n")
         for citation in response.message.citations:
-            print(f"Start: {citation.start}| End:{citation.end}| Text:'{citation.text}' ")
+            print(
+                f"Start: {citation.start}| End:{citation.end}| Text:'{citation.text}' "
+            )
             print("Sources:")
             for idx, source in enumerate(citation.sources):
                 print(f"{idx+1}. {source.id}")
                 if verbose_source:
                     print(f"{source.tool_output}")
             print("\n")
-    
+
     return messages
 ```
 
@@ -318,7 +363,9 @@ Sources:
 
 
 ```python PYTHON
-messages = run_agent("What's the latency of the highest-scoring run for the summarize_article use case?")
+messages = run_agent(
+    "What's the latency of the highest-scoring run for the summarize_article use case?"
+)
 # Answer: 4.8
 ```
 ```mdx
@@ -348,7 +395,9 @@ Sources:
 
 
 ```python PYTHON
-messages = run_agent("Which use case uses the least amount of tokens on average? Show the comparison of all use cases in a markdown table.")
+messages = run_agent(
+    "Which use case uses the least amount of tokens on average? Show the comparison of all use cases in a markdown table."
+)
 # Answer: extract_names (106.25), draft_email (245.75), summarize_article (355.75)
 ```
 ```mdx
