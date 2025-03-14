@@ -8,7 +8,7 @@ function summarize(cell_value) {
     let raw = JSON.stringify({
         "message": "Summarize this in about 10 words: " + cell_value,
         "temperature": 0.2,
-        "model": "command-r-plus-08-2024",
+        "model": "command-a-03-2025",
     });
     let requestOptions = {
         'method': 'post',
