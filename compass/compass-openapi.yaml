@@ -1,0 +1,3169 @@
+components:
+  schemas:
+    AssetType:
+      enum:
+      - page_image
+      - page_markdown
+      - document_text
+      title: AssetType
+      type: string
+    ComposedGroup:
+      properties:
+        group_name:
+          description: The unique group_name of the corresponding group
+          title: Group Name
+          type: string
+        roles:
+          items:
+            $ref: '#/components/schemas/RoleResponse'
+          title: Roles
+          type: array
+        roles_page_info:
+          $ref: '#/components/schemas/PageInfo'
+        users:
+          items:
+            $ref: '#/components/schemas/UserResponse'
+          title: Users
+          type: array
+        users_page_info:
+          $ref: '#/components/schemas/PageInfo'
+      required:
+      - group_name
+      - users
+      - users_page_info
+      - roles
+      - roles_page_info
+      title: ComposedGroup
+      type: object
+    ComposedRole:
+      properties:
+        groups:
+          description: List of groups that the role is applied to
+          items:
+            $ref: '#/components/schemas/GroupResponse'
+          title: Groups
+          type: array
+        groups_page_info:
+          $ref: '#/components/schemas/PageInfo'
+          description: The information corresponding to that page of groups and the
+            overall information about the groups that the user is a member of
+        policies:
+          description: 'The list of policies that are attached to this role '
+          items:
+            $ref: '#/components/schemas/PolicyResponse'
+          title: Policies
+          type: array
+        role_name:
+          description: The unique role_name of the corresponding role
+          title: Role Name
+          type: string
+      required:
+      - role_name
+      - policies
+      - groups
+      - groups_page_info
+      title: ComposedRole
+      type: object
+    ComposedUser:
+      properties:
+        groups:
+          description: The list of groups that the specified user is a member of -
+            results will be paginated
+          items:
+            $ref: '#/components/schemas/GroupResponse'
+          title: Groups
+          type: array
+        groups_page_info:
+          $ref: '#/components/schemas/PageInfo'
+          description: The information corresponding to that page of groups and the
+            overall information about the groups that the user is a member of
+        user_name:
+          description: The unique user_name of the corresponding user
+          title: User Name
+          type: string
+      required:
+      - user_name
+      - groups
+      - groups_page_info
+      title: ComposedUser
+      type: object
+    ContentTypeEnum:
+      enum:
+      - text/plain
+      - text/html
+      - text/csv
+      - text/tsv
+      - text/x-markdown
+      - text/org
+      - text/rtf
+      - text/x-rst
+      - application/json
+      - application/jsonl
+      - application/json-lines
+      - application/pdf
+      - application/xml
+      - application/msword
+      - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+      - application/vnd.ms-excel
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      - application/vnd.ms-powerpoint
+      - application/vnd.openxmlformats-officedocument.presentationml.presentation
+      - application/epub+zip
+      - application/vnd.oasis.opendocument.text
+      - application/vnd.ms-outlook
+      - application/octet-stream
+      - image/jpeg
+      - image/png
+      - image/heic
+      - image/tiff
+      - image/bmp
+      - image/gif
+      - image/svg+xml
+      - image/webp
+      - audio/mpeg
+      - audio/x-wav
+      - video/mp4
+      - video/x-msvideo
+      - message/rfc822
+      title: ContentTypeEnum
+      type: string
+    DirectSearchInput:
+      properties:
+        query:
+          description: The query to be used for the search
+          title: Query
+          type: object
+        scroll:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Scroll id to be passed for the next set of results
+          title: Scroll
+        size:
+          default: 10
+          description: The number of documents to return
+          title: Size
+          type: integer
+      required:
+      - query
+      title: DirectSearchInput
+      type: object
+    DirectSearchResponse:
+      properties:
+        hits:
+          items:
+            $ref: '#/components/schemas/ScoredDocumentChunkReturn'
+          title: Hits
+          type: array
+        scroll_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Scroll ID for pagination
+          title: Scroll Id
+      required:
+      - hits
+      title: DirectSearchResponse
+      type: object
+    DirectSearchScrollInput:
+      properties:
+        scroll:
+          default: 1m
+          description: Period to retain search scroll
+          title: Scroll
+          type: string
+        scroll_id:
+          description: Scroll id to be passed for the next set of results
+          title: Scroll Id
+          type: string
+      required:
+      - scroll_id
+      title: DirectSearchScrollInput
+      type: object
+    Document-Input:
+      properties:
+        authorized_groups:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: The groups that are authorized to access the document. This
+            is useful when using Document-level Security and RBAC must be enabled
+          title: Authorized Groups
+        chunks:
+          description: "The document\u2019s chunks (e.g. paragraphs, pages, tables,\
+            \ images) "
+          items:
+            $ref: '#/components/schemas/DocumentChunk-Input'
+          title: Chunks
+          type: array
+        content:
+          description: Dictionary of document content field, including text, metadata,
+            and any user provided filters
+          title: Content
+          type: object
+        document_id:
+          description: The unique document_id
+          title: Document Id
+          type: string
+        index_fields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: "Specifies which fields will be included in the semantic search\
+            \ embedded text, defaults to \u201Ctext\u201D and \u201Cmeta\u201D. "
+          title: Index Fields
+        parent_document_id:
+          description: The unique id for the parent document
+          title: Parent Document Id
+          type: string
+        path:
+          description: 'The path from which the file came from; if the '
+          title: Path
+          type: string
+      required:
+      - document_id
+      - path
+      - parent_document_id
+      - content
+      - chunks
+      title: Document
+      type: object
+    Document-Output:
+      properties:
+        authorized_groups:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: The groups that are authorized to access the document. This
+            is useful when using Document-level Security and RBAC must be enabled
+          title: Authorized Groups
+        chunks:
+          description: "The document\u2019s chunks (e.g. paragraphs, pages, tables,\
+            \ images) "
+          items:
+            $ref: '#/components/schemas/DocumentChunk-Output'
+          title: Chunks
+          type: array
+        content:
+          description: Dictionary of document content field, including text, metadata,
+            and any user provided filters
+          title: Content
+          type: object
+        document_id:
+          description: The unique document_id
+          title: Document Id
+          type: string
+        index_fields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: "Specifies which fields will be included in the semantic search\
+            \ embedded text, defaults to \u201Ctext\u201D and \u201Cmeta\u201D. "
+          title: Index Fields
+        parent_document_id:
+          description: The unique id for the parent document
+          title: Parent Document Id
+          type: string
+        path:
+          description: 'The path from which the file came from; if the '
+          title: Path
+          type: string
+      required:
+      - document_id
+      - path
+      - parent_document_id
+      - content
+      - chunks
+      title: Document
+      type: object
+    DocumentChunk-Input:
+      properties:
+        asset_ids:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: 'This is meant for internal use '
+          title: Asset Ids
+        assets:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAsset'
+            type: array
+          - type: 'null'
+          description: '[to be deprecated] List of CompassDocumentChunkAsset. The
+            length of the assets will depend on the origin file_type as well as the
+            parser_config set'
+          title: Assets
+        assets_info:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAssetInfo'
+            type: array
+          - type: 'null'
+          description: List of AssetInfo objects. The length of the assets will depend
+            on the origin file_type as well as the parser_config set
+          title: Assets Info
+        chunk_id:
+          description: The unique id for the specific chunk in the database
+          title: Chunk Id
+          type: string
+        content:
+          description: Dict that contains the data to be used for embeddings
+          title: Content
+          type: object
+        origin:
+          anyOf:
+          - type: object
+          - type: 'null'
+          description: "Dict that contains data around the origin of the chunk. This\
+            \ contents of the origin may depend on the origin file_type but should\
+            \ always contain: 1) filename : the name of the parent file the chunk\
+            \ came from \nIf the file_type=pdf then it will also have page_number"
+          title: Origin
+        parent_document_id:
+          description: The unique id for the parent document - this allows to group
+            chunks by parent_document_id to get all children of a parent document
+          title: Parent Document Id
+          type: string
+        path:
+          description: The path from which the parent file came from
+          title: Path
+          type: string
+        sort_id:
+          description: '[deprecated] This is the original order of the chunk in respect
+            to the parent document'
+          title: Sort Id
+          type: integer
+      required:
+      - chunk_id
+      - sort_id
+      - parent_document_id
+      - path
+      - content
+      title: DocumentChunk
+      type: object
+    DocumentChunk-Output:
+      properties:
+        asset_ids:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: 'This is meant for internal use '
+          title: Asset Ids
+        assets:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAsset'
+            type: array
+          - type: 'null'
+          description: '[to be deprecated] List of CompassDocumentChunkAsset. The
+            length of the assets will depend on the origin file_type as well as the
+            parser_config set'
+          title: Assets
+        assets_info:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAssetInfo'
+            type: array
+          - type: 'null'
+          description: List of AssetInfo objects. The length of the assets will depend
+            on the origin file_type as well as the parser_config set
+          title: Assets Info
+        chunk_id:
+          description: The unique id for the specific chunk in the database
+          title: Chunk Id
+          type: string
+        content:
+          description: Dict that contains the data to be used for embeddings
+          title: Content
+          type: object
+        origin:
+          anyOf:
+          - type: object
+          - type: 'null'
+          description: "Dict that contains data around the origin of the chunk. This\
+            \ contents of the origin may depend on the origin file_type but should\
+            \ always contain: 1) filename : the name of the parent file the chunk\
+            \ came from \nIf the file_type=pdf then it will also have page_number"
+          title: Origin
+        parent_document_id:
+          description: The unique id for the parent document - this allows to group
+            chunks by parent_document_id to get all children of a parent document
+          title: Parent Document Id
+          type: string
+        path:
+          description: The path from which the parent file came from
+          title: Path
+          type: string
+        sort_id:
+          description: '[deprecated] This is the original order of the chunk in respect
+            to the parent document'
+          title: Sort Id
+          type: integer
+      required:
+      - chunk_id
+      - sort_id
+      - parent_document_id
+      - path
+      - content
+      title: DocumentChunk
+      type: object
+    DocumentChunkAsset:
+      properties:
+        asset_data:
+          description: The raw data of the asset
+          title: Asset Data
+          type: string
+        asset_type:
+          $ref: '#/components/schemas/AssetType'
+          description: "String with the possible values: \n1) page_image: a page that\
+            \ has been rendered as an image. This will come from PDFs \n2) page_markdown:\
+            \  a markdown representation of a page\u2019s content. This will come\
+            \ from PDFs when the parsing config is set as ImageToMarkdown \n3) document_text:\
+            \ a dump of text extracted extracted from a document"
+        content_type:
+          description: 'The content type of the asset: image/jpeg, text/markdown'
+          title: Content Type
+          type: string
+      required:
+      - asset_type
+      - content_type
+      - asset_data
+      title: DocumentChunkAsset
+      type: object
+    DocumentChunkAssetInfo:
+      properties:
+        asset_id:
+          description: The unique id for the asset
+          title: Asset Id
+          type: string
+        asset_type:
+          $ref: '#/components/schemas/AssetType'
+          description: 'The type of asset in the asset_info dictionary, describes
+            contents of the associated presigned url '
+        content_type:
+          description: 'Mime-type of base file '
+          title: Content Type
+          type: string
+        presigned_url:
+          description: 'Presigned url fetchable with a 1hr time-to-live '
+          title: Presigned Url
+          type: string
+      required:
+      - asset_id
+      - asset_type
+      - content_type
+      - presigned_url
+      title: DocumentChunkAssetInfo
+      type: object
+    DocumentResponse:
+      properties:
+        document:
+          $ref: '#/components/schemas/Document-Output'
+      required:
+      - document
+      title: DocumentResponse
+      type: object
+    FilterType:
+      enum:
+      - $eq
+      - $neq
+      - $lte
+      - $gte
+      - $wordMatch
+      title: FilterType
+      type: string
+    GroupAuthorizationAction:
+      enum:
+      - add
+      - remove
+      title: GroupAuthorizationAction
+      type: string
+    GroupAuthorizationInput:
+      properties:
+        action:
+          $ref: '#/components/schemas/GroupAuthorizationAction'
+          description: Action to perform on the document
+        authorized_groups:
+          description: List of RBAC groups the documents should be authorized for
+          items:
+            type: string
+          title: Authorized Groups
+          type: array
+        document_ids:
+          description: List of document ids to update
+          items:
+            type: string
+          title: Document Ids
+          type: array
+      required:
+      - document_ids
+      - authorized_groups
+      - action
+      title: GroupAuthorizationInput
+      type: object
+    GroupCreateRequest:
+      properties:
+        group_name:
+          description: The name of the group to be created - this must be unique
+          title: Group Name
+          type: string
+      required:
+      - group_name
+      title: GroupCreateRequest
+      type: object
+    GroupMembershipRequest:
+      properties:
+        user_name:
+          description: The name of the user to be added to the group
+          title: User Name
+          type: string
+      required:
+      - user_name
+      title: GroupMembershipRequest
+      type: object
+    GroupMembershipResponse:
+      properties:
+        group_name:
+          description: The name of the group the user is added to
+          title: Group Name
+          type: string
+        user_name:
+          description: The name of the user added
+          title: User Name
+          type: string
+      required:
+      - group_name
+      - user_name
+      title: GroupMembershipResponse
+      type: object
+    GroupPage:
+      properties:
+        groups:
+          description: the list of groups that the user is a member of - results will
+            be paginated
+          items:
+            $ref: '#/components/schemas/GroupResponse'
+          title: Groups
+          type: array
+        page_info:
+          $ref: '#/components/schemas/PageInfo'
+          description: the information corresponding to that page and the overall
+            information about the groups the user is a member of
+      required:
+      - groups
+      - page_info
+      title: GroupPage
+      type: object
+    GroupResponse:
+      properties:
+        group_name:
+          description: The unique group_name of the corresponding group
+          title: Group Name
+          type: string
+      required:
+      - group_name
+      title: GroupResponse
+      type: object
+    GroupRoleRequest:
+      properties:
+        role_name:
+          description: The name of the role to be added to the group
+          title: Role Name
+          type: string
+      required:
+      - role_name
+      title: GroupRoleRequest
+      type: object
+    GroupRoleResponse:
+      properties:
+        group_name:
+          description: The name of the group the role is added to
+          title: Group Name
+          type: string
+        role_name:
+          description: The name of the role added
+          title: Role Name
+          type: string
+      required:
+      - group_name
+      - role_name
+      title: GroupRoleResponse
+      type: object
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    IndexConfigInput:
+      properties:
+        analyzer:
+          default: english
+          description: Analyzer is a parameter set for multimodality. For all EAPs,
+            the default value should be used (english)
+          title: Analyzer
+          type: string
+        number_of_replicas:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Number of replicas for the index.
+          title: Number Of Replicas
+        number_of_shards:
+          default: 3
+          description: Number of shards is used for indexes by customers that are
+            very large (>10MM chunks). For all EAPs, the default of 3 should suffice
+            unless Cohere has set up the index for you
+          title: Number Of Shards
+          type: integer
+      title: IndexConfigInput
+      type: object
+    IndexInfo:
+      properties:
+        count:
+          description: The total number of chunks in the index
+          title: Count
+          type: integer
+        name:
+          description: 'The name of the index - this has to be unique '
+          title: Name
+          type: string
+        parent_doc_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The total number of files provided for the index - files can
+            be broken into 1..* chunks
+          title: Parent Doc Count
+      required:
+      - name
+      - count
+      - parent_doc_count
+      title: IndexInfo
+      type: object
+    ListIndexesResponse:
+      properties:
+        indexes:
+          items:
+            $ref: '#/components/schemas/IndexInfo'
+          title: Indexes
+          type: array
+      required:
+      - indexes
+      title: ListIndexesResponse
+      type: object
+    PageInfo:
+      properties:
+        filter:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: only returned if a filter was passed in the request
+          title: Filter
+        next:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: How to iterate to the next page - only appears if there are
+            enough results to warrant pagination
+          title: Next
+        page:
+          description: The current page of users returned
+          title: Page
+          type: integer
+        page_size:
+          description: the number of results per page
+          title: Page Size
+          type: integer
+        previous:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: how to iterate to the previous page - only appears on pages
+            that are subsequent to the first page
+          title: Previous
+        total:
+          description: The total results from the request
+          title: Total
+          type: integer
+        total_pages:
+          description: The total number of pages that can be returned
+          title: Total Pages
+          type: integer
+      required:
+      - total
+      - page
+      - total_pages
+      - page_size
+      title: PageInfo
+      type: object
+    Permission:
+      enum:
+      - read
+      - write
+      - root
+      title: Permission
+      type: string
+    PermissionRequest:
+      enum:
+      - read
+      - write
+      title: PermissionRequest
+      type: string
+    PolicyRequest:
+      properties:
+        indexes:
+          description: 'The list of indexes the policy (permission) should be applied
+            to '
+          items:
+            type: string
+          title: Indexes
+          type: array
+        permission:
+          $ref: '#/components/schemas/PermissionRequest'
+          description: Permission requested on the index
+      required:
+      - indexes
+      - permission
+      title: PolicyRequest
+      type: object
+    PolicyResponse:
+      properties:
+        indexes:
+          description: The indexes in which the subsequent permission is applied to
+          items:
+            type: string
+          title: Indexes
+          type: array
+        permission:
+          $ref: '#/components/schemas/Permission'
+          description: The permissions type that is applied (either READ or WRITE)
+      required:
+      - indexes
+      - permission
+      title: PolicyResponse
+      type: object
+    PutDocumentResult:
+      properties:
+        document_id:
+          description: The document id passed in the request
+          title: Document Id
+          type: string
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Errors if any
+          title: Error
+        task_ids:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: Internal background task ids
+          title: Task Ids
+      required:
+      - document_id
+      - error
+      title: PutDocumentResult
+      type: object
+    PutDocumentsInput:
+      properties:
+        authorized_groups:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: The groups that are authorized to access the document. This
+            is useful when using Document-level Security and RBAC must be enabled
+          title: Authorized Groups
+        documents:
+          items:
+            $ref: '#/components/schemas/Document-Input'
+          title: Documents
+          type: array
+        merge_groups_on_conflict:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: false
+          description: When Document-level Security is enabled, allows upserting documents
+            with static groups
+          title: Merge Groups On Conflict
+      required:
+      - documents
+      title: PutDocumentsInput
+      type: object
+    PutDocumentsResponse:
+      properties:
+        results:
+          items:
+            $ref: '#/components/schemas/PutDocumentResult'
+          title: Results
+          type: array
+      required:
+      - results
+      title: PutDocumentsResponse
+      type: object
+    RoleCreateRequest:
+      properties:
+        policies:
+          items:
+            $ref: '#/components/schemas/PolicyRequest'
+          title: Policies
+          type: array
+        role_name:
+          description: 'The name of the role - it is unique for the tenancy '
+          title: Role Name
+          type: string
+      required:
+      - role_name
+      - policies
+      title: RoleCreateRequest
+      type: object
+    RoleDeleteResponse:
+      properties:
+        role_name:
+          title: Role Name
+          type: string
+      required:
+      - role_name
+      title: RoleDeleteResponse
+      type: object
+    RolePage:
+      properties:
+        page_info:
+          $ref: '#/components/schemas/PageInfo'
+          description: The information corresponding to that page and the overall
+            information about the roles attached to the specified Root token
+        roles:
+          description: The list of roles attached to the specified group and the specified
+            Root token - results will be paginated
+          items:
+            $ref: '#/components/schemas/RoleResponse'
+          title: Roles
+          type: array
+      required:
+      - roles
+      - page_info
+      title: RolePage
+      type: object
+    RoleResponse:
+      properties:
+        policies:
+          description: 'The list of policies that are attached to this role '
+          items:
+            $ref: '#/components/schemas/PolicyResponse'
+          title: Policies
+          type: array
+        role_name:
+          description: The unique role_name of the corresponding role
+          title: Role Name
+          type: string
+      required:
+      - role_name
+      - policies
+      title: RoleResponse
+      type: object
+    ScoredDocument:
+      properties:
+        authorized_groups:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: The groups that are authorized to access the document. This
+            is useful when using Document-level Security and RBAC must be enabled
+          title: Authorized Groups
+        chunks:
+          items:
+            $ref: '#/components/schemas/ScoredDocumentChunk'
+          title: Chunks
+          type: array
+        content:
+          description: Dictionary of document content field, including text, metadata,
+            and any user provided filters
+          title: Content
+          type: object
+        document_id:
+          description: The unique document_id
+          title: Document Id
+          type: string
+        index_fields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: "Specifies which fields will be included in the semantic search\
+            \ embedded text, defaults to \u201Ctext\u201D and \u201Cmeta\u201D. "
+          title: Index Fields
+        parent_document_id:
+          description: The unique id for the parent document
+          title: Parent Document Id
+          type: string
+        path:
+          description: 'The path from which the file came from; if the '
+          title: Path
+          type: string
+        score:
+          description: A relevancy score of the document. Search Document scores are
+            not guaranteed to be between 0 and 1.
+          title: Score
+          type: number
+      required:
+      - document_id
+      - path
+      - parent_document_id
+      - content
+      - chunks
+      - score
+      title: ScoredDocument
+      type: object
+    ScoredDocumentChunk:
+      properties:
+        asset_ids:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: 'This is meant for internal use '
+          title: Asset Ids
+        assets:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAsset'
+            type: array
+          - type: 'null'
+          description: '[to be deprecated] List of CompassDocumentChunkAsset. The
+            length of the assets will depend on the origin file_type as well as the
+            parser_config set'
+          title: Assets
+        assets_info:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAssetInfo'
+            type: array
+          - type: 'null'
+          description: List of AssetInfo objects. The length of the assets will depend
+            on the origin file_type as well as the parser_config set
+          title: Assets Info
+        chunk_id:
+          description: The unique id for the specific chunk in the database
+          title: Chunk Id
+          type: string
+        content:
+          description: Dict that contains the data to be used for embeddings
+          title: Content
+          type: object
+        origin:
+          anyOf:
+          - type: object
+          - type: 'null'
+          description: "Dict that contains data around the origin of the chunk. This\
+            \ contents of the origin may depend on the origin file_type but should\
+            \ always contain: 1) filename : the name of the parent file the chunk\
+            \ came from \nIf the file_type=pdf then it will also have page_number"
+          title: Origin
+        parent_document_id:
+          description: The unique id for the parent document - this allows to group
+            chunks by parent_document_id to get all children of a parent document
+          title: Parent Document Id
+          type: string
+        path:
+          description: The path from which the parent file came from
+          title: Path
+          type: string
+        score:
+          description: Relevancy score of the chunk normalized between [0,1]. Normalization
+            of chunk scores do not depend on the set of chunks retrieved
+          title: Score
+          type: number
+        sort_id:
+          description: '[deprecated] This is the original order of the chunk in respect
+            to the parent document'
+          title: Sort Id
+          type: integer
+      required:
+      - chunk_id
+      - sort_id
+      - parent_document_id
+      - path
+      - content
+      - score
+      title: ScoredDocumentChunk
+      type: object
+    ScoredDocumentChunkReturn:
+      properties:
+        asset_ids:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: 'This is meant for internal use '
+          title: Asset Ids
+        assets:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAsset'
+            type: array
+          - type: 'null'
+          description: '[to be deprecated] List of CompassDocumentChunkAsset. The
+            length of the assets will depend on the origin file_type as well as the
+            parser_config set'
+          title: Assets
+        assets_info:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAssetInfo'
+            type: array
+          - type: 'null'
+          description: List of AssetInfo objects. The length of the assets will depend
+            on the origin file_type as well as the parser_config set
+          title: Assets Info
+        chunk_id:
+          description: The unique id for the specific chunk in the database
+          title: Chunk Id
+          type: string
+        content:
+          description: Dict that contains the data to be used for embeddings
+          title: Content
+          type: object
+        document_id:
+          description: The unique id for the document
+          title: Document Id
+          type: string
+        index_fields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: The fields that are indexed
+          title: Index Fields
+        origin:
+          anyOf:
+          - type: object
+          - type: 'null'
+          description: "Dict that contains data around the origin of the chunk. This\
+            \ contents of the origin may depend on the origin file_type but should\
+            \ always contain: 1) filename : the name of the parent file the chunk\
+            \ came from \nIf the file_type=pdf then it will also have page_number"
+          title: Origin
+        parent_document_id:
+          description: The unique id for the parent document - this allows to group
+            chunks by parent_document_id to get all children of a parent document
+          title: Parent Document Id
+          type: string
+        path:
+          description: The path of the document
+          title: Path
+          type: string
+        score:
+          description: Relevancy score of the chunk normalized between [0,1]. Normalization
+            of chunk scores do not depend on the set of chunks retrieved
+          title: Score
+          type: number
+        sort_id:
+          description: '[deprecated] This is the original order of the chunk in respect
+            to the parent document'
+          title: Sort Id
+          type: integer
+      required:
+      - chunk_id
+      - sort_id
+      - parent_document_id
+      - path
+      - content
+      - score
+      - document_id
+      title: ScoredDocumentChunkReturn
+      type: object
+    SearchChunksResponse:
+      properties:
+        hits:
+          items:
+            $ref: '#/components/schemas/ScoredDocumentChunkReturn'
+          title: Hits
+          type: array
+      required:
+      - hits
+      title: SearchChunksResponse
+      type: object
+    SearchDocumentsResponse:
+      properties:
+        hits:
+          description: List of documents returned by the search query
+          items:
+            $ref: '#/components/schemas/ScoredDocument'
+          title: Hits
+          type: array
+      required:
+      - hits
+      title: SearchDocumentsResponse
+      type: object
+    SearchFilter:
+      properties:
+        field:
+          description: The field on the index-level to be used for filtering
+          title: Field
+          type: string
+        type:
+          $ref: '#/components/schemas/FilterType'
+          description: "Different operations that can be used to filter the specified\
+            \ field: \n1) $eq will be a term match2) $gte and $lte will become range\
+            \ queries3) $wordMatch will be converted to a string"
+        value:
+          description: 'The value the filter should use '
+          title: Value
+      required:
+      - field
+      - type
+      - value
+      title: SearchFilter
+      type: object
+    SearchInput:
+      properties:
+        enable_profiling:
+          default: false
+          description: This includes some performance data around the search response
+            - helpful for debugging otherwise it will slow the response time of the
+            query
+          title: Enable Profiling
+          type: boolean
+        filters:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/SearchFilter'
+            type: array
+          - type: 'null'
+          description: A list of filters which will be applied onto the search
+          title: Filters
+        query:
+          description: The query to be searched into the index
+          minLength: 1
+          title: Query
+          type: string
+        top_k:
+          description: 'The number of documents to be returned '
+          title: Top K
+          type: integer
+      required:
+      - query
+      - top_k
+      title: SearchInput
+      type: object
+    UploadDocumentsRequest:
+      properties:
+        documents:
+          description: A list of documents to be inserted
+          items:
+            $ref: '#/components/schemas/UploadDocumentsRequestDocument'
+          maxItems: 100
+          minItems: 1
+          title: Documents
+          type: array
+      required:
+      - documents
+      title: UploadDocumentsRequest
+      type: object
+    UploadDocumentsRequestDocument:
+      properties:
+        attributes:
+          anyOf:
+          - type: object
+          - type: 'null'
+          description: 'Additional context to be embedded with the document '
+          title: Attributes
+        content_encoded_bytes:
+          description: The content encoded as bytes
+          title: Content Encoded Bytes
+          type: string
+        content_length_bytes:
+          description: The bytes of the document
+          exclusiveMinimum: 0.0
+          title: Content Length Bytes
+          type: integer
+        content_type:
+          $ref: '#/components/schemas/ContentTypeEnum'
+          description: The content type of the document
+        filename:
+          description: The filename of the document
+          minLength: 1
+          title: Filename
+          type: string
+        id:
+          description: The unique id for the document
+          title: Id
+          type: string
+      required:
+      - id
+      - filename
+      - content_type
+      - content_length_bytes
+      - content_encoded_bytes
+      title: UploadDocumentsRequestDocument
+      type: object
+    UploadDocumentsResponse:
+      properties:
+        document_ids:
+          description: The unique ids for the documents
+          items:
+            type: string
+          title: Document Ids
+          type: array
+        upload_id:
+          description: The unique id for the upload
+          format: uuid4
+          title: Upload Id
+          type: string
+      required:
+      - upload_id
+      - document_ids
+      title: UploadDocumentsResponse
+      type: object
+    UserCreateRequest:
+      properties:
+        user_name:
+          description: The name of the user to be created
+          title: User Name
+          type: string
+      required:
+      - user_name
+      title: UserCreateRequest
+      type: object
+    UserCreateResponse:
+      properties:
+        token:
+          description: The unique token to identify the user to the Compass RBAC system
+          title: Token
+          type: string
+        user_name:
+          description: The name of the user created
+          title: User Name
+          type: string
+      required:
+      - user_name
+      - token
+      title: UserCreateResponse
+      type: object
+    UserDeleteResponse:
+      properties:
+        user_name:
+          description: The name of the user deleted
+          title: User Name
+          type: string
+      required:
+      - user_name
+      title: UserDeleteResponse
+      type: object
+    UserPage:
+      properties:
+        page_info:
+          $ref: '#/components/schemas/PageInfo'
+          description: The information corresponding to that page and the overall
+            information about the users attached to the specified Root token
+        users:
+          description: The list of users attached to the specified Root token - results
+            will be paginated
+          items:
+            $ref: '#/components/schemas/UserResponse'
+          title: Users
+          type: array
+      required:
+      - users
+      - page_info
+      title: UserPage
+      type: object
+    UserResponse:
+      properties:
+        user_name:
+          description: The unique user_name of the corresponding user
+          title: User Name
+          type: string
+      required:
+      - user_name
+      title: UserResponse
+      type: object
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
+info:
+  title: Compass search API
+  version: 0.1.0
+openapi: 3.1.0
+paths:
+  /metrics:
+    get:
+      description: Endpoint that serves Prometheus metrics.
+      operationId: metrics_metrics_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Metrics
+  /security/admin/rbac/v2/groups:
+    get:
+      description: Fetches all groups in the current Compass tenancy with pagination.
+        ROOT permission is required to access this API.
+      operationId: fetch_groups_security_admin_rbac_v2_groups_get
+      parameters:
+      - description: Set this if you would want to iterate through another page of
+          results for a subsequent request
+        in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to iterate through another page
+            of results for a subsequent request
+          title: Cursor
+      - description: Set this if you would want to filter the groups based on a partial
+          text match on group_names
+        in: query
+        name: filter
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to filter the groups based on a
+            partial text match on group_names
+          title: Filter
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupPage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Fetch Groups
+      x-codeSamples:
+      - lang: python
+        source: "import os\nfrom typing import Optional\n\nfrom cohere.compass.clients.access_control\
+          \ import CompassRootClient\nfrom cohere.compass.models.access_control import\
+          \ Group, PageDirection, PageInfo\n\ncompass_root_client = CompassRootClient(\n\
+          \    compass_url=os.getenv(\"COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"\
+          COMPASS_API_ROOT_TOKEN\"),\n)\n\n\ndef get_all_groups(\n    filter: Optional[str]\
+          \ = None,\n    page_info: Optional[PageInfo] = None,\n    direction: Optional[PageDirection]\
+          \ = None,\n    groups: Optional[list[Group]] = None,\n) -> list[Group]:\n\
+          \    group_pages = compass_root_client.get_groups_page(\n        filter=filter,\
+          \ page_info=page_info, direction=direction\n    )\n\n    groups = groups\
+          \ or []\n    groups.extend(group_pages.groups)\n\n    if not group_pages.page_info.has_next_page():\n\
+          \        return groups\n    return get_all_groups(\n        filter=filter,\n\
+          \        page_info=group_pages.page_info,\n        direction=PageDirection.NEXT,\n\
+          \        groups=groups,\n    )\n\n\ngroups = get_all_groups()\nprint(f\"\
+          Groups: {groups}\")\n"
+    post:
+      description: Create a new groups - on creation, groups will not have any users
+        or roles assigned to it. This requires a Root Bearer token.
+      operationId: create_groups_security_admin_rbac_v2_groups_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/GroupCreateRequest'
+              title: Create Groups
+              type: array
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupResponse'
+                title: Response Create Groups Security Admin Rbac V2 Groups Post
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create groups
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import Group\n\ncompass_root_client\
+          \ = CompassRootClient(\n    compass_url=os.getenv(\"COMPASS_API_URL\"),\n\
+          \    root_user_token=os.getenv(\"COMPASS_API_ROOT_TOKEN\"),\n)\n\ngroups\
+          \ = compass_root_client.create_groups(\n    groups=[\n        Group(group_name=\"\
+          unique_group_name_1\"),\n        Group(group_name=\"unique_group_name_2\"\
+          ),\n    ]\n)\n\nfor group in groups:\n    print(f\"Created group: {group.group_name}\"\
+          )\n"
+  /security/admin/rbac/v2/groups/{group_names}:
+    delete:
+      description: Delete groups by group name. ROOT permission is required to access
+        this API.
+      operationId: delete_groups_security_admin_rbac_v2_groups__group_names__delete
+      parameters:
+      - description: A comma separate list of the names of the groups to be deleted
+        in: path
+        name: group_names
+        required: true
+        schema:
+          description: A comma separate list of the names of the groups to be deleted
+          title: Group Names
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupResponse'
+                title: Response Delete Groups Security Admin Rbac V2 Groups  Group
+                  Names  Delete
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete groups
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients.access_control import CompassRootClient\n\
+          \ncompass_root_client = CompassRootClient(\n    compass_url=os.getenv(\"\
+          COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"COMPASS_API_ROOT_TOKEN\"\
+          ),\n)\n\ngroups = compass_root_client.delete_groups(\n    group_names=[\n\
+          \        os.getenv(\"GROUP_NAME\"),\n    ]\n)\n\nfor group in groups:\n\
+          \    print(f\"Deleted group: {group.group_name}\")\n"
+  /security/admin/rbac/v2/groups/{group_name}:
+    get:
+      description: Obtains a more detailed Group object that is joined to the Users
+        and Roles
+      operationId: fetch_group_security_admin_rbac_v2_groups__group_name__get
+      parameters:
+      - description: The name of the group
+        in: path
+        name: group_name
+        required: true
+        schema:
+          description: The name of the group
+          title: Group Name
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposedGroup'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Group details
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients.access_control import CompassRootClient\n\
+          \ncompass_root_client = CompassRootClient(\n    compass_url=os.getenv(\"\
+          COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"COMPASS_API_ROOT_TOKEN\"\
+          ),\n)\n\ngroup = compass_root_client.get_detailed_group(group_name=os.getenv(\"\
+          GROUP_NAME\"))\n\nprint(f\"Group roles: {group.roles}\")\nprint(f\"Group\
+          \ users: {group.users}\")\n"
+  /security/admin/rbac/v2/groups/{group_name}/roles:
+    get:
+      description: Fetches all roles attached to a specific group in the current Compass
+        tenancy. ROOT permission is required to access this API.
+      operationId: fetch_group_roles_security_admin_rbac_v2_groups__group_name__roles_get
+      parameters:
+      - description: Group name to fetch roles for
+        in: path
+        name: group_name
+        required: true
+        schema:
+          description: Group name to fetch roles for
+          title: Group Name
+          type: string
+      - description: Set this if you would want to iterate through another page of
+          results for a subsequent request
+        in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to iterate through another page
+            of results for a subsequent request
+          title: Cursor
+      - description: Set this if you would want to filter the groups based on a partial
+          text match on group_names
+        in: query
+        name: filter
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to filter the groups based on a
+            partial text match on group_names
+          title: Filter
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RolePage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Fetch the Roles attached to a Group
+      x-codeSamples:
+      - lang: python
+        source: "import os\nfrom typing import Optional\n\nfrom cohere.compass.clients.access_control\
+          \ import CompassRootClient\nfrom cohere.compass.models.access_control import\
+          \ PageDirection, PageInfo, Role, User\n\ncompass_root_client = CompassRootClient(\n\
+          \    compass_url=os.getenv(\"COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"\
+          COMPASS_API_ROOT_TOKEN\"),\n)\n\n\ndef get_all_roles_in_group(\n    group_name:\
+          \ str,\n    filter: Optional[str] = None,\n    page_info: Optional[PageInfo]\
+          \ = None,\n    direction: Optional[PageDirection] = None,\n    roles: Optional[list[Role]]\
+          \ = None,\n) -> list[User]:\n    roles_page = compass_root_client.get_group_roles_page(\n\
+          \        group_name=group_name,\n        filter=filter,\n        page_info=page_info,\n\
+          \        direction=direction,\n    )\n\n    roles = roles or []\n    roles.extend(roles_page.roles)\n\
+          \n    if not roles_page.page_info.has_next_page():\n        return roles\n\
+          \n    return get_all_roles_in_group(\n        group_name=group_name,\n \
+          \       filter=filter,\n        page_info=roles_page.page_info,\n      \
+          \  direction=PageDirection.NEXT,\n        roles=roles,\n    )\n\n\nroles\
+          \ = get_all_roles_in_group(group_name=os.getenv(\"GROUP_NAME\"))\nprint(f\"\
+          Roles in group: {roles}\")\n"
+    post:
+      description: Add a role mapping to a group. ROOT permission is required to access
+        this API.
+      operationId: add_group_roles_security_admin_rbac_v2_groups__group_name__roles_post
+      parameters:
+      - description: Group name
+        in: path
+        name: group_name
+        required: true
+        schema:
+          description: Group name
+          title: Group Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: List of role names
+              items:
+                $ref: '#/components/schemas/GroupRoleRequest'
+              title: Group Roles
+              type: array
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupRoleResponse'
+                title: Response Add Group Roles Security Admin Rbac V2 Groups  Group
+                  Name  Roles Post
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Add a role to a Group
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import Group, Permission, Policy,\
+          \ Role\nfrom requests.exceptions import HTTPError\n\ncompass_root_client\
+          \ = CompassRootClient(\n    compass_url=os.getenv(\"COMPASS_API_URL\"),\n\
+          \    root_user_token=os.getenv(\"COMPASS_API_ROOT_TOKEN\"),\n)\n\ntry:\n\
+          \    groups = compass_root_client.create_groups(\n        groups=[\n   \
+          \         Group(group_name=\"unique_group_name_1\"),\n            Group(group_name=\"\
+          unique_group_name_2\"),\n        ]\n    )\nexcept HTTPError as e:\n    if\
+          \ e.response.status_code == 409:\n        print(\"Group already exists.\"\
+          )\n    else:\n        raise\n\ntry:\n    roles = compass_root_client.create_roles(\n\
+          \        roles=[\n            Role(\n                role_name=\"developer_read_specific_index\"\
+          ,\n                policies=[Policy(indexes=[\"user-*\"], permission=Permission.READ)],\n\
+          \            ),\n        ]\n    )\nexcept HTTPError as e:\n    if e.response.status_code\
+          \ == 409:\n        print(\"Role already exists.\")\n    else:\n        raise\n\
+          \ngroup_roles = compass_root_client.add_roles_to_group(\n    group_name=\"\
+          unique_group_name_1\",\n    role_names=[\n        \"developer_read_specific_index\"\
+          ,\n    ],\n)\n\nfor group_role in group_roles:\n    print(f\"Added roles:\
+          \ {group_role.role_name} to group: {group_role.group_name}\")\n"
+  /security/admin/rbac/v2/groups/{group_name}/roles/{role_names}:
+    delete:
+      description: Delete one or more roles belonging to a group. ROOT permission
+        is required to access this API.
+      operationId: delete_group_roles_security_admin_rbac_v2_groups__group_name__roles__role_names__delete
+      parameters:
+      - description: The name of the group the roles are to be deleted from
+        in: path
+        name: group_name
+        required: true
+        schema:
+          description: The name of the group the roles are to be deleted from
+          title: Group Name
+          type: string
+      - description: A comma separate list of the names of the roles to be deleted
+          from the group
+        in: path
+        name: role_names
+        required: true
+        schema:
+          description: A comma separate list of the names of the roles to be deleted
+            from the group
+          title: Role Names
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupRoleResponse'
+                title: Response Delete Group Roles Security Admin Rbac V2 Groups  Group
+                  Name  Roles  Role Names  Delete
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete Role from Group
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import Group, Permission, Policy,\
+          \ Role\n\ncompass_root_client = CompassRootClient(\n    compass_url=os.getenv(\"\
+          COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"COMPASS_API_ROOT_TOKEN\"\
+          ),\n)\n\ngroups = compass_root_client.create_groups(\n    groups=[\n   \
+          \     Group(group_name=\"unique_group_name_1\"),\n    ]\n)\n\nroles = compass_root_client.create_roles(\n\
+          \    roles=[\n        Role(\n            role_name=\"developer_read_specific_index\"\
+          ,\n            policies=[Policy(indexes=[\"user-*\"], permission=Permission.READ)],\n\
+          \        ),\n    ]\n)\n\ngroup_roles = compass_root_client.add_roles_to_group(\n\
+          \    group_name=\"unique_group_name_1\",\n    role_names=[\n        \"developer_read_specific_index\"\
+          ,\n    ],\n)\n\nfor group_role in group_roles:\n    print(f\"Added roles:\
+          \ {group_role.role_name} to group: {group_role.group_name}\")\n\ngroup_roles\
+          \ = compass_root_client.remove_roles_from_group(\n    group_name=\"unique_group_name_1\"\
+          ,\n    role_names=[\n        \"developer_read_specific_index\",\n    ],\n\
+          )\n\nfor group_role in group_roles:\n    print(f\"Removed roles: {group_role.role_name}\
+          \ to group: {group_role.group_name}\")\n"
+  /security/admin/rbac/v2/groups/{group_name}/users:
+    get:
+      description: Fetches all users attached to a specific group in the current Compass
+        tenancy. ROOT permission is required to access this API.
+      operationId: fetch_group_memberships_security_admin_rbac_v2_groups__group_name__users_get
+      parameters:
+      - description: Group name to fetch
+        in: path
+        name: group_name
+        required: true
+        schema:
+          description: Group name to fetch
+          title: Group Name
+          type: string
+      - description: Set this if you would want to iterate through another page of
+          results for a subsequent request
+        in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to iterate through another page
+            of results for a subsequent request
+          title: Cursor
+      - description: Set this if you would want to filter the groups based on a partial
+          text match on group_names
+        in: query
+        name: filter
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to filter the groups based on a
+            partial text match on group_names
+          title: Filter
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Fetch the Users attached to a Group
+      x-codeSamples:
+      - lang: python
+        source: "import os\nfrom typing import Optional\n\nfrom cohere.compass.clients.access_control\
+          \ import CompassRootClient\nfrom cohere.compass.models.access_control import\
+          \ PageDirection, PageInfo, User\n\ncompass_root_client = CompassRootClient(\n\
+          \    compass_url=os.getenv(\"COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"\
+          COMPASS_API_ROOT_TOKEN\"),\n)\n\n\ndef get_all_members_in_group(\n    group_name:\
+          \ str,\n    filter: Optional[str] = None,\n    page_info: Optional[PageInfo]\
+          \ = None,\n    direction: Optional[PageDirection] = None,\n    users: Optional[list[User]]\
+          \ = None,\n) -> list[User]:\n    user_page = compass_root_client.get_group_members_page(\n\
+          \        group_name=group_name,\n        filter=filter,\n        page_info=page_info,\n\
+          \        direction=direction,\n    )\n\n    users = users or []\n    users.extend(user_page.users)\n\
+          \n    if not user_page.page_info.has_next_page():\n        return users\n\
+          \    return get_all_members_in_group(\n        group_name=group_name,\n\
+          \        filter=filter,\n        page_info=user_page.page_info,\n      \
+          \  direction=PageDirection.NEXT,\n        users=users,\n    )\n\n\nmembers\
+          \ = get_all_members_in_group(group_name=os.getenv(\"GROUP_NAME\"))\nprint(f\"\
+          Members in group: {members}\")\n"
+    post:
+      description: Add a user to a group. ROOT permission is required to access this
+        API.
+      operationId: add_group_memberships_security_admin_rbac_v2_groups__group_name__users_post
+      parameters:
+      - description: Group name
+        in: path
+        name: group_name
+        required: true
+        schema:
+          description: Group name
+          title: Group Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: List of user names
+              items:
+                $ref: '#/components/schemas/GroupMembershipRequest'
+              title: Group Memberships
+              type: array
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupMembershipResponse'
+                title: Response Add Group Memberships Security Admin Rbac V2 Groups  Group
+                  Name  Users Post
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Add a user to a Group
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import Group, User\nfrom requests.exceptions\
+          \ import HTTPError\n\ncompass_root_client = CompassRootClient(\n    compass_url=os.getenv(\"\
+          COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"COMPASS_API_ROOT_TOKEN\"\
+          ),\n)\n\ntry:\n    groups = compass_root_client.create_groups(\n       \
+          \ groups=[\n            Group(group_name=\"unique_group_name_1\"),\n   \
+          \         Group(group_name=\"unique_group_name_2\"),\n        ]\n    )\n\
+          \n    for group in groups:\n        print(f\"Created group: {group.group_name}\"\
+          )\nexcept HTTPError as e:\n    if e.response.status_code == 409:\n     \
+          \   print(\"Group already exists.\")\n    else:\n        raise\n\ntry:\n\
+          \    users = compass_root_client.create_users(\n        users=[\n      \
+          \      User(user_name=\"unique_user_name_1\"),\n            User(user_name=\"\
+          unique_user_name_2\"),\n        ]\n    )\nexcept HTTPError as e:\n    if\
+          \ e.response.status_code == 409:\n        print(\"User already exists.\"\
+          )\n    else:\n        raise\n\ntry:\n    # Adding unique_user_name_1 to\
+          \ unique_group_name_1\n    group_membership = compass_root_client.add_members_to_group(\n\
+          \        group_name=\"unique_group_name_1\",\n        user_names=[\"unique_user_name_1\"\
+          ],\n    )\n    print(\"Group membership added: \", group_membership)\nexcept\
+          \ HTTPError as e:\n    if e.response.status_code == 409:\n        print(\"\
+          Membership already exists.\")\n    else:\n        raise\n\ntry:\n    # Adding\
+          \ unique_user_name_2 to unique_group_name_2\n    group_membership = compass_root_client.add_members_to_group(\n\
+          \        group_name=\"unique_group_name_2\",\n        user_names=[\"unique_user_name_2\"\
+          ],\n    )\n    print(\"Group membership added: \", group_membership)\nexcept\
+          \ HTTPError as e:\n    if e.response.status_code == 409:\n        print(\"\
+          Membership already exists.\")\n    else:\n        raise\n"
+  /security/admin/rbac/v2/groups/{group_name}/users/{user_names}:
+    delete:
+      description: Delete a user belonging to a group. ROOT permission is required
+        to access this API.
+      operationId: delete_group_memberships_security_admin_rbac_v2_groups__group_name__users__user_names__delete
+      parameters:
+      - description: The name of the group the users are to be deleted from
+        in: path
+        name: group_name
+        required: true
+        schema:
+          description: The name of the group the users are to be deleted from
+          title: Group Name
+          type: string
+      - description: A comma separate list of the names of the users to be deleted
+          from the group
+        in: path
+        name: user_names
+        required: true
+        schema:
+          description: A comma separate list of the names of the users to be deleted
+            from the group
+          title: User Names
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupMembershipResponse'
+                title: Response Delete Group Memberships Security Admin Rbac V2 Groups  Group
+                  Name  Users  User Names  Delete
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete User from Group
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import Group, User\nfrom requests.exceptions\
+          \ import HTTPError\n\ncompass_root_client = CompassRootClient(\n    compass_url=os.getenv(\"\
+          COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"COMPASS_API_ROOT_TOKEN\"\
+          ),\n)\n\ntry:\n    groups = compass_root_client.create_groups(\n       \
+          \ groups=[\n            Group(group_name=\"unique_group_name_1\"),\n   \
+          \     ]\n    )\nexcept HTTPError as e:\n    if e.response.status_code ==\
+          \ 409:\n        print(\"Group already exists.\")\n    else:\n        raise\n\
+          \ntry:\n    users = compass_root_client.create_users(\n        users=[User(user_name=\"\
+          unique_user_name_1\")]\n    )\nexcept HTTPError as e:\n    if e.response.status_code\
+          \ == 409:\n        print(\"User already exists.\")\n    else:\n        raise\n\
+          \ntry:\n    # Adding unique_user_name_1 to unique_group_name_1\n    group_membership\
+          \ = compass_root_client.add_members_to_group(\n        group_name=\"unique_group_name_1\"\
+          ,\n        user_names=[\"unique_user_name_1\"],\n    )\n    print(\"Group\
+          \ membership added: \", group_membership)\nexcept HTTPError as e:\n    if\
+          \ e.response.status_code == 409:\n        print(\"Membership already exists.\"\
+          )\n    else:\n        raise\n\n\n# Removing unique_user_name_1 from unique_group_name_1\n\
+          group_membership = compass_root_client.remove_members_from_group(\n    group_name=\"\
+          unique_group_name_1\",\n    user_names=[\"unique_user_name_1\"],\n)\nprint(\"\
+          Group membership removed: \", group_membership)\n"
+  /security/admin/rbac/v2/roles:
+    get:
+      description: Fetches all roles in the current Compass tenancy with pagination.
+        ROOT permission is required to access this API.
+      operationId: fetch_roles_security_admin_rbac_v2_roles_get
+      parameters:
+      - description: Set this if you would want to iterate through another page of
+          results for a subsequent request
+        in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to iterate through another page
+            of results for a subsequent request
+          title: Cursor
+      - description: Set this if you would want to filter the groups based on a partial
+          text match on group_names
+        in: query
+        name: filter
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to filter the groups based on a
+            partial text match on group_names
+          title: Filter
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RolePage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Fetch roles
+      x-codeSamples:
+      - lang: python
+        source: "import os\nfrom typing import Optional\n\nfrom cohere.compass.clients.access_control\
+          \ import CompassRootClient\nfrom cohere.compass.models.access_control import\
+          \ PageDirection, PageInfo, Role\n\ncompass_root_client = CompassRootClient(\n\
+          \    compass_url=os.getenv(\"COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"\
+          COMPASS_API_ROOT_TOKEN\"),\n)\n\n\ndef get_all_roles(\n    filter: Optional[str]\
+          \ = None,\n    page_info: Optional[PageInfo] = None,\n    roles: Optional[list[Role]]\
+          \ = None,\n    direction: Optional[PageDirection] = None,\n) -> list[Role]:\n\
+          \    roles_page = compass_root_client.get_roles_page(\n        filter=filter,\
+          \ page_info=page_info, direction=direction\n    )\n\n    roles = roles or\
+          \ []\n    roles.extend(roles_page.roles)\n\n    if not roles_page.page_info.has_next_page():\n\
+          \        return roles\n\n    return get_all_roles(\n        filter=filter,\
+          \ page_info=page_info, direction=PageDirection.NEXT\n    )\n\n\nroles =\
+          \ get_all_roles()\nprint(f\"Roles: {roles}\")\n"
+    post:
+      description: Create new roles, roles can have multiple policies - each policy
+        can either have READ or WRITE permission to a set of indexes. ROOT permission
+        is required to access this API.
+      operationId: create_roles_security_admin_rbac_v2_roles_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/RoleCreateRequest'
+              title: Roles Request
+              type: array
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/RoleResponse'
+                title: Response Create Roles Security Admin Rbac V2 Roles Post
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create roles
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import Permission, Policy, Role\n\
+          \ncompass_root_client = CompassRootClient(\n    compass_url=os.getenv(\"\
+          COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"COMPASS_API_ROOT_TOKEN\"\
+          ),\n)\n\nroles = compass_root_client.create_roles(\n    roles=[\n      \
+          \  # * allows all index\n        Role(\n            role_name=\"developer_read_all_index\"\
+          ,\n            policies=[Policy(indexes=[\"*\"], permission=Permission.READ)],\n\
+          \        ),\n        Role(\n            role_name=\"developer_write_all_index\"\
+          ,\n            policies=[Policy(indexes=[\"*\"], permission=Permission.WRITE)],\n\
+          \        ),\n        # user-* allows index only prefixed with `user-`\n\
+          \        Role(\n            role_name=\"developer_read_specific_index\"\
+          ,\n            policies=[Policy(indexes=[\"user-*\"], permission=Permission.READ)],\n\
+          \        ),\n    ]\n)\n\nfor role in roles:\n    print(f\"Role information:\
+          \ {role.role_name}, {role.policies}\")\n"
+  /security/admin/rbac/v2/roles/{role_names}:
+    delete:
+      description: Delete a role. ROOT permission is required to access this API.
+      operationId: delete_roles_security_admin_rbac_v2_roles__role_names__delete
+      parameters:
+      - description: The name of the role to be deleted
+        in: path
+        name: role_names
+        required: true
+        schema:
+          description: The name of the role to be deleted
+          title: Role Names
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/RoleDeleteResponse'
+                title: Response Delete Roles Security Admin Rbac V2 Roles  Role Names  Delete
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete roles
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients.access_control import CompassRootClient\n\
+          \ncompass_root_client = CompassRootClient(\n    compass_url=os.getenv(\"\
+          COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"COMPASS_API_ROOT_TOKEN\"\
+          ),\n)\n\nroles = compass_root_client.delete_roles(role_names=[os.getenv(\"\
+          ROLE_NAME\")])\n\nfor role in roles:\n    print(f\"Deleted role: {role.role_name}\"\
+          )\n"
+  /security/admin/rbac/v2/roles/{role_name}:
+    get:
+      description: Obtains a more detailed Role object that is joined to the Groups
+        it is assigned to
+      operationId: fetch_role_security_admin_rbac_v2_roles__role_name__get
+      parameters:
+      - description: The name of the role
+        in: path
+        name: role_name
+        required: true
+        schema:
+          description: The name of the role
+          title: Role Name
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposedRole'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Role details
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients.access_control import CompassRootClient\n\
+          \ncompass_root_client = CompassRootClient(\n    compass_url=os.getenv(\"\
+          COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"COMPASS_API_ROOT_TOKEN\"\
+          ),\n)\n\ndetailed_role = compass_root_client.get_detailed_role(role_name=os.getenv(\"\
+          ROLE_NAME\"))\n\nprint(f\"Role name: {detailed_role.role_name}\")\nprint(f\"\
+          Group name: {detailed_role.groups}\")\n"
+    put:
+      description: Update an existing role in the current Compass tenancy. ROOT permission
+        is required to access this API.
+      operationId: update_role_security_admin_rbac_v2_roles__role_name__put
+      parameters:
+      - description: The name of the role to be updated
+        in: path
+        name: role_name
+        required: true
+        schema:
+          description: The name of the role to be updated
+          title: Role Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: List of policy requests
+              items:
+                $ref: '#/components/schemas/PolicyRequest'
+              title: Policies Request
+              type: array
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Update a role
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import Permission, Policy, Role\n\
+          \ncompass_root_client = CompassRootClient(\n    compass_url=os.getenv(\"\
+          COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"COMPASS_API_ROOT_TOKEN\"\
+          ),\n)\n\nrole = compass_root_client.update_role(\n    role=Role(\n     \
+          \   role_name=\"developer_read_all_index\",\n        policies=[Policy(indexes=[\"\
+          prefix-*\"], permission=Permission.READ)],\n    )\n)\n\nprint(f\"Updated\
+          \ role information: {role.role_name}, {role.policies}\")\n"
+  /security/admin/rbac/v2/roles/{role_name}/groups:
+    get:
+      description: Fetch all groups that the role is assigned to.
+      operationId: fetch_role_groups_security_admin_rbac_v2_roles__role_name__groups_get
+      parameters:
+      - description: Name of the role
+        in: path
+        name: role_name
+        required: true
+        schema:
+          description: Name of the role
+          title: Role Name
+          type: string
+      - description: Set this if you would want to iterate through another page of
+          results for a subsequent request
+        in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to iterate through another page
+            of results for a subsequent request
+          title: Cursor
+      - description: Set this if you would want to filter the groups based on a partial
+          text match on group_names
+        in: query
+        name: filter
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to filter the groups based on a
+            partial text match on group_names
+          title: Filter
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupPage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Fetch role groups
+      x-codeSamples:
+      - lang: python
+        source: "import os\nfrom typing import Optional\n\nfrom cohere.compass.clients.access_control\
+          \ import CompassRootClient\nfrom cohere.compass.models.access_control import\
+          \ Group, PageDirection, PageInfo\n\ncompass_root_client = CompassRootClient(\n\
+          \    compass_url=os.getenv(\"COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"\
+          COMPASS_API_ROOT_TOKEN\"),\n)\n\n\ndef get_all_role_groups(\n    role_name:\
+          \ str,\n    filter: Optional[str] = None,\n    page_info: Optional[PageInfo]\
+          \ = None,\n    groups: Optional[list[Group]] = None,\n    direction: Optional[PageDirection]\
+          \ = None,\n) -> list[Group]:\n    role_pages = compass_root_client.get_role_groups_page(\n\
+          \        role_name=role_name, filter=filter, page_info=page_info, direction=direction\n\
+          \    )\n\n    groups = groups or []\n    groups.extend(role_pages.groups)\n\
+          \n    if not role_pages.page_info.has_next_page():\n        return groups\n\
+          \n    return get_all_role_groups(\n        role_name=role_name,\n      \
+          \  filter=filter,\n        page_info=role_pages.page_info,\n        groups=groups,\n\
+          \        direction=PageDirection.NEXT,\n    )\n\n\ngroup = get_all_role_groups(role_name=os.getenv(\"\
+          ROLE_NAME\"))\nprint(f\"Groups in role: {group}\")\n"
+  /security/admin/rbac/v2/root:
+    post:
+      description: Create a root user for the tenant identified from bearer token
+      operationId: create_root_user_security_admin_rbac_v2_root_post
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCreateResponse'
+          description: Successful Response
+      summary: Create Root User
+  /security/admin/rbac/v2/users:
+    get:
+      description: Fetches all users in the current Compass tenancy with pagination.
+        ROOT permission is required to access this API.
+      operationId: fetch_users_security_admin_rbac_v2_users_get
+      parameters:
+      - description: Set this if you would want to iterate through another page of
+          results for a subsequent request
+        in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to iterate through another page
+            of results for a subsequent request
+          title: Cursor
+      - description: Set this if you would want to filter the users based on a partial
+          text match on user_names
+        in: query
+        name: filter
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to filter the users based on a partial
+            text match on user_names
+          title: Filter
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Fetch users
+      x-codeSamples:
+      - lang: python
+        source: "import os\nfrom typing import Optional\n\nfrom cohere.compass.clients.access_control\
+          \ import CompassRootClient\nfrom cohere.compass.models.access_control import\
+          \ PageDirection, PageInfo, User\n\ncompass_root_client = CompassRootClient(\n\
+          \    compass_url=os.getenv(\"COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"\
+          COMPASS_API_ROOT_TOKEN\"),\n)\n\n\ndef get_all_users(\n    filter: Optional[str]\
+          \ = None,\n    page_info: Optional[PageInfo] = None,\n    direction: Optional[PageDirection]\
+          \ = None,\n    users: Optional[list[User]] = None,\n) -> list[User]:\n \
+          \   user_page = compass_root_client.get_users_page(\n        filter=filter,\n\
+          \        page_info=page_info,\n        direction=direction,\n    )\n\n \
+          \   users = users if users else []\n    users.extend(user_page.users)\n\
+          \    if not user_page.page_info.has_next_page():\n        return users\n\
+          \    return get_all_users(\n        filter=filter,\n        page_info=user_page.page_info,\n\
+          \        direction=PageDirection.NEXT,\n        users=users,\n    )\n\n\n\
+          users = get_all_users()\n\nfor user in users:\n    print(f\"User name {user.user_name}\"\
+          )\n"
+    post:
+      description: Create new user(s) in your current Compass tenancy. ROOT permission
+        is required to access this API.  Names must be unique, and requests to create
+        a user with an existing name will be rejected.
+      operationId: create_users_security_admin_rbac_v2_users_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/UserCreateRequest'
+              title: Users Request
+              type: array
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/UserCreateResponse'
+                title: Response Create Users Security Admin Rbac V2 Users Post
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create users
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import User\n\ncompass_root_client\
+          \ = CompassRootClient(\n    compass_url=os.getenv(\"COMPASS_API_URL\"),\n\
+          \    root_user_token=os.getenv(\"COMPASS_API_ROOT_TOKEN\"),\n)\n\nusers_with_token\
+          \ = compass_root_client.create_users(\n    users=[User(user_name=\"unique_user_name_1\"\
+          ), User(user_name=\"unique_user_name_2\")]\n)\n\nfor user in users_with_token:\n\
+          \    # Token is used to access the Compass API on behalf of the user\n \
+          \   print(f\"User information: {user.user_name}, Token: {user.token}\")\n"
+  /security/admin/rbac/v2/users/{user_names}:
+    delete:
+      description: Delete users by user name. ROOT permission is required to access
+        this API.
+      operationId: delete_users_security_admin_rbac_v2_users__user_names__delete
+      parameters:
+      - description: A comma separate list of the names of the users to be deleted
+        in: path
+        name: user_names
+        required: true
+        schema:
+          description: A comma separate list of the names of the users to be deleted
+          title: User Names
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/UserDeleteResponse'
+                title: Response Delete Users Security Admin Rbac V2 Users  User Names  Delete
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete users
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients.access_control import CompassRootClient\n\
+          \ncompass_root_client = CompassRootClient(\n    compass_url=os.getenv(\"\
+          COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"COMPASS_API_ROOT_TOKEN\"\
+          ),\n)\n\nusers = compass_root_client.delete_users(\n    user_names=[\"unique_user_name_1\"\
+          , \"unique_user_name_2\"]\n)\n\nfor user in users:\n    print(f\"Deleted\
+          \ users: {user.user_name}\")\n"
+  /security/admin/rbac/v2/users/{user_name}:
+    get:
+      description: Obtains a more detailed User object that is joined to the Groups
+        it is a member of.
+      operationId: fetch_user_security_admin_rbac_v2_users__user_name__get
+      parameters:
+      - description: The name of the user
+        in: path
+        name: user_name
+        required: true
+        schema:
+          description: The name of the user
+          title: User Name
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposedUser'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: User details
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import DetailedUser\n\ncompass_root_client\
+          \ = CompassRootClient(\n    compass_url=os.getenv(\"COMPASS_API_URL\"),\n\
+          \    root_user_token=os.getenv(\"COMPASS_API_ROOT_TOKEN\"),\n)\n\ndetailed_user:\
+          \ DetailedUser = compass_root_client.get_detailed_user(\n    user_name=os.getenv(\"\
+          USER_NAME\")\n)\n\nprint(f\"User name {detailed_user.user_name}\")\nprint(f\"\
+          User groups {detailed_user.groups}\")\n"
+  /security/admin/rbac/v2/users/{user_name}/groups:
+    get:
+      description: Fetches all groups that a user is member of in the current Compass
+        tenancy. ROOT permission is required to access this API.
+      operationId: fetch_user_groups_security_admin_rbac_v2_users__user_name__groups_get
+      parameters:
+      - description: Name of the user
+        in: path
+        name: user_name
+        required: true
+        schema:
+          description: Name of the user
+          title: User Name
+          type: string
+      - description: Set this if you would want to iterate through another page of
+          results for a subsequent request
+        in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to iterate through another page
+            of results for a subsequent request
+          title: Cursor
+      - description: Set this if you would want to filter the groups based on a partial
+          text match on group_name
+        in: query
+        name: filter
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to filter the groups based on a
+            partial text match on group_name
+          title: Filter
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupPage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Fetch the Groups attached to a User
+      x-codeSamples:
+      - lang: python
+        source: "import os\nfrom typing import Optional\n\nfrom cohere.compass.clients.access_control\
+          \ import CompassRootClient\nfrom cohere.compass.models.access_control import\
+          \ Group, PageDirection, PageInfo\n\ncompass_root_client = CompassRootClient(\n\
+          \    compass_url=os.getenv(\"COMPASS_API_URL\"),\n    root_user_token=os.getenv(\"\
+          COMPASS_API_ROOT_TOKEN\"),\n)\n\n\ndef get_all_user_groups(\n    user_name:\
+          \ str,\n    filter: Optional[str] = None,\n    page_info: Optional[PageInfo]\
+          \ = None,\n    groups: Optional[list[Group]] = None,\n    direction: Optional[PageDirection]\
+          \ = None,\n) -> list[Group]:\n    group_pages = compass_root_client.get_user_groups_page(\n\
+          \        user_name=user_name, filter=filter, page_info=page_info, direction=direction\n\
+          \    )\n\n    groups = groups or []\n    groups.extend(group_pages.groups)\n\
+          \n    if not group_pages.page_info.has_next_page():\n        return groups\n\
+          \n    return get_all_user_groups(\n        user_name=user_name,\n      \
+          \  filter=filter,\n        page_info=group_pages.page_info,\n        groups=groups,\n\
+          \        direction=PageDirection.NEXT,\n    )\n\n\ngroups = get_all_user_groups(user_name=os.getenv(\"\
+          USER_NAME\"))\nprint(f\"User groups: {groups}\")\n"
+  /v1/indexes/:
+    get:
+      description: Returns a list of all indexes. If RBAC is enabled only indices
+        which the user has READ or WRITE permission are returned.
+      operationId: list_indexes_v1_indexes__get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListIndexesResponse'
+          description: Successful Response
+      summary: List all indexes
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients import CompassClient\n\n\
+          compass_client = CompassClient(\n    index_url=os.getenv(\"COMPASS_API_URL\"\
+          ),\n    bearer_token=os.getenv(\"COMPASS_API_BEARER_TOKEN\"),\n)\nr = compass_client.list_indexes()\n\
+          if r.error:\n    raise Exception(f\"Failed to list indexes: {r.error}\"\
+          )\n\nindexes = r.result[\"indexes\"]\nfor index in indexes:\n    print(f\"\
+          Index name: {index['name']}\")\n    print(f\"Chunk count: {index['count']}\"\
+          )\n    print(f\"Document count: {index['parent_doc_count']}\")\n"
+  /v1/indexes/_direct_search/scroll:
+    post:
+      description: Direct search with scroll. This endpoint allows users to paginate
+        through the search results.
+      operationId: direct_search_scroll_v1_indexes__direct_search_scroll_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectSearchScrollInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectSearchResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Direct search with scroll
+      x-codeSamples:
+      - lang: python
+        source: "import os\nfrom typing import Optional\n\nfrom cohere.compass.clients\
+          \ import CompassClient\nfrom cohere.compass.models import RetrievedChunkExtended\n\
+          \ncompass_client = CompassClient(\n    index_url=os.getenv(\"COMPASS_API_URL\"\
+          ),\n    bearer_token=os.getenv(\"COMPASS_API_BEARER_TOKEN\"),\n)\nquery\
+          \ = {\"query\": {\"match_all\": {}}}\n\n\ndef call_direct_search_scroll(\n\
+          \    hits: list[RetrievedChunkExtended],\n    scroll_id: Optional[str] =\
+          \ None,\n) -> list[RetrievedChunkExtended]:\n    if hits is None:\n    \
+          \    hits = []\n\n    if scroll_id is None:\n        return hits\n\n   \
+          \ results_scroll = compass_client.direct_search_scroll(\n        scroll_id=scroll_id,\n\
+          \        scroll=\"1m\",\n    )\n\n    hits.extend(results_scroll.hits)\n\
+          \    return call_direct_search_scroll(hits=hits, scroll_id=results.scroll_id)\n\
+          \n\nresults = compass_client.direct_search(\n    index_name=os.getenv(\"\
+          INDEX_NAME\"),\n    query=query,\n    scroll=\"1m\",\n    size=100,\n)\n\
+          \nhits = call_direct_search_scroll(hits=results.hits, scroll_id=results.scroll_id)\n"
+  /v1/indexes/{index_name}:
+    delete:
+      description: Deletes the specified index. If RBAC is enabled only indices which
+        the user has WRITE permission are able to be deleted.
+      operationId: delete_index_v1_indexes__index_name__delete
+      parameters:
+      - description: The name of the index to be deleted
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index to be deleted
+          title: Index Name
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete an index
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients import CompassClient\n\n\
+          compass_client = CompassClient(\n    index_url=os.getenv(\"COMPASS_API_URL\"\
+          ),\n    bearer_token=os.getenv(\"COMPASS_API_BEARER_TOKEN\"),\n)\nr = compass_client.delete_index(index_name=os.getenv(\"\
+          INDEX_NAME\"))\nif r.error:\n    raise Exception(f\"Failed to delete index:\
+          \ {r.error}\")\n"
+    put:
+      description: Creates a new index with the specified name. If the index already
+        exists returns status code 200.
+      operationId: create_index_v1_indexes__index_name__put
+      parameters:
+      - description: 'The name of the index to be created - this has to be unique '
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: 'The name of the index to be created - this has to be unique '
+          title: Index Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/IndexConfigInput'
+              - type: 'null'
+              title: Index Config
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create an index
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients import CompassClient\n\n\
+          compass_client = CompassClient(\n    index_url=os.getenv(\"COMPASS_API_URL\"\
+          ),\n    bearer_token=os.getenv(\"COMPASS_API_BEARER_TOKEN\"),\n)\nr = compass_client.create_index(index_name=os.getenv(\"\
+          INDEX_NAME\"))\nif r.error:\n    raise Exception(f\"Failed to create index:\
+          \ {r.error}\")\n"
+  /v1/indexes/{index_name}/_direct_search:
+    post:
+      description: Direct search into the index. This endpoint allows users to search
+        directly into the index without any processing.
+      operationId: direct_search_v1_indexes__index_name___direct_search_post
+      parameters:
+      - description: The name of the index to be searched
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index to be searched
+          title: Index Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectSearchInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectSearchResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Direct search into the index
+      x-codeSamples:
+      - lang: python
+        source: "import os\nfrom typing import Optional\n\nfrom cohere.compass.clients\
+          \ import CompassClient\nfrom cohere.compass.models import RetrievedChunkExtended\n\
+          \ncompass_client = CompassClient(\n    index_url=os.getenv(\"COMPASS_API_URL\"\
+          ),\n    bearer_token=os.getenv(\"COMPASS_API_BEARER_TOKEN\"),\n)\nquery\
+          \ = {\"query\": {\"match_all\": {}}}\n\n\ndef call_direct_search_scroll(\n\
+          \    hits: list[RetrievedChunkExtended],\n    scroll_id: Optional[str] =\
+          \ None,\n) -> list[RetrievedChunkExtended]:\n    if hits is None:\n    \
+          \    hits = []\n\n    if scroll_id is None:\n        return hits\n\n   \
+          \ results_scroll = compass_client.direct_search_scroll(\n        scroll_id=scroll_id,\n\
+          \        scroll=\"1m\",\n    )\n\n    hits.extend(results_scroll.hits)\n\
+          \    return call_direct_search_scroll(hits=hits, scroll_id=results.scroll_id)\n\
+          \n\nresults = compass_client.direct_search(\n    index_name=os.getenv(\"\
+          INDEX_NAME\"),\n    query=query,\n    scroll=\"1m\",\n    size=100,\n)\n\
+          \nhits = call_direct_search_scroll(hits=results.hits, scroll_id=results.scroll_id)\n"
+  /v1/indexes/{index_name}/_flush:
+    post:
+      description: Flushes the documents  in memory for a given index to disk. This
+        is an intensive task and should be used sparingly, for example, for manual
+        restarts or to free up memory.
+      operationId: flush_index_v1_indexes__index_name___flush_post
+      parameters:
+      - description: The name of the index to be flushed
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index to be flushed
+          title: Index Name
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Flush an index
+  /v1/indexes/{index_name}/_refresh:
+    post:
+      description: Pushes newly inserted document to be made available for search
+        immediately.
+      operationId: refresh_index_v1_indexes__index_name___refresh_post
+      parameters:
+      - description: The name of the index to be refreshed
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index to be refreshed
+          title: Index Name
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Refresh an index
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients import CompassClient\n\n\
+          compass_client = CompassClient(\n    index_url=os.getenv(\"COMPASS_API_URL\"\
+          ),\n    bearer_token=os.getenv(\"COMPASS_API_BEARER_TOKEN\"),\n)\nr = compass_client.refresh_index(index_name=os.getenv(\"\
+          INDEX_NAME\"))\nif r.error:\n    raise Exception(f\"Failed to refresh indexes:\
+          \ {r.error}\")\n"
+  /v1/indexes/{index_name}/documents:
+    put:
+      description: This endpoint allows users to update or insert documents into a
+        specified index. By providing a PutDocumentsInput object, users can define
+        the documents to be added or modified. The PUT method is used to perform the
+        operation, ensuring that the documents are either updated or inserted into
+        the index. If RBAC is enabled, the user will need to be in a group with a
+        role that has WRITE permissions on the index.
+      operationId: put_documents_v1_indexes__index_name__documents_put
+      parameters:
+      - description: The name of the index for documents to be inserted into
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index for documents to be inserted into
+          title: Index Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutDocumentsInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutDocumentsResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Put documents into an index
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients import CompassClient, CompassParserClient\n\
+          \ncompass_client = CompassClient(\n    index_url=os.getenv(\"COMPASS_API_URL\"\
+          ),\n    bearer_token=os.getenv(\"COMPASS_API_BEARER_TOKEN\"),\n)\n\ncompass_parser_client\
+          \ = CompassParserClient(parser_url=os.getenv(\"COMPASS_PARSER_URL\"))\n\n\
+          docs_to_index = compass_parser_client.process_folder(\n    folder_path=os.getenv(\"\
+          FOLDER_TO_PROCESS\"), recursive=True\n)\n\n\ncompass_client.create_index(index_name=os.getenv(\"\
+          INDEX_NAME\"))\nr = compass_client.insert_docs(\n    index_name=os.getenv(\"\
+          INDEX_NAME\"), docs=docs_to_index, num_jobs=1\n)\n\nprint(r)\n"
+  /v1/indexes/{index_name}/documents/_search:
+    post:
+      description: Perform a search query on the specified index and return a list
+        of relevant documents along with their scores. This returns a list of Document
+        objects, which contain all chunks from an indexed document. If RBAC is enabled
+        the user  will need to belong to a group with role that has READ permission
+        on the index.
+      operationId: search_documents_v1_indexes__index_name__documents__search_post
+      parameters:
+      - description: The name of the index to be searched
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index to be searched
+          title: Index Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchDocumentsResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Search Documents within an Index
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients import CompassClient\n\n\
+          compass_client = CompassClient(\n    index_url=os.getenv(\"COMPASS_API_URL\"\
+          ),\n    bearer_token=os.getenv(\"COMPASS_API_BEARER_TOKEN\"),\n)\nr = compass_client.search_documents(\n\
+          \    index_name=os.getenv(\"INDEX_NAME\"), query=os.getenv(\"SEARCH_QUERY\"\
+          )\n)\n\nif r.error:\n    raise Exception(f\"Failed to search doc: {r.error}\"\
+          )\n\nprint(r.hits)\n"
+  /v1/indexes/{index_name}/documents/_search_chunks:
+    post:
+      description: Search for relevant chunks for a query from documents in a given
+        index. If the Compass Parser was used, the granularity returned can depend
+        on the document type.  If RBAC is enabled the user will need to be in a group
+        with a role that has READ permission on the index.
+      operationId: search_chunks_v1_indexes__index_name__documents__search_chunks_post
+      parameters:
+      - description: The name of the index to be searched
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index to be searched
+          title: Index Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchChunksResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Search Chunks within an Index
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients import CompassClient\n\n\
+          compass_client = CompassClient(\n    index_url=os.getenv(\"COMPASS_API_URL\"\
+          ),\n    bearer_token=os.getenv(\"COMPASS_API_BEARER_TOKEN\"),\n)\nr = compass_client.search_chunks(\n\
+          \    index_name=os.getenv(\"INDEX_NAME\"), query=os.getenv(\"SEARCH_QUERY\"\
+          )\n)\n\nif r.error:\n    raise Exception(f\"Failed to search: {r.error}\"\
+          )\n\nprint(r.hits)\n"
+  /v1/indexes/{index_name}/documents/_upload:
+    post:
+      description: Push a list of documents for processing. The documents will be
+        processed asynchronously and will be available for search after processing
+        is complete.
+      operationId: upload_documents_v1_indexes__index_name__documents__upload_post
+      parameters:
+      - description: The name of the index for documents to be inserted into
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index for documents to be inserted into
+          title: Index Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadDocumentsRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadDocumentsResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Async Insertion of Documents into an Index
+      x-codeSamples:
+      - lang: python
+        source: "import os\nimport uuid\n\nfrom cohere.compass.clients import CompassClient\n\
+          from cohere.compass.models import DocumentAttributes\n\ncompass_client =\
+          \ CompassClient(\n    index_url=os.getenv(\"COMPASS_API_URL\"),\n    bearer_token=os.getenv(\"\
+          COMPASS_API_BEARER_TOKEN\"),\n)\n\ndoc_attr = DocumentAttributes()\ndoc_attr.key\
+          \ = \"value\"\n\nfile_path = os.getenv(\"FILE_PATH\")\nif not file_path:\n\
+          \    raise Exception(\"FILE_PATH is required\")\n\nwith open(file_path,\
+          \ \"rb\") as f:\n    file_bytes = f.read()\n\nresult = compass_client.upload_document(\n\
+          \    index_name=os.getenv(\"INDEX_NAME\"),\n    filename=os.getenv(\"FILE_NAME\"\
+          ),\n    filebytes=file_bytes,\n    content_type=os.getenv(\"CONTENT_TYPE\"\
+          ),\n    document_id=uuid.uuid4(),\n)\n\nprint(result)\n"
+  /v1/indexes/{index_name}/documents/{document_id}:
+    delete:
+      description: Delete a single document based on document_id from a particular
+        index. If RBAC is enabled the user will need to be in a group with WRITE permission
+        on the index.
+      operationId: delete_document_v1_indexes__index_name__documents__document_id__delete
+      parameters:
+      - description: The name of the index where the document should reside
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index where the document should reside
+          title: Index Name
+          type: string
+      - description: The id of the document to be deleted
+        in: path
+        name: document_id
+        required: true
+        schema:
+          description: The id of the document to be deleted
+          title: Document Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete a document
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients import CompassClient\n\n\
+          compass_client = CompassClient(\n    index_url=os.getenv(\"COMPASS_API_URL\"\
+          ),\n    bearer_token=os.getenv(\"COMPASS_API_BEARER_TOKEN\"),\n)\nr = compass_client.delete_document(\n\
+          \    index_name=os.getenv(\"INDEX_NAME\"), document_id=os.getenv(\"DOCUMENT_ID\"\
+          )\n)\n\nif r.error:\n    raise Exception(f\"Failed to delete doc: {r.error}\"\
+          )\n"
+    get:
+      description: Returns a single document based on document_id from a particular
+        index. If RBAC is enabled the user will need to be in a group with READ permission
+        on the index.
+      operationId: get_document_v1_indexes__index_name__documents__document_id__get
+      parameters:
+      - description: The name of the index where the document should reside
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index where the document should reside
+          title: Index Name
+          type: string
+      - description: The parent_document_id of the document to be retrieved
+        in: path
+        name: document_id
+        required: true
+        schema:
+          description: The parent_document_id of the document to be retrieved
+          title: Document Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get a Specific Document from an Index
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients import CompassClient\n\n\
+          compass_client = CompassClient(\n    index_url=os.getenv(\"COMPASS_API_URL\"\
+          ),\n    bearer_token=os.getenv(\"COMPASS_API_BEARER_TOKEN\"),\n)\nr = compass_client.get_document(\n\
+          \    index_name=os.getenv(\"INDEX_NAME\"), document_id=os.getenv(\"COMPASS_DOCUMENT_ID\"\
+          )\n)\n\nif r.error:\n    raise Exception(f\"Failed to get doc: {r.error}\"\
+          )\n\nprint(r.result.hits)\n"
+  /v1/indexes/{index_name}/documents/{document_id}/_add_attributes:
+    post:
+      description: Allows you to add attribues to the document for an index. The attributes
+        are added to a particular document based on the document_id. If RBAC is enabled
+        you will need WRITE permission on the index.
+      operationId: add_attributes_v1_indexes__index_name__documents__document_id___add_attributes_post
+      parameters:
+      - description: The name of the index where the document should reside
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index where the document should reside
+          title: Index Name
+          type: string
+      - description: The document_id of the document to be updated
+        in: path
+        name: document_id
+        required: true
+        schema:
+          description: The document_id of the document to be updated
+          title: Document Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: The attributes to be added to the document
+              title: Attributes
+              type: object
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Add attributes using doc_id
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass.clients import CompassClient\nfrom\
+          \ cohere.compass.models import DocumentAttributes\n\ncompass_client = CompassClient(\n\
+          \    index_url=os.getenv(\"COMPASS_API_URL\"),\n    bearer_token=os.getenv(\"\
+          COMPASS_API_BEARER_TOKEN\"),\n)\n\ndoc_attr = DocumentAttributes()\ndoc_attr.key\
+          \ = \"value\"\n\nerror = compass_client.add_attributes(\n    index_name=os.getenv(\"\
+          INDEX_NAME\"),\n    document_id=os.getenv(\"DOCUMENT_ID\"),\n    attributes=doc_attr,\n\
+          )\n\nif error:\n    raise Exception(f\"Failed to add attributes: {error}\"\
+          )\n"
+  /v1/indexes/{index_name}/documents/{document_id}/assets/{asset_id}:
+    get:
+      description: Returns the asset associated with the asset id inside the document.
+      operationId: get_document_asset_v1_indexes__index_name__documents__document_id__assets__asset_id__get
+      parameters:
+      - in: path
+        name: index_name
+        required: true
+        schema:
+          title: Index Name
+          type: string
+      - in: path
+        name: document_id
+        required: true
+        schema:
+          title: Document Id
+          type: string
+      - in: path
+        name: asset_id
+        required: true
+        schema:
+          title: Asset Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get an Asset from a Document
+      x-codeSamples:
+      - lang: python
+        source: "import json\nimport os\n\nfrom cohere.compass.clients import CompassClient\n\
+          \ncompass_client = CompassClient(\n    index_url=os.getenv(\"COMPASS_API_URL\"\
+          ),\n    bearer_token=os.getenv(\"COMPASS_API_BEARER_TOKEN\"),\n)\n\nresults\
+          \ = compass_client.search_chunks(\n    index_name=os.getenv(\"INDEX_NAME\"\
+          ), query=os.getenv(\"SEARCH_QUERY\")\n)\nif results.error:\n    raise Exception(f\"\
+          Failed to search chunks: {results.error}\")\n\nhits = results.hits\n\nif\
+          \ not hits:\n    raise Exception(\"No hits found\")\n\nhit = hits[0]\n\n\
+          asset_id: str = hit.assets_info[0].asset_id  # type: ignore\ndocument_id\
+          \ = hit.document_id\n# URL to fetch asset\npresigned_url = hit.assets_info[0].presigned_url\n\
+          \n\n### Get document asset again, after pre-signed url has expired\nasset,\
+          \ content_type = compass_client.get_document_asset(\n    index_name=document_id,\n\
+          \    document_id=os.getenv(\"DOCUMENT_ID\"),\n    asset_id=asset_id,\n)\n\
+          \n# Save the asset to a file.\nif content_type in [\"image/jpeg\", \"image/png\"\
+          ]:\n    with open(f\"{asset_id}\", \"wb\") as f:\n        f.write(asset)\n\
+          # Print the asset as JSON\nelif \"text/json\" in content_type:\n    print(json.dumps(asset,\
+          \ indent=2))\n"
+  /v1/indexes/{index_name}/group_authorization:
+    post:
+      description: Update group authorization for documents, this is used in document
+        level security.
+      operationId: update_group_authorization_v1_indexes__index_name__group_authorization_post
+      parameters:
+      - in: path
+        name: index_name
+        required: true
+        schema:
+          title: Index Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupAuthorizationInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutDocumentsResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Update group authorization for documents
+      x-codeSamples:
+      - lang: python
+        source: "import os\n\nfrom cohere.compass import GroupAuthorizationInput\n\
+          from cohere.compass.clients import CompassClient\n\ncompass_client = CompassClient(\n\
+          \    index_url=os.getenv(\"COMPASS_API_URL\"),\n    bearer_token=os.getenv(\"\
+          COMPASS_API_BEARER_TOKEN\"),\n)\n\nr = compass_client.update_group_authorization(\n\
+          \    index_name=os.getenv(\"INDEX_NAME\"),\n    group_auth_input=GroupAuthorizationInput(\n\
+          \        document_ids=[os.getenv(\"DOCUMENT_ID\")],\n        authorized_groups=[os.getenv(\"\
+          AUTHORIZED_GROUP_NAME\")],\n        action=GroupAuthorizationInput.Actions.ADD,\n\
+          \    ),\n)\n\nfor doc in r.results:\n    if doc.error:\n        print(f\"\
+          Error processing doc: {doc.document_id}, error: {doc.error}\")\n       \
+          \ continue\n    print(f\"Successfully processed doc: {doc.document_id}\"\
+          )\n"
+  /v1/tasks/{task_id}:
+    get:
+      description: Status of tasks running in background
+      operationId: task_status_v1_tasks__task_id__get
+      parameters:
+      - in: path
+        name: task_id
+        required: true
+        schema:
+          title: Task Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get task status
+servers:
+- url: /api
