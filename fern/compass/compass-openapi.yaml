@@ -1,819 +1,3684 @@
-openapi: 3.0.2
-servers:
-  - url: /v3
-info:
-  description: |-
-    This is a sample Pet Store Server based on the OpenAPI 3.0 specification.  You can find out more about
-    Swagger at [http://swagger.io](http://swagger.io). In the third iteration of the pet store, we've switched to the design first approach!
-    You can now help us improve the API whether it's by making changes to the definition itself or to the code.
-    That way, with time, we can improve the API in general, and expose some of the new features in OAS3.
-
-    Some useful links:
-    - [The Pet Store repository](https://github.com/swagger-api/swagger-petstore)
-    - [The source API definition for the Pet Store](https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml)
-  version: 1.0.20-SNAPSHOT
-  title: Swagger Petstore - OpenAPI 3.0
-  termsOfService: 'http://swagger.io/terms/'
-  contact:
-    email: apiteam@swagger.io
-  license:
-    name: Apache 2.0
-    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
-tags:
-  - name: pet
-    description: Everything about your Pets
-    externalDocs:
-      description: Find out more
-      url: 'http://swagger.io'
-  - name: store
-    description: Access to Petstore orders
-    externalDocs:
-      description: Find out more about our store
-      url: 'http://swagger.io'
-  - name: user
-    description: Operations about user
-paths:
-  /pet:
-    post:
-      tags:
-        - pet
-      summary: Add a new pet to the store
-      description: Add a new pet to the store
-      operationId: addPet
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Pet'
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pet'
-        '405':
-          description: Invalid input
-      security:
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
-      requestBody:
-        description: Create a new pet in the store
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Pet'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/Pet'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Pet'
-    put:
-      tags:
-        - pet
-      summary: Update an existing pet
-      description: Update an existing pet by Id
-      operationId: updatePet
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Pet'
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pet'
-        '400':
-          description: Invalid ID supplied
-        '404':
-          description: Pet not found
-        '405':
-          description: Validation exception
-      security:
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
-      requestBody:
-        description: Update an existent pet in the store
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Pet'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/Pet'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Pet'
-  /pet/findByStatus:
-    get:
-      tags:
-        - pet
-      summary: Finds Pets by status
-      description: Multiple status values can be provided with comma separated strings
-      operationId: findPetsByStatus
-      parameters:
-        - name: status
-          in: query
-          description: Status values that need to be considered for filter
-          required: false
-          explode: true
-          schema:
-            type: string
-            enum:
-              - available
-              - pending
-              - sold
-            default: available
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/xml:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Pet'
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Pet'
-        '400':
-          description: Invalid status value
-      security:
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
-  /pet/findByTags:
-    get:
-      tags:
-        - pet
-      summary: Finds Pets by tags
-      description: >-
-        Multiple tags can be provided with comma separated strings. Use tag1,
-        tag2, tag3 for testing.
-      operationId: findPetsByTags
-      parameters:
-        - name: tags
-          in: query
-          description: Tags to filter by
-          required: false
-          explode: true
-          schema:
-            type: array
-            items:
-              type: string
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/xml:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Pet'
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Pet'
-        '400':
-          description: Invalid tag value
-      security:
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
-  '/pet/{petId}':
-    get:
-      tags:
-        - pet
-      summary: Find pet by ID
-      description: Returns a single pet
-      operationId: getPetById
-      parameters:
-        - name: petId
-          in: path
-          description: ID of pet to return
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Pet'
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pet'
-        '400':
-          description: Invalid ID supplied
-        '404':
-          description: Pet not found
-      security:
-        - api_key: []
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
-    post:
-      tags:
-        - pet
-      summary: Updates a pet in the store with form data
-      description: ''
-      operationId: updatePetWithForm
-      parameters:
-        - name: petId
-          in: path
-          description: ID of pet that needs to be updated
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: name
-          in: query
-          description: Name of pet that needs to be updated
-          schema:
-            type: string
-        - name: status
-          in: query
-          description: Status of pet that needs to be updated
-          schema:
-            type: string
-      responses:
-        '405':
-          description: Invalid input
-      security:
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
-    delete:
-      tags:
-        - pet
-      summary: Deletes a pet
-      description: ''
-      operationId: deletePet
-      parameters:
-        - name: api_key
-          in: header
-          description: ''
-          required: false
-          schema:
-            type: string
-        - name: petId
-          in: path
-          description: Pet id to delete
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '400':
-          description: Invalid pet value
-      security:
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
-  '/pet/{petId}/uploadImage':
-    post:
-      tags:
-        - pet
-      summary: uploads an image
-      description: ''
-      operationId: uploadFile
-      parameters:
-        - name: petId
-          in: path
-          description: ID of pet to update
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: additionalMetadata
-          in: query
-          description: Additional Metadata
-          required: false
-          schema:
-            type: string
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-      security:
-        - petstore_auth:
-            - 'write:pets'
-            - 'read:pets'
-      requestBody:
-        content:
-          application/octet-stream:
-            schema:
-              type: string
-              format: binary
-  /store/inventory:
-    get:
-      tags:
-        - store
-      summary: Returns pet inventories by status
-      description: Returns a map of status codes to quantities
-      operationId: getInventory
-      x-swagger-router-controller: OrderController
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties:
-                  type: integer
-                  format: int32
-      security:
-        - api_key: []
-  /store/order:
-    post:
-      tags:
-        - store
-      summary: Place an order for a pet
-      description: Place a new order in the store
-      operationId: placeOrder
-      x-swagger-router-controller: OrderController
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Order'
-        '405':
-          description: Invalid input
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Order'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/Order'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Order'
-  '/store/order/{orderId}':
-    get:
-      tags:
-        - store
-      summary: Find purchase order by ID
-      x-swagger-router-controller: OrderController
-      description: >-
-        For valid response try integer IDs with value <= 5 or > 10. Other values
-        will generate exceptions.
-      operationId: getOrderById
-      parameters:
-        - name: orderId
-          in: path
-          description: ID of order that needs to be fetched
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Order'
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Order'
-        '400':
-          description: Invalid ID supplied
-        '404':
-          description: Order not found
-    delete:
-      tags:
-        - store
-      summary: Delete purchase order by ID
-      x-swagger-router-controller: OrderController
-      description: >-
-        For valid response try integer IDs with value < 1000. Anything above
-        1000 or nonintegers will generate API errors
-      operationId: deleteOrder
-      parameters:
-        - name: orderId
-          in: path
-          description: ID of the order that needs to be deleted
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '400':
-          description: Invalid ID supplied
-        '404':
-          description: Order not found
-  /user:
-    post:
-      tags:
-        - user
-      summary: Create user
-      description: This can only be done by the logged in user.
-      operationId: createUser
-      responses:
-        default:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/User'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/User'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/User'
-        description: Created user object
-  /user/createWithList:
-    post:
-      tags:
-        - user
-      summary: Creates list of users with given input array
-      description: 'Creates list of users with given input array'
-      x-swagger-router-controller: UserController
-      operationId: createUsersWithListInput
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/User'
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        default:
-          description: successful operation
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/User'
-  /user/login:
-    get:
-      tags:
-        - user
-      summary: Logs user into the system
-      description: ''
-      operationId: loginUser
-      parameters:
-        - name: username
-          in: query
-          description: The user name for login
-          required: false
-          schema:
-            type: string
-        - name: password
-          in: query
-          description: The password for login in clear text
-          required: false
-          schema:
-            type: string
-      responses:
-        '200':
-          description: successful operation
-          headers:
-            X-Rate-Limit:
-              description: calls per hour allowed by the user
-              schema:
-                type: integer
-                format: int32
-            X-Expires-After:
-              description: date in UTC when token expires
-              schema:
-                type: string
-                format: date-time
-          content:
-            application/xml:
-              schema:
-                type: string
-            application/json:
-              schema:
-                type: string
-        '400':
-          description: Invalid username/password supplied
-  /user/logout:
-    get:
-      tags:
-        - user
-      summary: Logs out current logged in user session
-      description: ''
-      operationId: logoutUser
-      parameters: []
-      responses:
-        default:
-          description: successful operation
-  '/user/{username}':
-    get:
-      tags:
-        - user
-      summary: Get user by user name
-      description: ''
-      operationId: getUserByName
-      parameters:
-        - name: username
-          in: path
-          description: 'The name that needs to be fetched. Use user1 for testing. '
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/User'
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '400':
-          description: Invalid username supplied
-        '404':
-          description: User not found
-    put:
-      tags:
-        - user
-      summary: Update user
-      x-swagger-router-controller: UserController
-      description: This can only be done by the logged in user.
-      operationId: updateUser
-      parameters:
-        - name: username
-          in: path
-          description: name that needs to be updated
-          required: true
-          schema:
-            type: string
-      responses:
-        default:
-          description: successful operation
-      requestBody:
-        description: Update an existent user in the store
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/User'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/User'
-    delete:
-      tags:
-        - user
-      summary: Delete user
-      description: This can only be done by the logged in user.
-      operationId: deleteUser
-      parameters:
-        - name: username
-          in: path
-          description: The name that needs to be deleted
-          required: true
-          schema:
-            type: string
-      responses:
-        '400':
-          description: Invalid username supplied
-        '404':
-          description: User not found
-externalDocs:
-  description: Find out more about Swagger
-  url: 'http://swagger.io'
 components:
   schemas:
-    Order:
-      x-swagger-router-model: io.swagger.petstore.model.Order
+    AssetType:
+      enum:
+      - page_image
+      - page_markdown
+      - document_text
+      title: AssetType
+      type: string
+    AzureBlobStorageConfig:
       properties:
-        id:
-          type: integer
-          format: int64
-          example: 10
-        petId:
-          type: integer
-          format: int64
-          example: 198772
-        quantity:
-          type: integer
-          format: int32
-          example: 7
-        shipDate:
+        connection_string:
+          description: The connection string to the Azure Blob Storage account
+          title: Connection String
           type: string
-          format: date-time
-        status:
+        container_name:
+          description: The name of the container in the Azure Blob Storage account
+          title: Container Name
           type: string
-          description: Order Status
-          enum:
-            - placed
-            - approved
-            - delivered
-          example: approved
-        complete:
-          type: boolean
-      xml:
-        name: order
-      type: object
-    Customer:
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 100000
-        username:
+        name_starts_with:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The prefix of the blob name to sync
+          title: Name Starts With
+        type:
+          const: msft_azure_blob_storage
+          title: Type
           type: string
-          example: fehguy
-        address:
-          type: array
-          items:
-            $ref: '#/components/schemas/Address'
-          xml:
-            wrapped: true
-            name: addresses
-      xml:
-        name: customer
-      type: object
-    Address:
-      properties:
-        street:
-          type: string
-          example: 437 Lytton
-        city:
-          type: string
-          example: Palo Alto
-        state:
-          type: string
-          example: CA
-        zip:
-          type: string
-          example: 94301
-      xml:
-        name: address
-      type: object
-    Category:
-      x-swagger-router-model: io.swagger.petstore.model.Category
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 1
-        name:
-          type: string
-          example: Dogs
-      xml:
-        name: category
-      type: object
-    User:
-      x-swagger-router-model: io.swagger.petstore.model.User
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 10
-        username:
-          type: string
-          example: theUser
-        firstName:
-          type: string
-          example: John
-        lastName:
-          type: string
-          example: James
-        email:
-          type: string
-          example: john@email.com
-        password:
-          type: string
-          example: 12345
-        phone:
-          type: string
-          example: 12345
-        userStatus:
-          type: integer
-          format: int32
-          example: 1
-          description: User Status
-      xml:
-        name: user
-      type: object
-    Tag:
-      x-swagger-router-model: io.swagger.petstore.model.Tag
-      properties:
-        id:
-          type: integer
-          format: int64
-        name:
-          type: string
-      xml:
-        name: tag
-      type: object
-    Pet:
-      x-swagger-router-model: io.swagger.petstore.model.Pet
       required:
-        - name
-        - photoUrls
+      - type
+      - connection_string
+      - container_name
+      title: AzureBlobStorageConfig
+      type: object
+    ComposedGroup:
       properties:
-        id:
-          type: integer
-          format: int64
-          example: 10
-        name:
+        group_name:
+          description: The unique group_name of the corresponding group
+          title: Group Name
           type: string
-          example: doggie
-        category:
-          $ref: '#/components/schemas/Category'
-        photoUrls:
+        roles:
+          items:
+            $ref: '#/components/schemas/RoleResponse'
+          title: Roles
           type: array
-          xml:
-            wrapped: true
+        roles_page_info:
+          $ref: '#/components/schemas/PageInfo'
+        users:
+          items:
+            $ref: '#/components/schemas/UserResponse'
+          title: Users
+          type: array
+        users_page_info:
+          $ref: '#/components/schemas/PageInfo'
+      required:
+      - group_name
+      - users
+      - users_page_info
+      - roles
+      - roles_page_info
+      title: ComposedGroup
+      type: object
+    ComposedRole:
+      properties:
+        groups:
+          description: List of groups that the role is applied to
+          items:
+            $ref: '#/components/schemas/GroupResponse'
+          title: Groups
+          type: array
+        groups_page_info:
+          $ref: '#/components/schemas/PageInfo'
+          description: The information corresponding to that page of groups and the
+            overall information about the groups that the user is a member of
+        policies:
+          description: 'The list of policies that are attached to this role '
+          items:
+            $ref: '#/components/schemas/PolicyResponse'
+          title: Policies
+          type: array
+        role_name:
+          description: The unique role_name of the corresponding role
+          title: Role Name
+          type: string
+      required:
+      - role_name
+      - policies
+      - groups
+      - groups_page_info
+      title: ComposedRole
+      type: object
+    ComposedUser:
+      properties:
+        groups:
+          description: The list of groups that the specified user is a member of -
+            results will be paginated
+          items:
+            $ref: '#/components/schemas/GroupResponse'
+          title: Groups
+          type: array
+        groups_page_info:
+          $ref: '#/components/schemas/PageInfo'
+          description: The information corresponding to that page of groups and the
+            overall information about the groups that the user is a member of
+        user_name:
+          description: The unique user_name of the corresponding user
+          title: User Name
+          type: string
+      required:
+      - user_name
+      - groups
+      - groups_page_info
+      title: ComposedUser
+      type: object
+    ContentTypeEnum:
+      enum:
+      - text/plain
+      - text/html
+      - text/csv
+      - text/tsv
+      - text/x-markdown
+      - text/org
+      - text/rtf
+      - text/x-rst
+      - application/json
+      - application/jsonl
+      - application/json-lines
+      - application/pdf
+      - application/xml
+      - application/msword
+      - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+      - application/vnd.ms-excel
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      - application/vnd.ms-powerpoint
+      - application/vnd.openxmlformats-officedocument.presentationml.presentation
+      - application/epub+zip
+      - application/vnd.oasis.opendocument.text
+      - application/vnd.ms-outlook
+      - application/octet-stream
+      - image/jpeg
+      - image/png
+      - image/heic
+      - image/tiff
+      - image/bmp
+      - image/gif
+      - image/svg+xml
+      - image/webp
+      - audio/mpeg
+      - audio/x-wav
+      - video/mp4
+      - video/x-msvideo
+      - message/rfc822
+      title: ContentTypeEnum
+      type: string
+    CreateDataSource:
+      properties:
+        datasource:
+          $ref: '#/components/schemas/DataSource'
+        state_key:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The state key used to access the oauth data stored in the cache
+          title: State Key
+      required:
+      - datasource
+      title: CreateDataSource
+      type: object
+    DataSource:
+      properties:
+        config:
+          description: The configuration of the datasource
+          discriminator:
+            mapping:
+              msft_azure_blob_storage: '#/components/schemas/AzureBlobStorageConfig'
+              msft_onedrive: '#/components/schemas/OneDriveConfig'
+            propertyName: type
+          oneOf:
+          - $ref: '#/components/schemas/AzureBlobStorageConfig'
+          - $ref: '#/components/schemas/OneDriveConfig'
+          title: Config
+        created_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          description: The creation date of the datasource
+          title: Created At
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The description of the datasource
+          title: Description
+        destinations:
+          description: Indexes hydrated from this datasources
           items:
             type: string
-            xml:
-              name: photoUrl
-        tags:
+          title: Destinations
           type: array
-          xml:
-            wrapped: true
-          items:
-            $ref: '#/components/schemas/Tag'
-            xml:
-              name: tag
-        status:
+        enabled:
+          default: true
+          description: Whether the datasource is enabled
+          title: Enabled
+          type: boolean
+        filename_to_attributes:
+          additionalProperties:
+            type: object
+          description: Mapping of filename to attributes
+          title: Filename To Attributes
+          type: object
+        id:
+          anyOf:
+          - format: uuid4
+            type: string
+          - type: 'null'
+          description: The unique identifier of the datasource
+          title: Id
+        name:
+          description: The name of the datasource
+          title: Name
           type: string
-          description: pet status in the store
-          enum:
-            - available
-            - pending
-            - sold
-      xml:
-        name: pet
+        updated_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          description: The last update date of the datasource
+          title: Updated At
+      required:
+      - name
+      - config
+      - destinations
+      title: DataSource
       type: object
-    ApiResponse:
+    DirectSearchInput:
       properties:
-        code:
+        query:
+          description: The query to be used for the search
+          title: Query
+          type: object
+        scroll:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Scroll id to be passed for the next set of results
+          title: Scroll
+        size:
+          default: 10
+          description: The number of documents to return
+          title: Size
           type: integer
-          format: int32
-        type:
-          type: string
-        message:
-          type: string
-      xml:
-        name: '##default'
+      required:
+      - query
+      title: DirectSearchInput
       type: object
-  requestBodies:
-    Pet:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Pet'
-        application/xml:
-          schema:
-            $ref: '#/components/schemas/Pet'
-      description: Pet object that needs to be added to the store
-    UserArray:
-      content:
-        application/json:
-          schema:
+    DirectSearchResponse:
+      properties:
+        hits:
+          items:
+            $ref: '#/components/schemas/ScoredDocumentChunkReturn'
+          title: Hits
+          type: array
+        scroll_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Scroll ID for pagination
+          title: Scroll Id
+      required:
+      - hits
+      title: DirectSearchResponse
+      type: object
+    DirectSearchScrollInput:
+      properties:
+        scroll:
+          default: 1m
+          description: Period to retain search scroll
+          title: Scroll
+          type: string
+        scroll_id:
+          description: Scroll id to be passed for the next set of results
+          title: Scroll Id
+          type: string
+      required:
+      - scroll_id
+      title: DirectSearchScrollInput
+      type: object
+    Document-Input:
+      properties:
+        authorized_groups:
+          anyOf:
+          - items:
+              type: string
             type: array
-            items:
-              $ref: '#/components/schemas/User'
-      description: List of user object
-  securitySchemes:
-    petstore_auth:
-      type: oauth2
-      flows:
-        implicit:
-          authorizationUrl: 'https://petstore.swagger.io/oauth/authorize'
-          scopes:
-            'write:pets': modify pets in your account
-            'read:pets': read your pets
-    api_key:
-      type: apiKey
-      name: api_key
-      in: header
+          - type: 'null'
+          description: The groups that are authorized to access the document. This
+            is useful when using Document-level Security and RBAC must be enabled
+          title: Authorized Groups
+        chunks:
+          description: "The document\u2019s chunks (e.g. paragraphs, pages, tables,\
+            \ images) "
+          items:
+            $ref: '#/components/schemas/DocumentChunk-Input'
+          title: Chunks
+          type: array
+        content:
+          description: Dictionary of document content field, including text, metadata,
+            and any user provided filters
+          title: Content
+          type: object
+        document_id:
+          description: The unique document_id
+          title: Document Id
+          type: string
+        index_fields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: "Specifies which fields will be included in the semantic search\
+            \ embedded text, defaults to \u201Ctext\u201D and \u201Cmeta\u201D. "
+          title: Index Fields
+        parent_document_id:
+          description: The unique id for the parent document
+          title: Parent Document Id
+          type: string
+        path:
+          description: 'The path from which the file came from; if the '
+          title: Path
+          type: string
+      required:
+      - document_id
+      - path
+      - parent_document_id
+      - content
+      - chunks
+      title: Document
+      type: object
+    Document-Output:
+      properties:
+        authorized_groups:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: The groups that are authorized to access the document. This
+            is useful when using Document-level Security and RBAC must be enabled
+          title: Authorized Groups
+        chunks:
+          description: "The document\u2019s chunks (e.g. paragraphs, pages, tables,\
+            \ images) "
+          items:
+            $ref: '#/components/schemas/DocumentChunk-Output'
+          title: Chunks
+          type: array
+        content:
+          description: Dictionary of document content field, including text, metadata,
+            and any user provided filters
+          title: Content
+          type: object
+        document_id:
+          description: The unique document_id
+          title: Document Id
+          type: string
+        index_fields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: "Specifies which fields will be included in the semantic search\
+            \ embedded text, defaults to \u201Ctext\u201D and \u201Cmeta\u201D. "
+          title: Index Fields
+        parent_document_id:
+          description: The unique id for the parent document
+          title: Parent Document Id
+          type: string
+        path:
+          description: 'The path from which the file came from; if the '
+          title: Path
+          type: string
+      required:
+      - document_id
+      - path
+      - parent_document_id
+      - content
+      - chunks
+      title: Document
+      type: object
+    DocumentChunk-Input:
+      properties:
+        asset_ids:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: 'This is meant for internal use '
+          title: Asset Ids
+        assets:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAsset'
+            type: array
+          - type: 'null'
+          description: '[to be deprecated] List of CompassDocumentChunkAsset. The
+            length of the assets will depend on the origin file_type as well as the
+            parser_config set'
+          title: Assets
+        assets_info:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAssetInfo'
+            type: array
+          - type: 'null'
+          description: List of AssetInfo objects. The length of the assets will depend
+            on the origin file_type as well as the parser_config set
+          title: Assets Info
+        chunk_id:
+          description: The unique id for the specific chunk in the database
+          title: Chunk Id
+          type: string
+        content:
+          description: Dict that contains the data to be used for embeddings
+          title: Content
+          type: object
+        origin:
+          anyOf:
+          - type: object
+          - type: 'null'
+          description: "Dict that contains data around the origin of the chunk. This\
+            \ contents of the origin may depend on the origin file_type but should\
+            \ always contain: 1) filename : the name of the parent file the chunk\
+            \ came from \nIf the file_type=pdf then it will also have page_number"
+          title: Origin
+        parent_document_id:
+          description: The unique id for the parent document - this allows to group
+            chunks by parent_document_id to get all children of a parent document
+          title: Parent Document Id
+          type: string
+        path:
+          description: The path from which the parent file came from
+          title: Path
+          type: string
+        sort_id:
+          description: '[deprecated] This is the original order of the chunk in respect
+            to the parent document'
+          title: Sort Id
+          type: integer
+      required:
+      - chunk_id
+      - sort_id
+      - parent_document_id
+      - path
+      - content
+      title: DocumentChunk
+      type: object
+    DocumentChunk-Output:
+      properties:
+        asset_ids:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: 'This is meant for internal use '
+          title: Asset Ids
+        assets:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAsset'
+            type: array
+          - type: 'null'
+          description: '[to be deprecated] List of CompassDocumentChunkAsset. The
+            length of the assets will depend on the origin file_type as well as the
+            parser_config set'
+          title: Assets
+        assets_info:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAssetInfo'
+            type: array
+          - type: 'null'
+          description: List of AssetInfo objects. The length of the assets will depend
+            on the origin file_type as well as the parser_config set
+          title: Assets Info
+        chunk_id:
+          description: The unique id for the specific chunk in the database
+          title: Chunk Id
+          type: string
+        content:
+          description: Dict that contains the data to be used for embeddings
+          title: Content
+          type: object
+        origin:
+          anyOf:
+          - type: object
+          - type: 'null'
+          description: "Dict that contains data around the origin of the chunk. This\
+            \ contents of the origin may depend on the origin file_type but should\
+            \ always contain: 1) filename : the name of the parent file the chunk\
+            \ came from \nIf the file_type=pdf then it will also have page_number"
+          title: Origin
+        parent_document_id:
+          description: The unique id for the parent document - this allows to group
+            chunks by parent_document_id to get all children of a parent document
+          title: Parent Document Id
+          type: string
+        path:
+          description: The path from which the parent file came from
+          title: Path
+          type: string
+        sort_id:
+          description: '[deprecated] This is the original order of the chunk in respect
+            to the parent document'
+          title: Sort Id
+          type: integer
+      required:
+      - chunk_id
+      - sort_id
+      - parent_document_id
+      - path
+      - content
+      title: DocumentChunk
+      type: object
+    DocumentChunkAsset:
+      properties:
+        asset_data:
+          description: The raw data of the asset
+          title: Asset Data
+          type: string
+        asset_type:
+          $ref: '#/components/schemas/AssetType'
+          description: "String with the possible values: \n1) page_image: a page that\
+            \ has been rendered as an image. This will come from PDFs \n2) page_markdown:\
+            \  a markdown representation of a page\u2019s content. This will come\
+            \ from PDFs when the parsing config is set as ImageToMarkdown \n3) document_text:\
+            \ a dump of text extracted extracted from a document"
+        content_type:
+          description: 'The content type of the asset: image/jpeg, text/markdown'
+          title: Content Type
+          type: string
+      required:
+      - asset_type
+      - content_type
+      - asset_data
+      title: DocumentChunkAsset
+      type: object
+    DocumentChunkAssetInfo:
+      properties:
+        asset_id:
+          description: The unique id for the asset
+          title: Asset Id
+          type: string
+        asset_type:
+          $ref: '#/components/schemas/AssetType'
+          description: 'The type of asset in the asset_info dictionary, describes
+            contents of the associated presigned url '
+        content_type:
+          description: 'Mime-type of base file '
+          title: Content Type
+          type: string
+        presigned_url:
+          description: 'Presigned url fetchable with a 1hr time-to-live '
+          title: Presigned Url
+          type: string
+      required:
+      - asset_id
+      - asset_type
+      - content_type
+      - presigned_url
+      title: DocumentChunkAssetInfo
+      type: object
+    DocumentResponse:
+      properties:
+        document:
+          $ref: '#/components/schemas/Document-Output'
+      required:
+      - document
+      title: DocumentResponse
+      type: object
+    DocumentStatus:
+      properties:
+        created_at:
+          description: First time the document was created
+          format: date-time
+          title: Created At
+          type: string
+        destinations:
+          description: Destination indexes
+          items:
+            type: string
+          title: Destinations
+          type: array
+        document_id:
+          description: Internal id of the document
+          title: Document Id
+          type: string
+        source_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Internal identifier for source
+          title: Source Id
+        state:
+          description: Last known state of the document
+          title: State
+          type: string
+        updated_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          description: Last time the document was updated
+          title: Updated At
+      required:
+      - document_id
+      - state
+      - destinations
+      - created_at
+      title: DocumentStatus
+      type: object
+    FilterType:
+      enum:
+      - $eq
+      - $neq
+      - $lte
+      - $gte
+      - $wordMatch
+      title: FilterType
+      type: string
+    GetConfigResponse:
+      properties:
+        auth_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The URL to redirect to for authentication
+          title: Auth Url
+        config_schema:
+          description: The configuration schema for the datasource
+          title: Config Schema
+      required:
+      - config_schema
+      title: GetConfigResponse
+      type: object
+    GroupAuthorizationAction:
+      enum:
+      - add
+      - remove
+      title: GroupAuthorizationAction
+      type: string
+    GroupAuthorizationInput:
+      properties:
+        action:
+          $ref: '#/components/schemas/GroupAuthorizationAction'
+          description: Action to perform on the document
+        authorized_groups:
+          description: List of RBAC groups the documents should be authorized for
+          items:
+            type: string
+          title: Authorized Groups
+          type: array
+        document_ids:
+          description: List of document ids to update
+          items:
+            type: string
+          title: Document Ids
+          type: array
+      required:
+      - document_ids
+      - authorized_groups
+      - action
+      title: GroupAuthorizationInput
+      type: object
+    GroupCreateRequest:
+      properties:
+        group_name:
+          description: The name of the group to be created - this must be unique
+          title: Group Name
+          type: string
+      required:
+      - group_name
+      title: GroupCreateRequest
+      type: object
+    GroupMembershipRequest:
+      properties:
+        user_name:
+          description: The name of the user to be added to the group
+          title: User Name
+          type: string
+      required:
+      - user_name
+      title: GroupMembershipRequest
+      type: object
+    GroupMembershipResponse:
+      properties:
+        group_name:
+          description: The name of the group the user is added to
+          title: Group Name
+          type: string
+        user_name:
+          description: The name of the user added
+          title: User Name
+          type: string
+      required:
+      - group_name
+      - user_name
+      title: GroupMembershipResponse
+      type: object
+    GroupPage:
+      properties:
+        groups:
+          description: the list of groups that the user is a member of - results will
+            be paginated
+          items:
+            $ref: '#/components/schemas/GroupResponse'
+          title: Groups
+          type: array
+        page_info:
+          $ref: '#/components/schemas/PageInfo'
+          description: the information corresponding to that page and the overall
+            information about the groups the user is a member of
+      required:
+      - groups
+      - page_info
+      title: GroupPage
+      type: object
+    GroupResponse:
+      properties:
+        group_name:
+          description: The unique group_name of the corresponding group
+          title: Group Name
+          type: string
+      required:
+      - group_name
+      title: GroupResponse
+      type: object
+    GroupRoleRequest:
+      properties:
+        role_name:
+          description: The name of the role to be added to the group
+          title: Role Name
+          type: string
+      required:
+      - role_name
+      title: GroupRoleRequest
+      type: object
+    GroupRoleResponse:
+      properties:
+        group_name:
+          description: The name of the group the role is added to
+          title: Group Name
+          type: string
+        role_name:
+          description: The name of the role added
+          title: Role Name
+          type: string
+      required:
+      - group_name
+      - role_name
+      title: GroupRoleResponse
+      type: object
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    IndexConfigInput:
+      properties:
+        analyzer:
+          default: english
+          description: Analyzer is a parameter set for multimodality. For all EAPs,
+            the default value should be used (english)
+          title: Analyzer
+          type: string
+        number_of_replicas:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Number of replicas for the index.
+          title: Number Of Replicas
+        number_of_shards:
+          default: 3
+          description: Number of shards is used for indexes by customers that are
+            very large (>10MM chunks). For all EAPs, the default of 3 should suffice
+            unless Cohere has set up the index for you
+          title: Number Of Shards
+          type: integer
+      title: IndexConfigInput
+      type: object
+    IndexInfo:
+      properties:
+        count:
+          description: The total number of chunks in the index
+          title: Count
+          type: integer
+        name:
+          description: 'The name of the index - this has to be unique '
+          title: Name
+          type: string
+        parent_doc_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The total number of files provided for the index - files can
+            be broken into 1..* chunks
+          title: Parent Doc Count
+      required:
+      - name
+      - count
+      - parent_doc_count
+      title: IndexInfo
+      type: object
+    ListIndexesResponse:
+      properties:
+        indexes:
+          items:
+            $ref: '#/components/schemas/IndexInfo'
+          title: Indexes
+          type: array
+      required:
+      - indexes
+      title: ListIndexesResponse
+      type: object
+    OneDriveConfig:
+      properties:
+        type:
+          const: msft_onedrive
+          title: Type
+          type: string
+      required:
+      - type
+      title: OneDriveConfig
+      type: object
+    PageInfo:
+      properties:
+        filter:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: only returned if a filter was passed in the request
+          title: Filter
+        next:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: How to iterate to the next page - only appears if there are
+            enough results to warrant pagination
+          title: Next
+        page:
+          description: The current page of users returned
+          title: Page
+          type: integer
+        page_size:
+          description: the number of results per page
+          title: Page Size
+          type: integer
+        previous:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: how to iterate to the previous page - only appears on pages
+            that are subsequent to the first page
+          title: Previous
+        total:
+          description: The total results from the request
+          title: Total
+          type: integer
+        total_pages:
+          description: The total number of pages that can be returned
+          title: Total Pages
+          type: integer
+      required:
+      - total
+      - page
+      - total_pages
+      - page_size
+      title: PageInfo
+      type: object
+    PaginatedList_DataSource_:
+      properties:
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: 100
+          title: Limit
+        skip:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: 0
+          title: Skip
+        value:
+          items:
+            $ref: '#/components/schemas/DataSource'
+          title: Value
+          type: array
+      required:
+      - value
+      title: PaginatedList[DataSource]
+      type: object
+    PaginatedList_DocumentStatus_:
+      properties:
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: 100
+          title: Limit
+        skip:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: 0
+          title: Skip
+        value:
+          items:
+            $ref: '#/components/schemas/DocumentStatus'
+          title: Value
+          type: array
+      required:
+      - value
+      title: PaginatedList[DocumentStatus]
+      type: object
+    Permission:
+      enum:
+      - read
+      - write
+      - root
+      title: Permission
+      type: string
+    PermissionRequest:
+      enum:
+      - read
+      - write
+      title: PermissionRequest
+      type: string
+    PolicyRequest:
+      properties:
+        indexes:
+          description: 'The list of indexes the policy (permission) should be applied
+            to '
+          items:
+            type: string
+          title: Indexes
+          type: array
+        permission:
+          $ref: '#/components/schemas/PermissionRequest'
+          description: Permission requested on the index
+      required:
+      - indexes
+      - permission
+      title: PolicyRequest
+      type: object
+    PolicyResponse:
+      properties:
+        indexes:
+          description: The indexes in which the subsequent permission is applied to
+          items:
+            type: string
+          title: Indexes
+          type: array
+        permission:
+          $ref: '#/components/schemas/Permission'
+          description: The permissions type that is applied (either READ or WRITE)
+      required:
+      - indexes
+      - permission
+      title: PolicyResponse
+      type: object
+    PutDocumentResult:
+      properties:
+        document_id:
+          description: The document id passed in the request
+          title: Document Id
+          type: string
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Errors if any
+          title: Error
+        task_ids:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: Internal background task ids
+          title: Task Ids
+      required:
+      - document_id
+      - error
+      title: PutDocumentResult
+      type: object
+    PutDocumentsInput:
+      properties:
+        authorized_groups:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: The groups that are authorized to access the document. This
+            is useful when using Document-level Security and RBAC must be enabled
+          title: Authorized Groups
+        documents:
+          items:
+            $ref: '#/components/schemas/Document-Input'
+          title: Documents
+          type: array
+        merge_groups_on_conflict:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: false
+          description: When Document-level Security is enabled, allows upserting documents
+            with static groups
+          title: Merge Groups On Conflict
+      required:
+      - documents
+      title: PutDocumentsInput
+      type: object
+    PutDocumentsResponse:
+      properties:
+        results:
+          items:
+            $ref: '#/components/schemas/PutDocumentResult'
+          title: Results
+          type: array
+      required:
+      - results
+      title: PutDocumentsResponse
+      type: object
+    RoleCreateRequest:
+      properties:
+        policies:
+          items:
+            $ref: '#/components/schemas/PolicyRequest'
+          title: Policies
+          type: array
+        role_name:
+          description: 'The name of the role - it is unique for the tenancy '
+          title: Role Name
+          type: string
+      required:
+      - role_name
+      - policies
+      title: RoleCreateRequest
+      type: object
+    RoleDeleteResponse:
+      properties:
+        role_name:
+          title: Role Name
+          type: string
+      required:
+      - role_name
+      title: RoleDeleteResponse
+      type: object
+    RolePage:
+      properties:
+        page_info:
+          $ref: '#/components/schemas/PageInfo'
+          description: The information corresponding to that page and the overall
+            information about the roles attached to the specified Root token
+        roles:
+          description: The list of roles attached to the specified group and the specified
+            Root token - results will be paginated
+          items:
+            $ref: '#/components/schemas/RoleResponse'
+          title: Roles
+          type: array
+      required:
+      - roles
+      - page_info
+      title: RolePage
+      type: object
+    RoleResponse:
+      properties:
+        policies:
+          description: 'The list of policies that are attached to this role '
+          items:
+            $ref: '#/components/schemas/PolicyResponse'
+          title: Policies
+          type: array
+        role_name:
+          description: The unique role_name of the corresponding role
+          title: Role Name
+          type: string
+      required:
+      - role_name
+      - policies
+      title: RoleResponse
+      type: object
+    ScoredDocument:
+      properties:
+        authorized_groups:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: The groups that are authorized to access the document. This
+            is useful when using Document-level Security and RBAC must be enabled
+          title: Authorized Groups
+        chunks:
+          items:
+            $ref: '#/components/schemas/ScoredDocumentChunk'
+          title: Chunks
+          type: array
+        content:
+          description: Dictionary of document content field, including text, metadata,
+            and any user provided filters
+          title: Content
+          type: object
+        document_id:
+          description: The unique document_id
+          title: Document Id
+          type: string
+        index_fields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: "Specifies which fields will be included in the semantic search\
+            \ embedded text, defaults to \u201Ctext\u201D and \u201Cmeta\u201D. "
+          title: Index Fields
+        parent_document_id:
+          description: The unique id for the parent document
+          title: Parent Document Id
+          type: string
+        path:
+          description: 'The path from which the file came from; if the '
+          title: Path
+          type: string
+        score:
+          description: A relevancy score of the document. Search Document scores are
+            not guaranteed to be between 0 and 1.
+          title: Score
+          type: number
+      required:
+      - document_id
+      - path
+      - parent_document_id
+      - content
+      - chunks
+      - score
+      title: ScoredDocument
+      type: object
+    ScoredDocumentChunk:
+      properties:
+        asset_ids:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: 'This is meant for internal use '
+          title: Asset Ids
+        assets:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAsset'
+            type: array
+          - type: 'null'
+          description: '[to be deprecated] List of CompassDocumentChunkAsset. The
+            length of the assets will depend on the origin file_type as well as the
+            parser_config set'
+          title: Assets
+        assets_info:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAssetInfo'
+            type: array
+          - type: 'null'
+          description: List of AssetInfo objects. The length of the assets will depend
+            on the origin file_type as well as the parser_config set
+          title: Assets Info
+        chunk_id:
+          description: The unique id for the specific chunk in the database
+          title: Chunk Id
+          type: string
+        content:
+          description: Dict that contains the data to be used for embeddings
+          title: Content
+          type: object
+        origin:
+          anyOf:
+          - type: object
+          - type: 'null'
+          description: "Dict that contains data around the origin of the chunk. This\
+            \ contents of the origin may depend on the origin file_type but should\
+            \ always contain: 1) filename : the name of the parent file the chunk\
+            \ came from \nIf the file_type=pdf then it will also have page_number"
+          title: Origin
+        parent_document_id:
+          description: The unique id for the parent document - this allows to group
+            chunks by parent_document_id to get all children of a parent document
+          title: Parent Document Id
+          type: string
+        path:
+          description: The path from which the parent file came from
+          title: Path
+          type: string
+        score:
+          description: Relevancy score of the chunk normalized between [0,1]. Normalization
+            of chunk scores do not depend on the set of chunks retrieved
+          title: Score
+          type: number
+        sort_id:
+          description: '[deprecated] This is the original order of the chunk in respect
+            to the parent document'
+          title: Sort Id
+          type: integer
+      required:
+      - chunk_id
+      - sort_id
+      - parent_document_id
+      - path
+      - content
+      - score
+      title: ScoredDocumentChunk
+      type: object
+    ScoredDocumentChunkReturn:
+      properties:
+        asset_ids:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: 'This is meant for internal use '
+          title: Asset Ids
+        assets:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAsset'
+            type: array
+          - type: 'null'
+          description: '[to be deprecated] List of CompassDocumentChunkAsset. The
+            length of the assets will depend on the origin file_type as well as the
+            parser_config set'
+          title: Assets
+        assets_info:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/DocumentChunkAssetInfo'
+            type: array
+          - type: 'null'
+          description: List of AssetInfo objects. The length of the assets will depend
+            on the origin file_type as well as the parser_config set
+          title: Assets Info
+        chunk_id:
+          description: The unique id for the specific chunk in the database
+          title: Chunk Id
+          type: string
+        content:
+          description: Dict that contains the data to be used for embeddings
+          title: Content
+          type: object
+        document_id:
+          description: The unique id for the document
+          title: Document Id
+          type: string
+        index_fields:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: The fields that are indexed
+          title: Index Fields
+        origin:
+          anyOf:
+          - type: object
+          - type: 'null'
+          description: "Dict that contains data around the origin of the chunk. This\
+            \ contents of the origin may depend on the origin file_type but should\
+            \ always contain: 1) filename : the name of the parent file the chunk\
+            \ came from \nIf the file_type=pdf then it will also have page_number"
+          title: Origin
+        parent_document_id:
+          description: The unique id for the parent document - this allows to group
+            chunks by parent_document_id to get all children of a parent document
+          title: Parent Document Id
+          type: string
+        path:
+          description: The path of the document
+          title: Path
+          type: string
+        score:
+          description: Relevancy score of the chunk normalized between [0,1]. Normalization
+            of chunk scores do not depend on the set of chunks retrieved
+          title: Score
+          type: number
+        sort_id:
+          description: '[deprecated] This is the original order of the chunk in respect
+            to the parent document'
+          title: Sort Id
+          type: integer
+      required:
+      - chunk_id
+      - sort_id
+      - parent_document_id
+      - path
+      - content
+      - score
+      - document_id
+      title: ScoredDocumentChunkReturn
+      type: object
+    SearchChunksResponse:
+      properties:
+        hits:
+          items:
+            $ref: '#/components/schemas/ScoredDocumentChunkReturn'
+          title: Hits
+          type: array
+      required:
+      - hits
+      title: SearchChunksResponse
+      type: object
+    SearchDocumentsResponse:
+      properties:
+        hits:
+          description: List of documents returned by the search query
+          items:
+            $ref: '#/components/schemas/ScoredDocument'
+          title: Hits
+          type: array
+      required:
+      - hits
+      title: SearchDocumentsResponse
+      type: object
+    SearchFilter:
+      properties:
+        field:
+          description: The field on the index-level to be used for filtering
+          title: Field
+          type: string
+        type:
+          $ref: '#/components/schemas/FilterType'
+          description: "Different operations that can be used to filter the specified\
+            \ field: \n1) $eq will be a term match2) $gte and $lte will become range\
+            \ queries3) $wordMatch will be converted to a string"
+        value:
+          description: 'The value the filter should use '
+          title: Value
+      required:
+      - field
+      - type
+      - value
+      title: SearchFilter
+      type: object
+    SearchInput:
+      properties:
+        enable_profiling:
+          default: false
+          description: This includes some performance data around the search response
+            - helpful for debugging otherwise it will slow the response time of the
+            query
+          title: Enable Profiling
+          type: boolean
+        filters:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/SearchFilter'
+            type: array
+          - type: 'null'
+          description: A list of filters which will be applied onto the search
+          title: Filters
+        query:
+          description: The query to be searched into the index
+          minLength: 1
+          title: Query
+          type: string
+        top_k:
+          description: 'The number of documents to be returned '
+          title: Top K
+          type: integer
+      required:
+      - query
+      - top_k
+      title: SearchInput
+      type: object
+    UploadDocumentsRequest:
+      properties:
+        documents:
+          description: A list of documents to be inserted
+          items:
+            $ref: '#/components/schemas/UploadDocumentsRequestDocument'
+          maxItems: 100
+          minItems: 1
+          title: Documents
+          type: array
+      required:
+      - documents
+      title: UploadDocumentsRequest
+      type: object
+    UploadDocumentsRequestDocument:
+      properties:
+        attributes:
+          anyOf:
+          - type: object
+          - type: 'null'
+          description: 'Additional context to be embedded with the document '
+          title: Attributes
+        content_encoded_bytes:
+          description: The content encoded as bytes
+          title: Content Encoded Bytes
+          type: string
+        content_length_bytes:
+          description: The bytes of the document
+          exclusiveMinimum: 0.0
+          title: Content Length Bytes
+          type: integer
+        content_type:
+          $ref: '#/components/schemas/ContentTypeEnum'
+          description: The content type of the document
+        filename:
+          description: The filename of the document
+          minLength: 1
+          title: Filename
+          type: string
+        id:
+          description: The unique id for the document
+          title: Id
+          type: string
+      required:
+      - id
+      - filename
+      - content_type
+      - content_length_bytes
+      - content_encoded_bytes
+      title: UploadDocumentsRequestDocument
+      type: object
+    UploadDocumentsResponse:
+      properties:
+        document_ids:
+          description: The unique ids for the documents
+          items:
+            type: string
+          title: Document Ids
+          type: array
+        upload_id:
+          description: The unique id for the upload
+          format: uuid4
+          title: Upload Id
+          type: string
+      required:
+      - upload_id
+      - document_ids
+      title: UploadDocumentsResponse
+      type: object
+    UserCreateRequest:
+      properties:
+        user_name:
+          description: The name of the user to be created
+          title: User Name
+          type: string
+      required:
+      - user_name
+      title: UserCreateRequest
+      type: object
+    UserCreateResponse:
+      properties:
+        token:
+          description: The unique token to identify the user to the Compass RBAC system
+          title: Token
+          type: string
+        user_name:
+          description: The name of the user created
+          title: User Name
+          type: string
+      required:
+      - user_name
+      - token
+      title: UserCreateResponse
+      type: object
+    UserDeleteResponse:
+      properties:
+        user_name:
+          description: The name of the user deleted
+          title: User Name
+          type: string
+      required:
+      - user_name
+      title: UserDeleteResponse
+      type: object
+    UserPage:
+      properties:
+        page_info:
+          $ref: '#/components/schemas/PageInfo'
+          description: The information corresponding to that page and the overall
+            information about the users attached to the specified Root token
+        users:
+          description: The list of users attached to the specified Root token - results
+            will be paginated
+          items:
+            $ref: '#/components/schemas/UserResponse'
+          title: Users
+          type: array
+      required:
+      - users
+      - page_info
+      title: UserPage
+      type: object
+    UserResponse:
+      properties:
+        user_name:
+          description: The unique user_name of the corresponding user
+          title: User Name
+          type: string
+      required:
+      - user_name
+      title: UserResponse
+      type: object
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
+info:
+  title: Compass search API
+  version: 0.1.0
+openapi: 3.1.0
+paths:
+  /metrics:
+    get:
+      description: Endpoint that serves Prometheus metrics.
+      operationId: metrics_metrics_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Metrics
+  /security/admin/rbac/v2/groups:
+    get:
+      description: Fetches all groups in the current Compass tenancy with pagination.
+        ROOT permission is required to access this API.
+      operationId: fetch_groups_security_admin_rbac_v2_groups_get
+      parameters:
+      - description: Set this if you would want to iterate through another page of
+          results for a subsequent request
+        in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to iterate through another page
+            of results for a subsequent request
+          title: Cursor
+      - description: Set this if you would want to filter the groups based on a partial
+          text match on group_names
+        in: query
+        name: filter
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to filter the groups based on a
+            partial text match on group_names
+          title: Filter
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupPage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Fetch Groups
+      x-codeSamples:
+      - lang: python
+        source: "from typing import Optional\n\nfrom cohere.compass.clients.access_control\
+          \ import CompassRootClient\nfrom cohere.compass.models.access_control import\
+          \ Group, PageDirection, PageInfo\n\nCOMPASS_API_URL = ...\nROOT_USER_TOKEN\
+          \ = ...\n\ncompass_root_client = CompassRootClient(\n    compass_url=COMPASS_API_URL,\n\
+          \    root_user_token=ROOT_USER_TOKEN,\n)\n\n\ndef get_all_groups(\n    filter:\
+          \ Optional[str] = None,\n    page_info: Optional[PageInfo] = None,\n   \
+          \ direction: Optional[PageDirection] = None,\n    groups: Optional[list[Group]]\
+          \ = None,\n) -> list[Group]:\n    group_pages = compass_root_client.get_groups_page(\n\
+          \        filter=filter, page_info=page_info, direction=direction\n    )\n\
+          \n    groups = groups or []\n    groups.extend(group_pages.groups)\n\n \
+          \   if not group_pages.page_info.has_next_page():\n        return groups\n\
+          \    return get_all_groups(\n        filter=filter,\n        page_info=group_pages.page_info,\n\
+          \        direction=PageDirection.NEXT,\n        groups=groups,\n    )\n\n\
+          \ngroups = get_all_groups()\nprint(f\"Groups: {groups}\")\n"
+    post:
+      description: Create a new groups - on creation, groups will not have any users
+        or roles assigned to it. This requires a Root Bearer token.
+      operationId: create_groups_security_admin_rbac_v2_groups_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/GroupCreateRequest'
+              title: Create Groups
+              type: array
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupResponse'
+                title: Response Create Groups Security Admin Rbac V2 Groups Post
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create groups
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import Group\n\nCOMPASS_API_URL\
+          \ = ...\nROOT_USER_TOKEN = ...\n\ncompass_root_client = CompassRootClient(\n\
+          \    compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\n\ngroups = compass_root_client.create_groups(\n    groups=[\n       \
+          \ Group(group_name=\"unique_group_name_1\"),\n        Group(group_name=\"\
+          unique_group_name_2\"),\n    ]\n)\n\nfor group in groups:\n    print(f\"\
+          Created group: {group.group_name}\")\n"
+  /security/admin/rbac/v2/groups/{group_names}:
+    delete:
+      description: Delete groups by group name. ROOT permission is required to access
+        this API.
+      operationId: delete_groups_security_admin_rbac_v2_groups__group_names__delete
+      parameters:
+      - description: A comma separate list of the names of the groups to be deleted
+        in: path
+        name: group_names
+        required: true
+        schema:
+          description: A comma separate list of the names of the groups to be deleted
+          title: Group Names
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupResponse'
+                title: Response Delete Groups Security Admin Rbac V2 Groups  Group
+                  Names  Delete
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete groups
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients.access_control import CompassRootClient\n\
+          \nCOMPASS_API_URL = ...\nROOT_USER_TOKEN = ...\nGROUP_NAME = ...\n\ncompass_root_client\
+          \ = CompassRootClient(\n    compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\ngroups = compass_root_client.delete_groups(group_names=[GROUP_NAME])\n\
+          \nfor group in groups:\n    print(f\"Deleted group: {group.group_name}\"\
+          )\n"
+  /security/admin/rbac/v2/groups/{group_name}:
+    get:
+      description: Obtains a more detailed Group object that is joined to the Users
+        and Roles
+      operationId: fetch_group_security_admin_rbac_v2_groups__group_name__get
+      parameters:
+      - description: The name of the group
+        in: path
+        name: group_name
+        required: true
+        schema:
+          description: The name of the group
+          title: Group Name
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposedGroup'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Group details
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients.access_control import CompassRootClient\n\
+          \nCOMPASS_API_URL = ...\nROOT_USER_TOKEN = ...\nGROUP_NAME = ...\n\ncompass_root_client\
+          \ = CompassRootClient(\n    compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\n\ngroup = compass_root_client.get_detailed_group(group_name=GROUP_NAME)\n\
+          \nprint(f\"Group roles: {group.roles}\")\nprint(f\"Group users: {group.users}\"\
+          )\n"
+  /security/admin/rbac/v2/groups/{group_name}/roles:
+    get:
+      description: Fetches all roles attached to a specific group in the current Compass
+        tenancy. ROOT permission is required to access this API.
+      operationId: fetch_group_roles_security_admin_rbac_v2_groups__group_name__roles_get
+      parameters:
+      - description: Group name to fetch roles for
+        in: path
+        name: group_name
+        required: true
+        schema:
+          description: Group name to fetch roles for
+          title: Group Name
+          type: string
+      - description: Set this if you would want to iterate through another page of
+          results for a subsequent request
+        in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to iterate through another page
+            of results for a subsequent request
+          title: Cursor
+      - description: Set this if you would want to filter the groups based on a partial
+          text match on group_names
+        in: query
+        name: filter
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to filter the groups based on a
+            partial text match on group_names
+          title: Filter
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RolePage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Fetch the Roles attached to a Group
+      x-codeSamples:
+      - lang: python
+        source: "from typing import Optional\n\nfrom cohere.compass.clients.access_control\
+          \ import CompassRootClient\nfrom cohere.compass.models.access_control import\
+          \ PageDirection, PageInfo, Role, User\n\nCOMPASS_API_URL = ...\nROOT_USER_TOKEN\
+          \ = ...\nGROUP_NAME = ...\n\ncompass_root_client = CompassRootClient(\n\
+          \    compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\n\n\ndef get_all_roles_in_group(\n    group_name: str,\n    filter: Optional[str]\
+          \ = None,\n    page_info: Optional[PageInfo] = None,\n    direction: Optional[PageDirection]\
+          \ = None,\n    roles: Optional[list[Role]] = None,\n) -> list[User]:\n \
+          \   roles_page = compass_root_client.get_group_roles_page(\n        group_name=group_name,\n\
+          \        filter=filter,\n        page_info=page_info,\n        direction=direction,\n\
+          \    )\n\n    roles = roles or []\n    roles.extend(roles_page.roles)\n\n\
+          \    if not roles_page.page_info.has_next_page():\n        return roles\n\
+          \n    return get_all_roles_in_group(\n        group_name=group_name,\n \
+          \       filter=filter,\n        page_info=roles_page.page_info,\n      \
+          \  direction=PageDirection.NEXT,\n        roles=roles,\n    )\n\n\nroles\
+          \ = get_all_roles_in_group(group_name=GROUP_NAME)\nprint(f\"Roles in group:\
+          \ {roles}\")\n"
+    post:
+      description: Add a role mapping to a group. ROOT permission is required to access
+        this API.
+      operationId: add_group_roles_security_admin_rbac_v2_groups__group_name__roles_post
+      parameters:
+      - description: Group name
+        in: path
+        name: group_name
+        required: true
+        schema:
+          description: Group name
+          title: Group Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: List of role names
+              items:
+                $ref: '#/components/schemas/GroupRoleRequest'
+              title: Group Roles
+              type: array
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupRoleResponse'
+                title: Response Add Group Roles Security Admin Rbac V2 Groups  Group
+                  Name  Roles Post
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Add a role to a Group
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import Group, Permission, Policy,\
+          \ Role\nfrom requests.exceptions import HTTPError\n\nCOMPASS_API_URL = ...\n\
+          ROOT_USER_TOKEN = ...\n\ncompass_root_client = CompassRootClient(\n    compass_url=COMPASS_API_URL,\n\
+          \    root_user_token=ROOT_USER_TOKEN,\n)\n\ntry:\n    groups = compass_root_client.create_groups(\n\
+          \        groups=[\n            Group(group_name=\"unique_group_name_1\"\
+          ),\n            Group(group_name=\"unique_group_name_2\"),\n        ]\n\
+          \    )\nexcept HTTPError as e:\n    if e.response.status_code == 409:\n\
+          \        print(\"Group already exists.\")\n    else:\n        raise\n\n\
+          try:\n    roles = compass_root_client.create_roles(\n        roles=[\n \
+          \           Role(\n                role_name=\"developer_read_specific_index\"\
+          ,\n                policies=[Policy(indexes=[\"user-*\"], permission=Permission.READ)],\n\
+          \            ),\n        ]\n    )\nexcept HTTPError as e:\n    if e.response.status_code\
+          \ == 409:\n        print(\"Role already exists.\")\n    else:\n        raise\n\
+          \ngroup_roles = compass_root_client.add_roles_to_group(\n    group_name=\"\
+          unique_group_name_1\",\n    role_names=[\n        \"developer_read_specific_index\"\
+          ,\n    ],\n)\n\nfor group_role in group_roles:\n    print(f\"Added roles:\
+          \ {group_role.role_name} to group: {group_role.group_name}\")\n"
+  /security/admin/rbac/v2/groups/{group_name}/roles/{role_names}:
+    delete:
+      description: Delete one or more roles belonging to a group. ROOT permission
+        is required to access this API.
+      operationId: delete_group_roles_security_admin_rbac_v2_groups__group_name__roles__role_names__delete
+      parameters:
+      - description: The name of the group the roles are to be deleted from
+        in: path
+        name: group_name
+        required: true
+        schema:
+          description: The name of the group the roles are to be deleted from
+          title: Group Name
+          type: string
+      - description: A comma separate list of the names of the roles to be deleted
+          from the group
+        in: path
+        name: role_names
+        required: true
+        schema:
+          description: A comma separate list of the names of the roles to be deleted
+            from the group
+          title: Role Names
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupRoleResponse'
+                title: Response Delete Group Roles Security Admin Rbac V2 Groups  Group
+                  Name  Roles  Role Names  Delete
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete Role from Group
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import Group, Permission, Policy,\
+          \ Role\n\nCOMPASS_API_URL = ...\nROOT_USER_TOKEN = ...\n\ncompass_root_client\
+          \ = CompassRootClient(\n    compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\n\ngroups = compass_root_client.create_groups(\n    groups=[\n       \
+          \ Group(group_name=\"unique_group_name_1\"),\n    ]\n)\n\nroles = compass_root_client.create_roles(\n\
+          \    roles=[\n        Role(\n            role_name=\"developer_read_specific_index\"\
+          ,\n            policies=[Policy(indexes=[\"user-*\"], permission=Permission.READ)],\n\
+          \        ),\n    ]\n)\n\ngroup_roles = compass_root_client.add_roles_to_group(\n\
+          \    group_name=\"unique_group_name_1\",\n    role_names=[\n        \"developer_read_specific_index\"\
+          ,\n    ],\n)\n\nfor group_role in group_roles:\n    print(f\"Added roles:\
+          \ {group_role.role_name} to group: {group_role.group_name}\")\n\ngroup_roles\
+          \ = compass_root_client.remove_roles_from_group(\n    group_name=\"unique_group_name_1\"\
+          ,\n    role_names=[\n        \"developer_read_specific_index\",\n    ],\n\
+          )\n\nfor group_role in group_roles:\n    print(f\"Removed roles: {group_role.role_name}\
+          \ to group: {group_role.group_name}\")\n"
+  /security/admin/rbac/v2/groups/{group_name}/users:
+    get:
+      description: Fetches all users attached to a specific group in the current Compass
+        tenancy. ROOT permission is required to access this API.
+      operationId: fetch_group_memberships_security_admin_rbac_v2_groups__group_name__users_get
+      parameters:
+      - description: Group name to fetch
+        in: path
+        name: group_name
+        required: true
+        schema:
+          description: Group name to fetch
+          title: Group Name
+          type: string
+      - description: Set this if you would want to iterate through another page of
+          results for a subsequent request
+        in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to iterate through another page
+            of results for a subsequent request
+          title: Cursor
+      - description: Set this if you would want to filter the groups based on a partial
+          text match on group_names
+        in: query
+        name: filter
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to filter the groups based on a
+            partial text match on group_names
+          title: Filter
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Fetch the Users attached to a Group
+      x-codeSamples:
+      - lang: python
+        source: "from typing import Optional\n\nfrom cohere.compass.clients.access_control\
+          \ import CompassRootClient\nfrom cohere.compass.models.access_control import\
+          \ PageDirection, PageInfo, User\n\nCOMPASS_API_URL = ...\nROOT_USER_TOKEN\
+          \ = ...\nGROUP_NAME = ...\ncompass_root_client = CompassRootClient(\n  \
+          \  compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\n\n\ndef get_all_members_in_group(\n    group_name: str,\n    filter:\
+          \ Optional[str] = None,\n    page_info: Optional[PageInfo] = None,\n   \
+          \ direction: Optional[PageDirection] = None,\n    users: Optional[list[User]]\
+          \ = None,\n) -> list[User]:\n    user_page = compass_root_client.get_group_members_page(\n\
+          \        group_name=group_name,\n        filter=filter,\n        page_info=page_info,\n\
+          \        direction=direction,\n    )\n\n    users = users or []\n    users.extend(user_page.users)\n\
+          \n    if not user_page.page_info.has_next_page():\n        return users\n\
+          \    return get_all_members_in_group(\n        group_name=group_name,\n\
+          \        filter=filter,\n        page_info=user_page.page_info,\n      \
+          \  direction=PageDirection.NEXT,\n        users=users,\n    )\n\n\nmembers\
+          \ = get_all_members_in_group(group_name=GROUP_NAME)\nprint(f\"Members in\
+          \ group: {members}\")\n"
+    post:
+      description: Add a user to a group. ROOT permission is required to access this
+        API.
+      operationId: add_group_memberships_security_admin_rbac_v2_groups__group_name__users_post
+      parameters:
+      - description: Group name
+        in: path
+        name: group_name
+        required: true
+        schema:
+          description: Group name
+          title: Group Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: List of user names
+              items:
+                $ref: '#/components/schemas/GroupMembershipRequest'
+              title: Group Memberships
+              type: array
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupMembershipResponse'
+                title: Response Add Group Memberships Security Admin Rbac V2 Groups  Group
+                  Name  Users Post
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Add a user to a Group
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import Group, User\nfrom requests.exceptions\
+          \ import HTTPError\n\nCOMPASS_API_URL = ...\nROOT_USER_TOKEN = ...\n\ncompass_root_client\
+          \ = CompassRootClient(\n    compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\n\ntry:\n    groups = compass_root_client.create_groups(\n        groups=[\n\
+          \            Group(group_name=\"unique_group_name_1\"),\n            Group(group_name=\"\
+          unique_group_name_2\"),\n        ]\n    )\n\n    for group in groups:\n\
+          \        print(f\"Created group: {group.group_name}\")\nexcept HTTPError\
+          \ as e:\n    if e.response.status_code == 409:\n        print(\"Group already\
+          \ exists.\")\n    else:\n        raise\n\ntry:\n    users = compass_root_client.create_users(\n\
+          \        users=[\n            User(user_name=\"unique_user_name_1\"),\n\
+          \            User(user_name=\"unique_user_name_2\"),\n        ]\n    )\n\
+          except HTTPError as e:\n    if e.response.status_code == 409:\n        print(\"\
+          User already exists.\")\n    else:\n        raise\n\ntry:\n    # Adding\
+          \ unique_user_name_1 to unique_group_name_1\n    group_membership = compass_root_client.add_members_to_group(\n\
+          \        group_name=\"unique_group_name_1\",\n        user_names=[\"unique_user_name_1\"\
+          ],\n    )\n    print(\"Group membership added: \", group_membership)\nexcept\
+          \ HTTPError as e:\n    if e.response.status_code == 409:\n        print(\"\
+          Membership already exists.\")\n    else:\n        raise\n\ntry:\n    # Adding\
+          \ unique_user_name_2 to unique_group_name_2\n    group_membership = compass_root_client.add_members_to_group(\n\
+          \        group_name=\"unique_group_name_2\",\n        user_names=[\"unique_user_name_2\"\
+          ],\n    )\n    print(\"Group membership added: \", group_membership)\nexcept\
+          \ HTTPError as e:\n    if e.response.status_code == 409:\n        print(\"\
+          Membership already exists.\")\n    else:\n        raise\n"
+  /security/admin/rbac/v2/groups/{group_name}/users/{user_names}:
+    delete:
+      description: Delete a user belonging to a group. ROOT permission is required
+        to access this API.
+      operationId: delete_group_memberships_security_admin_rbac_v2_groups__group_name__users__user_names__delete
+      parameters:
+      - description: The name of the group the users are to be deleted from
+        in: path
+        name: group_name
+        required: true
+        schema:
+          description: The name of the group the users are to be deleted from
+          title: Group Name
+          type: string
+      - description: A comma separate list of the names of the users to be deleted
+          from the group
+        in: path
+        name: user_names
+        required: true
+        schema:
+          description: A comma separate list of the names of the users to be deleted
+            from the group
+          title: User Names
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GroupMembershipResponse'
+                title: Response Delete Group Memberships Security Admin Rbac V2 Groups  Group
+                  Name  Users  User Names  Delete
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete User from Group
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import Group, User\nfrom requests.exceptions\
+          \ import HTTPError\n\nCOMPASS_API_URL = ...\nROOT_USER_TOKEN = ...\n\ncompass_root_client\
+          \ = CompassRootClient(\n    compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\ntry:\n    groups = compass_root_client.create_groups(\n        groups=[\n\
+          \            Group(group_name=\"unique_group_name_1\"),\n        ]\n   \
+          \ )\nexcept HTTPError as e:\n    if e.response.status_code == 409:\n   \
+          \     print(\"Group already exists.\")\n    else:\n        raise\n\ntry:\n\
+          \    users = compass_root_client.create_users(\n        users=[User(user_name=\"\
+          unique_user_name_1\")]\n    )\nexcept HTTPError as e:\n    if e.response.status_code\
+          \ == 409:\n        print(\"User already exists.\")\n    else:\n        raise\n\
+          \ntry:\n    # Adding unique_user_name_1 to unique_group_name_1\n    group_membership\
+          \ = compass_root_client.add_members_to_group(\n        group_name=\"unique_group_name_1\"\
+          ,\n        user_names=[\"unique_user_name_1\"],\n    )\n    print(\"Group\
+          \ membership added: \", group_membership)\nexcept HTTPError as e:\n    if\
+          \ e.response.status_code == 409:\n        print(\"Membership already exists.\"\
+          )\n    else:\n        raise\n\n# Removing unique_user_name_1 from unique_group_name_1\n\
+          group_membership = compass_root_client.remove_members_from_group(\n    group_name=\"\
+          unique_group_name_1\",\n    user_names=[\"unique_user_name_1\"],\n)\nprint(\"\
+          Group membership removed: \", group_membership)\n"
+  /security/admin/rbac/v2/roles:
+    get:
+      description: Fetches all roles in the current Compass tenancy with pagination.
+        ROOT permission is required to access this API.
+      operationId: fetch_roles_security_admin_rbac_v2_roles_get
+      parameters:
+      - description: Set this if you would want to iterate through another page of
+          results for a subsequent request
+        in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to iterate through another page
+            of results for a subsequent request
+          title: Cursor
+      - description: Set this if you would want to filter the groups based on a partial
+          text match on group_names
+        in: query
+        name: filter
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to filter the groups based on a
+            partial text match on group_names
+          title: Filter
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RolePage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Fetch roles
+      x-codeSamples:
+      - lang: python
+        source: "from typing import Optional\n\nfrom cohere.compass.clients.access_control\
+          \ import CompassRootClient\nfrom cohere.compass.models.access_control import\
+          \ PageDirection, PageInfo, Role\n\nCOMPASS_API_URL = ...\nROOT_USER_TOKEN\
+          \ = ...\n\ncompass_root_client = CompassRootClient(\n    compass_url=COMPASS_API_URL,\n\
+          \    root_user_token=ROOT_USER_TOKEN,\n)\n\n\ndef get_all_roles(\n    filter:\
+          \ Optional[str] = None,\n    page_info: Optional[PageInfo] = None,\n   \
+          \ roles: Optional[list[Role]] = None,\n    direction: Optional[PageDirection]\
+          \ = None,\n) -> list[Role]:\n    roles_page = compass_root_client.get_roles_page(\n\
+          \        filter=filter, page_info=page_info, direction=direction\n    )\n\
+          \n    roles = roles or []\n    roles.extend(roles_page.roles)\n\n    if\
+          \ not roles_page.page_info.has_next_page():\n        return roles\n\n  \
+          \  return get_all_roles(\n        filter=filter, page_info=page_info, direction=PageDirection.NEXT\n\
+          \    )\n\n\nroles = get_all_roles()\nprint(f\"Roles: {roles}\")\n"
+    post:
+      description: Create new roles, roles can have multiple policies - each policy
+        can either have READ or WRITE permission to a set of indexes. ROOT permission
+        is required to access this API.
+      operationId: create_roles_security_admin_rbac_v2_roles_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/RoleCreateRequest'
+              title: Roles Request
+              type: array
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/RoleResponse'
+                title: Response Create Roles Security Admin Rbac V2 Roles Post
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create roles
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import Permission, Policy, Role\n\
+          \nCOMPASS_API_URL = ...\nROOT_USER_TOKEN = ...\n\ncompass_root_client =\
+          \ CompassRootClient(\n    compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\n\nroles = compass_root_client.create_roles(\n    roles=[\n        # *\
+          \ allows all index\n        Role(\n            role_name=\"developer_read_all_index\"\
+          ,\n            policies=[Policy(indexes=[\"*\"], permission=Permission.READ)],\n\
+          \        ),\n        Role(\n            role_name=\"developer_write_all_index\"\
+          ,\n            policies=[Policy(indexes=[\"*\"], permission=Permission.WRITE)],\n\
+          \        ),\n        # user-* allows index only prefixed with `user-`\n\
+          \        Role(\n            role_name=\"developer_read_specific_index\"\
+          ,\n            policies=[Policy(indexes=[\"user-*\"], permission=Permission.READ)],\n\
+          \        ),\n    ]\n)\n\nfor role in roles:\n    print(f\"Role information:\
+          \ {role.role_name}, {role.policies}\")\n"
+  /security/admin/rbac/v2/roles/{role_names}:
+    delete:
+      description: Delete a role. ROOT permission is required to access this API.
+      operationId: delete_roles_security_admin_rbac_v2_roles__role_names__delete
+      parameters:
+      - description: The name of the role to be deleted
+        in: path
+        name: role_names
+        required: true
+        schema:
+          description: The name of the role to be deleted
+          title: Role Names
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/RoleDeleteResponse'
+                title: Response Delete Roles Security Admin Rbac V2 Roles  Role Names  Delete
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete roles
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients.access_control import CompassRootClient\n\
+          \nCOMPASS_API_URL = ...\nROOT_USER_TOKEN = ...\nROLE_NAME = ...\n\ncompass_root_client\
+          \ = CompassRootClient(\n    compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\n\nroles = compass_root_client.delete_roles(role_names=[ROLE_NAME])\n\n\
+          for role in roles:\n    print(f\"Deleted role: {role.role_name}\")\n"
+  /security/admin/rbac/v2/roles/{role_name}:
+    get:
+      description: Obtains a more detailed Role object that is joined to the Groups
+        it is assigned to
+      operationId: fetch_role_security_admin_rbac_v2_roles__role_name__get
+      parameters:
+      - description: The name of the role
+        in: path
+        name: role_name
+        required: true
+        schema:
+          description: The name of the role
+          title: Role Name
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposedRole'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Role details
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients.access_control import CompassRootClient\n\
+          \nCOMPASS_API_URL = ...\nROOT_USER_TOKEN = ...\nROLE_NAME = ...\n\ncompass_root_client\
+          \ = CompassRootClient(\n    compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\ndetailed_role = compass_root_client.get_detailed_role(role_name=ROLE_NAME)\n\
+          \nprint(f\"Role name: {detailed_role.role_name}\")\nprint(f\"Group name:\
+          \ {detailed_role.groups}\")\n"
+    put:
+      description: Update an existing role in the current Compass tenancy. ROOT permission
+        is required to access this API.
+      operationId: update_role_security_admin_rbac_v2_roles__role_name__put
+      parameters:
+      - description: The name of the role to be updated
+        in: path
+        name: role_name
+        required: true
+        schema:
+          description: The name of the role to be updated
+          title: Role Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: List of policy requests
+              items:
+                $ref: '#/components/schemas/PolicyRequest'
+              title: Policies Request
+              type: array
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Update a role
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import Permission, Policy, Role\n\
+          \nCOMPASS_API_URL = ...\nROOT_USER_TOKEN = ...\n\ncompass_root_client =\
+          \ CompassRootClient(\n    compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\n\nrole = compass_root_client.update_role(\n    role=Role(\n        role_name=\"\
+          developer_read_all_index\",\n        policies=[Policy(indexes=[\"prefix-*\"\
+          ], permission=Permission.READ)],\n    )\n)\n\nprint(f\"Updated role information:\
+          \ {role.role_name}, {role.policies}\")\n"
+  /security/admin/rbac/v2/roles/{role_name}/groups:
+    get:
+      description: Fetch all groups that the role is assigned to.
+      operationId: fetch_role_groups_security_admin_rbac_v2_roles__role_name__groups_get
+      parameters:
+      - description: Name of the role
+        in: path
+        name: role_name
+        required: true
+        schema:
+          description: Name of the role
+          title: Role Name
+          type: string
+      - description: Set this if you would want to iterate through another page of
+          results for a subsequent request
+        in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to iterate through another page
+            of results for a subsequent request
+          title: Cursor
+      - description: Set this if you would want to filter the groups based on a partial
+          text match on group_names
+        in: query
+        name: filter
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to filter the groups based on a
+            partial text match on group_names
+          title: Filter
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupPage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Fetch role groups
+      x-codeSamples:
+      - lang: python
+        source: "from typing import Optional\n\nfrom cohere.compass.clients.access_control\
+          \ import CompassRootClient\nfrom cohere.compass.models.access_control import\
+          \ Group, PageDirection, PageInfo\n\nCOMPASS_API_URL = ...\nROOT_USER_TOKEN\
+          \ = ...\nROLE_NAME = ...\n\ncompass_root_client = CompassRootClient(\n \
+          \   compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\n\n\ndef get_all_role_groups(\n    role_name: str,\n    filter: Optional[str]\
+          \ = None,\n    page_info: Optional[PageInfo] = None,\n    groups: Optional[list[Group]]\
+          \ = None,\n    direction: Optional[PageDirection] = None,\n) -> list[Group]:\n\
+          \    role_pages = compass_root_client.get_role_groups_page(\n        role_name=role_name,\
+          \ filter=filter, page_info=page_info, direction=direction\n    )\n\n   \
+          \ groups = groups or []\n    groups.extend(role_pages.groups)\n\n    if\
+          \ not role_pages.page_info.has_next_page():\n        return groups\n\n \
+          \   return get_all_role_groups(\n        role_name=role_name,\n        filter=filter,\n\
+          \        page_info=role_pages.page_info,\n        groups=groups,\n     \
+          \   direction=PageDirection.NEXT,\n    )\n\n\ngroup = get_all_role_groups(role_name=ROLE_NAME)\n\
+          print(f\"Groups in role: {group}\")\n"
+  /security/admin/rbac/v2/root:
+    post:
+      description: Create a root user for the tenant identified from bearer token
+      operationId: create_root_user_security_admin_rbac_v2_root_post
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCreateResponse'
+          description: Successful Response
+      summary: Create Root User
+  /security/admin/rbac/v2/users:
+    get:
+      description: Fetches all users in the current Compass tenancy with pagination.
+        ROOT permission is required to access this API.
+      operationId: fetch_users_security_admin_rbac_v2_users_get
+      parameters:
+      - description: Set this if you would want to iterate through another page of
+          results for a subsequent request
+        in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to iterate through another page
+            of results for a subsequent request
+          title: Cursor
+      - description: Set this if you would want to filter the users based on a partial
+          text match on user_names
+        in: query
+        name: filter
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to filter the users based on a partial
+            text match on user_names
+          title: Filter
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Fetch users
+      x-codeSamples:
+      - lang: python
+        source: "from typing import Optional\n\nfrom cohere.compass.clients.access_control\
+          \ import CompassRootClient\nfrom cohere.compass.models.access_control import\
+          \ PageDirection, PageInfo, User\n\nCOMPASS_API_URL = ...\nROOT_USER_TOKEN\
+          \ = ...\n\ncompass_root_client = CompassRootClient(\n    compass_url=COMPASS_API_URL,\n\
+          \    root_user_token=ROOT_USER_TOKEN,\n)\n\n\ndef get_all_users(\n    filter:\
+          \ Optional[str] = None,\n    page_info: Optional[PageInfo] = None,\n   \
+          \ direction: Optional[PageDirection] = None,\n    users: Optional[list[User]]\
+          \ = None,\n) -> list[User]:\n    user_page = compass_root_client.get_users_page(\n\
+          \        filter=filter,\n        page_info=page_info,\n        direction=direction,\n\
+          \    )\n\n    users = users if users else []\n    users.extend(user_page.users)\n\
+          \    if not user_page.page_info.has_next_page():\n        return users\n\
+          \    return get_all_users(\n        filter=filter,\n        page_info=user_page.page_info,\n\
+          \        direction=PageDirection.NEXT,\n        users=users,\n    )\n\n\n\
+          users = get_all_users()\n\nfor user in users:\n    print(f\"User name {user.user_name}\"\
+          )\n"
+    post:
+      description: Create new user(s) in your current Compass tenancy. ROOT permission
+        is required to access this API.  Names must be unique, and requests to create
+        a user with an existing name will be rejected.
+      operationId: create_users_security_admin_rbac_v2_users_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/UserCreateRequest'
+              title: Users Request
+              type: array
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/UserCreateResponse'
+                title: Response Create Users Security Admin Rbac V2 Users Post
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create users
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import User\n\nCOMPASS_API_URL\
+          \ = ...\nROOT_USER_TOKEN = ...\n\ncompass_root_client = CompassRootClient(\n\
+          \    compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\n\nusers_with_token = compass_root_client.create_users(\n    users=[User(user_name=\"\
+          unique_user_name_1\"), User(user_name=\"unique_user_name_2\")]\n)\n\nfor\
+          \ user in users_with_token:\n    # Token is used to access the Compass API\
+          \ on behalf of the user\n    print(f\"User information: {user.user_name},\
+          \ Token: {user.token}\")\n"
+  /security/admin/rbac/v2/users/{user_names}:
+    delete:
+      description: Delete users by user name. ROOT permission is required to access
+        this API.
+      operationId: delete_users_security_admin_rbac_v2_users__user_names__delete
+      parameters:
+      - description: A comma separate list of the names of the users to be deleted
+        in: path
+        name: user_names
+        required: true
+        schema:
+          description: A comma separate list of the names of the users to be deleted
+          title: User Names
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/UserDeleteResponse'
+                title: Response Delete Users Security Admin Rbac V2 Users  User Names  Delete
+                type: array
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete users
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients.access_control import CompassRootClient\n\
+          \nCOMPASS_API_URL = ...\nROOT_USER_TOKEN = ...\n\ncompass_root_client =\
+          \ CompassRootClient(\n    compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\n\nusers = compass_root_client.delete_users(\n    user_names=[\"unique_user_name_1\"\
+          , \"unique_user_name_2\"]\n)\n\nfor user in users:\n    print(f\"Deleted\
+          \ users: {user.user_name}\")\n"
+  /security/admin/rbac/v2/users/{user_name}:
+    get:
+      description: Obtains a more detailed User object that is joined to the Groups
+        it is a member of.
+      operationId: fetch_user_security_admin_rbac_v2_users__user_name__get
+      parameters:
+      - description: The name of the user
+        in: path
+        name: user_name
+        required: true
+        schema:
+          description: The name of the user
+          title: User Name
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposedUser'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: User details
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients.access_control import CompassRootClient\n\
+          from cohere.compass.models.access_control import DetailedUser\n\nCOMPASS_API_URL\
+          \ = ...\nROOT_USER_TOKEN = ...\nUSER_NAME = ...\n\ncompass_root_client =\
+          \ CompassRootClient(\n    compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\n\ndetailed_user: DetailedUser = compass_root_client.get_detailed_user(user_name=USER_NAME)\n\
+          \nprint(f\"User name {detailed_user.user_name}\")\nprint(f\"User groups\
+          \ {detailed_user.groups}\")\n"
+  /security/admin/rbac/v2/users/{user_name}/groups:
+    get:
+      description: Fetches all groups that a user is member of in the current Compass
+        tenancy. ROOT permission is required to access this API.
+      operationId: fetch_user_groups_security_admin_rbac_v2_users__user_name__groups_get
+      parameters:
+      - description: Name of the user
+        in: path
+        name: user_name
+        required: true
+        schema:
+          description: Name of the user
+          title: User Name
+          type: string
+      - description: Set this if you would want to iterate through another page of
+          results for a subsequent request
+        in: query
+        name: cursor
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to iterate through another page
+            of results for a subsequent request
+          title: Cursor
+      - description: Set this if you would want to filter the groups based on a partial
+          text match on group_name
+        in: query
+        name: filter
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Set this if you would want to filter the groups based on a
+            partial text match on group_name
+          title: Filter
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupPage'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Fetch the Groups attached to a User
+      x-codeSamples:
+      - lang: python
+        source: "from typing import Optional\n\nfrom cohere.compass.clients.access_control\
+          \ import CompassRootClient\nfrom cohere.compass.models.access_control import\
+          \ Group, PageDirection, PageInfo\n\nCOMPASS_API_URL = ...\nROOT_USER_TOKEN\
+          \ = ...\nUSER_NAME = ...\n\ncompass_root_client = CompassRootClient(\n \
+          \   compass_url=COMPASS_API_URL,\n    root_user_token=ROOT_USER_TOKEN,\n\
+          )\n\n\ndef get_all_user_groups(\n    user_name: str,\n    filter: Optional[str]\
+          \ = None,\n    page_info: Optional[PageInfo] = None,\n    groups: Optional[list[Group]]\
+          \ = None,\n    direction: Optional[PageDirection] = None,\n) -> list[Group]:\n\
+          \    group_pages = compass_root_client.get_user_groups_page(\n        user_name=user_name,\
+          \ filter=filter, page_info=page_info, direction=direction\n    )\n\n   \
+          \ groups = groups or []\n    groups.extend(group_pages.groups)\n\n    if\
+          \ not group_pages.page_info.has_next_page():\n        return groups\n\n\
+          \    return get_all_user_groups(\n        user_name=user_name,\n       \
+          \ filter=filter,\n        page_info=group_pages.page_info,\n        groups=groups,\n\
+          \        direction=PageDirection.NEXT,\n    )\n\n\ngroups = get_all_user_groups(user_name=USER_NAME)\n\
+          print(f\"User groups: {groups}\")\n"
+  /v1/datasources/:
+    get:
+      description: List all datasources created by a user
+      operationId: list_datasources_v1_datasources__get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedList_DataSource_'
+          description: Successful Response
+      summary: List all datasources
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient\nfrom cohere.compass.models\
+          \ import PaginatedList\n\nCOMPASS_API_URL = ...\nBEARER_TOKEN = ...\n\n\
+          compass_client = CompassClient(\n    index_url=COMPASS_API_URL,\n    bearer_token=BEARER_TOKEN,\n\
+          )\nr = compass_client.list_datasources()\n\nif isinstance(r, str):\n   \
+          \ raise Exception(f\"Failed to list datasources: {r}\")\n\nif isinstance(r,\
+          \ PaginatedList):\n    datasources = r.value\n    for datasource in datasources:\n\
+          \        print(f\"Datasource id: {datasource.id}\")\n        print(f\"Datasource\
+          \ name: {datasource.name}\")\n        print(f\"Datasource description: {datasource.description}\"\
+          )\n        print(f\"Datasource enabled: {datasource.enabled}\")\n"
+    post:
+      description: Create a new datasource
+      operationId: create_datasource_v1_datasources__post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDataSource'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create a datasource
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient\nfrom cohere.compass.models\
+          \ import AzureBlobStorageConfig, CreateDataSource, DataSource\n\nCOMPASS_API_URL\
+          \ = ...\nBEARER_TOKEN = ...\nINDEX_NAME = ...\n\nDATASOURCE_ENABLED: bool\
+          \ = ...\nDATASOURCE_NAME = ...\nDATASOURCE_DESCRIPTION = ...\n\nAZURE_BLOB_STORAGE_CONNECTION_STRING\
+          \ = ...\nAZURE_BLOB_STORAGE_CONTAINER_NAME = ...\nAZURE_BLOB_STORAGE_NAME_STARTS_WITH\
+          \ = ...\n\ncompass_client = CompassClient(\n    index_url=COMPASS_API_URL,\n\
+          \    bearer_token=BEARER_TOKEN,\n)\n\ncompass_client.create_index(index_name=INDEX_NAME)\n\
+          \ndatasource = compass_client.create_datasource(\n    datasource=CreateDataSource(\n\
+          \        datasource=DataSource(\n            name=DATASOURCE_NAME,\n   \
+          \         description=DATASOURCE_DESCRIPTION,\n            config=AzureBlobStorageConfig(\n\
+          \                type=\"msft_azure_blob_storage\",\n                connection_string=AZURE_BLOB_STORAGE_CONNECTION_STRING,\n\
+          \                container_name=AZURE_BLOB_STORAGE_CONTAINER_NAME,\n   \
+          \             name_starts_with=AZURE_BLOB_STORAGE_NAME_STARTS_WITH,\n  \
+          \          ),\n            destinations=[INDEX_NAME],\n            enabled=DATASOURCE_ENABLED,\n\
+          \        )\n    )\n)\n\nif isinstance(datasource, str):\n    raise Exception(f\"\
+          Failed to create datasources: {datasource}\")\n\nif isinstance(datasource,\
+          \ DataSource):\n    print(datasource)\n"
+  /v1/datasources/config:
+    get:
+      description: List all available config types for datasources
+      operationId: list_configs_v1_datasources_config_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  type: string
+                title: Response List Configs V1 Datasources Config Get
+                type: array
+          description: Successful Response
+      summary: Available config types for datasourecs
+  /v1/datasources/config/{config_type}:
+    get:
+      description: Get the configuration schema for a datasource
+      operationId: get_config_v1_datasources_config__config_type__get
+      parameters:
+      - description: Config type returned from GET /config
+        in: path
+        name: config_type
+        required: true
+        schema:
+          description: Config type returned from GET /config
+          title: Config Type
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetConfigResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get datasource config
+  /v1/datasources/{datasource_id}:
+    delete:
+      description: Delete a specified data source
+      operationId: delete_datasource_v1_datasources__datasource_id__delete
+      parameters:
+      - description: Datasource uuid
+        in: path
+        name: datasource_id
+        required: true
+        schema:
+          description: Datasource uuid
+          format: uuid
+          title: Datasource Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete a datasource
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient\n\nCOMPASS_API_URL\
+          \ = ...\nBEARER_TOKEN = ...\n\nDATASOURCE_ID = ...\n\ncompass_client = CompassClient(\n\
+          \    index_url=COMPASS_API_URL,\n    bearer_token=BEARER_TOKEN,\n)\n\nr\
+          \ = compass_client.delete_datasource(datasource_id=DATASOURCE_ID)\n\nprint(r)\n"
+    get:
+      description: Retrieve the specific details around a datasource
+      operationId: get_datasource_v1_datasources__datasource_id__get
+      parameters:
+      - description: Datasource uuid
+        in: path
+        name: datasource_id
+        required: true
+        schema:
+          description: Datasource uuid
+          format: uuid
+          title: Datasource Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get a datasource
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient\n\nCOMPASS_API_URL\
+          \ = ...\nBEARER_TOKEN = ...\n\nDATASOURCE_ID = ...\n\ncompass_client = CompassClient(\n\
+          \    index_url=COMPASS_API_URL,\n    bearer_token=BEARER_TOKEN,\n)\n\nr\
+          \ = compass_client.get_datasource(datasource_id=DATASOURCE_ID)\n\nprint(r)\n"
+  /v1/datasources/{datasource_id}/_sync:
+    post:
+      description: Triggers the immediate syncing of a specified datasource
+      operationId: sync_datasource_v1_datasources__datasource_id___sync_post
+      parameters:
+      - description: Datasource uuid
+        in: path
+        name: datasource_id
+        required: true
+        schema:
+          description: Datasource uuid
+          format: uuid
+          title: Datasource Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Sync a datasource
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient\n\nCOMPASS_API_URL\
+          \ = ...\nBEARER_TOKEN = ...\n\nDATASOURCE_ID = ...\n\ncompass_client = CompassClient(\n\
+          \    index_url=COMPASS_API_URL,\n    bearer_token=BEARER_TOKEN,\n)\nr =\
+          \ compass_client.sync_datasource(\n    datasource_id=DATASOURCE_ID,\n)\n\
+          \nprint(r)\n"
+  /v1/datasources/{datasource_id}/documents/:
+    get:
+      description: List all document status for a given datasource
+      operationId: list_datasources_objects_states_v1_datasources__datasource_id__documents__get
+      parameters:
+      - description: Datasource uuid
+        in: path
+        name: datasource_id
+        required: true
+        schema:
+          description: Datasource uuid
+          format: uuid
+          title: Datasource Id
+          type: string
+      - description: Skip the first N documents, used for pagination
+        in: query
+        name: skip
+        required: true
+        schema:
+          anyOf:
+          - minimum: 0
+            type: integer
+          - type: 'null'
+          description: Skip the first N documents, used for pagination
+          title: Skip
+      - description: Limit the number of documents returned, used for pagination
+        in: query
+        name: limit
+        required: true
+        schema:
+          anyOf:
+          - maximum: 100
+            minimum: 0
+            type: integer
+          - type: 'null'
+          description: Limit the number of documents returned, used for pagination
+          title: Limit
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedList_DocumentStatus_'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Document status for a datasource
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient\nfrom cohere.compass.models\
+          \ import PaginatedList\n\nCOMPASS_API_URL = ...\nBEARER_TOKEN = ...\n\n\
+          DATASOURCE_ID = ...\n\ncompass_client = CompassClient(\n    index_url=COMPASS_API_URL,\n\
+          \    bearer_token=BEARER_TOKEN,\n)\nr = compass_client.list_datasources_objects_states(\n\
+          \    datasource_id=DATASOURCE_ID,\n)\n\nif isinstance(r, str):\n    raise\
+          \ Exception(f\"Failed to list datasources: {r}\")\n\nif isinstance(r, PaginatedList):\n\
+          \    documents = r.value\n    for document in documents:\n        print(f\"\
+          Document id: {document.document_id}\")\n        print(f\"Document state:\
+          \ {document.state}\")\n        print(f\"Document source id: {document.source_id}\"\
+          )\n        print(f\"Document destination: {document.destinations}\")\n"
+  /v1/indexes/:
+    get:
+      description: Returns a list of all indexes. If RBAC is enabled only indices
+        which the user has READ or WRITE permission are returned.
+      operationId: list_indexes_v1_indexes__get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListIndexesResponse'
+          description: Successful Response
+      summary: List all indexes
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient\n\nCOMPASS_API_URL\
+          \ = ...\nBEARER_TOKEN = ...\nINDEX_NAME = ...\n\ncompass_client = CompassClient(\n\
+          \    index_url=COMPASS_API_URL,\n    bearer_token=BEARER_TOKEN,\n)\n\nr\
+          \ = compass_client.list_indexes()\nif r.error:\n    raise Exception(f\"\
+          Failed to list indexes: {r.error}\")\n\nindexes = r.result[\"indexes\"]\n\
+          for index in indexes:\n    print(f\"Index name: {index['name']}\")\n   \
+          \ print(f\"Chunk count: {index['count']}\")\n    print(f\"Document count:\
+          \ {index['parent_doc_count']}\")\n"
+  /v1/indexes/_direct_search/scroll:
+    post:
+      description: Direct search with scroll. This endpoint allows users to paginate
+        through the search results.
+      operationId: direct_search_scroll_v1_indexes__direct_search_scroll_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectSearchScrollInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectSearchResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Direct search with scroll
+      x-codeSamples:
+      - lang: python
+        source: "from typing import Optional\n\nfrom cohere.compass.clients import\
+          \ CompassClient\nfrom cohere.compass.models import RetrievedChunkExtended\n\
+          \nCOMPASS_API_URL = ...\nBEARER_TOKEN = ...\nINDEX_NAME = ...\nDOCUMENT_ID\
+          \ = ...\n\ncompass_client = CompassClient(\n    index_url=COMPASS_API_URL,\n\
+          \    bearer_token=BEARER_TOKEN,\n)\n\nquery = {\"query\": {\"match_all\"\
+          : {}}}\n\n\ndef call_direct_search_scroll(\n    hits: list[RetrievedChunkExtended],\n\
+          \    scroll_id: Optional[str] = None,\n) -> list[RetrievedChunkExtended]:\n\
+          \    if hits is None:\n        hits = []\n\n    if scroll_id is None:\n\
+          \        return hits\n\n    results_scroll = compass_client.direct_search_scroll(\n\
+          \        scroll_id=scroll_id,\n        scroll=\"1m\",\n    )\n\n    hits.extend(results_scroll.hits)\n\
+          \    return call_direct_search_scroll(hits=hits, scroll_id=results.scroll_id)\n\
+          \n\nresults = compass_client.direct_search(\n    index_name=INDEX_NAME,\n\
+          \    query=query,\n    scroll=\"1m\",\n    size=100,\n)\n\nhits = call_direct_search_scroll(hits=results.hits,\
+          \ scroll_id=results.scroll_id)\n"
+  /v1/indexes/{index_name}:
+    delete:
+      description: Deletes the specified index. If RBAC is enabled only indices which
+        the user has WRITE permission are able to be deleted.
+      operationId: delete_index_v1_indexes__index_name__delete
+      parameters:
+      - description: The name of the index to be deleted
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index to be deleted
+          title: Index Name
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete an index
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient\n\nCOMPASS_API_URL\
+          \ = ...\nBEARER_TOKEN = ...\nINDEX_NAME = ...\n\ncompass_client = CompassClient(\n\
+          \    index_url=COMPASS_API_URL,\n    bearer_token=BEARER_TOKEN,\n)\n\nr\
+          \ = compass_client.delete_index(index_name=INDEX_NAME)\n\nif r.error:\n\
+          \    raise Exception(f\"Failed to delete index: {r.error}\")\n"
+    put:
+      description: Creates a new index with the specified name. If the index already
+        exists returns status code 200.
+      operationId: create_index_v1_indexes__index_name__put
+      parameters:
+      - description: 'The name of the index to be created - this has to be unique '
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: 'The name of the index to be created - this has to be unique '
+          title: Index Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/IndexConfigInput'
+              - type: 'null'
+              title: Index Config
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Create an index
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient\n\nCOMPASS_API_URL\
+          \ = ...\nBEARER_TOKEN = ...\nINDEX_NAME = ...\n\ncompass_client = CompassClient(\n\
+          \    index_url=COMPASS_API_URL,\n    bearer_token=BEARER_TOKEN,\n)\n\nr\
+          \ = compass_client.create_index(index_name=INDEX_NAME)\n\nif r.error:\n\
+          \    raise Exception(f\"Failed to create index: {r.error}\")\n"
+  /v1/indexes/{index_name}/_direct_search:
+    post:
+      description: Direct search into the index. This endpoint allows users to search
+        directly into the index without any processing.
+      operationId: direct_search_v1_indexes__index_name___direct_search_post
+      parameters:
+      - description: The name of the index to be searched
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index to be searched
+          title: Index Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectSearchInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectSearchResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Direct search into the index
+      x-codeSamples:
+      - lang: python
+        source: "from typing import Optional\n\nfrom cohere.compass.clients import\
+          \ CompassClient\nfrom cohere.compass.models import RetrievedChunkExtended\n\
+          \nCOMPASS_API_URL = ...\nBEARER_TOKEN = ...\nINDEX_NAME = ...\nDOCUMENT_ID\
+          \ = ...\n\ncompass_client = CompassClient(\n    index_url=COMPASS_API_URL,\n\
+          \    bearer_token=BEARER_TOKEN,\n)\n\nquery = {\"query\": {\"match_all\"\
+          : {}}}\n\n\ndef call_direct_search_scroll(\n    hits: list[RetrievedChunkExtended],\n\
+          \    scroll_id: Optional[str] = None,\n) -> list[RetrievedChunkExtended]:\n\
+          \    if hits is None:\n        hits = []\n\n    if scroll_id is None:\n\
+          \        return hits\n\n    results_scroll = compass_client.direct_search_scroll(\n\
+          \        scroll_id=scroll_id,\n        scroll=\"1m\",\n    )\n\n    hits.extend(results_scroll.hits)\n\
+          \    return call_direct_search_scroll(hits=hits, scroll_id=results.scroll_id)\n\
+          \n\nresults = compass_client.direct_search(\n    index_name=INDEX_NAME,\n\
+          \    query=query,\n    scroll=\"1m\",\n    size=100,\n)\n\nhits = call_direct_search_scroll(hits=results.hits,\
+          \ scroll_id=results.scroll_id)\n"
+  /v1/indexes/{index_name}/_flush:
+    post:
+      description: Flushes the documents  in memory for a given index to disk. This
+        is an intensive task and should be used sparingly, for example, for manual
+        restarts or to free up memory.
+      operationId: flush_index_v1_indexes__index_name___flush_post
+      parameters:
+      - description: The name of the index to be flushed
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index to be flushed
+          title: Index Name
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Flush an index
+  /v1/indexes/{index_name}/_refresh:
+    post:
+      description: Pushes newly inserted document to be made available for search
+        immediately.
+      operationId: refresh_index_v1_indexes__index_name___refresh_post
+      parameters:
+      - description: The name of the index to be refreshed
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index to be refreshed
+          title: Index Name
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Refresh an index
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient\n\nCOMPASS_API_URL\
+          \ = ...\nBEARER_TOKEN = ...\nINDEX_NAME = ...\n\ncompass_client = CompassClient(\n\
+          \    index_url=COMPASS_API_URL,\n    bearer_token=BEARER_TOKEN,\n)\n\nr\
+          \ = compass_client.refresh_index(index_name=INDEX_NAME)\nif r.error:\n \
+          \   raise Exception(f\"Failed to refresh indexes: {r.error}\")\n"
+  /v1/indexes/{index_name}/documents:
+    put:
+      description: This endpoint allows users to update or insert documents into a
+        specified index. By providing a PutDocumentsInput object, users can define
+        the documents to be added or modified. The PUT method is used to perform the
+        operation, ensuring that the documents are either updated or inserted into
+        the index. If RBAC is enabled, the user will need to be in a group with a
+        role that has WRITE permissions on the index.
+      operationId: put_documents_v1_indexes__index_name__documents_put
+      parameters:
+      - description: The name of the index for documents to be inserted into
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index for documents to be inserted into
+          title: Index Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutDocumentsInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutDocumentsResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Put documents into an index
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient, CompassParserClient\n\
+          \nCOMPASS_API_URL = ...\nPARSER_URL = ...\nBEARER_TOKEN = ...\nINDEX_NAME\
+          \ = ...\nFOLDER_TO_PROCESS = ...\n\ncompass_client = CompassClient(\n  \
+          \  index_url=COMPASS_API_URL,\n    bearer_token=BEARER_TOKEN,\n)\n\ncompass_parser_client\
+          \ = CompassParserClient(parser_url=PARSER_URL)\n\ndocs_to_index = compass_parser_client.process_folder(\n\
+          \    folder_path=FOLDER_TO_PROCESS, recursive=True\n)\n\ncompass_client.create_index(index_name=INDEX_NAME)\n\
+          r = compass_client.insert_docs(index_name=INDEX_NAME, docs=docs_to_index,\
+          \ num_jobs=1)\n\nprint(r)\n"
+  /v1/indexes/{index_name}/documents/_search:
+    post:
+      description: Perform a search query on the specified index and return a list
+        of relevant documents along with their scores. This returns a list of Document
+        objects, which contain all chunks from an indexed document. If RBAC is enabled
+        the user  will need to belong to a group with role that has READ permission
+        on the index.
+      operationId: search_documents_v1_indexes__index_name__documents__search_post
+      parameters:
+      - description: The name of the index to be searched
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index to be searched
+          title: Index Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchDocumentsResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Search Documents within an Index
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient\n\nCOMPASS_API_URL\
+          \ = ...\nBEARER_TOKEN = ...\nINDEX_NAME = ...\nDOCUMENT_ID = ...\nSEARCH_QUERY\
+          \ = ...\n\ncompass_client = CompassClient(\n    index_url=COMPASS_API_URL,\n\
+          \    bearer_token=BEARER_TOKEN,\n)\n\nr = compass_client.search_documents(index_name=INDEX_NAME,\
+          \ query=SEARCH_QUERY)\n\nif r.error:\n    raise Exception(f\"Failed to search\
+          \ doc: {r.error}\")\n\nprint(r.hits)\n"
+  /v1/indexes/{index_name}/documents/_search_chunks:
+    post:
+      description: Search for relevant chunks for a query from documents in a given
+        index. If the Compass Parser was used, the granularity returned can depend
+        on the document type.  If RBAC is enabled the user will need to be in a group
+        with a role that has READ permission on the index.
+      operationId: search_chunks_v1_indexes__index_name__documents__search_chunks_post
+      parameters:
+      - description: The name of the index to be searched
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index to be searched
+          title: Index Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchChunksResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Search Chunks within an Index
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient\n\nCOMPASS_API_URL\
+          \ = ...\nBEARER_TOKEN = ...\nINDEX_NAME = ...\nDOCUMENT_ID = ...\nSEARCH_QUERY\
+          \ = ...\n\ncompass_client = CompassClient(\n    index_url=COMPASS_API_URL,\n\
+          \    bearer_token=BEARER_TOKEN,\n)\n\nr = compass_client.search_chunks(index_name=INDEX_NAME,\
+          \ query=SEARCH_QUERY)\n\nif r.error:\n    raise Exception(f\"Failed to search:\
+          \ {r.error}\")\n\nprint(r.hits)\n"
+  /v1/indexes/{index_name}/documents/_upload:
+    post:
+      description: Push a list of documents for processing. The documents will be
+        processed asynchronously and will be available for search after processing
+        is complete.
+      operationId: upload_documents_v1_indexes__index_name__documents__upload_post
+      parameters:
+      - description: The name of the index for documents to be inserted into
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index for documents to be inserted into
+          title: Index Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadDocumentsRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadDocumentsResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Async Insertion of Documents into an Index
+      x-codeSamples:
+      - lang: python
+        source: "import uuid\n\nfrom cohere.compass.clients import CompassClient\n\
+          from cohere.compass.models import DocumentAttributes\n\nCOMPASS_API_URL\
+          \ = ...\nBEARER_TOKEN = ...\nINDEX_NAME = ...\nDOCUMENT_ID = ...\nFILE_PATH\
+          \ = ...\nFILE_NAME = ...\nCONTENT_TYPE = ...\n\ncompass_client = CompassClient(\n\
+          \    index_url=COMPASS_API_URL,\n    bearer_token=BEARER_TOKEN,\n)\n\ndoc_attr\
+          \ = DocumentAttributes()\ndoc_attr.key = \"value\"\n\nfile_path = FILE_PATH\n\
+          if not file_path:\n    raise Exception(\"FILE_PATH is required\")\n\nwith\
+          \ open(file_path, \"rb\") as f:\n    file_bytes = f.read()\n\nresult = compass_client.upload_document(\n\
+          \    index_name=INDEX_NAME,\n    filename=FILE_NAME,\n    filebytes=file_bytes,\n\
+          \    content_type=CONTENT_TYPE,\n    document_id=uuid.uuid4(),\n)\n\nprint(result)\n"
+  /v1/indexes/{index_name}/documents/{document_id}:
+    delete:
+      description: Delete a single document based on document_id from a particular
+        index. If RBAC is enabled the user will need to be in a group with WRITE permission
+        on the index.
+      operationId: delete_document_v1_indexes__index_name__documents__document_id__delete
+      parameters:
+      - description: The name of the index where the document should reside
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index where the document should reside
+          title: Index Name
+          type: string
+      - description: The id of the document to be deleted
+        in: path
+        name: document_id
+        required: true
+        schema:
+          description: The id of the document to be deleted
+          title: Document Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete a document
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient\n\nCOMPASS_API_URL\
+          \ = ...\nBEARER_TOKEN = ...\nINDEX_NAME = ...\nDOCUMENT_ID = ...\n\ncompass_client\
+          \ = CompassClient(\n    index_url=COMPASS_API_URL,\n    bearer_token=BEARER_TOKEN,\n\
+          )\n\nr = compass_client.delete_document(index_name=INDEX_NAME, document_id=DOCUMENT_ID)\n\
+          \nif r.error:\n    raise Exception(f\"Failed to delete doc: {r.error}\"\
+          )\n"
+    get:
+      description: Returns a single document based on document_id from a particular
+        index. If RBAC is enabled the user will need to be in a group with READ permission
+        on the index.
+      operationId: get_document_v1_indexes__index_name__documents__document_id__get
+      parameters:
+      - description: The name of the index where the document should reside
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index where the document should reside
+          title: Index Name
+          type: string
+      - description: The parent_document_id of the document to be retrieved
+        in: path
+        name: document_id
+        required: true
+        schema:
+          description: The parent_document_id of the document to be retrieved
+          title: Document Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get a Specific Document from an Index
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient\n\nCOMPASS_API_URL\
+          \ = ...\nBEARER_TOKEN = ...\nINDEX_NAME = ...\nDOCUMENT_ID = ...\n\ncompass_client\
+          \ = CompassClient(\n    index_url=COMPASS_API_URL,\n    bearer_token=BEARER_TOKEN,\n\
+          )\n\nr = compass_client.get_document(index_name=INDEX_NAME, document_id=DOCUMENT_ID)\n\
+          \nif r.error:\n    raise Exception(f\"Failed to get doc: {r.error}\")\n\n\
+          print(r.result.hits)\n"
+  /v1/indexes/{index_name}/documents/{document_id}/_add_attributes:
+    post:
+      description: Allows you to add attribues to the document for an index. The attributes
+        are added to a particular document based on the document_id. If RBAC is enabled
+        you will need WRITE permission on the index.
+      operationId: add_attributes_v1_indexes__index_name__documents__document_id___add_attributes_post
+      parameters:
+      - description: The name of the index where the document should reside
+        in: path
+        name: index_name
+        required: true
+        schema:
+          description: The name of the index where the document should reside
+          title: Index Name
+          type: string
+      - description: The document_id of the document to be updated
+        in: path
+        name: document_id
+        required: true
+        schema:
+          description: The document_id of the document to be updated
+          title: Document Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: The attributes to be added to the document
+              title: Attributes
+              type: object
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Add attributes using doc_id
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass.clients import CompassClient\nfrom cohere.compass.models\
+          \ import DocumentAttributes\n\nCOMPASS_API_URL = ...\nBEARER_TOKEN = ...\n\
+          INDEX_NAME = ...\nDOCUMENT_ID = ...\n\ncompass_client = CompassClient(\n\
+          \    index_url=COMPASS_API_URL,\n    bearer_token=BEARER_TOKEN,\n)\n\ndoc_attr\
+          \ = DocumentAttributes()\ndoc_attr.key = \"value\"\n\nerror = compass_client.add_attributes(\n\
+          \    index_name=INDEX_NAME,\n    document_id=DOCUMENT_ID,\n    attributes=doc_attr,\n\
+          )\n\nif error:\n    raise Exception(f\"Failed to add attributes: {error}\"\
+          )\n"
+  /v1/indexes/{index_name}/documents/{document_id}/assets/{asset_id}:
+    get:
+      description: Returns the asset associated with the asset id inside the document.
+      operationId: get_document_asset_v1_indexes__index_name__documents__document_id__assets__asset_id__get
+      parameters:
+      - in: path
+        name: index_name
+        required: true
+        schema:
+          title: Index Name
+          type: string
+      - in: path
+        name: document_id
+        required: true
+        schema:
+          title: Document Id
+          type: string
+      - in: path
+        name: asset_id
+        required: true
+        schema:
+          title: Asset Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get an Asset from a Document
+      x-codeSamples:
+      - lang: python
+        source: "import json\n\nfrom cohere.compass.clients import CompassClient\n\
+          \nCOMPASS_API_URL = ...\nBEARER_TOKEN = ...\nINDEX_NAME = ...\nDOCUMENT_ID\
+          \ = ...\nSEARCH_QUERY = ...\n\ncompass_client = CompassClient(\n    index_url=COMPASS_API_URL,\n\
+          \    bearer_token=BEARER_TOKEN,\n)\n\nresults = compass_client.search_chunks(index_name=INDEX_NAME,\
+          \ query=SEARCH_QUERY)\nif results.error:\n    raise Exception(f\"Failed\
+          \ to search chunks: {results.error}\")\n\nhits = results.hits\n\nif not\
+          \ hits:\n    raise Exception(\"No hits found\")\n\nhit = hits[0]\n\nasset_id:\
+          \ str = hit.assets_info[0].asset_id  # type: ignore\ndocument_id = hit.document_id\n\
+          # URL to fetch asset\npresigned_url = hit.assets_info[0].presigned_url\n\
+          \n### Get document asset again, after pre-signed url has expired\nasset,\
+          \ content_type = compass_client.get_document_asset(\n    index_name=document_id,\n\
+          \    document_id=DOCUMENT_ID,\n    asset_id=asset_id,\n)\n\n# Save the asset\
+          \ to a file.\nif content_type in [\"image/jpeg\", \"image/png\"]:\n    with\
+          \ open(f\"{asset_id}\", \"wb\") as f:\n        f.write(asset)\n# Print the\
+          \ asset as JSON\nelif \"text/json\" in content_type:\n    print(json.dumps(asset,\
+          \ indent=2))\n"
+  /v1/indexes/{index_name}/group_authorization:
+    post:
+      description: Update group authorization for documents, this is used in document
+        level security.
+      operationId: update_group_authorization_v1_indexes__index_name__group_authorization_post
+      parameters:
+      - in: path
+        name: index_name
+        required: true
+        schema:
+          title: Index Name
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupAuthorizationInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutDocumentsResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Update group authorization for documents
+      x-codeSamples:
+      - lang: python
+        source: "from cohere.compass import GroupAuthorizationInput\nfrom cohere.compass.clients\
+          \ import CompassClient\n\nCOMPASS_API_URL = ...\nBEARER_TOKEN = ...\nINDEX_NAME\
+          \ = ...\nDOCUMENT_ID = ...\nAUTHORIZED_GROUP_NAME = ...\n\ncompass_client\
+          \ = CompassClient(\n    index_url=COMPASS_API_URL,\n    bearer_token=BEARER_TOKEN,\n\
+          )\n\nr = compass_client.update_group_authorization(\n    index_name=INDEX_NAME,\n\
+          \    group_auth_input=GroupAuthorizationInput(\n        document_ids=[DOCUMENT_ID],\n\
+          \        authorized_groups=[AUTHORIZED_GROUP_NAME],\n        action=GroupAuthorizationInput.Actions.ADD,\n\
+          \    ),\n)\n\nfor doc in r.results:\n    if doc.error:\n        print(f\"\
+          Error processing doc: {doc.document_id}, error: {doc.error}\")\n       \
+          \ continue\n    print(f\"Successfully processed doc: {doc.document_id}\"\
+          )\n"
+  /v1/tasks/{task_id}:
+    get:
+      description: Status of tasks running in background
+      operationId: task_status_v1_tasks__task_id__get
+      parameters:
+      - in: path
+        name: task_id
+        required: true
+        schema:
+          title: Task Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get task status
+  /v1/webhooks/:
+    get:
+      description: Trigger syncs for a specific datasources passed in as a query parameter
+      operationId: on_trigger_syncs_v1_webhooks__get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Datasource, trigger syncs
+  /v1/webhooks/auth:
+    get:
+      description: Initiate the authentication flow for a datasource
+      operationId: auth_datasource_v1_webhooks_auth_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+      summary: Datasource, initiate auth flow
+servers:
+- url: /api
