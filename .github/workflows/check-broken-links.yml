@@ -1,0 +1,36 @@
+name: preview-docs
+
+on:
+  pull_request_target:
+    branches:
+      - main
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checkout PR
+        if: github.event_name == 'pull_request_target'
+        run: |
+          git fetch origin pull/${{ github.event.pull_request.number }}/head:pr-${{ github.event.pull_request.number }}
+          git checkout pr-${{ github.event.pull_request.number }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install Dependencies
+        shell: bash
+        run: pnpm install        
+
+      - name: Run fern broken links check
+        env:
+          FERN_TOKEN: ${{ secrets.FERN_TOKEN }}
+        run: pnpm docs:brokenLinks
+
