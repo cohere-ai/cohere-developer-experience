@@ -1,14 +1,15 @@
-import cohere
-import streamlit as st
+import json
 import os
 import textwrap
-import json
+
+import cohere
+import streamlit as st
 
 # Set up Cohere client
 co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
 
 def generate_idea(industry, temperature):
-    
+
     prompt = f"""
 Generate a startup idea given the industry. Return the startup idea and without additional commentary.
 
@@ -28,15 +29,16 @@ Industry: {industry}
 Startup Idea:"""
 
     # Call the Cohere Chat endpoint
-    response = co.chat( 
-            messages=[{"role": "user", "content": prompt}],
-            model="command-r-plus-08-2024", 
-            temperature=temperature)
-        
+    response = co.chat(
+        messages=[{"role": "user", "content": prompt}],
+        model="command-a-03-2025",
+        temperature=temperature,
+    )
+
     return response.message.content[0].text
 
 def generate_name(idea, temperature):
-    
+
     prompt= f"""
 Generate a startup name given the startup idea. Return the startup name and without additional commentary.
 
@@ -56,11 +58,12 @@ Startup Idea: {idea}
 Startup Name:"""
 
     # Call the Cohere Chat endpoint
-    response = co.chat( 
-            messages=[{"role": "user", "content": prompt}],
-            model="command-r-plus-08-2024", 
-            temperature=temperature)
-        
+    response = co.chat(
+        messages=[{"role": "user", "content": prompt}],
+        model="command-a-03-2025",
+        temperature=temperature,
+    )
+
     return response.message.content[0].text
 
 # The front end code starts here
