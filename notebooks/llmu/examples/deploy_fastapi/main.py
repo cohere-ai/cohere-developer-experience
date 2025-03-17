@@ -1,4 +1,5 @@
 import json
+
 import cohere
 from fastapi import FastAPI
 from pydantic import BaseModel, conlist
@@ -9,8 +10,8 @@ co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key: https://dashboar
 app = FastAPI()
 
 def classify_sentiment(product_review):
-        # Create prompt with examples
-        prompt = """Classify this text into positive, negative, or neutral sentiment. Here are some examples:
+    # Create prompt with examples
+    prompt = """Classify this text into positive, negative, or neutral sentiment. Here are some examples:
 
         Positive examples:
         - "The order came 5 days early"
@@ -36,31 +37,26 @@ def classify_sentiment(product_review):
         Text to classify:
         {}"""
 
-        res = co.chat(
-            model="command-r-plus-08-2024",
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt.format(product_review)
-                }
-            ],
-            temperature=0.0,
-            response_format={
-                "type": "json_object",
-                "schema": {
-                    "type": "object",
-                    "properties": {
-                        "class": {
-                            "type": "string",
-                            "enum": ["positive", "negative", "neutral"]
-                        }
-                    },
-                    "required": ["class"]
-                }
-            }
-        )
-        return json.loads(res.message.content[0].text)["class"]
-    
+    res = co.chat(
+        model="command-a-03-2025",
+        messages=[{"role": "user", "content": prompt.format(product_review)}],
+        temperature=0.0,
+        response_format={
+            "type": "json_object",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "class": {
+                        "type": "string",
+                        "enum": ["positive", "negative", "neutral"],
+                    }
+                },
+                "required": ["class"],
+            },
+        },
+    )
+    return json.loads(res.message.content[0].text)["class"]
+
 class ProductReviews(BaseModel):
     reviews: conlist(str, min_length=1)
 
