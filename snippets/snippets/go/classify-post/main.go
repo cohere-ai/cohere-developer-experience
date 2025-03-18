@@ -10,10 +10,12 @@ import (
 
 func main() {
 	co := client.NewClient()
+	model := "<YOUR-FINE-TUNED-MODEL-ID>"
 
 	resp, err := co.Classify(
 		context.TODO(),
 		&cohere.ClassifyRequest{
+			Model: &model,
 			Examples: []*cohere.ClassifyExample{
 				{
 					Text:  cohere.String("orange"),
