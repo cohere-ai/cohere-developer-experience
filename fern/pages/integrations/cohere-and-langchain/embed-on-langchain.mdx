@@ -1,5 +1,5 @@
 ---
-title: "Embed on LangChain"
+title: Cohere Embed on LangChain (Integration Guide)
 slug: "docs/embed-on-langchain"
 
 hidden: false
@@ -25,8 +25,9 @@ To use [Cohere's Embeddings](/docs/embeddings) with LangChain, create a [CohereE
 from langchain_cohere import CohereEmbeddings
 
 # Define the Cohere embedding model
-embeddings = CohereEmbeddings(cohere_api_key="COHERE_API_KEY",
-                              model="embed-english-v3.0")
+embeddings = CohereEmbeddings(
+    cohere_api_key="COHERE_API_KEY", model="embed-english-v3.0"
+)
 
 # Embed a document
 text = "This is a test document."
@@ -34,28 +35,37 @@ query_result = embeddings.embed_query(text)
 print(query_result[:5], "...")
 doc_result = embeddings.embed_documents([text])
 print(doc_result[0][:5], "...")
-
 ```
 
 To use these embeddings with Cohere's RAG functionality, you will need to use one of the vector DBs [from this list](https://python.langchain.com/docs/integrations/vectorstores). In this example we use chroma, so in order to run it you will need to install chroma using `pip install chromadb`.
 
 ```python PYTHON
-from langchain_cohere import ChatCohere, CohereEmbeddings, CohereRerank, CohereRagRetriever
+from langchain_cohere import (
+    ChatCohere,
+    CohereEmbeddings,
+    CohereRerank,
+    CohereRagRetriever,
+)
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_community.document_loaders import WebBaseLoader
 
-user_query =  "what is Cohere Toolkit?"
+user_query = "what is Cohere Toolkit?"
 
-llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
-                 model="command-r-plus-08-2024",
-                 temperature=0)
+llm = ChatCohere(
+    cohere_api_key="COHERE_API_KEY",
+    model="command-a-03-2025",
+    temperature=0,
+)
 
-embeddings = CohereEmbeddings(cohere_api_key="COHERE_API_KEY",
-                              model="embed-english-v3.0")
+embeddings = CohereEmbeddings(
+    cohere_api_key="COHERE_API_KEY", model="embed-english-v3.0"
+)
 
 # Load text files and split into chunks, you can also use data gathered elsewhere in your application
-raw_documents = WebBaseLoader("https://docs.cohere.com/docs/cohere-toolkit").load()
+raw_documents = WebBaseLoader(
+    "https://docs.cohere.com/docs/cohere-toolkit"
+).load()
 
 text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=0)
 documents = text_splitter.split_documents(raw_documents)
@@ -63,7 +73,7 @@ documents = text_splitter.split_documents(raw_documents)
 db = Chroma.from_documents(documents, embeddings)
 input_docs = db.as_retriever().invoke(user_query)
 
-# Create the cohere rag retriever using the chat model 
+# Create the cohere rag retriever using the chat model
 rag = CohereRagRetriever(llm=llm)
 docs = rag.invoke(
     user_query,
@@ -75,12 +85,12 @@ for doc in docs[:-1]:
     print(doc.metadata)
     print("\n\n" + doc.page_content)
     print("\n\n" + "-" * 30 + "\n\n")
-# Print the final generation 
+# Print the final generation
 answer = docs[-1].page_content
 print("Answer:")
 print(answer)
-# Print the final citations 
-citations = docs[-1].metadata['citations']
+# Print the final citations
+citations = docs[-1].metadata["citations"]
 print("Citations:")
 print(citations)
 ```
@@ -106,8 +116,19 @@ from langchain_aws import BedrockEmbeddings
 embeddings = BedrockEmbeddings(
     credentials_profile_name="{PROFILE-NAME}",
     region_name="us-east-1",
-    model_id="cohere.embed-english-v3"
+    model_id="cohere.embed-english-v3",
 )
 
 embeddings.embed_query("This is a content of the document")
+```
+### Using LangChain on Private Deployments
+
+You can use LangChain with privately deployed Cohere models. To use it, specify your model deployment URL in the `base_url` parameter.
+
+```python PYTHON
+llm = CohereEmbeddings(
+    base_url="<YOUR_DEPLOYMENT_URL>",
+    cohere_api_key="COHERE_API_KEY",
+    model="MODEL_NAME",
+)
 ```

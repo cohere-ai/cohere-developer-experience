@@ -13,7 +13,7 @@ const cohere = new CohereClient({});
     ],
     query: 'What is the capital of the United States?',
     topN: 3,
-    model: 'rerank-english-v3.0',
+    model: 'rerank-v3.5',
   });
 
   console.log(rerank);

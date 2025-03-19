@@ -1,0 +1,862 @@
+---
+title: "Using Cohere models via the OpenAI SDK"
+slug: "v2/docs/compatibility-api"
+
+hidden: true 
+description: "The document serves as a guide for Cohere's Compatibility API, which allows developers to seamlessly use Cohere's models using OpenAI's SDK."
+image: "../../../assets/images/b3c8253-cohere_meta_image.jpg"  
+keywords: "Cohere, text generation, LLMs, generative AI"
+
+createdAt: "Thu Feb 29 2024 18:13:25 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Thu May 23 2024 04:32:10 GMT+0000 (Coordinated Universal Time)"
+---
+The Compatibility API allows developers to use Cohere’s models through OpenAI’s SDK.
+
+It makes it easy to switch existing OpenAI-based applications to use Cohere’s models while still maintaining the use of OpenAI SDK — no big refactors needed.
+
+The supported libraries are:
+- TypeScript / JavaScript	
+- Python
+- .NET
+- Java (beta)
+- Go (beta)
+
+This is a quickstart guide to help you get started with the Compatibility API.
+
+## Installation
+
+First, install the OpenAI SDK and import the package.
+
+Then, create a client and configure it with the compatibility API base URL and your Cohere API key.
+
+<Tabs>
+<Tab title="Python">
+    
+```bash
+pip install openai
+```
+
+```python PYTHON
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.cohere.ai/compatibility/v1",
+    api_key="COHERE_API_KEY",
+)
+```
+
+</Tab>
+
+<Tab title="TypeScript">
+
+```bash
+npm install openai
+```
+
+```typescript TYPESCRIPT
+
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+    baseURL: "https://api.cohere.ai/compatibility/v1",
+    apiKey: "COHERE_API_KEY",
+});
+```
+</Tab>
+</Tabs>
+    
+
+## Basic chat completions
+
+Here’s a basic example of using the Chat Completions API.
+
+<Tabs>
+<Tab title="Python">
+    
+```python PYTHON
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.cohere.ai/compatibility/v1",
+    api_key="COHERE_API_KEY",
+)
+
+completion = client.chat.completions.create(
+    model="command-a-03-2025",
+    messages=[
+        {
+            "role": "user",
+            "content": "Write a haiku about recursion in programming.",
+        },
+    ],
+)
+
+print(completion.choices[0].message)
+```
+
+</Tab>
+
+<Tab title="TypeScript">
+
+```typescript TYPESCRIPT
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+    baseURL: "https://api.cohere.ai/compatibility/v1",
+    apiKey: "COHERE_API_KEY",
+    });
+
+const completion = await openai.chat.completions.create({
+    model: "command-a-03-2025",
+    messages: [
+        {
+            role: "user",
+            content: "Write a haiku about recursion in programming.",
+        },
+    ]
+});
+
+console.log(completion.choices[0].message);
+```
+
+</Tab>
+
+<Tab title="cURL">
+
+```bash
+curl --request POST \
+    --url https://api.cohere.ai/compatibility/v1/chat/completions \
+    --header 'Authorization: Bearer COHERE_API_KEY' \
+    --header 'Content-Type: application/json' \
+    --data '{
+    "model": "command-a-03-2025",
+    "messages": [
+    {
+        "role": "user", 
+        "content": "Write a haiku about recursion in programming."
+    }
+    ]
+}'
+```
+
+</Tab>
+
+</Tabs>
+    
+
+Example response (via the Python SDK):
+
+```mdx
+ChatCompletionMessage(content="Recursive loops,\nUnraveling code's depths,\nEndless, yet complete.", refusal=None, role='assistant', audio=None, function_call=None, tool_calls=None)
+```
+
+
+## Chat with streaming
+
+To stream the response, set the `stream` parameter to `True`.
+    
+<Tabs>
+<Tab title="Python">
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.cohere.ai/compatibility/v1",
+    api_key="COHERE_API_KEY",
+)
+
+stream = client.chat.completions.create(
+    model="command-a-03-2025",
+    messages=[
+        {
+            "role": "user",
+            "content": "Write a haiku about recursion in programming.",
+        },
+    ],
+    stream=True,
+)
+
+for chunk in stream:
+    print(chunk.choices[0].delta.content or "", end="")
+```
+
+</Tab>
+
+<Tab title="TypeScript">
+
+```typescript TYPESCRIPT
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+    baseURL: "https://api.cohere.ai/compatibility/v1",
+    apiKey: "COHERE_API_KEY",
+    });
+
+const completion = await openai.chat.completions.create({
+    model: "command-a-03-2025",
+    messages: [
+        {
+            role: "user",
+            content: "Write a haiku about recursion in programming.",
+        },
+    ],
+    stream: true,
+});
+
+for await (const chunk of completion) {
+    console.log(chunk.choices[0].delta.content);
+}
+```
+
+</Tab>
+
+<Tab title="cURL">
+
+```bash
+curl --request POST \
+    --url https://api.cohere.ai/compatibility/v1/chat/completions \
+    --header 'Authorization: Bearer COHERE_API_KEY' \
+    --header 'Content-Type: application/json' \
+    --data '{
+    "model": "command-a-03-2025",
+    "messages": [
+    {
+        "role": "user",
+        "content": "Write a haiku about recursion in programming."
+    }
+    ],
+    "stream": true
+}'
+```
+
+</Tab>
+
+</Tabs>
+
+Example response (via the Python SDK):
+
+```mdx
+Recursive call,
+Unraveling, line by line,
+Solving, then again.
+```
+
+## State management
+
+For state management, use the `messages` parameter to build the conversation history. 
+
+You can include a system message via the `developer` role and the multiple chat turns between the `user` and `assistant`.
+
+<Tabs>
+<Tab title="Python">
+    
+```python PYTHON
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.cohere.ai/compatibility/v1",
+    api_key="COHERE_API_KEY",
+)
+
+completion = client.chat.completions.create(
+    messages=[
+        {
+            "role": "developer",
+            "content": "You must respond in the style of a pirate.",
+        },
+        {
+            "role": "user",
+            "content": "What's 2 + 2.",
+        },
+        {
+            "role": "assistant",
+            "content": "Arrr, matey! 2 + 2 be 4, just like a doubloon in the sea!",
+        },
+        {
+            "role": "user",
+            "content": "Add 30 to that.",
+        },
+    ],
+    model="command-a-03-2025",
+)
+
+print(completion.choices[0].message)
+```
+
+</Tab>
+<Tab title="TypeScript">
+
+```typescript TYPESCRIPT
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+    baseURL: "https://api.cohere.ai/compatibility/v1",
+    apiKey: "COHERE_API_KEY",
+    });
+
+const completion = await openai.chat.completions.create({
+    model: "command-a-03-2025",
+    messages: [
+        {
+            role: "developer", 
+            content: "You must respond in the style of a pirate."
+        },
+        {
+            role: "user",
+            content: "What's 2 + 2.",
+        },
+        {
+            role: "assistant",
+            content: "Arrr, matey! 2 + 2 be 4, just like a doubloon in the sea!",
+        },
+        {
+            role: "user",
+            content: "Add 30 to that.",
+        }
+    ],
+    stream: true,
+});
+
+for await (const chunk of completion) {
+    console.log(chunk.choices[0].delta.content);
+}
+```
+
+</Tab>
+
+<Tab title="cURL">
+
+```bash
+curl --request POST \
+    --url https://api.cohere.ai/compatibility/v1/chat/completions \
+    --header 'Authorization: Bearer COHERE_API_KEY' \
+    --header 'Content-Type: application/json' \
+    --data '{
+    "model": "command-a-03-2025",
+    "messages": [
+    {
+        "role": "developer",
+        "content": "You must respond in the style of a pirate."
+    },
+    {
+        "role": "user",
+        "content": "What'\''s 2 + 2."
+    },
+    {
+        "role": "assistant", 
+        "content": "Arrr, matey! 2 + 2 be 4, just like a doubloon in the sea!"
+    },
+    {
+        "role": "user",
+        "content": "Add 30 to that."
+    }
+    ]
+}'
+```
+
+</Tab>
+
+</Tabs>
+
+Example response (via the Python SDK):
+
+```mdx
+ChatCompletionMessage(content='Aye aye, captain! 4 + 30 be 34, a treasure to behold!', refusal=None, role='assistant', audio=None, function_call=None, tool_calls=None)
+```
+
+## Structured outputs
+
+The Structured Outputs feature allows you to specify the schema of the model response. It guarantees that the response will strictly follow the schema. 
+
+To use it, set the `response_format` parameter to the JSON Schema of the desired output.
+
+<Tabs>
+<Tab title="Python">
+    
+```python PYTHON
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.cohere.ai/compatibility/v1",
+    api_key="COHERE_API_KEY",
+)
+
+completion = client.beta.chat.completions.parse(
+    model="command-a-03-2025",
+    messages=[
+        {
+            "role": "user",
+            "content": "Generate a JSON describing a book.",
+        }
+    ],
+    response_format={
+        "type": "json_object",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string"},
+                "author": {"type": "string"},
+                "publication_year": {"type": "integer"},
+            },
+            "required": ["title", "author", "publication_year"],
+        },
+    },
+)
+
+print(completion.choices[0].message.content)
+```
+
+</Tab>
+
+<Tab title="TypeScript">
+
+```typescript TYPESCRIPT
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+    baseURL: "https://api.cohere.ai/compatibility/v1",
+    apiKey: "COHERE_API_KEY",
+    });
+
+const completion = await openai.chat.completions.create({
+    model: "command-a-03-2025",
+    messages: [
+        {
+            role: "user",
+            content: "Generate a JSON describing a book.",
+        }
+    ],
+    response_format: {
+        type: "json_object",
+        schema: {
+            type: "object",
+            properties: {
+                title: {type: "string"},
+                author: {type: "string"},
+                publication_year: {type: "integer"},
+            },
+            required: ["title", "author", "publication_year"],
+        },
+    }
+});
+
+console.log(completion.choices[0].message);
+```
+
+</Tab>
+
+<Tab title="cURL">
+
+```bash
+curl --request POST \
+    --url https://api.cohere.ai/compatibility/v1/chat/completions \
+    --header 'Authorization: Bearer COHERE_API_KEY' \
+    --header 'Content-Type: application/json' \
+    --data '{
+    "model": "command-a-03-2025",
+    "messages": [
+    {
+        "role": "user",
+        "content": "Generate a JSON describing a book."
+    }
+    ],
+    "response_format": {
+    "type": "json_object",
+    "schema": {
+        "type": "object",
+        "properties": {
+        "title": {"type": "string"},
+        "author": {"type": "string"},
+        "publication_year": {"type": "integer"}
+        },
+        "required": ["title", "author", "publication_year"]
+    }
+    }
+}'
+```
+
+</Tab>
+
+</Tabs>
+
+Example response (via the Python SDK):
+
+```
+{
+    "title": "The Great Gatsby",
+    "author": "F. Scott Fitzgerald",
+    "publication_year": 1925
+}
+```
+
+## Tool use (function calling)
+
+You can utilize the tool use feature by passing a list of tools to the `tools` parameter in the API call.
+
+Specifying the `strict` parameter to `True` in the tool calling step will guarantee that every generated tool call follows the specified tool schema.
+
+<Tabs>
+<Tab title="Python">
+    
+```python PYTHON
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.cohere.ai/compatibility/v1",
+    api_key="COHERE_API_KEY",
+)
+
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_flight_info",
+            "description": "Get flight information between two cities or airports",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "loc_origin": {
+                        "type": "string",
+                        "description": "The departure airport, e.g. MIA",
+                    },
+                    "loc_destination": {
+                        "type": "string",
+                        "description": "The destination airport, e.g. NYC",
+                    },
+                },
+                "required": ["loc_origin", "loc_destination"],
+            },
+        },
+    }
+]
+
+messages = [
+    {"role": "developer", "content": "Today is April 30th"},
+    {
+        "role": "user",
+        "content": "When is the next flight from Miami to Seattle?",
+    },
+    {
+        "role": "assistant",
+        "tool_calls": [
+            {
+                "function": {
+                    "arguments": '{ "loc_destination": "Seattle", "loc_origin": "Miami" }',
+                    "name": "get_flight_info",
+                },
+                "id": "get_flight_info0",
+                "type": "function",
+            }
+        ],
+    },
+    {
+        "role": "tool",
+        "name": "get_flight_info",
+        "tool_call_id": "get_flight_info0",
+        "content": "Miami to Seattle, May 1st, 10 AM.",
+    },
+]
+
+completion = client.chat.completions.create(
+    model="command-a-03-2025",
+    messages=messages,
+    tools=tools,
+    temperature=0.7,
+)
+
+print(completion.choices[0].message)
+```
+
+</Tab>
+
+<Tab title="TypeScript">
+
+```typescript TYPESCRIPT
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+    baseURL: "https://api.cohere.ai/compatibility/v1",
+    apiKey: "COHERE_API_KEY",
+    });
+
+const completion = await openai.chat.completions.create({
+    model: "command-a-03-2025",
+    messages: [
+        {
+            role: "developer", 
+            content: "Today is April 30th"
+        },
+        {
+            role: "user",
+            content: "When is the next flight from Miami to Seattle?"
+        },
+        {
+            role: "assistant",
+            tool_calls: [
+                {
+                    function: {
+                        arguments: '{ "loc_destination": "Seattle", "loc_origin": "Miami" }',
+                        name: "get_flight_info"
+                    },
+                    id: "get_flight_info0",
+                    type: "function"
+                }
+            ]
+        },
+        {
+            role: "tool",
+            name: "get_flight_info",
+            tool_call_id: "get_flight_info0", 
+            content: "Miami to Seattle, May 1st, 10 AM."
+        }
+    ],
+    tools: [
+        {
+            type: "function",
+            function: {
+                name: "get_flight_info",
+                description: "Get flight information between two cities or airports",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        loc_origin: {
+                            type: "string",
+                            description: "The departure airport, e.g. MIA"
+                        },
+                        loc_destination: {
+                            type: "string",
+                            description: "The destination airport, e.g. NYC"
+                        }
+                    },
+                    required: ["loc_origin", "loc_destination"]
+                }
+            }
+        }
+    ],
+    temperature: 0.7
+});
+
+console.log(completion.choices[0].message);
+```
+
+</Tab>
+
+<Tab title="cURL">
+
+```bash
+curl --request POST \
+    --url https://api.cohere.ai/compatibility/v1/chat/completions \
+    --header 'Authorization: Bearer COHERE_API_KEY' \
+    --header 'Content-Type: application/json' \
+    --data '{
+    "model": "command-a-03-2025",
+    "messages": [
+        {
+        "role": "developer",
+        "content": "Today is April 30th"
+    },
+    {
+        "role": "user",
+        "content": "When is the next flight from Miami to Seattle?"
+    },
+        {
+        "role": "assistant",
+        "tool_calls": [
+            {
+                "function": {
+                    "arguments": "{ \"loc_destination\": \"Seattle\", \"loc_origin\": \"Miami\" }",
+                    "name": "get_flight_info"
+                },
+                "id": "get_flight_info0",
+                "type": "function"
+            }
+        ]
+    },
+    {
+        "role": "tool",
+        "name": "get_flight_info",
+        "tool_call_id": "get_flight_info0",
+        "content": "Miami to Seattle, May 1st, 10 AM."
+    }],
+    "tools": [
+    {
+        "type": "function",
+        "function": {
+            "name":"get_flight_info",
+            "description": "Get flight information between two cities or airports",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "loc_origin": {
+                        "type": "string",
+                        "description": "The departure airport, e.g. MIA"
+                    },
+                    "loc_destination": {
+                        "type": "string",
+                        "description": "The destination airport, e.g. NYC"
+                    }
+                },
+                "required": ["loc_origin", "loc_destination"]
+            }
+        }
+        }
+    ],
+    "temperature": 0.7
+}'
+```
+
+</Tab>
+
+</Tabs>
+
+Example response (via the Python SDK):
+
+```mdx
+ChatCompletionMessage(content='The next flight from Miami to Seattle is on May 1st, 10 AM.', refusal=None, role='assistant', audio=None, function_call=None, tool_calls=None)
+```
+
+## Embeddings
+
+You can generate text embeddings Embeddings API by passing a list of strings as the `input` parameter. You can also specify in `encoding_format` the format of embeddings to be generated. Can be either `float` or `base64`.
+
+<Tabs>
+<Tab title="Python">
+    
+```python PYTHON
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.cohere.ai/compatibility/v1",
+    api_key=COHERE_API_KEY,
+)
+
+response = client.embeddings.create(
+    input=["Hello world!"],
+    model="embed-multilingual-v3.0",
+    encoding_format="float",
+)
+
+print(
+    response.data[0].embedding[:5]
+)  # Display the first 5 dimensions
+```
+
+</Tab>
+
+<Tab title="TypeScript">
+
+```typescript TYPESCRIPT
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+    baseURL: "https://api.cohere.ai/compatibility/v1",
+    apiKey: "COHERE_API_KEY",
+    });
+
+const response = await openai.embeddings.create({
+    input: ["Hello world!"],
+    model: "embed-multilingual-v3.0",
+    encoding_format: "float"
+});
+
+console.log(response.data[0].embedding.slice(0, 5)); // Display the first 5 dimensions
+```
+
+</Tab>
+
+<Tab title="cURL">
+
+```bash
+curl --request POST \
+    --url https://api.cohere.ai/compatibility/v1/embeddings \
+    --header 'Authorization: Bearer COHERE_API_KEY' \
+    --header 'Content-Type: application/json' \
+    --data '{
+    "model": "embed-multilingual-v3.0",
+    "input": ["Hello world!"],
+    "encoding_format": "float"
+}'
+
+```
+
+</Tab>
+
+</Tabs>
+
+Example response (via the Python SDK):
+
+```mdx
+[0.0045051575, 0.046905518, 0.025543213, 0.009651184, -0.024993896]
+```
+
+## Supported parameters
+
+The following is the list supported parameters in the Compatibility API, including those that are not explicitly demonstrated in the examples above:
+
+### Chat completions
+
+- `model`
+- `messages`
+- `stream`
+- `response_format`
+- `tools`
+- `temperature`
+- `max_tokens`
+- `stop`
+- `seed`
+- `top_p`
+- `frequency_penalty`
+- `presence_penalty`
+
+
+### Embeddings
+
+- `input`
+- `model`
+- `encoding_format`
+
+## Unsupported parameters
+
+The following parameters are not supported in the Compatibility API:
+
+### Chat completions
+
+- `tool_choice`
+- `store`
+- `reasoning_effort`
+- `metadata`
+- `logit_bias`
+- `logprobs`
+- `top_logprobs`
+- `max_completion_tokens`
+- `n`
+- `modalities`
+- `prediction`
+- `audio`
+- `service_tier`
+- `stream_options`
+- `parallel_tool_calls`
+- `user`
+
+### Embeddings
+
+- `dimensions`
+- `user`
+
+### Cohere-specific parameters
+
+Parameters that are uniquely available on the Cohere API but not on the OpenAI SDK are not supported.
+
+Chat endpoint:
+
+- `connectors`
+- `documents`
+- `citation_options`
+- ...[more here](https://docs.cohere.com/reference/chat)
+
+Embed endpoint:
+- `input_type`
+- `images`
+- `truncate`
+- ...[more here](https://docs.cohere.com/reference/embed)

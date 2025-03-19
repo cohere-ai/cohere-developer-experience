@@ -1,5 +1,5 @@
 ---
-title: "Cohere on Azure"
+title: "Cohere on the Microsoft Azure Platform"
 slug: "v2/docs/cohere-on-microsoft-azure"
 
 hidden: false
@@ -9,7 +9,7 @@ image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "generative AI, large language models, Microsoft Azure"
 
 createdAt: "Mon Apr 08 2024 14:53:59 GMT+0000 (Coordinated Universal Time)"
-updatedAt: "Wed May 01 2024 16:11:36 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Tue Feb 25 2025 13:15:36 Mountain Standard Time (MST)"
 ---
 <Note title="Note"> 
 The code examples in this section use the Cohere v1 API. The v2 API is not yet supported for cloud deployments and will be coming soon.
@@ -17,14 +17,15 @@ The code examples in this section use the Cohere v1 API. The v2 API is not yet s
 
 In an effort to make our language-model capabilities more widely available, we've partnered with a few major platforms to create hosted versions of our offerings. 
 
-In this article, you learn how to use [Azure AI Studio](https://ai.azure.com/) to deploy both the Cohere Command models and the Cohere Embed models on Microsoft's Azure cloud computing platform.
+In this article, you learn how to use [Azure AI Foundry](https://ai.azure.com/) to deploy both the Cohere Command models and the Cohere Embed models on Microsoft's Azure cloud computing platform.
 
-The following six models are available through Azure AI Studio with pay-as-you-go, token-based billing:
+The following seven models are available through Azure AI Foundry with pay-as-you-go, token-based billing:
 
 - Command R (and the [refreshed Command R model](https://docs.cohere.com/docs/command-r#:~:text=Command%20R%20August%202024%20Release))
 - Command R+ (and the [refreshed Command R+ model](https://docs.cohere.com/docs/command-r-plus#:~:text=Command%20R%2B%20August%202024%20Release))
 - Embed v3 - English
 - Embed v3 - Multilingual
+- Cohere Rerank V3.5
 - Cohere Rerank V3 (English)
 - Cohere Rerank V3 (multilingual)
 
@@ -33,7 +34,7 @@ The following six models are available through Azure AI Studio with pay-as-you-g
 Whether you're using Command or Embed, the initial set up is the same. You'll need:
 
 - An Azure subscription with a valid payment method. Free or trial Azure subscriptions won't work. If you don't have an Azure subscription, create a [paid Azure account](https://azure.microsoft.com/pricing/purchase-options/pay-as-you-go) to begin.
-- An [Azure AI hub resource](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-azure-ai-resource). Note: for Cohere models, the pay-as-you-go deployment offering is only available with AI hubs created in the `EastUS`, `EastUS2` or `Sweden Central` regions.
+- An [Azure AI hub resource](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-azure-ai-resource). Note: for Cohere models, the pay-as-you-go deployment offering is only available with AI hubs created in the `East US`, `East US 2`, `North Central US`, `South Central US`, `Sweden Central`, `West US` or `West US 3` regions.
 - An [Azure AI project](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-projects) in Azure AI Studio.
 - Azure role-based access controls (Azure RBAC) are used to grant access to operations in Azure AI Studio. To perform the required steps, your user account must be assigned the Azure AI Developer role on the resource group. For more information on permissions, see [Role-based access control in Azure AI Studio](https://learn.microsoft.com/en-us/azure/ai-studio/concepts/rbac-ai-studio).
 
@@ -72,14 +73,19 @@ data = {
 body = str.encode(json.dumps(data))
 
 # Replace the url with your API endpoint
-url = "https://your-endpoint.inference.ai.azure.com/v1/chat/completions"
+url = (
+    "https://your-endpoint.inference.ai.azure.com/v1/chat/completions"
+)
 
 # Replace this with the key for the endpoint
 api_key = "your-auth-key"
 if not api_key:
     raise Exception("API Key is missing")
 
-headers = {"Content-Type": "application/json", "Authorization": (api_key)}
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": (api_key),
+}
 
 req = urllib.request.Request(url, body, headers)
 
@@ -114,9 +120,7 @@ import urllib.request
 import json
 
 # Configure payload data sending to API endpoint
-data = {
-    "input": ["hi"]
-}
+data = {"input": ["hi"]}
 
 body = str.encode(json.dumps(data))
 
@@ -128,7 +132,10 @@ api_key = "your-auth-key"
 if not api_key:
     raise Exception("API Key is missing")
 
-headers = {"Content-Type": "application/json", "Authorization": (api_key)}
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": (api_key),
+}
 
 req = urllib.request.Request(url, body, headers)
 
@@ -143,7 +150,7 @@ except urllib.error.HTTPError as error:
     print(error.read().decode("utf8", "ignore"))
 ```
 
-## ReRank
+## Rerank
 
 We currently exposes the `v1/rerank` endpoint for inference with both Rerank 3 - English and Rerank 3 - Multilingual. For more information on using the APIs, see the [reference](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-rerank#rerank-api-reference-for-cohere-rerank-models-deployed-as-a-service) section. 
 
@@ -152,7 +159,7 @@ import cohere
 
 co = cohere.Client(
     base_url="https://<endpoint>.<region>.inference.ai.azure.com/v1",
-    api_key="<key>"
+    api_key="<key>",
 )
 
 documents = [
@@ -202,8 +209,100 @@ response = co.rerank(
 )
 ```
 
-## A Note on SDKs
+## Using the Cohere SDK
 
-You should be aware that it's possible to use the cohere SDK client to consume Azure AI deployments. Here are example notes for [Command](https://github.com/Azure/azureml-examples/blob/main/sdk/python/foundation-models/cohere/cohere-cmdR.ipynb) and [Embed](https://github.com/Azure/azureml-examples/blob/main/sdk/python/foundation-models/cohere/cohere-embed.ipynb). 
+You can use the Cohere SDK client to consume Cohere models that are deployed via Azure AI Foundry. This means you can leverage the SDK's features such as RAG, tool use, structured outputs, and more.
+
+The following are a few examples on how to use the SDK for the different models.
+
+### Setup
+```python PYTHON
+# pip install cohere
+
+import cohere
+
+# For Command models
+co_chat = cohere.Client(
+    api_key="AZURE_INFERENCE_CREDENTIAL",
+    base_url="AZURE_MODEL_ENDPOINT",  # Example - https://Cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/
+)
+
+# For Embed models
+co_embed = cohere.Client(
+    api_key="AZURE_INFERENCE_CREDENTIAL",
+    base_url="AZURE_MODEL_ENDPOINT",  # Example - https://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/
+)
+
+# For Rerank models
+co_rerank = cohere.Client(
+    api_key="AZURE_INFERENCE_CREDENTIAL",
+    base_url="AZURE_MODEL_ENDPOINT",  # Example - https://cohere-rerank-v3-multilingual-xyz.eastus.models.ai.azure.com/
+)
+```
+
+### Chat
+```python PYTHON
+message = "I'm joining a new startup called Co1t today. Could you help me write a short introduction message to my teammates."
+
+response = co_chat.chat(message=message)
+
+print(response)
+```
+### RAG
+```python PYTHON
+faqs_short = [
+    {
+        "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+    },
+    {
+        "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+    },
+]
+
+query = "Are there fitness-related perks?"
+
+response = co_chat.chat(message=query, documents=faqs_short)
+
+print(response)
+```
+
+### Embed
+```python PYTHON
+docs = [
+    "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.",
+    "Finding Coffee Spots: For your caffeine fix, head to the break room's coffee machine or cross the street to the café for artisan coffee.",
+]
+
+doc_emb = co_embed.embed(
+    input_type="search_document",
+    texts=docs,
+).embeddings
+```
+
+### Rerank
+```python PYTHON
+faqs_short = [
+    {
+        "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+    },
+    {
+        "text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."
+    },
+    {
+        "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+    },
+]
+
+query = "Are there fitness-related perks?"
+
+results = co_rerank.rerank(
+    query=query,
+    documents=faqs_short,
+    top_n=2,
+    model="rerank-english-v3.0",
+)
+```
+
+Here are some other examples for [Command](https://github.com/Azure/azureml-examples/blob/main/sdk/python/foundation-models/cohere/cohere-cmdR.ipynb) and [Embed](https://github.com/Azure/azureml-examples/blob/main/sdk/python/foundation-models/cohere/cohere-embed.ipynb). 
 
 The important thing to understand is that our new and existing customers can call the models from Azure while still leveraging their integration with the Cohere SDK.

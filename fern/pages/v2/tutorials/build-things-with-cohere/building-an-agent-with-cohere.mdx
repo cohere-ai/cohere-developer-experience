@@ -1,5 +1,5 @@
 ---
-title: Building an Agent with Cohere
+title: Building a Generative AI Agent with Cohere
 slug: /v2/docs/building-an-agent-with-cohere
 
 description: "This page describes building a generative-AI powered agent with Cohere."
@@ -7,7 +7,7 @@ image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "Cohere, agents"
 ---
 
-<a target="_blank" href="https://colab.research.google.com/github/cohere-ai/notebooks/blob/main/notebooks/guides/getting-started/v2/tutorial_pt7.ipynb">Open in Colab</a>
+<a target="_blank" href="https://colab.research.google.com/github/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/getting-started/v2/tutorial_pt7_v2.ipynb">Open in Colab</a>
 
 Tool use extends the ideas from [RAG](/v2/docs/rag-with-cohere), where external systems are used to guide the response of an LLM, but by leveraging a much bigger set of tools than what’s possible with RAG. The concept of tool use leverages LLMs' useful feature of being able to act as a reasoning and decision-making engine.
 
@@ -30,13 +30,13 @@ To get started, first we need to install the `cohere` library and create a Coher
 
 
 ```python PYTHON
-
 # pip install cohere
 
 import cohere
 import json
 
-co = cohere.ClientV2(api_key="COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
+# Get your free API key: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(api_key="COHERE_API_KEY")
 ```
 
 ## Creating tools
@@ -53,27 +53,48 @@ Here, we are defining a Python function for each tool, but more broadly, the too
 # Create the tools
 def search_faqs(query):
     faqs = [
-        {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
-        {"text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."}
+        {
+            "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+        },
+        {
+            "text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."
+        },
     ]
     return faqs
 
+
 def search_emails(query):
     emails = [
-        {"from": "it@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "Setting Up Your IT Needs", "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts."},
-        {"from": "john@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "First Week Check-In", "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!"}
+        {
+            "from": "it@co1t.com",
+            "to": "david@co1t.com",
+            "date": "2024-06-24",
+            "subject": "Setting Up Your IT Needs",
+            "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.",
+        },
+        {
+            "from": "john@co1t.com",
+            "to": "david@co1t.com",
+            "date": "2024-06-24",
+            "subject": "First Week Check-In",
+            "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!",
+        },
     ]
     return emails
-    
+
+
 def create_calendar_event(date: str, time: str, duration: int):
     # You can implement any logic here
-    return {"is_success": True,
-            "message": f"Created a {duration} hour long event at {time} on {date}"}
-    
+    return {
+        "is_success": True,
+        "message": f"Created a {duration} hour long event at {time} on {date}",
+    }
+
+
 functions_map = {
     "search_faqs": search_faqs,
     "search_emails": search_emails,
-    "create_calendar_event": create_calendar_event
+    "create_calendar_event": create_calendar_event,
 }
 ```
 
@@ -98,12 +119,12 @@ tools = [
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "The query from the user"
+                        "description": "The query from the user",
                     }
                 },
-                "required": ["query"]
-            }
-        }
+                "required": ["query"],
+            },
+        },
     },
     {
         "type": "function",
@@ -115,12 +136,12 @@ tools = [
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "The query from the user"
+                        "description": "The query from the user",
                     }
                 },
-                "required": ["query"]
-            }
-        }
+                "required": ["query"],
+            },
+        },
     },
     {
         "type": "function",
@@ -132,21 +153,21 @@ tools = [
                 "properties": {
                     "date": {
                         "type": "string",
-                        "description": "the date on which the event starts, formatted as mm/dd/yy"
+                        "description": "the date on which the event starts, formatted as mm/dd/yy",
                     },
                     "time": {
                         "type": "string",
-                        "description": "the time of the event, formatted using 24h military time formatting"
+                        "description": "the time of the event, formatted using 24h military time formatting",
                     },
                     "duration": {
                         "type": "number",
-                        "description": "the number of hours the event lasts for"
-                    }
+                        "description": "the number of hours the event lasts for",
+                    },
                 },
-                "required": ["date", "time", "duration"]
-            }
-        }
-    }
+                "required": ["date", "time", "duration"],
+            },
+        },
+    },
 ]
 ```
 
@@ -167,7 +188,7 @@ At its most basic, these four components interact in a workflow through four ste
 
 ```python PYTHON
 # Create custom system message
-system_message="""## Task and Context
+system_message = """## Task and Context
 You are an assistant who assist new employees of Co1t with their first week. You respond to their questions and assist them with their needs. Today is Monday, June 24, 2024"""
 
 
@@ -175,25 +196,33 @@ You are an assistant who assist new employees of Co1t with their first week. You
 message = "Is there any message about getting setup with IT?"
 
 # Add the system and user messages to the chat history
-messages = [{"role": "system", "content": system_message},
-            {"role": "user", "content": message}]
+messages = [
+    {"role": "system", "content": system_message},
+    {"role": "user", "content": message},
+]
 
 # Step 2: Tool planning and calling
 response = co.chat(
-        model="command-r-plus-08-2024",
-        messages=messages,
-        tools=tools
-    )
+    model="command-a-03-2025", messages=messages, tools=tools
+)
 
-if response.message.tool_calls:    
+if response.message.tool_calls:
     print("Tool plan:")
-    print(response.message.tool_plan,"\n")
+    print(response.message.tool_plan, "\n")
     print("Tool calls:")
     for tc in response.message.tool_calls:
-        print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
-        
+        print(
+            f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}"
+        )
+
     # Append tool calling details to the chat history
-    messages.append({"role": "assistant", "tool_calls": response.message.tool_calls, "tool_plan": response.message.tool_plan})
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_calls": response.message.tool_calls,
+            "tool_plan": response.message.tool_plan,
+        }
+    )
 ```
 ```
 Tool plan:
@@ -213,13 +242,26 @@ Also, notice that the model first generates a plan about what it should do ("I w
 ```python PYTHON
 # Step 3: Tool execution
 for tc in response.message.tool_calls:
-    tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
+    tool_result = functions_map[tc.function.name](
+        **json.loads(tc.function.arguments)
+    )
     tool_content = []
     for data in tool_result:
-        tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+        tool_content.append(
+            {
+                "type": "document",
+                "document": {"data": json.dumps(data)},
+            }
+        )
         # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
     # Append tool results to the chat history
-    messages.append({"role": "tool", "tool_call_id": tc.id, "content": tool_content})
+    messages.append(
+        {
+            "role": "tool",
+            "tool_call_id": tc.id,
+            "content": tool_content,
+        }
+    )
 
     print("Tool results:")
     for result in tool_content:
@@ -237,18 +279,18 @@ Tool results:
 ```python PYTHON
 # Step 4: Response and citation generation
 response = co.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools
+    model="command-a-03-2025", messages=messages, tools=tools
 )
 
 # Append assistant response to the chat history
-messages.append({"role": "assistant", "content": response.message.content[0].text})
+messages.append(
+    {"role": "assistant", "content": response.message.content[0].text}
+)
 
 # Print final response
 print("Response:")
 print(response.message.content[0].text)
-print("="*50)
+print("=" * 50)
 
 # Print citations (if any)
 if response.message.citations:
@@ -276,42 +318,47 @@ Let's create a function to called `run_assistant` to implement these steps, and 
 
 
 ```python PYTHON
-model = "command-r-plus-08-2024"
+model = "command-a-03-2025"
 
-system_message="""## Task and Context
+system_message = """## Task and Context
 You are an assistant who assists new employees of Co1t with their first week. You respond to their questions and assist them with their needs. Today is Monday, June 24, 2024"""
+
 
 def run_assistant(query, messages=None):
     if messages is None:
         messages = []
-        
+
     if "system" not in {m.get("role") for m in messages}:
         messages.append({"role": "system", "content": system_message})
-    
+
     # Step 1: get user message
     print(f"Question:\n{query}")
-    print("="*50)
-    
+    print("=" * 50)
+
     messages.append({"role": "user", "content": query})
 
     # Step 2: Generate tool calls (if any)
-    response = co.chat(
-        model=model,
-        messages=messages,
-        tools=tools
-    )
+    response = co.chat(model=model, messages=messages, tools=tools)
 
     while response.message.tool_calls:
-        
+
         print("Tool plan:")
-        print(response.message.tool_plan,"\n")
+        print(response.message.tool_plan, "\n")
         print("Tool calls:")
         for tc in response.message.tool_calls:
-            print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
-        print("="*50)
+            print(
+                f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}"
+            )
+        print("=" * 50)
 
-        messages.append({"role": "assistant", "tool_calls": response.message.tool_calls, "tool_plan": response.message.tool_plan})        
-        
+        messages.append(
+            {
+                "role": "assistant",
+                "tool_calls": response.message.tool_calls,
+                "tool_plan": response.message.tool_plan,
+            }
+        )
+
         # Step 3: Get tool results
         for idx, tc in enumerate(response.message.tool_calls):
             tool_result = functions_map[tc.function.name](
@@ -319,32 +366,44 @@ def run_assistant(query, messages=None):
             )
             tool_content = []
             for data in tool_result:
-                tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+                tool_content.append(
+                    {
+                        "type": "document",
+                        "document": {"data": json.dumps(data)},
+                    }
+                )
                 # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
             messages.append(
-                {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
+                {
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": tool_content,
+                }
             )
-        
-        # Step 4: Generate response and citations 
+
+        # Step 4: Generate response and citations
         response = co.chat(
-            model=model,
-            messages=messages,
-            tools=tools
+            model=model, messages=messages, tools=tools
         )
-    
-    messages.append({"role": "assistant", "content": response.message.content[0].text})
-        
+
+    messages.append(
+        {
+            "role": "assistant",
+            "content": response.message.content[0].text,
+        }
+    )
+
     # Print final response
     print("Response:")
     print(response.message.content[0].text)
-    print("="*50)
-    
+    print("=" * 50)
+
     # Print citations (if any)
     if response.message.citations:
         print("\nCITATIONS:")
         for citation in response.message.citations:
             print(citation, "\n")
-    
+
     return messages
 ```
 
@@ -358,7 +417,9 @@ This is also an example of tool use enabling a write operation instead of just a
 
 
 ```python PYTHON
-messages = run_assistant("Can you check if there are any lunch invites, and for those days, create a one-hour event on my calendar at 12PM.")
+messages = run_assistant(
+    "Can you check if there are any lunch invites, and for those days, create a one-hour event on my calendar at 12PM."
+)
 ```
 ```
 Question:

@@ -1,5 +1,5 @@
 ---
-title: "Starting the Chat Fine-Tuning"
+title: "Starting the Chat Fine-Tuning Run"
 slug: "v2/docs/chat-starting-the-training"
 
 hidden: false
@@ -20,7 +20,7 @@ Fine-tuning of the Command family of models for Chat with the Web UI consists of
 
 ### Choose the Chat Option
 
-Go to the [fine-tuning page](http://dashboard.cohere.com/fine-tuning) and click on 'Create a Chat model'.
+Go to the [fine-tuning page](https://dashboard.cohere.com/fine-tuning) and click on 'Create a Chat model'.
 
 <img src='../../../../assets/images/465773a-image.png' />
 
@@ -146,19 +146,23 @@ Using the `co.finetuning.create_finetuned_model()` method of the Cohere client, 
 ```python PYTHON
 import cohere
 
-co = cohere.ClientV2('Your API key')
+co = cohere.ClientV2("Your API key")
 
 # Single train file upload
-chat_dataset = co.datasets.create(name="chat-dataset",
-                                   data=open("path/to/train.jsonl", "rb"),
-                                   type="chat-finetune-input")
+chat_dataset = co.datasets.create(
+    name="chat-dataset",
+    data=open("path/to/train.jsonl", "rb"),
+    type="chat-finetune-input",
+)
 print(co.wait(chat_dataset))
 
 # Uploading both train and eval file
-chat_dataset_with_eval = co.datasets.create(name="chat-dataset-with-eval",
-                                           data=open("path/to/train.jsonl, "rb"),
-                                           eval_data=open("path/to/eval.jsonl, "rb"),
-                                           type="chat-finetune-input")
+chat_dataset_with_eval = co.datasets.create(
+    name="chat-dataset-with-eval",
+    data=open("path/to/train.jsonl", "rb"),
+    eval_data=open("path/to/eval.jsonl", "rb"),
+    type="chat-finetune-input",
+)
 print(co.wait(chat_dataset_with_eval))
 ```
 
@@ -211,20 +215,28 @@ Once a fine-tuned model has been created with a specified Weights and Biases con
 
 ```python PYTHON
 import cohere
-from cohere.finetuning import Hyperparameters, Settings, FinetunedModel, BaseModel, WandbConfig
+from cohere.finetuning import (
+    Hyperparameters,
+    Settings,
+    FinetunedModel,
+    BaseModel,
+    WandbConfig,
+)
 
-co = cohere.ClientV2('Your API key')
+co = cohere.ClientV2("Your API key")
 
-chat_dataset = co.datasets.create(name="chat-dataset",
-                                  data=open("path/to/train.jsonl", "rb"),
-                                  type="chat-finetune-input")
+chat_dataset = co.datasets.create(
+    name="chat-dataset",
+    data=open("path/to/train.jsonl", "rb"),
+    type="chat-finetune-input",
+)
 # optional (define custom hyperparameters)
 hp = Hyperparameters(
-  early_stopping_patience=10,
-  early_stopping_threshold=0.001,
-  train_batch_size=16,
-  train_epochs=1,
-  learning_rate=0.01,
+    early_stopping_patience=10,
+    early_stopping_threshold=0.001,
+    train_batch_size=16,
+    train_epochs=1,
+    learning_rate=0.01,
 )
 
 # optional (define wandb configuration)
@@ -235,17 +247,17 @@ wnb_config = WandbConfig(
 )
 
 create_response = co.finetuning.create_finetuned_model(
-  request=FinetunedModel(
-    name="customer-service-chat-model",
-    settings=Settings(
-      base_model=BaseModel(
-        base_type="BASE_TYPE_CHAT",
-      ),
-      dataset_id=chat_dataset.id,
-      hyperparameters=hp,
-      wandb=wnb_config,
+    request=FinetunedModel(
+        name="customer-service-chat-model",
+        settings=Settings(
+            base_model=BaseModel(
+                base_type="BASE_TYPE_CHAT",
+            ),
+            dataset_id=chat_dataset.id,
+            hyperparameters=hp,
+            wandb=wnb_config,
+        ),
     ),
-  ),
 )
 ```
 
@@ -264,17 +276,24 @@ Here's a Python script to make this clearer:
 ```python PYTHON
 import cohere
 
-co = cohere.ClientV2('Your API key')
+co = cohere.ClientV2("Your API key")
 # get the fine-tuned model object
-get_response = co.finetuning.get_finetuned_model(create_response.finetuned_model.id)
+get_response = co.finetuning.get_finetuned_model(
+    create_response.finetuned_model.id
+)
 
 response = co.chat(
-  model=get_response.finetuned_model.id+"-ft",
-  # Required - user message. Optional (to specify a preamble/system message)
-  messages=[{"role": "system", "content": "You are a chatbot trained to answer to my every question. Answer every question with full sentences."},
-            {"role": "user", "content": "Hi there"}],
-  # optional
-  return_prompt=True
+    model=get_response.finetuned_model.id + "-ft",
+    # Required - user message. Optional (to specify a preamble/system message)
+    messages=[
+        {
+            "role": "system",
+            "content": "You are a chatbot trained to answer to my every question. Answer every question with full sentences.",
+        },
+        {"role": "user", "content": "Hi there"},
+    ],
+    # optional
+    return_prompt=True,
 )
 
 # Printing the model's response.
@@ -286,12 +305,20 @@ After your first message with the model, you can build the `messages` list with 
 ```python PYTHON
 # Continuing the above conversation with `response.id`.
 response_2 = co.chat(
-  model=get_response.finetuned_model.id+"-ft",
-  # optional (to specify a preamble)
-  messages=[{"role": "system", "content": "You are an assistant trained to answer my questions. Answer in complete sentences."},
-            {"role": "user", "content": "Hi there"},
-            {"role": "assistant", "content": response.message.content[0].text},
-            {"role": "user", "content": "How are you?"}],
+    model=get_response.finetuned_model.id + "-ft",
+    # optional (to specify a preamble)
+    messages=[
+        {
+            "role": "system",
+            "content": "You are an assistant trained to answer my questions. Answer in complete sentences.",
+        },
+        {"role": "user", "content": "Hi there"},
+        {
+            "role": "assistant",
+            "content": response.message.content[0].text,
+        },
+        {"role": "user", "content": "How are you?"},
+    ],
 )
 ```
 

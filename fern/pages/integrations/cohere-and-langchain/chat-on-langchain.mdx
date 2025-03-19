@@ -1,5 +1,5 @@
 ---
-title: Chat on LangChain
+title: Cohere Chat on LangChain (Integration Guide)
 slug: docs/chat-on-langchain
 hidden: false
 description: >-
@@ -25,8 +25,9 @@ from langchain_cohere import ChatCohere
 from langchain_core.messages import AIMessage, HumanMessage
 
 # Define the Cohere LLM
-llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
-                 model="command-r-plus-08-2024")
+llm = ChatCohere(
+    cohere_api_key="COHERE_API_KEY", model="command-a-03-2025"
+)
 
 # Send a chat message without chat history
 current_message = [HumanMessage(content="knock knock")]
@@ -36,7 +37,8 @@ print(llm.invoke(current_message))
 current_message_and_history = [
     HumanMessage(content="knock knock"),
     AIMessage(content="Who's there?"),
-    HumanMessage(content="Tank") ]
+    HumanMessage(content="Tank"),
+]
 print(llm.invoke(current_message_and_history))
 ```
 
@@ -50,9 +52,13 @@ For example, using an internet search tool to get essay writing advice from Cohe
 
 ```python PYTHON
 from langchain_cohere import ChatCohere
-from langchain_cohere.react_multi_hop.agent import create_cohere_react_agent
+from langchain_cohere.react_multi_hop.agent import (
+    create_cohere_react_agent,
+)
 from langchain.agents import AgentExecutor
-from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_community.tools.tavily_search import (
+    TavilySearchResults,
+)
 from langchain_core.prompts import ChatPromptTemplate
 
 # Internet search tool - you can use any tool, and there are lots of community tools in LangChain.
@@ -61,8 +67,9 @@ os.environ["TAVILY_API_KEY"] = "TAVILY_API_KEY"
 internet_search = TavilySearchResults()
 
 # Define the Cohere LLM
-llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
-                 model="command-r-plus-08-2024")
+llm = ChatCohere(
+    cohere_api_key="COHERE_API_KEY", model="command-a-03-2025"
+)
 
 # Create an agent
 agent = create_cohere_react_agent(
@@ -72,7 +79,9 @@ agent = create_cohere_react_agent(
 )
 
 # Create an agent executor
-agent_executor = AgentExecutor(agent=agent, tools=[internet_search], verbose=True)
+agent_executor = AgentExecutor(
+    agent=agent, tools=[internet_search], verbose=True
+)
 
 # Generate a response
 response = agent_executor.invoke(
@@ -103,8 +112,9 @@ from langchain_cohere import ChatCohere
 # User query we will use for the generation
 user_query = "What is cohere?"
 # Define the Cohere LLM
-llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
-                 model="command-r-plus-08-2024")
+llm = ChatCohere(
+    cohere_api_key="COHERE_API_KEY", model="command-a-03-2025"
+)
 # Create the Cohere rag retriever using the chat model
 rag = CohereRagRetriever(llm=llm, connectors=[])
 # Create the wikipedia retriever
@@ -139,16 +149,22 @@ from langchain_cohere import ChatCohere
 from langchain_core.documents import Document
 
 # Define the Cohere LLM
-llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
-                 model="command-r-plus-08-2024")
+llm = ChatCohere(
+    cohere_api_key="COHERE_API_KEY", model="command-a-03-2025"
+)
 
 # Create the Cohere rag retriever using the chat model
 rag = CohereRagRetriever(llm=llm, connectors=[])
 docs = rag.invoke(
     "Does LangChain support cohere RAG?",
     documents=[
-        Document(page_content="LangChain supports cohere RAG!", metadata={"id": "id-1"}),
-        Document(page_content="The sky is blue!", metadata={"id": "id-2"}),
+        Document(
+            page_content="LangChain supports cohere RAG!",
+            metadata={"id": "id-1"},
+        ),
+        Document(
+            page_content="The sky is blue!", metadata={"id": "id-2"}
+        ),
     ],
 )
 
@@ -163,7 +179,7 @@ answer = docs[-1].page_content
 print("Answer:")
 print(answer)
 # Print the final citations
-citations = docs[-1].metadata['citations']
+citations = docs[-1].metadata["citations"]
 print("Citations:")
 print(citations)
 ```
@@ -180,8 +196,9 @@ from langchain_cohere import ChatCohere
 from langchain_core.documents import Document
 
 # Define the Cohere LLM
-llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
-                 model="command-r-plus-08-2024")
+llm = ChatCohere(
+    cohere_api_key="COHERE_API_KEY", model="command-a-03-2025"
+)
 
 # Create the Cohere rag retriever using the chat model with the web search connector
 rag = CohereRagRetriever(llm=llm, connectors=[{"id": "web-search"}])
@@ -197,7 +214,7 @@ answer = docs[-1].page_content
 print("Answer:")
 print(answer)
 # Print the final citations
-citations = docs[-1].metadata['citations']
+citations = docs[-1].metadata["citations"]
 print("Citations:")
 print(citations)
 ```
@@ -210,21 +227,26 @@ Note: this feature is currently in beta.
 from langchain_cohere import ChatCohere
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains.combine_documents import (
+    create_stuff_documents_chain,
+)
 
 prompt = ChatPromptTemplate.from_messages(
     [("human", "What are everyone's favorite colors:\n\n{context}")]
 )
 
 # Define the Cohere LLM
-llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
-                 model="command-r-plus-08-2024")
+llm = ChatCohere(
+    cohere_api_key="COHERE_API_KEY", model="command-a-03-2025"
+)
 
 chain = create_stuff_documents_chain(llm, prompt)
 
 docs = [
     Document(page_content="Jesse loves red but not yellow"),
-    Document(page_content = "Jamal loves green but not as much as he loves orange")
+    Document(
+        page_content="Jamal loves green but not as much as he loves orange"
+    ),
 ]
 
 chain.invoke({"context": docs})
@@ -239,25 +261,34 @@ You can specify the `response_format` parameter to indicate that you want the re
 from langchain_cohere import ChatCohere
 
 # Define the Cohere LLM
-llm = ChatCohere(cohere_api_key="COHERE_API_KEY",
-                 model="command-r-plus-08-2024")
+llm = ChatCohere(
+    cohere_api_key="COHERE_API_KEY", model="command-a-03-2025"
+)
 
-res = llm.invoke("John is five years old", response_format={
-            "type": "json_object",
-            "schema": {
-                "title": "Person",
-                "description": "Identifies the age and name of a person",
-                "type": "object",
-                "properties": {
-                    "name": { "type": "string", "description": "Name of the person" },
-                    "age": { "type": "number", "description": "Age of the person" },
+res = llm.invoke(
+    "John is five years old",
+    response_format={
+        "type": "json_object",
+        "schema": {
+            "title": "Person",
+            "description": "Identifies the age and name of a person",
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the person",
                 },
-                "required": [
-                    "name",
-                    "age",
-                ],
-            }
-        }
+                "age": {
+                    "type": "number",
+                    "description": "Age of the person",
+                },
+            },
+            "required": [
+                "name",
+                "age",
+            ],
+        },
+    },
 )
 
 print(res)
@@ -276,11 +307,25 @@ loader = WebBaseLoader("https://docs.cohere.com/docs/cohere-toolkit")
 docs = loader.load()
 
 # Define the Cohere LLM
-llm = ChatCohere(cohere_api_key="COHERE_API_KEY",              
-                 model="command-r-plus-08-2024",
-                 temperature=0)
+llm = ChatCohere(
+    cohere_api_key="COHERE_API_KEY",
+    model="command-a-03-2025",
+    temperature=0,
+)
 
 chain = load_summarize_chain(llm, chain_type="stuff")
 
 chain.invoke({"input_documents": docs})
+```
+
+### Using LangChain on Private Deployments
+
+You can use LangChain with privately deployed Cohere models. To use it, specify your model deployment URL in the `base_url` parameter.
+
+```python PYTHON
+llm = ChatCohere(
+    base_url="<YOUR_DEPLOYMENT_URL>",
+    cohere_api_key="COHERE_API_KEY",
+    model="MODEL_NAME",
+)
 ```

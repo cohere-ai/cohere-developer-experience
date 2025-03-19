@@ -1,0 +1,472 @@
+---
+title: "Parameter Types in Structured Outputs (JSON)"
+slug: "v2/docs/parameter-types-in-json"
+
+hidden: false
+
+description: "This page shows usage examples of the JSON Schema parameter types supported in Structured Outputs (JSON)."
+image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, language models, structured outputs"
+
+createdAt: "Thu Jun 06 2024 05:37:56 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Tue Jun 11 2024 02:43:00 GMT+0000 (Coordinated Universal Time)"
+---
+
+This page provides usage examples of the JSON Schema parameters that are supported in [Structured Outputs (JSON)](https://docs.cohere.com/v2/docs/structured-outputs).
+
+Note: Using Structured Outputs (JSON), the outputs are guaranteed to follow the schema for the tool name, parameter name, parameter data types, and the list of required parameters.
+
+<Accordion title='Helper code'>
+
+The examples on this page each provide a `response_format` schema and a `message` (the user message). To get an output, pass those values to a Chat endpoint call, as shown in the helper code below.
+
+```python PYTHON
+import cohere
+
+co = cohere.ClientV2(api_key="YOUR API KEY")
+
+res = co.chat(
+    # The model name. Example: command-a-03-2025
+    model="MODEL_NAME",
+    # The user message. Optional - you can first add a `system_message` role
+    messages=[
+        {
+            "role": "user",
+            "content": message,
+        }
+    ],
+    # The schema that you define
+    response_format=response_format,
+    # Typically, you'll need a low temperature for more deterministic outputs
+    temperature=0,
+)
+
+print(res.message.content[0].text)
+```
+</Accordion>
+
+## Basic types
+
+### String
+
+```python PYTHON
+response_format = {
+    "type": "json_object",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "title": {"type": "string"},
+            "author": {"type": "string"},
+        },
+        "required": ["title", "author"],
+    },
+}
+
+message = "Generate a JSON describing a book, with the fields 'title' and 'author'"
+```
+
+Example output:
+
+```mdx wordWrap
+{
+    "title": "The Great Gatsby",
+    "author": "F. Scott Fitzgerald"
+}
+```
+
+### Integer
+
+```python PYTHON
+response_format = {
+    "type": "json_object",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "title": {"type": "string"},
+            "author": {"type": "string"},
+            "publication_year": {"type": "integer"},
+        },
+        "required": ["title", "author", "publication_year"],
+    },
+}
+
+message = "Generate a JSON describing a book, with the fields 'title', 'author' and 'publication_year'"
+```
+
+Example output:
+
+```mdx wordWrap
+{
+  "title": "The Great Gatsby",
+  "author": "F. Scott Fitzgerald",
+  "publication_year": 1925
+}
+```
+
+### Float
+
+```python PYTHON
+response_format = {
+    "type": "json_object",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "city": {"type": "string"},
+            "temperature": {"type": "number"},
+        },
+        "required": ["city", "temperature"],
+    },
+}
+
+message = "Generate a JSON of a city and its average daily temperature in celcius"
+```
+
+Example output:
+
+```mdx wordWrap
+{
+  "city": "Toronto",
+  "temperature": 15.6
+}
+```
+
+### Boolean
+
+```python PYTHON
+response_format = {
+    "type": "json_object",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "city": {"type": "string"},
+            "is_capital": {"type": "boolean"},
+        },
+        "required": ["city", "is_capital"],
+    },
+}
+
+message = "Generate a JSON about a city in Spain and whether it is the capital of its country using 'is_capital'."
+```
+
+Example output:
+
+```mdx wordWrap
+{
+    "city": "Madrid",
+    "is_capital": true
+}
+```
+
+## Array
+
+### With specific types
+
+```python PYTHON
+response_format = {
+    "type": "json_object",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "cities": {
+                "type": "array",
+                "items": {"type": "string"},
+            }
+        },
+        "required": ["cities"],
+    },
+}
+
+message = "Generate a JSON listing three cities in Japan."
+```
+
+Example output:
+
+```mdx wordWrap
+{
+  "cities": [
+    "Tokyo",
+    "Kyoto",
+    "Osaka"
+  ]
+}
+```
+
+### Without specific types
+
+```python PYTHON
+response_format = {
+    "type": "json_object",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "cities": {
+                "type": "array",
+            }
+        },
+        "required": ["cities"],
+    },
+}
+
+message = "Generate a JSON listing three cities in Japan."
+```
+
+Example output:
+
+```mdx wordWrap
+{
+  "cities": [
+    "Tokyo",
+    "Kyoto",
+    "Osaka"
+  ]
+}
+```
+
+### Lists of lists
+
+```python PYTHON
+response_format = {
+    "type": "json_object",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "coordinates": {
+                "type": "array",
+                "items": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                },
+            }
+        },
+        "required": ["coordinates"],
+    },
+}
+
+message = "Generate a JSON of three random coordinates."
+```
+
+Example output:
+
+```mdx wordWrap
+{
+    "coordinates": [
+        [-31.28333, 146.41667],
+        [78.95833, 11.93333],
+        [44.41667, -75.68333]
+    ]
+}
+```
+
+## Others
+
+### Nested objects
+
+```python PYTHON
+response_format = {
+    "type": "json_object",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "actions": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "japanese": {"type": "string"},
+                        "romaji": {"type": "string"},
+                        "english": {"type": "string"},
+                    },
+                    "required": ["japanese", "romaji", "english"],
+                },
+            }
+        },
+        "required": ["actions"],
+    },
+}
+
+message = "Generate a JSON array of 3 objects with the following fields: japanese, romaji, english. These actions should be japanese verbs provided in the dictionary form."
+```
+
+Example output:
+
+```mdx wordWrap
+{
+    "actions": [
+        {
+            "japanese": "食べる",
+            "romaji": "taberu",
+            "english": "to eat"
+        },
+        {
+            "japanese": "話す",
+            "romaji": "hanasu",
+            "english": "to speak"
+        },
+        {
+            "japanese": "書く",
+            "romaji": "kaku",
+            "english": "to write"
+        }
+    ]
+}
+```
+
+### Enums
+
+```python PYTHON
+response_format = {
+    "type": "json_object",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "genre": {
+                "type": "string",
+                "enum": ["historical fiction", "cozy mystery"],
+            },
+            "title": {"type": "string"},
+        },
+        "required": ["title", "genre"],
+    },
+}
+
+message = "Generate a JSON for a new book idea."
+```
+
+Example output:
+
+```mdx wordWrap
+{
+  "genre": "historical fiction",
+  "title": "The Unseen Thread: A Tale of the Silk Road's Secrets and Shadows"
+ }
+```
+
+### Const
+
+```python PYTHON
+response_format = {
+    "type": "json_object",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "city": {
+                "type": "object",
+                "properties": {
+                    "country": {
+                        "type": "string",
+                        "const": "Thailand",
+                    },
+                    "city_name": {"type": "string"},
+                    "avg_temperature": {"type": "number"},
+                },
+                "required": [
+                    "country",
+                    "city_name",
+                    "avg_temperature",
+                ],
+            }
+        },
+        "required": ["city"],
+    },
+}
+
+message = "Generate a JSON of a city."
+```
+
+Example output:
+
+```mdx wordWrap
+{
+  "city": {
+    "country": "Thailand",
+    "city_name": "Bangkok",
+    "avg_temperature": 29.083333333333332
+  }
+}
+```
+
+### Pattern
+
+```python PYTHON
+response_format = {
+    "type": "json_object",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "product_sku": {
+                "type": "string",
+                "pattern": "[A-Z]{3}[0-9]{7}",
+            }
+        },
+        "required": ["product_sku"],
+    },
+}
+
+message = "Generate a JSON of an SKU for a new product line."
+```
+
+Example output:
+
+```mdx wordWrap
+{
+  "product_sku": "PRX0012345"
+}
+```
+
+### Format
+
+```python PYTHON
+response_format = {
+    "type": "json_object",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "itinerary": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "day_number": {"type": "integer"},
+                        "date": {"type": "string", "format": "date"},
+                        "places_to_visit": {"type": "string"},
+                    },
+                    "required": [
+                        "day_number",
+                        "date",
+                        "places_to_visit",
+                    ],
+                },
+            }
+        },
+        "required": ["itinerary"],
+    },
+}
+
+message = (
+    "Generate a JSON of a 3-day visit of Bali starting Jan 5 2025."
+)
+```
+
+Example output:
+
+```mdx wordWrap
+{
+  "itinerary": [
+    {
+      "day_number": 1,
+      "date": "2025-01-05",
+      "places_to_visit":  "Tanah Lot Temple, Ubud Monkey Forest, Tegalalang Rice Terraces"
+    },
+    {
+      "day_number": 2,
+      "date": "2025-01-06",
+      "places_to_visit": "Mount Batur, Tirta Empul Temple, Ubud Art Market"
+    },
+    {
+      "day_number": 3,
+      "date": "2025-01-07",
+      "places_to_visit": "Uluwatu Temple, Kuta Beach, Seminyak"
+    }
+  ]
+}
+```

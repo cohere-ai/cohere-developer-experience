@@ -1,5 +1,5 @@
 ---
-title: Tokens and Tokenizers
+title: "A Guide to Tokens and Tokenizers"
 slug: docs/tokens-and-tokenizers
 hidden: false
 description: >-
@@ -25,7 +25,7 @@ Our vocabulary of tokens is created using byte pair encoding, which you can read
 
 ## Tokenizers
 
-A tokenizer is a tool used to convert text into tokens and vice versa. Tokenizers are model specific; the tokenizer for `command` is not compatible with the `command-r` model, for instance, because they were trained using different tokenization methods.
+A tokenizer is a tool used to convert text into tokens and vice versa. Tokenizers are model specific: the tokenizer for one Cohere model is not compatible with the a different Cohere model, because they were trained using different tokenization methods.
 
 Tokenizers are often used to count how many tokens a text contains. This is useful because models can handle only a certain number of tokens in one go. This limitation is known as “context length,” and the number varies from model to model.
 
@@ -38,13 +38,15 @@ Cohere offers the [tokenize](/reference/tokenize) and [detokenize](/reference/de
 Cohere Tokenizers are publicly hosted and can be used locally to avoid network calls. If you are using the Python SDK, the `tokenize` and `detokenize` functions will take care of downloading and caching the tokenizer for you
 
 ```python PYTHON
-import cohere  
+import cohere
+
 co = cohere.Client(api_key="<API KEY>")
 
-co.tokenize(text="caterpillar", model="command-r-08-2024") # -> [74, 2340,107771]
+co.tokenize(text="caterpillar", model="command-a-03-2025")
+# -> [74, 2340,107771]
 ```
 
-Notice that this downloads the tokenizer config for the model `command-r`, which might take a couple of seconds for the initial request.
+Notice that this downloads the tokenizer config for the specified model, which might take a couple of seconds for the initial request.
 
 ### Caching and Optimization
 
@@ -53,10 +55,14 @@ The cache for the tokenizer configuration is declared for each client instance. 
 If you are doing development work before going to production with your application, this might be slow if you are just experimenting by redefining the client initialization. Cohere API offers endpoints for `tokenize` and `detokenize` which avoids downloading the tokenizer configuration file. In the Python SDK, these can be accessed by setting `offline=False` like so:
 
 ```python PYTHON
-import cohere  
+import cohere
+
 co = cohere.Client(api_key="<API KEY>")
 
-co.tokenize(text="caterpillar", model="command-r-08-2024", offline=False) # -> [74, 2340,107771], no tokenizer config was downloaded
+co.tokenize(
+    text="caterpillar", model="command-a-03-2025", offline=False
+)
+# -> [74, 2340,107771], no tokenizer config was downloaded
 ```
 
 ## Downloading a Tokenizer
@@ -66,14 +72,16 @@ Alternatively, the latest version of the tokenizer can be downloaded manually:
 ```python PYTHON
 # pip install tokenizers
 
-from tokenizers import Tokenizer  
+from tokenizers import Tokenizer
 import requests
 
 # download the tokenizer
 
-tokenizer_url = "https://..." # use /models/<id> endpoint for latest URL
+# use /models/<id> endpoint for latest URL
+tokenizer_url = "https://..."
 
-response = requests.get(tokenizer_url)  
+
+response = requests.get(tokenizer_url)
 tokenizer = Tokenizer.from_str(response.text)
 
 tokenizer.encode(sequence="...", add_special_tokens=False)
@@ -83,9 +91,9 @@ The URL for the tokenizer should be obtained dynamically by calling the [Models 
 
 ```json JSON
 {  
-  "name": "command-r-08-2024",  
+  "name": "command-a-03-2025",  
   ...
-  "tokenizer_url": "https://storage.googleapis.com/cohere-public/tokenizers/command-r-08-2024.json"  
+  "tokenizer_url": "https://storage.googleapis.com/cohere-public/tokenizers/command-a-03-2025.json"  
 }
 ```
 

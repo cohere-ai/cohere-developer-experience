@@ -1,0 +1,357 @@
+---
+title: Text generation - Cohere on Azure AI Foundry
+slug: v2/docs/cohere-on-azure/azure-ai-text-generation
+
+description: "A guide for performing text generation with Cohere's Command models on Azure AI Foundry (API v2)."
+image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, text generation, chatbot, Command models, Azure AI Foundry"
+---
+
+[Open in GitHub](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/cohere-on-azure/v2/azure-ai-text-generation.ipynb)
+
+In this tutorial, we'll explore text generation using Cohere's Command model on Azure AI Foundry.
+
+Text generation is a fundamental capability that enables LLMs to generate text for various applications, such as providing detailed responses to questions, helping with writing and editing tasks, creating conversational responses, and assisting with code generation and documentation.
+
+In this tutorial, we'll cover:
+- Setting up the Cohere client
+- Basic text generation
+- Other typical use cases
+- Building a chatbot
+
+We'll use Cohere's Command model deployed on Azure to demonstrate these capabilities and help you understand how to effectively use text generation in your applications.
+
+## Setup
+
+First, you will need to deploy the Command model on Azure via Azure AI Foundry. The deployment will create a serverless API with pay-as-you-go token based billing. You can find more information on how to deploy models in the [Azure documentation](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-serverless?tabs=azure-ai-studio).
+
+In the example below, we are deploying the Command R+ (August 2024) model.
+
+Once the model is deployed, you can access it via Cohere's Python SDK. Let's now install the Cohere SDK and set up our client.
+
+To create a client, you need to provide the API key and the model's base URL for the Azure endpoint. You can get these information from the Azure AI Foundry platform where you deployed the model.
+
+
+```python PYTHON
+# %pip install cohere
+import cohere
+
+co = cohere.ClientV2(
+    api_key="AZURE_API_KEY_CHAT",
+    base_url="AZURE_ENDPOINT_CHAT",  # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
+)
+```
+
+## Creating some contextual information
+
+Before we begin, let's create some context to use in our text generation tasks. In this example, we'll use a set of technical support frequently asked questions (FAQs) as our context.
+
+
+```python PYTHON
+# Technical support FAQ
+faq_tech_support = """- Question: How do I set up my new smartphone with my mobile plan?
+- Answer:
+  - Insert your SIM card into the device.
+  - Turn on your phone and follow the on-screen setup instructions.
+  - Connect to your mobile network and enter your account details when prompted.
+  - Download and install any necessary apps or updates.
+  - Contact customer support if you need further assistance.
+
+- Question: My internet connection is slow. How can I improve my mobile data speed?
+- Answer:
+  - Check your signal strength and move to an area with better coverage.
+  - Restart your device and try connecting again.
+  - Ensure your data plan is active and has sufficient data.
+  - Consider upgrading your plan for faster speeds.
+
+- Question: I can't connect to my mobile network. What should I do?
+- Answer:
+  - Check your SIM card is inserted correctly and not damaged.
+  - Restart your device and try connecting again.
+  - Ensure your account is active and not suspended.
+  - Check for any network outages in your area.
+  - Contact customer support for further assistance.
+
+- Question: How do I set up my voicemail?
+- Answer:
+  - Dial your voicemail access number (usually provided by your carrier).
+  - Follow the prompts to set up your voicemail greeting and password.
+  - Record your voicemail greeting and save it.
+  - Test your voicemail by calling your number and leaving a message.
+
+- Question: I'm having trouble sending text messages. What could be the issue?
+- Answer:
+  - Check your signal strength and move to an area with better coverage.
+  - Ensure your account has sufficient credit or an active plan.
+  - Restart your device and try sending a message again.
+  - Check your message settings and ensure they are correct.
+  - Contact customer support if the issue persists."""
+```
+
+## Helper function to generate text
+
+Now, let's define a function to generate text using the Command R+ model on Bedrock. We’ll use this function a few times throughout.
+
+This function takes a user message and generates the response via the chat endpoint. Note that we don't need to specify the model as we have already set it up in the client.
+
+```python PYTHON
+def generate_text(message):
+    response = co.chat(
+        model="model",  # Pass a dummy string
+        messages=[{"role": "user", "content": message}],
+    )
+    return response
+```
+
+## Text generation
+
+Let's explore basic text generation as our first use case. The model takes a prompt as input and produces a relevant response as output.
+
+Consider a scenario where a customer support agent uses an LLM to help draft responses to customer inquiries. The agent provides technical support FAQs as context along with the customer's question. The prompt is structured to include three components: the instruction, the context (FAQs), and the specific customer inquiry.
+
+After passing this prompt to our `generate_text` function, we receive a response object. The actual generated text can be accessed through the `response.text` attribute.
+
+
+```python PYTHON
+inquiry = "I've noticed some fluctuations in my mobile network's performance recently. The connection seems stable most of the time, but every now and then, I experience brief periods of slow data speeds. It happens a few times a day and is quite inconvenient."
+
+prompt = f"""Use the FAQs below to provide a concise response to this customer inquiry.
+
+# Customer inquiry
+{inquiry}
+
+# FAQs
+{faq_tech_support}"""
+
+response = generate_text(prompt)
+
+print(response.message.content[0].text)
+```
+``` mdx
+It's quite common to experience occasional fluctuations in mobile network performance, and there are a few steps you can take to address this issue. 
+
+First, check your signal strength and consider moving to a different location with better coverage. Sometimes, even a small change in position can make a difference. If you find that you're in an area with low signal strength, this could be the primary reason for the slow data speeds. 
+
+Next, try restarting your device. A simple restart can often resolve temporary glitches and improve your connection. After restarting, ensure that your data plan is active and has enough data allocated for your usage. If you're close to reaching your data limit, this could also impact your speeds. 
+
+If the issue persists, it might be worth checking for any network outages in your area. Occasionally, temporary network issues can cause intermittent slowdowns. Contact your mobile network's customer support to inquire about any known issues and to receive further guidance. 
+
+Additionally, consider the age and condition of your device. Older devices or those with outdated software might struggle to maintain consistent data speeds. Ensuring your device is up-to-date and well-maintained can contribute to a better overall network experience. 
+
+If the problem continues, you may want to explore the option of upgrading your data plan. Higher-tier plans often offer faster speeds and more reliable connections, especially during peak usage times. Contact your mobile provider to discuss the available options and find a plan that better suits your needs.
+```
+
+## Text summarization
+
+Another type of use case is text summarization. Now, let's summarize the customer inquiry into a single sentence. We add an instruction to the prompt and then pass the inquiry to the prompt.
+
+
+```python PYTHON
+prompt = f"""Summarize this customer inquiry into one short sentence.
+
+Inquiry: {inquiry}"""
+
+response = generate_text(prompt)
+
+print(response.message.content[0].text)
+```
+```mdx
+A customer is experiencing intermittent slow data speeds on their mobile network several times a day.
+```
+
+## Text rewriting
+
+Text rewriting is a powerful capability that allows us to adapt content for different purposes while preserving the core message. This involves transforming the style, tone, or format of text to better suit the target audience or medium.
+
+Let's look at an example where we convert a customer support chat response into a formal email. We'll construct the prompt by first stating our goal to rewrite the text, then providing the original chat response as context.
+
+
+```python PYTHON
+prompt = f"""Rewrite this customer support agent response into an email format, ready to send to the customer.
+
+If you're experiencing brief periods of slow data speeds or difficulty sending text messages and connecting to your mobile network, here are some troubleshooting steps you can follow:
+
+1. Check your signal strength - Move to an area with better coverage.
+2. Restart your device and try connecting again.
+3. Ensure your account is active and not suspended.
+4. Contact customer support for further assistance. (This can include updating your plan for better network performance.)
+
+Did these steps help resolve the issue? Let me know if you need further assistance."""
+
+response = generate_text(prompt)
+
+print(response.message.content[0].text)
+```
+```mdx
+Subject: Troubleshooting Slow Data Speeds and Network Connection Issues
+
+Dear [Customer's Name],
+
+I hope this email finds you well. I understand that you may be facing some challenges with your mobile network, including slow data speeds and difficulties sending text messages. Here are some recommended troubleshooting steps to help resolve these issues:
+
+- Signal Strength: Check the signal strength on your device and move to a different location if the signal is weak. Moving to an area with better coverage can often improve your connection.
+
+- Restart Your Device: Sometimes, a simple restart can resolve temporary glitches. Please restart your device and then try connecting to the network again.
+
+- Account Status: Verify that your account is active and in good standing. In some cases, service providers may temporarily suspend accounts due to various reasons, which can impact your network access. 
+
+- Contact Customer Support: If the issue persists, please reach out to our customer support team for further assistance. Our team can help troubleshoot and provide additional guidance. We can also discuss your current plan and explore options to enhance your network performance if needed.
+
+I hope these steps will help resolve the issue promptly. Please feel free to reply to this email if you have any further questions or if the problem continues. We are committed to ensuring your satisfaction and providing a seamless network experience.
+
+Best regards,
+[Your Name]
+[Customer Support Agent]
+[Company Name]
+```
+
+## Build a Chatbot
+
+While our previous examples were single-turn interactions, the Chat endpoint enables us to create chatbots that maintain memory of past conversation turns. This capability allows developers to build conversational applications that preserve context throughout the dialogue.
+
+Below, we implement a basic customer support chatbot that acts as a helpful service agent. We'll create a function called run_chatbot that handles the conversation flow and displays messages and events. The function can take an optional chat history parameter to maintain conversational context across multiple turns.
+
+For this, we introduce a couple of additional parameters to the Chat endpoint:
+
+- `preamble`: A preamble contains instructions to help steer a chatbot’s response toward specific characteristics, such as a persona, style, or format. Here, we are using a simple preamble: “You are a helpful customer support agent that assists customers of a mobile network service.”
+- `chat_history`: We store the history of a conversation between a user and the chatbot as a list, append every new conversation turn, and pass this information to the next endpoint call.
+
+
+```python PYTHON
+# Define a preamble
+system_message = """## Task and Context
+You are a helpful customer support agent that assists customers of a mobile network service."""
+
+
+# Run the chatbot
+def run_chatbot(message, messages=None):
+    if messages is None:
+        messages = []
+
+    if "system" not in {m.get("role") for m in messages}:
+        messages.append({"role": "system", "content": system_message})
+
+    messages.append({"role": "user", "content": message})
+
+    response = co.chat(
+        model="model",  # Pass a dummy string
+        messages=messages,
+    )
+
+    messages.append(
+        {
+            "role": "assistant",
+            "content": response.message.content[0].text,
+        }
+    )
+
+    print(response.message.content[0].text)
+
+    return messages
+```
+
+
+```python PYTHON
+messages = run_chatbot(
+    "Hi. I've noticed some fluctuations in my mobile network's performance recently."
+)
+```
+```mdx
+Hello there! I'd be happy to assist you with this issue. Network performance fluctuations can be concerning, and it's important to identify the cause to ensure you have a smooth experience. 
+
+Can you tell me more about the problems you've been experiencing? Are there specific times or locations where the network seems to perform poorly? Any details you can provide will help me understand the situation better and offer potential solutions.
+```
+
+
+```python PYTHON
+messages = run_chatbot(
+    "At times, the data speed is very poor. What should I do?",
+    messages,
+)
+```
+```mdx
+I'm sorry to hear that you're experiencing slow data speeds. Here are some troubleshooting steps and tips to help improve your network performance:
+
+- **Check Network Coverage:** First, ensure that you are in an area with good network coverage. You can check the coverage map provided by your mobile network service on their website. If you're in a location with known weak signal strength, moving to a different area might improve your data speed.
+
+- **Restart Your Device:** Sometimes, a simple restart of your mobile device can help refresh the network connection. Power off your device, wait for a few moments, and then turn it back on.
+
+- **Check for Network Updates:** Make sure your device is running the latest software and carrier settings. Updates often include improvements and optimizations for network performance. You can check for updates in your device's settings.
+
+- **Manage Network Settings:**
+   - *Network Mode:* Try switching to a different network mode (e.g., 4G/LTE, 3G) to see if a specific network band provides better speed.
+   - *Airplane Mode:* Toggle Airplane mode on and off to reconnect to the network.
+   - *Network Reset:* If the issue persists, you can try resetting your network settings, but note that this will erase saved Wi-Fi passwords.
+
+- **Contact Customer Support:** If the problem continues, it might be beneficial to contact your mobile network's customer support team. They can check for any known issues in your area and provide further assistance. They might also guide you through advanced troubleshooting steps.
+
+- **Consider Network Congestion:** Slow data speeds can sometimes occur during peak usage hours when the network is congested. Try using data-intensive apps during off-peak hours to see if that makes a difference.
+
+- **Check Background Apps:** Certain apps running in the background can consume data and impact speed. Close any unnecessary apps to free up resources.
+
+If the slow data speed persists despite these measures, it's advisable to reach out to your mobile network provider for further investigation and assistance. They can provide network-specific solutions and ensure you're getting the service you expect.
+```
+
+
+```python PYTHON
+messages = run_chatbot("Thanks. What else can I check?", messages)
+```
+```mdx
+ou're welcome! Here are some additional steps and factors to consider:
+
+- **Device Health:** Ensure your device is in good working condition. An older device or one with hardware issues might struggle to maintain a fast data connection. Consider checking for any pending system updates that could optimize your device's performance.
+
+- **SIM Card:** Try removing and reinserting your SIM card to ensure it is properly seated. A loose connection can impact network performance. If the issue persists, it might be worth asking your network provider for a SIM replacement.
+
+- **Network Congestion at Specific Times:** Network speed can vary depending on the time of day. If possible, monitor your data speed during different parts of the day to identify any patterns. This can help determine if network congestion during peak hours is the primary cause.
+
+- **Data Plan and Throttling:** Check your mobile data plan to ensure you haven't exceeded any data limits, which could result in reduced speeds. Some providers throttle speeds after a certain data threshold is reached.
+
+- **Background Updates and Downloads:** Certain apps might be set to update or download content in the background, consuming data and potentially slowing down your connection. Review your app settings and consider disabling automatic updates or background data usage for apps that don't require real-time updates.
+
+- **Network Diagnostics Tools:** Some mobile devices have built-in network diagnostics tools that can provide insights into your connection. These tools can help identify issues with signal strength, network latency, and more.
+
+- **Wi-Fi Calling and Data Usage:** If your device supports Wi-Fi calling, ensure it is enabled. This can offload some data usage from the cellular network, potentially improving speeds.
+
+- **Network Provider's App:** Download and install your mobile network provider's official app, if available. These apps often provide real-time network status updates and allow you to report issues directly.
+
+If you've gone through these checks and the problem persists, contacting your network provider's technical support team is the next best step. They can provide further guidance based on your specific situation.
+```
+
+### View the chat history
+
+Here's what is contained in the chat history after a few turns.
+
+
+```python PYTHON
+print("Chat history:")
+for message in messages:
+    print(message, "\n")
+```
+```mdx
+Chat history:
+{'role': 'system', 'content': '## Task and Context\nYou are a helpful customer support agent that assists customers of a mobile network service.'} 
+
+{'role': 'user', 'content': "Hi. I've noticed some fluctuations in my mobile network's performance recently."} 
+
+{'role': 'assistant', 'content': "Hello there! I'd be happy to assist you with this issue. Network performance fluctuations can be concerning, and it's important to identify the cause to ensure you have a smooth experience. \n\nCan you tell me more about the problems you've been experiencing? Are there specific times or locations where the network seems to perform poorly? Any details you can provide will help me understand the situation better and offer potential solutions."} 
+
+{'role': 'user', 'content': 'At times, the data speed is very poor. What should I do?'} 
+
+{'role': 'assistant', 'content': "I'm sorry to hear that you're experiencing slow data speeds. Here are some troubleshooting steps and tips to help improve your network performance:\n\n- **Check Network Coverage:** First, ensure that you are in an area with good network coverage. You can check the coverage map provided by your mobile network service on their website. If you're in a location with known weak signal strength, moving to a different area might improve your data speed.\n\n- **Restart Your Device:** Sometimes, a simple restart of your mobile device can help refresh the network connection. Power off your device, wait for a few moments, and then turn it back on.\n\n- **Check for Network Updates:** Make sure your device is running the latest software and carrier settings. Updates often include improvements and optimizations for network performance. You can check for updates in your device's settings.\n\n- **Manage Network Settings:**\n   - *Network Mode:* Try switching to a different network mode (e.g., 4G/LTE, 3G) to see if a specific network band provides better speed.\n   - *Airplane Mode:* Toggle Airplane mode on and off to reconnect to the network.\n   - *Network Reset:* If the issue persists, you can try resetting your network settings, but note that this will erase saved Wi-Fi passwords.\n\n- **Contact Customer Support:** If the problem continues, it might be beneficial to contact your mobile network's customer support team. They can check for any known issues in your area and provide further assistance. They might also guide you through advanced troubleshooting steps.\n\n- **Consider Network Congestion:** Slow data speeds can sometimes occur during peak usage hours when the network is congested. Try using data-intensive apps during off-peak hours to see if that makes a difference.\n\n- **Check Background Apps:** Certain apps running in the background can consume data and impact speed. Close any unnecessary apps to free up resources.\n\nIf the slow data speed persists despite these measures, it's advisable to reach out to your mobile network provider for further investigation and assistance. They can provide network-specific solutions and ensure you're getting the service you expect."} 
+
+{'role': 'user', 'content': 'Thanks. What else can I check?'} 
+
+{'role': 'assistant', 'content': "You're welcome! Here are some additional steps and factors to consider:\n\n- **Device Health:** Ensure your device is in good working condition. An older device or one with hardware issues might struggle to maintain a fast data connection. Consider checking for any pending system updates that could optimize your device's performance.\n\n- **SIM Card:** Try removing and reinserting your SIM card to ensure it is properly seated. A loose connection can impact network performance. If the issue persists, it might be worth asking your network provider for a SIM replacement.\n\n- **Network Congestion at Specific Times:** Network speed can vary depending on the time of day. If possible, monitor your data speed during different parts of the day to identify any patterns. This can help determine if network congestion during peak hours is the primary cause.\n\n- **Data Plan and Throttling:** Check your mobile data plan to ensure you haven't exceeded any data limits, which could result in reduced speeds. Some providers throttle speeds after a certain data threshold is reached.\n\n- **Background Updates and Downloads:** Certain apps might be set to update or download content in the background, consuming data and potentially slowing down your connection. Review your app settings and consider disabling automatic updates or background data usage for apps that don't require real-time updates.\n\n- **Network Diagnostics Tools:** Some mobile devices have built-in network diagnostics tools that can provide insights into your connection. These tools can help identify issues with signal strength, network latency, and more.\n\n- **Wi-Fi Calling and Data Usage:** If your device supports Wi-Fi calling, ensure it is enabled. This can offload some data usage from the cellular network, potentially improving speeds.\n\n- **Network Provider's App:** Download and install your mobile network provider's official app, if available. These apps often provide real-time network status updates and allow you to report issues directly.\n\nIf you've gone through these checks and the problem persists, contacting your network provider's technical support team is the next best step. They can provide further guidance based on your specific situation."} 
+```
+
+
+## Summary
+
+In this tutorial, we learned about:
+- How to set up the Cohere client to use the Command model deployed on Azure AI Foundry
+- How to perform basic text generation
+- How to use the model for other types of use cases
+- How to build a chatbot using the Chat endpoint
+
+In the next tutorial, we'll explore how to use the Embed model in semantic search applications.

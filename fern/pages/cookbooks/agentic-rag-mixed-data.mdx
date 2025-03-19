@@ -19,7 +19,7 @@ import { CookbookHeader } from "../../components/cookbook-header";
   ]}
 />
 
-<CookbookHeader href="https://github.com/cohere-ai/notebooks/blob/main/notebooks/agents/agentic-RAG/agentic_rag_langchain.ipynb" />
+<CookbookHeader href="https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/agents/agentic-RAG/agentic_rag_langchain.ipynb" />
 
 ## Motivation
 
@@ -39,7 +39,7 @@ In this notebook, we will guide you through best practices for setting up a RAG 
 
 We recommend the following notebook as a guide to [semi-structured RAG](https://github.com/langchain-ai/langchain/blob/master/cookbook/Semi_Structured_RAG.ipynb).
 
-We also recommend the following notebook to explore various parsing techniques for [PDFs](https://github.com/cohere-ai/notebooks/blob/main/notebooks/guides/Document_Parsing_For_Enterprises.ipynb).
+We also recommend the following notebook to explore various parsing techniques for [PDFs](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/Document_Parsing_For_Enterprises.ipynb).
 
 Various LangChain-supported parsers can be found [here](https://python.langchain.com/docs/modules/data_connection/document_loaders/pdf/).
 
@@ -169,7 +169,7 @@ def get_chat_output(message, preamble, chat_history, model, temp, documents=None
     temperature=temp
     ).text
 
-def parallel_proc_chat(prompts,preamble,chat_history=None,model='command-r-plus',temp=0.1,n_jobs=10):
+def parallel_proc_chat(prompts,preamble,chat_history=None,model='command-a-03-2025',temp=0.1,n_jobs=10):
     """Parallel processing of chat endpoint calls."""
     responses = Parallel(n_jobs=n_jobs, prefer="threads")(delayed(get_chat_output)(prompt,preamble,chat_history,model,temp) for prompt in prompts)
     return responses
@@ -241,7 +241,7 @@ With our database in place, we can run queries against it. The query process can
 ```python PYTHON
 def process_query(query, retriever):
     """Runs query augmentation, retrieval, rerank and final generation in one call."""
-    augmented_queries=co.chat(message=query,model='command-r-plus',temperature=0.2, search_queries_only=True)
+    augmented_queries=co.chat(message=query,model='command-a-03-2025',temperature=0.2, search_queries_only=True)
         #augment queries
     if augmented_queries.search_queries:
         reranked_docs=[]
@@ -261,7 +261,7 @@ You help people answer their questions and other requests interactively. You wil
 ## Style Guide
 Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.
 """
-    model = 'command-r-plus'
+    model = 'command-a-03-2025'
     temp = 0.2
 
 
@@ -313,7 +313,7 @@ In the example below, the `else` statement is invoked based on `query2`. We stil
 
 ```python PYTHON
 query2='divide this by two'
-augmented_queries=co.chat(message=query2,model='command-r-plus',temperature=0.2, search_queries_only=True)
+augmented_queries=co.chat(message=query2,model='command-a-03-2025',temperature=0.2, search_queries_only=True)
 if augmented_queries.search_queries:
     print('RAG is needed')
     final_answer, final_answer_docs = process_query(query, retriever)
@@ -322,7 +322,7 @@ else:
     print('RAG is not needed')
     response = co.chat(
       message=query2,
-      model='command-r-plus',
+      model='command-a-03-2025',
       chat_history=chat_history,
       temperature=0.3
     )
@@ -355,8 +355,8 @@ class Element(BaseModel):
 class RAG_pipeline():
     def __init__(self,paths):
         self.embedding_model="embed-english-v3.0"
-        self.generation_model="command-r-plus"
-        self.summary_model="command-r-plus"
+        self.generation_model="command-a-03-2025"
+        self.summary_model="command-a-03-2025"
         self.rerank_model="rerank-multilingual-v3.0"
         self.num_docs_to_retrieve = 10
         self.top_k_rerank=3
@@ -588,7 +588,7 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 
 class react_agent():
-    def __init__(self,rag_retriever,model="command-r-plus",temperature=0.2):
+    def __init__(self,rag_retriever,model="command-a-03-2025",temperature=0.2):
         self.llm = ChatCohere(model=model, temperature=temperature)
         self.preamble="""
 ## Task &amp; Context

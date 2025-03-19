@@ -7,11 +7,11 @@ image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "Cohere, how do LLMs generate text"
 ---
 
-<a target="_blank" href="https://colab.research.google.com/github/cohere-ai/notebooks/blob/main/notebooks/guides/getting-started/v2/tutorial_pt2.ipynb">Open in Colab</a>
+<a target="_blank" href="https://colab.research.google.com/github/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/getting-started/v2/tutorial_pt2_v2.ipynb">Open in Colab</a>
 
-Command is Cohere’s flagship LLM. It generates a response based on a user message or prompt. It is trained to follow user commands and to be instantly useful in practical business applications, like summarization, copywriting, extraction, and question-answering.
+Command is Cohere’s flagship LLM model family. Command models generate a response based on a user message or prompt. It is trained to follow user commands and to be instantly useful in practical business applications, like summarization, copywriting, extraction, and question-answering.
 
-Command R and Command R+ are the most recent models in the Command family. They are the market-leading models that balance high efficiency with strong accuracy to enable enterprises to move from proof of concept into production-grade AI.
+[Command A](/docs/command-a) and [Command R7B](/docs/command-r7b) are the most recent models in the Command family. They are the market-leading models that balance high efficiency with strong accuracy to enable enterprises to move from proof of concept into production-grade AI.
 
 You'll use Chat, the Cohere endpoint for accessing the Command models.
 
@@ -35,7 +35,8 @@ To get started, first we need to install the `cohere` library and create a Coher
 import cohere
 import json
 
-co = cohere.ClientV2(api_key"COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
+# Get your free API key: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(api_key="COHERE_API_KEY")
 ```
 
 ## Basic text generation
@@ -52,9 +53,11 @@ Here's an example of the assistant responding to a new hire's query asking for h
 message = "I'm joining a new startup called Co1t today. Could you help me write a short introduction message to my teammates."
 
 # Generate the response
-response = co.chat(model="command-r-plus-08-2024",
-                   messages=[{"role": "user", "content": message}])
-                #    messages=[cohere.UserMessage(content=message)])
+response = co.chat(
+    model="command-a-03-2025",
+    messages=[{"role": "user", "content": message}],
+)
+#    messages=[cohere.UserMessage(content=message)])
 
 print(response.message.content[0].text)
 ```
@@ -69,7 +72,7 @@ Feel free to edit and personalize the message to your liking. Good luck with you
 Further reading:
 - [Chat endpoint API reference](https://docs.cohere.com/v2/reference/chat)
 - [Documentation on Chat fine-tuning](https://docs.cohere.com/docs/chat-fine-tuning)
-- [Documentation on Command R+](https://docs.cohere.com/docs/command-r-plus)
+- [Documentation on Command A](https://docs.cohere.com/docs/command-a)
 - [LLM University module on text generation](https://cohere.com/llmu#text-generation)
 
 
@@ -81,7 +84,7 @@ In this section, we'll look at a couple of prompting techniques.
 
 The first is to add more specific instructions to the prompt. The more instructions you provide in the prompt, the closer you can get to the response you need.
 
-The limit of how long a prompt can be is dependent on the maximum context length that a model can support (in the case Command R/R+, it's 128k tokens).
+The limit of how long a prompt can be is dependent on the maximum context length that a model can support (in the case Command A, it's 256k tokens).
 
 Below, we'll add one additional instruction to the earlier prompt: the length we need the response to be.
 
@@ -91,9 +94,11 @@ Below, we'll add one additional instruction to the earlier prompt: the length we
 message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
 
 # Generate the response
-response = co.chat(model="command-r-plus-08-2024",
-                   messages=[{"role": "user", "content": message}])
-                #    messages=[cohere.UserMessage(content=message)])
+response = co.chat(
+    model="command-a-03-2025",
+    messages=[{"role": "user", "content": message}],
+)
+#    messages=[cohere.UserMessage(content=message)])
 
 print(response.message.content[0].text)
 ```
@@ -110,10 +115,12 @@ Below, we want the response to be similar in style and length to the convention,
 
 ```python PYTHON
 # Add the user message
-user_input = "Why can't I access the server? Is it a permissions issue?"
+user_input = (
+    "Why can't I access the server? Is it a permissions issue?"
+)
 
 # Create a prompt containing example outputs
-message=f"""Write a ticket title for the following user request:
+message = f"""Write a ticket title for the following user request:
 
 User request: Where are the usual storage places for project files?
 Ticket title: Project File Storage Location
@@ -128,8 +135,10 @@ User request: {user_input}
 Ticket title:"""
 
 # Generate the response
-response = co.chat(model="command-r-plus-08-2024",
-                   messages=[{"role": "user", "content": message}])
+response = co.chat(
+    model="command-a-03-2025",
+    messages=[{"role": "user", "content": message}],
+)
 
 print(response.message.content[0].text)
 ```
@@ -153,8 +162,10 @@ For example, you can choose from several variations of the Command model. Differ
 message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
 
 # Generate the response
-response = co.chat(model="command-r-plus-08-2024",
-                   messages=[{"role": "user", "content": message}])
+response = co.chat(
+    model="command-a-03-2025",
+    messages=[{"role": "user", "content": message}],
+)
 
 print(response.message.content[0].text)
 ```
@@ -177,9 +188,11 @@ message = "I like learning about the industrial revolution and how it shapes the
 
 # Generate the response multiple times by specifying a low temperature value
 for idx in range(3):
-    response = co.chat(model="command-r-plus-08-2024",
-                    messages=[{"role": "user", "content": message}],
-                    temperature=0)
+    response = co.chat(
+        model="command-a-03-2025",
+        messages=[{"role": "user", "content": message}],
+        temperature=0,
+    )
 
     print(f"{idx+1}: {response.message.content[0].text}\n")
 ```
@@ -201,9 +214,11 @@ message = "I like learning about the industrial revolution and how it shapes the
 
 # Generate the response multiple times by specifying a low temperature value
 for idx in range(3):
-    response = co.chat(model="command-r-plus-08-2024",
-                    messages=[{"role": "user", "content": message}],
-                    temperature=1)
+    response = co.chat(
+        model="command-a-03-2025",
+        messages=[{"role": "user", "content": message}],
+        temperature=1,
+    )
 
     print(f"{idx+1}: {response.message.content[0].text}\n")
 ```
@@ -237,26 +252,34 @@ The `response_format` parameter allows you to specify the schema the JSON object
 
 ```python PYTHON
 # Add the user message
-user_input = "Why can't I access the server? Is it a permissions issue?"
+user_input = (
+    "Why can't I access the server? Is it a permissions issue?"
+)
 message = f"""Create an IT ticket for the following user request. Generate a JSON object.
 {user_input}"""
 
 # Generate the response multiple times by adding the JSON schema
 response = co.chat(
-  model="command-r-plus-08-2024",
-  messages=[{"role": "user", "content": message}],
-  response_format={
-    "type": "json_object",
-    "schema": {
-      "type": "object",
-      "required": ["title", "category", "status"],
-      "properties": {
-        "title": { "type": "string"},
-        "category": { "type" : "string", "enum" : ["access", "software"]},
-        "status": { "type" : "string" , "enum" : ["open", "closed"]}
-      }
-    }
-  },
+    model="command-a-03-2025",
+    messages=[{"role": "user", "content": message}],
+    response_format={
+        "type": "json_object",
+        "schema": {
+            "type": "object",
+            "required": ["title", "category", "status"],
+            "properties": {
+                "title": {"type": "string"},
+                "category": {
+                    "type": "string",
+                    "enum": ["access", "software"],
+                },
+                "status": {
+                    "type": "string",
+                    "enum": ["open", "closed"],
+                },
+            },
+        },
+    },
 )
 
 json_object = json.loads(response.message.content[0].text)
@@ -268,7 +291,7 @@ print(json_object)
 ```
 
 Further reading:
-- [Documentation on Structured Generations (JSON)](https://docs.cohere.com/docs/structured-outputs-json)
+- [Documentation on Structured Outputs](https://docs.cohere.com/docs/structured-outputs)
 
 ## Streaming responses
 
@@ -286,8 +309,10 @@ In streaming mode, the endpoint will generate a series of objects. To get the ac
 message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
 
 # Generate the response by streaming it
-response = co.chat_stream(model="command-r-plus-08-2024",
-                          messages=[{"role": "user", "content": message}])
+response = co.chat_stream(
+    model="command-a-03-2025",
+    messages=[{"role": "user", "content": message}],
+)
 
 for event in response:
     if event:

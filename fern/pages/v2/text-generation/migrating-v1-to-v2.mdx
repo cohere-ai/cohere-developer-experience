@@ -49,19 +49,17 @@ co_v2 = cohere.ClientV2(api_key="<YOUR API KEY>")
 
 ```python PYTHON
 res = co_v1.chat(
-	    model="command-r-plus-08-2024",
-	    preamble="You respond in concise sentences.",
-	    chat_history=[
-	        {
-	            "role": "user",
-	            "message": "Hello"
-	        },
-	        {
-	            "role": "chatbot",
-	            "message": "Hi, how can I help you today?"
-	        }
-	    ],
-	    message="I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates?")
+    model="command-a-03-2025",
+    preamble="You respond in concise sentences.",
+    chat_history=[
+        {"role": "user", "message": "Hello"},
+        {
+            "role": "chatbot",
+            "message": "Hi, how can I help you today?",
+        },
+    ],
+    message="I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates?",
+)
 
 print(res.text)
 ```
@@ -74,25 +72,23 @@ Excited to join the team at Co1t, where I look forward to contributing my skills
 
 ```python PYTHON
 res = co_v2.chat(
-    model="command-r-plus-08-2024",
+    model="command-a-03-2025",
     messages=[
         {
             "role": "system",
-            "content": "You respond in concise sentences."
+            "content": "You respond in concise sentences.",
         },
-        {
-            "role": "user",
-            "content": "Hello"
-        },
+        {"role": "user", "content": "Hello"},
         {
             "role": "assistant",
-            "content": "Hi, how can I help you today?"
+            "content": "Hi, how can I help you today?",
         },
         {
             "role": "user",
-            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
-        }
-    ])
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates.",
+        },
+    ],
+)
 
 print(res.message.content[0].text)
 ```
@@ -108,8 +104,7 @@ Excited to join the team at Co1t, bringing my passion for innovation and a backg
 **v1**
 
 ```python PYTHON
-res = co_v1.chat(model="command-r-plus-08-2024",
-                 message="What is 2 + 2")
+res = co_v1.chat(model="command-a-03-2025", message="What is 2 + 2")
 
 print(res.text)
 ```
@@ -120,13 +115,10 @@ The answer is 4.
 **v2**
 
 ```python PYTHON
-res = co_v2.chat(model="command-r-plus-08-2024",
-                 messages=[
-                     {
-                         "role": "user",
-                         "content": "What is 2 + 2"
-                     }
-                 ])
+res = co_v2.chat(
+    model="command-a-03-2025",
+    messages=[{"role": "user", "content": "What is 2 + 2"}],
+)
 
 print(res.message.content[0].text)
 ```
@@ -149,8 +141,7 @@ The answer is 4.
 ```python PYTHON
 message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
 
-res = co_v1.chat_stream(model="command-r-plus-08-2024",
-                        message=message)
+res = co_v1.chat_stream(model="command-a-03-2025", message=message)
 
 for chunk in res:
     if chunk.event_type == "text-generation":
@@ -165,10 +156,12 @@ for chunk in res:
 ```python PYTHON
 message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
 
-res = co_v2.chat_stream(model="command-r-plus-08-2024",
-                        messages=[{"role": "user", "content": message}])
+res = co_v2.chat_stream(
+    model="command-a-03-2025",
+    messages=[{"role": "user", "content": message}],
+)
 
-for chunk in res: 
+for chunk in res:
     if chunk:
         if chunk.type == "content-delta":
             print(chunk.delta.message.content.text, end="")
@@ -190,20 +183,25 @@ for chunk in res:
 **v1**
 
 ```python PYTHON
-
 # Define the documents
 documents_v1 = [
-    {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
-    {"text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."}
+    {
+        "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+    },
+    {
+        "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+    },
 ]
 
 # The user query
 message = "Are there fitness-related benefits?"
 
 # Generate the response
-res_v1 = co_v1.chat(model="command-r-plus-08-2024",
-                    message=message,
-                    documents=documents_v1)
+res_v1 = co_v1.chat(
+    model="command-a-03-2025",
+    message=message,
+    documents=documents_v1,
+)
 
 print(res_v1.text)
 ```
@@ -216,25 +214,27 @@ Yes, there are fitness-related benefits. We offer gym memberships, on-site yoga 
 ```python PYTHON
 # Define the documents
 documents_v2 = [
-  {
-    "data": {
-      "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
-    }
-  },
-  {
-    "data": {
-      "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
-    }
-  }
+    {
+        "data": {
+            "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+        }
+    },
+    {
+        "data": {
+            "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+        }
+    },
 ]
 
 # The user query
 message = "Are there fitness-related benefits?"
 
 # Generate the response
-res_v2 = co_v2.chat(model="command-r-plus-08-2024",
-                    messages=[{"role": "user", "content": message}],
-                    documents=documents_v2)
+res_v2 = co_v2.chat(
+    model="command-a-03-2025",
+    messages=[{"role": "user", "content": message}],
+    documents=documents_v2,
+)
 
 print(res_v2.message.content[0].text)
 ```
@@ -246,20 +246,22 @@ The following is a list of the the different options for structuring documents f
 
 ```python PYTHON
 documents_v2 = [
-# List of objects with data string
-{
-	"id": "123"
-	"data": "I love penguins. they are fluffy",
-},
-# List of objects with data object
-{"id": "456", "data": {
-	"text": "I love penguins. they are fluffy",
-	"author": "Abdullah",
-	"create_date": "09021989"
-	}
-},
-# List of strings
-"just a string"
+    # List of objects with data string
+    {
+        "id": "123",
+        "data": "I love penguins. they are fluffy",
+    },
+    # List of objects with data object
+    {
+        "id": "456",
+        "data": {
+            "text": "I love penguins. they are fluffy",
+            "author": "Abdullah",
+            "create_date": "09021989",
+        },
+    },
+    # List of strings
+    "just a string",
 ]
 ```
 
@@ -318,8 +320,8 @@ Uses the web search connector to search the internet for information relevant to
 
 ```python PYTHON
 res_v1 = co_v1.chat(
-	message="who won euro 2024",
-	connectors=[{"id": "web-search"}],
+    message="who won euro 2024",
+    connectors=[{"id": "web-search"}],
 )
 
 print(res_v1.text)
@@ -347,7 +349,11 @@ def web_search(queries: list[str]) -> list[dict]:
         response = tavily_client.search(query, max_results=2)
 
         results = [
-            {"title": r["title"], "content": r["content"], "url": r["url"]}
+            {
+                "title": r["title"],
+                "content": r["content"],
+                "url": r["url"],
+            }
             for r in response["results"]
         ]
 
@@ -391,10 +397,12 @@ messages = [
     {"role": "user", "content": query},
 ]
 
-model = "command-r-plus-08-2024"
+model = "command-a-03-2025"
 
 # Generate search queries (if any)
-response = co_v2.chat(model=model, messages=messages, tools=web_search_tool)
+response = co_v2.chat(
+    model=model, messages=messages, tools=web_search_tool
+)
 
 search_queries = []
 
@@ -404,7 +412,9 @@ while response.message.tool_calls:
     print(response.message.tool_plan, "\n")
     print("Tool calls:")
     for tc in response.message.tool_calls:
-        print(f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}")
+        print(
+            f"Tool name: {tc.function.name} | Parameters: {tc.function.arguments}"
+        )
     print("=" * 50)
 
     messages.append(
@@ -420,14 +430,25 @@ while response.message.tool_calls:
         tool_result = web_search(**json.loads(tc.function.arguments))
         tool_content = []
         for data in tool_result:
-            tool_content.append({"type": "document", "document": {"data": json.dumps(data)}})
+            tool_content.append(
+                {
+                    "type": "document",
+                    "document": {"data": json.dumps(data)},
+                }
+            )
             # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
         messages.append(
-            {"role": "tool", "tool_call_id": tc.id, "content": tool_content}
+            {
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": tool_content,
+            }
         )
 
     # Step 4: Generate response and citations
-    response = co_v2.chat(model=model, messages=messages, tools=web_search_tool)
+    response = co_v2.chat(
+        model=model, messages=messages, tools=web_search_tool
+    )
 
 print(response.message.content[0].text)
 ```
@@ -464,9 +485,11 @@ Spain won the 2024 European Championship. They beat England in the final, with s
 ```python PYTHON
 message = "Are there fitness-related benefits?"
 
-res_v1 = co_v1.chat_stream(model="command-r-plus-08-2024",
-                           message=message,
-                           documents=documents_v1)
+res_v1 = co_v1.chat_stream(
+    model="command-a-03-2025",
+    message=message,
+    documents=documents_v1,
+)
 
 for chunk in res_v1:
     if chunk.event_type == "text-generation":
@@ -490,7 +513,9 @@ message = "Are there fitness-related benefits?"
 messages = [{"role": "user", "content": message}]
 
 res_v2 = co_v2.chat_stream(
-    model="command-r-plus-08-2024", messages=messages, documents=documents_v2
+    model="command-a-03-2025",
+    messages=messages,
+    documents=documents_v2,
 )
 
 for chunk in res_v2:
@@ -519,20 +544,21 @@ start=14 end=88 text='gym memberships, on-site yoga classes, and comprehensive h
 ```python PYTHON
 def get_weather(location):
     return {"temperature": "20C"}
-  
+
+
 functions_map = {"get_weather": get_weather}
 
 tools_v1 = [
     {
-      "name": "get_weather",
-      "description": "Gets the weather of a given location",
-      "parameter_definitions": {
-        "location": {
-          "description": "The location to get weather, example: San Francisco, CA",
-          "type": "str",
-          "required": True
-        }
-      }
+        "name": "get_weather",
+        "description": "Gets the weather of a given location",
+        "parameter_definitions": {
+            "location": {
+                "description": "The location to get weather, example: San Francisco, CA",
+                "type": "str",
+                "required": True,
+            }
+        },
     },
 ]
 ```
@@ -544,25 +570,26 @@ def get_weather(location):
     return [{"temperature": "20C"}]
     # You can return a list of objects e.g. [{"url": "abc.com", "text": "..."}, {"url": "xyz.com", "text": "..."}]
 
+
 functions_map = {"get_weather": get_weather}
 
 tools_v2 = [
     {
-    "type": "function",
-    "function": {
+        "type": "function",
+        "function": {
             "name": "get_weather",
-            "description" : "gets the weather of a given location",
+            "description": "gets the weather of a given location",
             "parameters": {
                 "type": "object",
                 "properties": {
-                "location": {
-                    "type" : "str",
-                    "description": "the location to get weather, example: San Fransisco, CA"
-                }
+                    "location": {
+                        "type": "string",
+                        "description": "the location to get weather, example: San Fransisco, CA",
+                    }
                 },
-                "required": ["location"]
-            }
-            }
+                "required": ["location"],
+            },
+        },
     },
 ]
 ```
@@ -582,9 +609,9 @@ tools_v2 = [
 ```python PYTHON
 message = "What's the weather in Toronto?"
 
-res_v1 = co_v1.chat(model="command-r-plus-08-2024",
-                    message=message,
-                    tools=tools_v1)
+res_v1 = co_v1.chat(
+    model="command-a-03-2025", message=message, tools=tools_v1
+)
 
 print(res_v1.tool_calls)
 ```
@@ -595,9 +622,13 @@ print(res_v1.tool_calls)
 **v2**
 
 ```python PYTHON
-messages = [{"role": "user", "content": "What's the weather in Toronto?"}]
+messages = [
+    {"role": "user", "content": "What's the weather in Toronto?"}
+]
 
-res_v2 = co_v2.chat(model="command-r-plus-08-2024", messages=messages, tools=tools_v2)
+res_v2 = co_v2.chat(
+    model="command-a-03-2025", messages=messages, tools=tools_v2
+)
 
 if res_v2.message.tool_calls:
     messages.append(
@@ -623,38 +654,31 @@ if res_v2.message.tool_calls:
 **v1**
 ```python PYTHON
 tool_results = [
-  {
-    "call": {
-      "name": "<tool name>",
-      "parameters": {
-        "<param name>": "<param value>"
-      }
+    {
+        "call": {
+            "name": "<tool name>",
+            "parameters": {"<param name>": "<param value>"},
+        },
+        "outputs": [{"<key>": "<value>"}],
     },
-    "outputs": [{
-      "<key>": "<value>"
-    }]
-  },
 ]
-
 ```
 **v2**
 ```python PYTHON
 messages = [
-  {
-    "role": "tool", 
-    "tool_call_id": "123", 
-    "content": [
-      {
-        "type": "document", 
-        "document": {
-          "id": "123", 
-          "data": {
-            "<key>": "<value>"
-          }
-        }
-      }
-    ]
-  }
+    {
+        "role": "tool",
+        "tool_call_id": "123",
+        "content": [
+            {
+                "type": "document",
+                "document": {
+                    "id": "123",
+                    "data": {"<key>": "<value>"},
+                },
+            }
+        ],
+    }
 ]
 ```
 
@@ -680,14 +704,16 @@ if res_v1.tool_calls:
     for tc in res_v1.tool_calls:
         tool_call = {"name": tc.name, "parameters": tc.parameters}
         tool_result = functions_map[tc.name](**tc.parameters)
-        tool_content_v1.append({"call": tool_call, "outputs": [tool_result]})
-        
+        tool_content_v1.append(
+            {"call": tool_call, "outputs": [tool_result]}
+        )
+
 res_v1 = co_v1.chat(
-    model="command-r-plus-08-2024",
+    model="command-a-03-2025",
     message="",
     tools=tools_v1,
-    tool_results=tool_content_v1,   
-    chat_history=res_v1.chat_history
+    tool_results=tool_content_v1,
+    chat_history=res_v1.chat_history,
 )
 
 print(res_v1.text)
@@ -706,16 +732,23 @@ if res_v2.message.tool_calls:
         )
         tool_content_v2 = []
         for data in tool_result:
-            tool_content_v2.append({"type": "document", "document": {"data": json.dumps(data)}})
+            tool_content_v2.append(
+                {
+                    "type": "document",
+                    "document": {"data": json.dumps(data)},
+                }
+            )
             # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
         messages.append(
-            {"role": "tool", "tool_call_id": tc.id, "content": tool_content_v2}
+            {
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": tool_content_v2,
+            }
         )
 
 res_v2 = co_v2.chat(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools_v2
+    model="command-a-03-2025", messages=messages, tools=tools_v2
 )
 
 print(res_v2.message.content[0].text)
@@ -780,13 +813,15 @@ if res_v1.tool_calls:
     for tc in res_v1.tool_calls:
         tool_call = {"name": tc.name, "parameters": tc.parameters}
         tool_result = functions_map[tc.name](**tc.parameters)
-        tool_content_v1.append({"call": tool_call, "outputs": [tool_result]})
+        tool_content_v1.append(
+            {"call": tool_call, "outputs": [tool_result]}
+        )
 
 res_v1 = co_v1.chat_stream(
     message="",
     tools=tools_v1,
     tool_results=tool_content_v1,
-    chat_history=res_v1.chat_history
+    chat_history=res_v1.chat_history,
 )
 
 for chunk in res_v1:
@@ -811,16 +846,23 @@ if res_v2.message.tool_calls:
         )
         tool_content_v2 = []
         for data in tool_result:
-            tool_content_v2.append({"type": "document", "document": {"data": json.dumps(data)}})
+            tool_content_v2.append(
+                {
+                    "type": "document",
+                    "document": {"data": json.dumps(data)},
+                }
+            )
             # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
         messages.append(
-            {"role": "tool", "tool_call_id": tc.id, "content": tool_content_v2}
+            {
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": tool_content_v2,
+            }
         )
 
 res_v2 = co_v2.chat_stream(
-    model="command-r-plus-08-2024",
-    messages=messages,
-    tools=tools_v2
+    model="command-a-03-2025", messages=messages, tools=tools_v2
 )
 
 for chunk in res_v2:
