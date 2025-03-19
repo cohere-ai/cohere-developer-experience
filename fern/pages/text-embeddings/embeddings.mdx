@@ -216,7 +216,7 @@ ret.embeddings.float
 Matryoshka learning creates embeddings with coarse-to-fine representation within a single vector; `embed-v4.0` supports multiple output dimensions in the following values: `[256,512,1024,1536]`. To access this, you specify the parameter `output_dimensions` when creating the embeddings. 
 
 ```python PYTHON
-texts=["hello"]
+texts = ["hello"]
 
 response = co.embed(
     model="embed-v4.0",
@@ -227,23 +227,23 @@ response = co.embed(
 ).embeddings
 
 # print out the embeddings
-response.float # returns a vector that is 1024 dimensions
+response.float  # returns a vector that is 1024 dimensions
 ```
 
 ## Support for Fused and Mixed Modalities
 `embed-v4.0` supports text and content-rich images such as figures, slide decks, document screen shots (i.e. screenshots of PDF pages). This eliminates the need for complex text extraction or ETL pipelines. Unlike our previous `embed-v3.0` model family, `embed-v4.0` is capable of processing both images and texts together; the inputs can either be an image that contains both text and visual content, or text and images that youd like to compress into a single vector representation. 
 
 A popular example of fused images and texts would be in e-Commerce, where you could have an asset represented as a JSON object with a corresponding image. 
-```python PYTHON
+```json JSON
 {
-	"product_title":"Nike Men's Low-Top Sneaker",
-	"product_description":"Braided and synthetic fabric on the upper provides a lightweight fit and airy feel Foam midsole is soft and comfortable Elastic inner sleeve and booty-like structure create a custom fitRubber on the sole adds traction and durability"
-	"brand_name": "Nike",
-	"image_assets":[
-		"some_url",
-		"some_url",
-		"some_url",
-	]
+    "product_title": "Nike Men's Low-Top Sneaker",
+    "product_description": "Braided and synthetic fabric on the upper provides a lightweight fit and airy feel Foam midsole is soft and comfortable Elastic inner sleeve and booty-like structure create a custom fitRubber on the sole adds traction and durability",
+    "brand_name": "Nike",
+    "image_assets": [
+        "some_url",
+        "some_url",
+        "some_url",
+    ],
 }
 ```
 
@@ -278,32 +278,37 @@ def image_to_base64_data_url(image_path):
     data_url = f"data:image/png;base64,{img_base64}"
     return data_url
 
-# Sample E-Commerce Object    
-sample_object={
-	"product_title":"Nike Men's Low-Top Sneaker",
-	"product_description":"Braided and synthetic fabric on the upper provides a lightweight fit and airy feel Foam midsole is soft and comfortable Elastic inner sleeve and booty-like structure create a custom fitRubber on the sole adds traction and durability"
-	"brand_name": "Nike",
-	"image_assets":[
-		"some_url",
-		"some_url",
-		"some_url",
-	]
+
+# Sample E-Commerce Object
+sample_object = {
+    "product_title": "Nike Men's Low-Top Sneaker",
+    "product_description": "Braided and synthetic fabric on the upper provides a lightweight fit and airy feel Foam midsole is soft and comfortable Elastic inner sleeve and booty-like structure create a custom fitRubber on the sole adds traction and durability",
+    "brand_name": "Nike",
+    "image_assets": [
+        "some_url",
+        "some_url",
+        "some_url",
+    ],
 }
 
-# Process all the images into base64 representation 
-base_64_img_arr=[]
-for url in sample_object['image_assets']:
-  processed_image = image_to_base64_data_url(url)
-  base_64_img_arr.append(processed_image)
+# Process all the images into base64 representation
+base_64_img_arr = []
+for url in sample_object["image_assets"]:
+    processed_image = image_to_base64_data_url(url)
+    base_64_img_arr.append(processed_image)
 
 
 embed_input = [
     {
         "content": [
-            {"type": "text", "text": sample_object['product_title']},
-            {"type": "text", "text": sample_object['product_description']},
-            {"type": "text", "text": sample_object['brand_name']}
-        ] + [{"type": "image", "image": img} for img in base_64_img_arr]
+            {"type": "text", "text": sample_object["product_title"]},
+            {
+                "type": "text",
+                "text": sample_object["product_description"],
+            },
+            {"type": "text", "text": sample_object["brand_name"]},
+        ]
+        + [{"type": "image", "image": img} for img in base_64_img_arr]
     }
 ]
 
@@ -312,8 +317,8 @@ ret = co.embed(
     inputs=embed_input,
     model="embed-v4.0",
     embedding_types=["float"],
-    input_type='search_document',
-    output_dimensions=1024
+    input_type="search_document",
+    output_dimensions=1024,
 )
 
 ret.embeddings.float
