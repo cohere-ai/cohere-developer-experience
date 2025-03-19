@@ -55,14 +55,19 @@ processed_image = image_to_base64_data_url(image_path)
 # Import the necessary packages
 import cohere
 
-co = cohere.Client(api_key="<YOUR API KEY>")
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
+
+# format the input_object
+image_input = [{"content": [{"type": "image", "image": processed_image}]}]
 
 co.embed(
-    model="embed-english-v3.0",
-    images=[processed_image],
-    input_type="image",
+    model="embed-v4.0",
+    inputs=image_input,
+    input_type='search_document',
+    embedding_types=["float"],
 )
 ```
+
 ## Sample Output
 Below is a sample of what the output would look like if you passed in a `jpeg` with original dimensions of `1080x1350` with a standard bit-depth of 24.
 ```json JSON

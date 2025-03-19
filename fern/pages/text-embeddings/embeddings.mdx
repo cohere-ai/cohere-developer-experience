@@ -15,7 +15,7 @@ updatedAt: 'Tue May 28 2024 19:14:00 GMT+0000 (Coordinated Universal Time)'
 
 Embeddings are a way to represent the **meaning** of text as a list of numbers. Using a simple comparison function, we can then calculate a similarity score for two embeddings to figure out whether two texts are talking about similar things. Common use-cases for embeddings include semantic search, clustering, and classification.
 
-In the example below we use the `embed-english-v3.0` model to generate embeddings for 3 phrases and compare them using a similarity function. The two **similar** phrases have a **high similarity score**, and the embeddings for two **unrelated** phrases have a **low similarity score**:
+In the example below we use the `embed-v4.0` model to generate embeddings for 3 phrases and compare them using a similarity function. The two similar phrases have a high similarity score, and the embeddings for two unrelated phrases have a low similarity score:
 
 ```python PYTHON
 import cohere
@@ -26,13 +26,14 @@ co = cohere.Client(api_key="YOUR_API_KEY")
 # get the embeddings
 phrases = ["i love soup", "soup is my favorite", "london is far away"]
 
-model = "embed-english-v3.0"
+model = "embed-v4.0"
 input_type = "search_query"
 
 res = co.embed(
     texts=phrases,
     model=model,
     input_type=input_type,
+    output_dimensions=1024,
     embedding_types=["float"],
 )
 
@@ -59,7 +60,7 @@ Cohere embeddings are optimized for different types of inputs.
 
 ## Multilingual Support
 
-In addition to `embed-english-v3.0` we offer a best-in-class multilingual model [embed-multilingual-v3.0](/docs/embed-2#multi-lingual-models)  with support for over 100 languages, including Chinese, Spanish, and French. This model can be used with the Embed API, just like its English counterpart:
+`embed-v4.0` is a best-in-class best-in-class multilingual model  with support for over 100 languages, including Chinese, Spanish, and French.
 
 ```python PYTHON
 import cohere
@@ -79,9 +80,10 @@ texts = [
 ]
 
 response = co.embed(
-    model="embed-multilingual-v3.0",
+    model="embed-v4.0",
     texts=texts,
     input_type="classification",
+    output_dimensions=1024,
     embedding_types=["float"],
 )
 
@@ -91,18 +93,85 @@ print(embeddings[0][:5])  # Print embeddings for the first text
 
 ## Image Embeddings
 
-The Cohere embedding platform supports image embeddings for the entire `embed-v3.0` family. This functionality can be utilized with the following steps:
+The Cohere Embedding platform supports image embeddings for `embed-v4.0` and the `embed-v3.0` family. There are two ways to access this functionality: 
 
-- Pass `image` to the `input_type` parameter (as discussed above). 
-- Pass your image URL to the new `images` parameter.
+- Pass `image` to the `input_type` parameter. Here are the steps:
+    - 1) Pass image to the input_type parameter 
+    - 2) Pass your image URL to the images parameter
+- Pass your image URL to the new `images` parameter. Here are the steps:
+    - 1) pass in a input list of `dicts` with the key content 
+    - 2) content contains a list of `dicts` with the keys `type` and `image`
+
+When using the `images` parameter the following restrictions exist: 
+
+- Pass `image` to the `input_type` parameter (as discussed above).
+- Pass your image URL to the new `images` parameter.
 
 Be aware that image embedding has the following restrictions:
 
-- If `input_type='image'`, the `texts` field must be empty.
-- The original image file type must be in a `png`, `jpeg`, `webp`, or `gif` format and can be up to 5 MB in size.
-- The image must be base64 encoded and sent as a Data URL to the `images` parameter. 
+- If `input_type='image'`, the `texts` field must be empty.
+- The original image file type must be in a `png`, `jpeg`, `webp`, or `gif` format and can be up to 5 MB in size.
+- The image must be base64 encoded and sent as a Data URL to the `images` parameter.
 - Our API currently does not support batch image embeddings.
 
+When using the `inputs` parameter the following restrictions exist (note these restrictions apply to `embed-v4.0`):
+
+- The maximum size of payload is 20mb
+- All images larger than 2,4578,624 pixels will be downsampled to 2,4578,624 pixels
+- All images smaller than 200,604 pixels will be upsampled to 200,604 pixels
+- `input_type` must be set to one of the following
+    - `search_query`
+    - `search_document`
+    - `classification`
+    - `clustering`
+
+Here's a code sample using the `inputs` parameter:
+```python PYTHON
+import cohere
+from PIL import Image
+from io import BytesIO
+import base64
+
+co = cohere.Client(api_key="<YOUR API KEY>")
+
+# The model accepts input in base64 as a Data URL
+
+
+def image_to_base64_data_url(image_path):
+    # Open the image file
+    with Image.open(image_path) as img:
+        # Create a BytesIO object to hold the image data in memory
+        buffered = BytesIO()
+        # Save the image as PNG to the BytesIO object
+        img.save(buffered, format="PNG")
+        # Encode the image data in base64
+        img_base64 = base64.b64encode(buffered.getvalue()).decode(
+            "utf-8"
+        )
+
+    # Create the Data URL and assumes the original image file type was png
+    data_url = f"data:image/png;base64,{img_base64}"
+    return data_url
+
+
+processed_image = image_to_base64_data_url("<PATH_TO_IMAGE>")
+
+input=[
+	{"content":[{"type":"image":processed_image}]}
+]
+
+ret = co.embed(
+    model="embed-v4.0",
+    embedding_types=["float"],
+    input_type='search_document',
+    inputs=input,
+    output_dimensions=1024
+)
+
+ret.embeddings.float
+```
+
+Here's a code sample using the `images` parameter:
 ```python PYTHON
 import cohere
 from PIL import Image
@@ -135,9 +204,116 @@ processed_image = image_to_base64_data_url("<PATH_TO_IMAGE>")
 
 ret = co.embed(
     images=[processed_image],
-    model="embed-english-v3.0",
+    model="embed-v4.0",
     embedding_types=["float"],
     input_type="image",
+)
+
+ret.embeddings.float
+```
+
+## Matryoshka Embeddings
+Matryoshka learning creates embeddings with coarse-to-fine representation within a single vector; `embed-v4.0` supports multiple output dimensions in the following values: `[256,512,1024,1536]`. To access this, you specify the parameter `output_dimensions` when creating the embeddings. 
+
+```python PYTHON
+texts=["hello"]
+
+response = co.embed(
+    model="embed-v4.0",
+    texts=texts,
+    output_dimensions=1024,
+    input_type="classification",
+    embedding_types=["float"],
+).embeddings
+
+# print out the embeddings
+response.float # returns a vector that is 1024 dimensions
+```
+
+## Support for Fused and Mixed Modalities
+`embed-v4.0` supports text and content-rich images such as figures, slide decks, document screen shots (i.e. screenshots of PDF pages). This eliminates the need for complex text extraction or ETL pipelines. Unlike our previous `embed-v3.0` model family, `embed-v4.0` is capable of processing both images and texts together; the inputs can either be an image that contains both text and visual content, or text and images that youd like to compress into a single vector representation. 
+
+A popular example of fused images and texts would be in e-Commerce, where you could have an asset represented as a JSON object with a corresponding image. 
+```python PYTHON
+{
+	"product_title":"Nike Men's Low-Top Sneaker",
+	"product_description":"Braided and synthetic fabric on the upper provides a lightweight fit and airy feel Foam midsole is soft and comfortable Elastic inner sleeve and booty-like structure create a custom fitRubber on the sole adds traction and durability"
+	"brand_name": "Nike",
+	"image_assets":[
+		"some_url",
+		"some_url",
+		"some_url",
+	]
+}
+```
+
+![Fused image and texts](../../assets/images/ecommerce_sneakers.png)
+
+Here's a code sample illustrating how `embed-v4.0` could be used to work with fused images and texts like the above:
+
+```python PYTHON
+import cohere
+from PIL import Image
+from io import BytesIO
+import base64
+
+co = cohere.Client(api_key="<YOUR API KEY>")
+
+# The model accepts input in base64 as a Data URL
+
+
+def image_to_base64_data_url(image_path):
+    # Open the image file
+    with Image.open(image_path) as img:
+        # Create a BytesIO object to hold the image data in memory
+        buffered = BytesIO()
+        # Save the image as PNG to the BytesIO object
+        img.save(buffered, format="PNG")
+        # Encode the image data in base64
+        img_base64 = base64.b64encode(buffered.getvalue()).decode(
+            "utf-8"
+        )
+
+    # Create the Data URL and assumes the original image file type was png
+    data_url = f"data:image/png;base64,{img_base64}"
+    return data_url
+
+# Sample E-Commerce Object    
+sample_object={
+	"product_title":"Nike Men's Low-Top Sneaker",
+	"product_description":"Braided and synthetic fabric on the upper provides a lightweight fit and airy feel Foam midsole is soft and comfortable Elastic inner sleeve and booty-like structure create a custom fitRubber on the sole adds traction and durability"
+	"brand_name": "Nike",
+	"image_assets":[
+		"some_url",
+		"some_url",
+		"some_url",
+	]
+}
+
+# Process all the images into base64 representation 
+base_64_img_arr=[]
+for url in sample_object['image_assets']:
+  processed_image = image_to_base64_data_url(url)
+  base_64_img_arr.append(processed_image)
+
+
+embed_input = [
+    {
+        "content": [
+            {"type": "text", "text": sample_object['product_title']},
+            {"type": "text", "text": sample_object['product_description']},
+            {"type": "text", "text": sample_object['brand_name']}
+        ] + [{"type": "image", "image": img} for img in base_64_img_arr]
+    }
+]
+
+
+ret = co.embed(
+    inputs=embed_input,
+    model="embed-v4.0",
+    embedding_types=["float"],
+    input_type='search_document',
+    output_dimensions=1024
 )
 
 ret.embeddings.float
