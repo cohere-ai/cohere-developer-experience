@@ -34,7 +34,7 @@ For semantic search, there are two types of documents we need to turn into embed
 We call the Embed endpoint using `co.embed()` and pass the required arguments:
 
 - `texts`: The list of texts
-- `model`: Here we choose `embed-v4.0`, which generates embeddings of size 1536, but we will set the output dimension to 1024
+- `model`: Here we choose `embed-v4.0`, which generates embeddings of size 1536 by default, but we will set the output dimension to 1024
 - `input_type`: We choose `search_document` to ensure the model treats these as the documents for search
 - `embedding_types`: We choose `float` to get a float array as the output
 
@@ -43,8 +43,6 @@ Next, we add and embed a query. We choose `search_query` as the `input_type` to 
 
 ### Step 3: Return the most similar documents
 Next, we calculate and sort similarity scores between a query and document embeddings, then display the top N most similar documents. Here, we are using the numpy library for calculating similarity using a dot product approach. 
-
-
 
 ```python PYTHON
 ### STEP 1: Embed the documents
@@ -101,6 +99,9 @@ for idx, docs_idx in enumerate(top_doc_idxs):
     print(f"Rank: {idx+1}")
     print(f"Document: {documents[docs_idx]}\n")
 ```
+
+Here's an example output:
+```
 Rank: 1
 Document: Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!
 
@@ -109,7 +110,7 @@ Document: Joining Slack Channels: You will receive an invite via email. Be sure 
 ```   
 
 
-## Content quality measure with Embed v3
+## Content quality measure with Embed v4
 
 A standard text embeddings model is optimized for only topic similarity between a query and candidate documents. But in many real-world applications, you have redundant information with varying content quality.
 
@@ -168,7 +169,6 @@ query_emb = co.embed(
     embedding_types=["float"],
 ).embeddings.float
 
-
 ### STEP 3: Return the most similar documents
 
 # Calculate similarity scores
@@ -182,6 +182,9 @@ top_doc_idxs = np.argsort(-scores)[:top_n]
 for idx, docs_idx in enumerate(top_doc_idxs):
     print(f"Rank: {idx+1}")
     print(f"Document: {documents[docs_idx]}\n")
+```
+
+Here's a sample output:
 ```
 Rank: 1
 Document: COVID-19 symptoms can include: a high temperature or shivering (chills); a new, continuous cough; a loss or change to your sense of smell or taste; and many more
@@ -201,10 +204,9 @@ Document: COVID-19 symptoms are not nice
 
 ## Multilingual semantic search
 
-The Embed endpoint also supports multilingual semantic search via `embed-v4.0` and then previous `embed-multilingual-...` models. This means you can perform semantic search on texts in different languages.
+The Embed endpoint also supports multilingual semantic search via `embed-v4.0` and previous `embed-multilingual-...` models. This means you can perform semantic search on texts in different languages.
 
 Specifically, you can do both multilingual and cross-lingual searches using one single model.
-
 
 ```python PYTHON
 ### STEP 1: Embed the documents
@@ -246,7 +248,6 @@ query_emb = co.embed(
     embedding_types=["float"],
 ).embeddings.float
 
-
 ### STEP 3: Return the most similar documents
 
 # Calculate similarity scores
@@ -261,6 +262,7 @@ for idx, docs_idx in enumerate(top_doc_idxs):
     print(f"Rank: {idx+1}")
     print(f"Document: {documents[docs_idx]}\n")
 ```
+
 Here's a sample output:
 ```
 Rank: 1
