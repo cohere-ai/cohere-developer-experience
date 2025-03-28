@@ -21,6 +21,7 @@ inputs = [
     "hey i need u to send some $",
 ]
 response = co.classify(
+    model="<YOUR-FINE-TUNED-MODEL-ID>",
     inputs=inputs,
     examples=examples,
 )

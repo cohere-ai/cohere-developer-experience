@@ -22,9 +22,16 @@ In this tutorial, we'll cover:
 
 By implementing these techniques, we'll expand our agentic RAG system to handle structured data in SQL databases, complementing our previous work with tabular data in pandas.
 
+Let's get started by setting up our environment and creating our SQLite database.
+
 ## Setup
 
 To get started, first we need to install the `cohere` library and create a Cohere client.
+
+
+```python PYTHON
+! pip install cohere pandas -qq
+```
 
 
 ```python PYTHON
@@ -34,8 +41,9 @@ import cohere
 import sqlite3
 import pandas as pd
 
-# Get your free API key: https://dashboard.cohere.com/api-keys
-co = cohere.ClientV2("COHERE_API_KEY")
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key: https://dashboard.cohere.com/api-keys
 ```
 
 ## Creating a SQLite database
@@ -45,6 +53,8 @@ Next, we'll create a SQLite database to store our evaluation results. SQLite is 
 1. Create a new SQLite database file named `evaluation_results.db`.
 2. Create a table called `evaluation_results` with columns for `usecase`, `run`, `score`, `temperature`, `tokens`, and `latency`.
 3. Insert sample data into the table to simulate our evaluation results.
+
+<Note> Important: the data can be [found here](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/agentic-rag/evaluation_results.db). Make sure to have the file in the same directory as this notebook for the imports to work correctly. </Note>
 
 
 ```python PYTHON
@@ -145,8 +155,9 @@ result = sql_table_query(
 )
 print(result)
 ```
-```
-  [{'usecase': 'extract_names', 'run': 'A', 'score': 0.5, 'temperature': 0.3, 'tokens': 103, 'latency': 1.12}, {'usecase': 'extract_names', 'run': 'B', 'score': 0.2, 'temperature': 0.3, 'tokens': 101, 'latency': 2.85}, {'usecase': 'extract_names', 'run': 'C', 'score': 0.7, 'temperature': 0.3, 'tokens': 101, 'latency': 2.22}, {'usecase': 'extract_names', 'run': 'D', 'score': 0.7, 'temperature': 0.5, 'tokens': 120, 'latency': 3.2}]
+```mdx
+
+[{'usecase': 'extract_names', 'run': 'A', 'score': 0.5, 'temperature': 0.3, 'tokens': 103, 'latency': 1.12}, {'usecase': 'extract_names', 'run': 'B', 'score': 0.2, 'temperature': 0.3, 'tokens': 101, 'latency': 2.85}, {'usecase': 'extract_names', 'run': 'C', 'score': 0.7, 'temperature': 0.3, 'tokens': 101, 'latency': 2.22}, {'usecase': 'extract_names', 'run': 'D', 'score': 0.7, 'temperature': 0.5, 'tokens': 120, 'latency': 3.2}]
 ```
 
 ## Setting up a tool to interact with the database
@@ -178,7 +189,7 @@ tools = [sql_table_query_tool]
 
 ## Building an agent for querying SQL data
 
-Next, let's create a `run_agent` function to run the agentic RAG workflow, the same as in Part 1.
+Next, let's create a `run_agent` function to run the agentic RAG workflow,  just as we did in Part 1.
 
 The only change we are making here is to make the system message more specific and describe the database schema to the agent.
 
@@ -201,7 +212,7 @@ You can use SQL queries to analyze this data and provide insights to the develop
 
 
 ```python PYTHON
-model = "command-r-plus-08-2024"
+model = "command-a-03-2025"
 
 
 def run_agent(query, messages=None):
@@ -219,7 +230,7 @@ def run_agent(query, messages=None):
 
     # Step 2: Generate tool calls (if any)
     response = co.chat(
-        model=model, messages=messages, tools=tools, temperature=0.1
+        model=model, messages=messages, tools=tools, temperature=0.3
     )
 
     while response.message.tool_calls:
@@ -283,7 +294,7 @@ def run_agent(query, messages=None):
             model=model,
             messages=messages,
             tools=tools,
-            temperature=0.1,
+            temperature=0.3,
         )
 
     messages.append(
@@ -327,24 +338,25 @@ Let's now ask the agent the same set of questions we asked in the previous chapt
 messages = run_agent("What's the average evaluation score in run A")
 # Answer: 0.63
 ```
-```
+```mdx
+
 Question:
 What's the average evaluation score in run A
 ==================================================
 Tool plan:
-I will write a SQL query to find the average evaluation score in run A. 
+I will query the connected SQL database to find the average evaluation score in run A. 
 
 Tool calls:
-Tool name: sql_table_query | Parameters: {"query":"SELECT AVG(score) FROM evaluation_results WHERE run = 'A'"}
+Tool name: sql_table_query | Parameters: {"query":"SELECT AVG(score) AS average_score\r\nFROM evaluation_results\r\nWHERE run = 'A';"}
 ==================================================
 Response:
-The average evaluation score in run A is **0.63**.
+The average evaluation score in run A is 0.63.
 ==================================================
 CITATIONS:
 
-Start: 43| End:47| Text:'0.63' 
+Start: 41| End:46| Text:'0.63.' 
 Sources:
-1. sql_table_query_jm4e5yp0ptad:0
+1. sql_table_query_97h16txpbeqs:0
 ```
     
 
@@ -356,24 +368,27 @@ messages = run_agent(
 )
 # Answer: 4.8
 ```
-```
+```mdx
+
 Question:
 What's the latency of the highest-scoring run for the summarize_article use case?
 ==================================================
 Tool plan:
-I will write and execute a SQL query to find the latency of the highest-scoring run for the summarize_article use case. 
+I will query the connected SQL database to find the latency of the highest-scoring run for the summarize_article use case.
+
+I will filter the data for the summarize_article use case and order the results by score in descending order. I will then return the latency of the first result. 
 
 Tool calls:
-Tool name: sql_table_query | Parameters: {"query":"SELECT latency FROM evaluation_results WHERE usecase = 'summarize_article' ORDER BY score DESC LIMIT 1"}
+Tool name: sql_table_query | Parameters: {"query":"SELECT latency\r\nFROM evaluation_results\r\nWHERE usecase = 'summarize_article'\r\nORDER BY score DESC\r\nLIMIT 1;"}
 ==================================================
 Response:
-The latency of the highest-scoring run for the summarize_article use case is 4.8 seconds.
+The latency of the highest-scoring run for the summarize_article use case is 4.8.
 ==================================================
 CITATIONS:
 
-Start: 77| End:89| Text:'4.8 seconds.' 
+Start: 77| End:81| Text:'4.8.' 
 Sources:
-1. sql_table_query_mxyzvcnsgdab:0
+1. sql_table_query_ekswkn14ra34:0
 ```
     
 
@@ -385,60 +400,63 @@ messages = run_agent(
 )
 # Answer: extract_names (106.25), draft_email (245.75), summarize_article (355.75)
 ```
-```
+```mdx
+
 Question:
 Which use case uses the least amount of tokens on average? Show the comparison of all use cases in a markdown table.
 ==================================================
 Tool plan:
-I will use the SQL tool to query the database for the average number of tokens used for each use case. I will then use the directly_answer tool to present the results in a markdown table. 
+I will query the connected SQL database to find the average number of tokens used for each use case. I will then present this information in a markdown table. 
 
 Tool calls:
-Tool name: sql_table_query | Parameters: {"query":"SELECT usecase, AVG(tokens) as avg_tokens FROM evaluation_results GROUP BY usecase ORDER BY avg_tokens ASC"}
+Tool name: sql_table_query | Parameters: {"query":"SELECT usecase, AVG(tokens) AS avg_tokens\nFROM evaluation_results\nGROUP BY usecase\nORDER BY avg_tokens ASC;"}
 ==================================================
 Response:
-The use case that uses the least amount of tokens on average is `extract_names`, with an average of 106.25 tokens. Here's a table comparing the average number of tokens used for all use cases:
+Here is a markdown table showing the average number of tokens used for each use case:
 
 | Use Case | Average Tokens |
 |---|---|
-| `extract_names` | 106.25 |
-| `draft_email` | 245.75 |
-| `summarize_article` | 355.75 |
+| extract_names | 106.25 |
+| draft_email | 245.75 |
+| summarize_article | 355.75 |
+
+The use case that uses the least amount of tokens on average is **extract_names**.
 ==================================================
 CITATIONS:
 
-Start: 64| End:114| Text:'`extract_names`, with an average of 106.25 tokens.' 
+Start: 129| End:142| Text:'extract_names' 
 Sources:
-1. sql_table_query_2qyr8vpqrf2v:0
+1. sql_table_query_50yjx2cecqx1:0
 
 
-Start: 236| End:250| Text:'`extract_names' 
+Start: 145| End:151| Text:'106.25' 
 Sources:
-1. sql_table_query_2qyr8vpqrf2v:0
+1. sql_table_query_50yjx2cecqx1:0
 
 
-Start: 254| End:260| Text:'106.25' 
+Start: 156| End:167| Text:'draft_email' 
 Sources:
-1. sql_table_query_2qyr8vpqrf2v:0
+1. sql_table_query_50yjx2cecqx1:0
 
 
-Start: 265| End:277| Text:'`draft_email' 
+Start: 170| End:176| Text:'245.75' 
 Sources:
-1. sql_table_query_2qyr8vpqrf2v:0
+1. sql_table_query_50yjx2cecqx1:0
 
 
-Start: 281| End:287| Text:'245.75' 
+Start: 181| End:198| Text:'summarize_article' 
 Sources:
-1. sql_table_query_2qyr8vpqrf2v:0
+1. sql_table_query_50yjx2cecqx1:0
 
 
-Start: 292| End:310| Text:'`summarize_article' 
+Start: 201| End:207| Text:'355.75' 
 Sources:
-1. sql_table_query_2qyr8vpqrf2v:0
+1. sql_table_query_50yjx2cecqx1:0
 
 
-Start: 314| End:320| Text:'355.75' 
+Start: 277| End:290| Text:'extract_names' 
 Sources:
-1. sql_table_query_2qyr8vpqrf2v:0
+1. sql_table_query_50yjx2cecqx1:0
 ```
     
 
