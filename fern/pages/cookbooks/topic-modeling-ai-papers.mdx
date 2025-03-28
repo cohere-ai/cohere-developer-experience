@@ -21,7 +21,7 @@ Here, you'll learn how to use Cohere’s NLP tools to perform semantic search an
 - Visualize the embeddings and proceed to perform topic modeling.
 - Use a tool to find the papers most relevant to a query you provide.
 
-To follow along with this tutorial, you need to be familiar with Python. Make sure you have python version 3.6+ installed. You can also use Google Colab to try out the project in the cloud. Finally, you need to have a Cohere Account.
+To follow along with this tutorial, you need to be familiar with Python and have python version 3.6+ installed, and you'll need to have a Cohere account. Everything that follows can be tested with a Google Colab notebook.
 
 First, you need to install the python dependencies required to run the project. Use pip to install them using the command below
 
@@ -29,7 +29,7 @@ First, you need to install the python dependencies required to run the project. 
 pip install requests beautifulsoup4 cohere altair clean-text numpy pandas scikit-learn > /dev/null
 ```
 
-And, we'll also initialize the Cohere client.
+And we'll also initialize the Cohere client.
 
 ```python PYTHON
 import cohere
@@ -57,7 +57,7 @@ from sklearn.cluster import KMeans
 Next, make an HTTP request to the source website that has an archive of the AI papers.
 
 ```python PYTHON
-URL = "https://www.jair.org/index.php/jair/issue/archive"
+URL = "https://arxiv.org/list/cs.AI/new"
 page = requests.get(URL)
 ```
 
@@ -66,7 +66,7 @@ In this section, we'll walk through some of the Python code we'll need for our t
 
 ### Getting and Processing ArXiv Papers.
 
-This `make_raw_df` function scrapes paper data from a given URL, pulling out titles and abstracts. It uses `BeautifulSoup` to parse the HTML content, extracting titles from elements with class "list-title mathjax" and abstracts from paragraph elements with class "mathjax". Finally, it organizes this data into a pandas DataFrame with two columns - "titles" and "texts" - where each row represents the information from a single paper.
+This `make_raw_df` function scrapes paper data from a given URL, pulling out titles and abstracts. It uses `BeautifulSoup` to parse the HTML content, extracting titles from elements with class `"list-title mathjax"` and abstracts from paragraph elements with class `"mathjax"`. Finally, it organizes this data into a pandas dataframe with two columns - "titles" and "texts" - where each row represents the information from a single paper.
 
 ```python PYTHON
 def make_raw_df(url):
@@ -93,15 +93,15 @@ def make_raw_df(url):
 ### Generating embeddings
 [Word embedding](https://docs.cohere.com/docs/embeddings) is a technique for learning a numerical representation of words. You can use these embeddings to:
 
-• cluster large amounts of text  
-• match a query with other similar sentences  
-• perform classification tasks like sentiment classification
+• Cluster large amounts of text  
+• Match a query with other similar sentences  
+• Perform classification tasks like sentiment classification
 
 All of which we will do today.
 
-Cohere’s platform provides an Embed Endpoint that returns text embeddings. An embedding is a list of floating-point numbers, and it captures the semantic meaning of the represented text. Models used to create these embeddings are available in several; small models are faster while large models offer better performance.
+Cohere’s platform provides an [Embed endpoint](https://docs.cohere.com/reference/embed) that returns text embeddings. An embedding is a list of floating-point numbers, and it captures the semantic meaning of the represented text. Models used to create these embeddings are available in several; small models are faster while large models offer better performance.
 
-In the three functions below, `get_embeddings`, `make_clusters`, and `create_cluster_names` we'll generate embeddings from the papers, use principal component analysis to create axes for later plotting efforts, use KMeans clustering to group the embedded papers into broad topics, and create a 'short name' that captures the essence of each cluster. This short name will make our Altair plot easier to read. 
+In the `get_embeddings`, `make_clusters`, and `create_cluster_names` functions defined below, we'll generate embeddings from the papers, use principal component analysis to create axes for later plotting efforts, use KMeans clustering to group the embedded papers into broad topics, and create a 'short name' that captures the essence of each cluster. This short name will make our Altair plot easier to read. 
 
 ```python PYTHON
 def get_embeddings(text, model="embed-english-v3.0"):
@@ -146,7 +146,7 @@ def create_cluster_names(essences_dict):
 ```
 
 ### Get Topic Essences
-Then, the `get_essence` function calls out to a Cohere Command model to create an 'essentialized' description of the papers in a given cluster. Like the 'short names' from above this will improve the readibility of our plot, because otherwise it would be of limited use.
+Then, the `get_essence` function calls out to a Cohere [Command endpoint](https://docs.cohere.com/reference/chat) to create an 'essentialized' description of the papers in a given cluster. Like the 'short names' from above this will improve the readibility of our plot, because otherwise it would be of limited use.
 
 ```python PYTHON
 def get_essence(df):
@@ -291,7 +291,7 @@ generate_chart(df_clust,'0','1',lbl='off',color='cluster',title=f'Clustering wit
 Your chart will look different, but it should be similar to this one:
 ![Topic modeling chart](../../assets/images/topic_modeling_chart.png)
 
-Congratulations! You have created the word embeddings and visualized them using a scatter plot. First, you need to reduce the dimensions of the word embeddings. 
+Congratulations! You have created the word embeddings and visualized them using a scatter plot, showing the overall structure of these papers.
 
 ## Similarity Search Across Papers
 Next, we'll expand on the functionality we've built so far to make it possible to find papers related to a user-provided query.
