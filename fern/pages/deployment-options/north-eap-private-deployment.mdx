@@ -26,14 +26,14 @@ This document describes the steps taken during a POC install. Where North is in 
 
 - CPU compute
     - 24 vCPU cores
-    - 72 Gb Memory
+    - 72 Gi Memory
     - OpenSearch nodes should have a `sysctl` config with `vm_max_map_count=262144`
 - GPU Compute
     - 2x NVIDIA A100 or 2x NVIDIA H100
     - 1x NVIDIA A10 or better
     - 2x NVIDIA T4 or better
 - Storage (PVC)
-    - A minimum of 300Gb of persistent storage
+    - A minimum of 300Gi of persistent storage
 
 ### Cluster Dependencies
 
@@ -216,15 +216,14 @@ The defaults are set up to expect a secret named `credentials` in your installat
             secretKeyRef:
               name: ""
               key: ""
-        modelDeploymentType: single_container
+        defaultModelDeployment: single_container
+        enabledModelDeployments:
+        - single_container
         singleContainer:
 	      model: "command"
       backend:
         monitoring:
           enabled: false
-      frontend:
-        env:
-          NEXT_PUBLIC_EXPERIMENTAL_FEATURES: data_digest,factory_reset
       postgresql:
         enabled: false
     
@@ -343,7 +342,9 @@ The defaults are set up to expect a secret named `credentials` in your installat
             secretKeyRef:
               name: ""
               key: ""
-        modelDeploymentType: cohere_platform
+        defaultModelDeployment: platform
+        enabledModelDeployments:
+        - platform
       backend:
         env:
           OTEL_DISABLE_AUTO_INSTRUMENTATION: "True"
@@ -583,14 +584,17 @@ models:
 
 toolkit:
   config:
-    modelDeploymentType: cohere_platform
+    defaultModelDeployment: cohere_platform
+    enabledModelDeployments:
+      - cohere_platform
 ```
 
 **Option 2): Use Helm `--set` flags**
 
 ```yaml
 --set models.enabled=false \
---set toolkit.config.modelDeploymentType=cohere_platform \
+--set toolkit.config.defaultModelDeployment=cohere_platform \
+--set toolkit.config.enabledModelDeployments[0]=cohere_platform \
 --set global.config.cohere.apiKey.secretKeyRef.name="<name>" \
 --set global.config.cohere.apiKey.secretKeyRef.key="<key>"
 ```
