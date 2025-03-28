@@ -5972,6 +5972,8 @@ paths:
                   x-fern-audiences:
                     - public
                   $ref: "#/components/schemas/ChatMessages"
+                reasoning_effort:
+                  $ref: "#/components/schemas/ReasoningEffort"
                 tools:
                   x-fern-audiences:
                     - public
@@ -16870,10 +16872,12 @@ paths:
 
                 func main() {
                 	co := client.NewClient()
+                	model := "<YOUR-FINE-TUNED-MODEL-ID>"
 
                 	resp, err := co.Classify(
                 		context.TODO(),
                 		&cohere.ClassifyRequest{
+                			Model: &model,
                 			Examples: []*cohere.ClassifyExample{
                 				{
                 					Text:  cohere.String("orange"),
@@ -16913,6 +16917,7 @@ paths:
 
                 (async () => {
                   const classify = await cohere.classify({
+                    model: '<YOUR-FINE-TUNED-MODEL-ID>',
                     examples: [
                       { text: "Dermatologists don't like her!", label: 'Spam' },
                       { text: "'Hello, open to this?'", label: 'Spam' },
@@ -16961,6 +16966,7 @@ paths:
                 ]
 
                 response = co.classify(
+                    model="<YOUR-FINE-TUNED-MODEL-ID>",
                     inputs=inputs,
                     examples=examples,
                 )
@@ -17002,6 +17008,7 @@ paths:
 
                 async def main():
                     response = await co.classify(
+                        model="<YOUR-FINE-TUNED-MODEL-ID>",
                         inputs=inputs,
                         examples=examples,
                     )
@@ -17083,6 +17090,7 @@ paths:
                   --header 'content-type: application/json' \
                   --header "Authorization: bearer $CO_API_KEY" \
                   --data '{
+                    "model": "<YOUR-FINE-TUNED-MODEL-ID>",
                     "inputs": ["Confirm your email address", "hey i need u to send some $"],
                     "examples": [
                       {"text": "Dermatologists don'\''t like her!","label": "Spam"},
@@ -17122,6 +17130,7 @@ paths:
             inputs:
               - Confirm your email address
               - hey i need u to send some $
+            model: "YOUR-FINE-TUNED-MODEL-ID"
           response:
             body:
               id: 86886163-b3f3-4e36-8554-60eca7696216
@@ -17354,7 +17363,20 @@ paths:
                   type: string
                   x-fern-audiences:
                     - public
-                  description: The identifier of the [fine-tuned model](https://docs.cohere.com/docs/classify-starting-the-training#create-a-new-fine-tuned-model).
+                  description: ID of a
+                    [Fine-tuned](https://docs.cohere.com/v2/docs/classify-starting-the-training)
+                    Classify model
+                  writeOnly: true
+                preset:
+                  type: string
+                  x-fern-audiences:
+                    - public
+                  example: my-preset-a58sbd
+                  description: The ID of a custom playground preset. You can create presets in the
+                    [playground](https://dashboard.cohere.com/playground/classify?model=large).
+                    If you use a preset, all other parameters become optional,
+                    and any included parameters will override the preset's
+                    parameters.
                   writeOnly: true
                 truncate:
                   type: string
@@ -22889,6 +22911,14 @@ components:
         Messages can be from `User`, `Assistant`, `Tool` and `System` roles. Learn more about messages and roles in [the Chat API guide](https://docs.cohere.com/v2/docs/chat-api).
       items:
         $ref: "#/components/schemas/ChatMessageV2"
+    ReasoningEffort:
+      description: |
+        The reasoning effort level of the model. This affects the model's performance and the time it takes to generate a response.
+      type: string
+      enum:
+        - low
+        - medium
+        - high
     ToolV2:
       type: object
       properties:
@@ -22926,7 +22956,7 @@ components:
             Defaults to `"accurate"`.
             Dictates the approach taken to generating citations as part of the RAG flow by allowing the user to specify whether they want `"accurate"` results, `"fast"` results or no results.
 
-            **Note**: `command-r7b-12-2024` only supports `"fast"` and `"off"` modes. Its default is `"fast"`.
+            **Note**: `command-r7b-12-2024` and `command-a-03-2025` only support `"fast"` and `"off"` modes. The default is `"fast"`.
     TruncationStrategy:
       description: Describes the truncation strategy for when the prompt exceeds the
         context length. Defaults to 'none'
@@ -27269,6 +27299,13 @@ components:
           items:
             $ref: "#/components/schemas/CompatibleEndpoint"
           description: The API endpoints that the model is default to.
+        features:
+          type: array
+          x-fern-audiences:
+            - public
+          items:
+            type: string
+          description: The features that the model supports.
     ListModelsResponse:
       type: object
       required:
