@@ -16,7 +16,7 @@ func main() {
 	resp, err := co.V2.ChatStream(
 		context.TODO(),
 		&cohere.V2ChatStreamRequest{
-			Model: "command-r-plus-08-2024",
+			Model: "command-a-03-2025",
 			Messages: cohere.ChatMessages{
 				{
 					Role: "user",

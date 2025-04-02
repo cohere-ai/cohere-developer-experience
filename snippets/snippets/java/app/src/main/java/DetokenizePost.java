@@ -11,7 +11,7 @@ public class DetokenizePost {
     DetokenizeResponse response =
         cohere.detokenize(
             DetokenizeRequest.builder()
-                .model("command-r-plus-08-2024")
+                .model("command-a-03-2025")
                 .tokens(List.of(8466, 5169, 2594, 8, 2792, 43))
                 .build());
 
