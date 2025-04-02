@@ -15477,6 +15477,16 @@ paths:
                   x-fern-audiences:
                     - public
                   $ref: "#/components/schemas/EmbedInputType"
+                inputs:
+                  type: array
+                  x-fern-audiences:
+                    - public
+                  items:
+                    $ref: "#/components/schemas/EmbedInput"
+                output_dimension:
+                  type: integer
+                  x-fern-audiences:
+                    - public
                 embedding_types:
                   type: array
                   x-fern-audiences:
@@ -24749,7 +24759,6 @@ components:
       required:
         - id
         - embeddings
-        - texts
         - api_version
       properties:
         response_type:
@@ -26048,6 +26057,84 @@ components:
               api_version:
                 version: "1"
             api_version: v2
+    EmbedContentType:
+      x-fern-audiences:
+        - public
+      type: string
+      writeOnly: true
+      enum:
+        - text
+        - image_url
+    EmbedImageProperties:
+      type: object
+      x-fern-audiences:
+        - public
+      properties:
+        width:
+          type: number
+          format: int64
+          description: Width of the image in pixels
+          x-fern-audiences:
+            - public
+        height:
+          type: number
+          format: int64
+          description: Height of the image in pixels
+          x-fern-audiences:
+            - public
+        format:
+          type: string
+          description: Format of the image
+          x-fern-audiences:
+            - public
+        bit_depth:
+          type: number
+          format: int64
+          description: Bit depth of the image
+          x-fern-audiences:
+            - public
+    EmbedImage:
+      type: object
+      x-fern-audiences:
+        - public
+      properties:
+        type:
+          $ref: "#/components/schemas/EmbedContentType"
+        image:
+          $ref: "#/components/schemas/EmbedImageProperties"
+    EmbedText:
+      type: object
+      x-fern-audiences:
+        - public
+      properties:
+        type:
+          $ref: "#/components/schemas/EmbedContentType"
+        text:
+          type: string
+          x-fern-audiences:
+            - public
+    EmbedContent:
+      oneOf:
+        - $ref: "#/components/schemas/EmbedImage"
+        - $ref: "#/components/schemas/EmbedText"
+      discriminator:
+        propertyName: type
+        mapping:
+          image_url: "#/components/schemas/EmbedImage"
+          text: "#/components/schemas/EmbedText"
+    EmbedInput:
+      type: object
+      x-fern-audiences:
+        - public
+      required:
+        - content
+      properties:
+        content:
+          x-fern-audiences:
+            - public
+          type: array
+          items:
+            $ref: "#/components/schemas/EmbedContent"
     EmbedJob:
       type: object
       required:
