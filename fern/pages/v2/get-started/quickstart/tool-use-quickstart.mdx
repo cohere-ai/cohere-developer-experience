@@ -1,0 +1,358 @@
+---
+title: Tool use & agents - quickstart
+slug: v2/docs/tool-use-quickstart
+
+description: "A quickstart guide for using tool use and building agents with Cohere's Command models (v2 API)."
+image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, tool use, agents, chatbot, command models"
+---
+Tool use enables developers to build agentic applications that connect to external tools, do reasoning, and perform actions.
+
+The Chat endpoint comes with built-in tool use capabilities such as function calling, multi-step reasoning, and citation generation.
+
+This quickstart guide shows you how to utilize tool use with the Chat endpoint.
+
+<Steps>
+### Setup
+First, install the Cohere Python SDK with the following command.
+
+```bash
+pip install -U cohere
+```
+
+Next, import the library and create a client.
+
+<Tabs>
+<Tab title="Cohere Platform">
+
+```python PYTHON
+import cohere
+
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
+```
+
+</Tab>
+<Tab title="Private Deployment">
+
+```python PYTHON
+import cohere
+
+co = cohere.ClientV2(
+    api_key="", base_url="<YOUR_DEPLOYMENT_URL>"  # Leave this blank
+)
+```
+
+</Tab>
+
+<Tab title="Bedrock">
+
+```python PYTHON
+import cohere
+
+co = cohere.BedrockClientV2(
+    aws_region="AWS_REGION",
+    aws_access_key="AWS_ACCESS_KEY_ID",
+    aws_secret_key="AWS_SECRET_ACCESS_KEY",
+    aws_session_token="AWS_SESSION_TOKEN",
+)
+
+# Get the model name: https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
+```
+</Tab>
+
+<Tab title="SageMaker">
+
+```python PYTHON
+import cohere
+
+co = cohere.SagemakerClientV2(
+    aws_region="AWS_REGION",
+    aws_access_key="AWS_ACCESS_KEY_ID",
+    aws_secret_key="AWS_SECRET_ACCESS_KEY",
+    aws_session_token="AWS_SESSION_TOKEN",
+)
+```
+</Tab>
+
+<Tab title="Azure AI">
+
+```python PYTHON
+import cohere
+
+co = cohere.ClientV2(
+    api_key="AZURE_API_KEY",
+    base_url="AZURE_ENDPOINT",
+)
+```
+</Tab>
+
+</Tabs>
+
+
+### Tool Definition
+First, we need to set up the tools. A tool can be any function or service that can receive and send objects.
+
+We also need to define the tool schemas in a format that can be passed to the Chat endpoint. The schema must contain the following fields: `name`, `description`, and `parameters`.
+
+
+```python PYTHON
+def get_weather(location):
+    # Implement your tool calling logic here
+    return [{"temperature": "20C"}]
+    # Return a list of objects e.g. [{"url": "abc.com", "text": "..."}, {"url": "xyz.com", "text": "..."}]
+
+
+functions_map = {"get_weather": get_weather}
+
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "gets the weather of a given location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "the location to get weather, example: San Fransisco, CA",
+                    }
+                },
+                "required": ["location"],
+            },
+        },
+    },
+]
+```
+
+### Tool Calling
+Next, pass the tool schema to the Chat endpoint together with the user message.
+
+The LLM will then generate the tool calls (if any) and return the `tool_plan` and `tool_calls` objects.
+
+<Tabs>
+<Tab title="Cohere Platform">
+```python PYTHON
+messages = [
+    {"role": "user", "content": "What's the weather in Toronto?"}
+]
+
+response = co.chat(
+    model="command-a-03-2025", messages=messages, tools=tools
+)
+
+if response.message.tool_calls:
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_calls": response.message.tool_calls,
+            "tool_plan": response.message.tool_plan,
+        }
+    )
+    print(response.message.tool_calls)
+```
+</Tab>
+
+<Tab title="Private Deployment">
+```python PYTHON
+messages = [
+    {"role": "user", "content": "What's the weather in Toronto?"}
+]
+
+response = co.chat(
+    model="command-a-03-2025", messages=messages, tools=tools
+)
+
+if response.message.tool_calls:
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_calls": response.message.tool_calls,
+            "tool_plan": response.message.tool_plan,
+        }
+    )
+    print(response.message.tool_calls)
+```
+</Tab>
+
+<Tab title="Bedrock">
+```python PYTHON
+messages = [
+    {"role": "user", "content": "What's the weather in Toronto?"}
+]
+
+response = co.chat(
+    model="YOUR_MODEL_NAME", messages=messages, tools=tools
+)
+
+if response.message.tool_calls:
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_calls": response.message.tool_calls,
+            "tool_plan": response.message.tool_plan,
+        }
+    )
+    print(response.message.tool_calls)
+```
+</Tab>
+
+<Tab title="SageMaker">
+```python PYTHON
+messages = [
+    {"role": "user", "content": "What's the weather in Toronto?"}
+]
+
+response = co.chat(
+    model="YOUR_ENDPOINT_NAME", messages=messages, tools=tools
+)
+
+if response.message.tool_calls:
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_calls": response.message.tool_calls,
+            "tool_plan": response.message.tool_plan,
+        }
+    )
+    print(response.message.tool_calls)
+```
+</Tab>
+
+<Tab title="Azure AI">
+```python PYTHON
+messages = [
+    {"role": "user", "content": "What's the weather in Toronto?"}
+]
+
+response = co.chat(
+    model="model",  # Pass a dummy string
+    messages=messages,
+    tools=tools,
+)
+
+if response.message.tool_calls:
+    messages.append(
+        {
+            "role": "assistant",
+            "tool_calls": response.message.tool_calls,
+            "tool_plan": response.message.tool_plan,
+        }
+    )
+    print(response.message.tool_calls)
+```
+</Tab>
+
+</Tabs>
+
+```mdx wordWrap
+[ToolCallV2(id='get_weather_776n8ctsgycn', type='function', function=ToolCallV2Function(name='get_weather', arguments='{"location":"Toronto"}'))]
+```
+
+### Tool Execution
+Next, the tools called will be executed based on the arguments generated in the tool calling step earlier.
+
+```python PYTHON
+import json
+
+if response.message.tool_calls:
+    for tc in response.message.tool_calls:
+        tool_result = functions_map[tc.function.name](
+            **json.loads(tc.function.arguments)
+        )
+        tool_content = []
+        for data in tool_result:
+            tool_content.append(
+                {
+                    "type": "document",
+                    "document": {"data": json.dumps(data)},
+                }
+            )
+            # Optional: add an "id" field in the "document" object, otherwise IDs are auto-generated
+        messages.append(
+            {
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": tool_content,
+            }
+        )
+```
+
+### Response Generation
+The results are passed back to the LLM, which generates the final response.
+
+<Tabs>
+<Tab title="Cohere Platform">
+```python PYTHON
+response = co.chat(
+    model="command-a-03-2025", messages=messages, tools=tools
+)
+print(response.message.content[0].text)
+```
+</Tab>
+
+<Tab title="Private Deployment">
+```python PYTHON
+response = co.chat(
+    model="command-a-03-2025", messages=messages, tools=tools
+)
+print(response.message.content[0].text)
+```
+</Tab>
+
+<Tab title="Bedrock">
+```python PYTHON
+response = co.chat(
+    model="YOUR_MODEL_NAME", messages=messages, tools=tools
+)
+print(response.message.content[0].text)
+```
+</Tab>
+
+<Tab title="SageMaker">
+```python PYTHON
+response = co.chat(
+    model="YOUR_ENDPOINT_NAME", messages=messages, tools=tools
+)
+print(response.message.content[0].text)
+```
+</Tab>
+
+<Tab title="Azure AI">
+```python PYTHON
+response = co.chat(
+    model="model",  # Pass a dummy string
+    messages=messages,
+    tools=tools,
+)
+print(response.message.content[0].text)
+```
+</Tab>
+
+
+</Tabs>
+
+```mdx wordWrap
+It is 20C in Toronto.
+```
+
+### Citation Generation
+The response object contains a `citations` field, which contains specific text spans from the documents on which the response is grounded.
+
+```python PYTHON
+if response.message.citations:
+    for citation in response.message.citations:
+        print(citation, "\n")
+```
+
+```mdx wordWrap
+start=6 end=9 text='20C' sources=[ToolSource(type='tool', id='get_weather_776n8ctsgycn:0', tool_output={'temperature': '20C'})] 
+```
+</Steps>
+
+## Further Resources
+- [Chat endpoint API reference](https://docs.cohere.com/reference/chat)
+- [Documentation on tool use](https://docs.cohere.com/docs/tools)
+- [LLM University module on tool use](https://cohere.com/llmu#tool-use)

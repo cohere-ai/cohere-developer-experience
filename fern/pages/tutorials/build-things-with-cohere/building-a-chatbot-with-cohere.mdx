@@ -30,7 +30,8 @@ To get started, first we need to install the `cohere` library and create a Coher
 
 import cohere
 
-co = cohere.Client("COHERE_API_KEY") # Get your API key: https://dashboard.cohere.com/api-keys
+# Get your API key: https://dashboard.cohere.com/api-keys
+co = cohere.Client("COHERE_API_KEY")
 ```
 
 ## Creating a custom preamble
@@ -48,15 +49,14 @@ In the example below, the preamble provides context for the assistant's task (ta
 message = "I'm joining a new startup called Co1t today. Could you help me write a short introduction message to my teammates."
 
 # Create a custom preamble
-preamble="""## Task and Context
+preamble = """## Task and Context
 You are an assistant who assist new employees of Co1t with their first week.
 
 ## Style Guide
 Try to speak in rhymes as much as possible. Be professional."""
 
 # Generate the response
-response = co.chat(message=message,
-                   preamble=preamble)
+response = co.chat(message=message, preamble=preamble)
 
 print(response.text)
 ```
@@ -107,12 +107,11 @@ Here, we are also adding a custom preamble for generating concise response, just
 message = "I'm joining a new startup called Co1t today. Could you help me write a short introduction message to my teammates."
 
 # Create a custom preamble
-preamble="""## Task & Context
+preamble = """## Task & Context
 Generate concise responses, with maximum one-sentence."""
 
 # Generate the response
-response = co.chat(message=message,
-                   preamble=preamble)
+response = co.chat(message=message, preamble=preamble)
 
 print(response.text)
 ```
@@ -136,9 +135,11 @@ Looking at the response, we see that the model is able to get the context from t
 message = "Make it more upbeat and conversational."
 
 # Generate the response with the current chat history as the context
-response = co.chat(message=message,
-                   preamble=preamble,
-                   chat_history=response.chat_history)
+response = co.chat(
+    message=message,
+    preamble=preamble,
+    chat_history=response.chat_history,
+)
 
 print(response.text)
 ```
@@ -157,12 +158,16 @@ You can continue doing this for any number of turns by passing the most recent `
 
 ```python PYTHON
 # Add the user message
-message = "Thanks. Could you create another one for my DM to my manager."
+message = (
+    "Thanks. Could you create another one for my DM to my manager."
+)
 
 # Generate the response with the current chat history as the context
-response = co.chat(message=message,
-                   preamble=preamble,
-                   chat_history=response.chat_history)
+response = co.chat(
+    message=message,
+    preamble=preamble,
+    chat_history=response.chat_history,
+)
 
 print(response.text)
 ```
@@ -178,8 +183,8 @@ To look at the current chat history, you can print the `response.chat_history` o
 ```python PYTHON
 # View the chat history
 for turn in response.chat_history:
-    print("Role:",turn.role)
-    print("Message:",turn.message,"\n")
+    print("Role:", turn.role)
+    print("Message:", turn.message, "\n")
 ```
 
 ```

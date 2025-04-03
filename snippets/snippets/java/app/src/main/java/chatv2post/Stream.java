@@ -15,7 +15,7 @@ public class Stream {
             .v2()
             .chatStream(
                 V2ChatStreamRequest.builder()
-                    .model("command-r-plus-08-2024")
+                    .model("command-a-03-2025")
                     .messages(
                         List.of(
                             ChatMessageV2.user(

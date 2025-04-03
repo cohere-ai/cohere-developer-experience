@@ -1,0 +1,112 @@
+---
+title: Aya Vision
+slug: "docs/aya-vision"
+hidden: false
+description: >-
+  Understand Cohere for AI's groundbreaking multilingual model Aya Vision, a state-of-the-art multimodal language model excelling at multiple tasks.
+image: ../../assets/images/6c1b0e4-cohere_meta_image.jpg
+keywords: 'Cohere AI, multilingual large language models, generative AI'
+createdAt: 'Wed Feb 26 2025 11:55:00 MST (U.S. Mountain Time)'
+updatedAt: ''
+---
+
+Aya Vision is a state-of-the-art multimodal and massively multilingual large language model excelling at critical benchmarks for language, text, and image capabilities. A natural extension of the Aya Expanse model family, Aya Vision provides deep capability in 23 languages, helping eliminate technological and communication divides between people and geographies.
+
+Built as a foundation for multilingual and multimodal communication, Aya Vision supports tasks such as image captioning, visual question answering, text generation, and translations from both texts and images into coherent text.
+
+## Model Details
+| Model Name               | Description                                                                                                                                                                                                                                             | Modality        | Context Length | Maximum Output Tokens | Endpoints                                            |
+|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|----------------|-----------------------|------------------------------------------------------|
+| `c4ai-aya-vision-8b`     | Aya Vision is a state-of-the-art multimodal model excelling at a variety of critical benchmarks for language, text, and image capabilities. This 8 billion parameter variant is focused on low latency and best-in-class performance.                   | Text, Images    | 16k            | 4k                    | [Chat](/reference/chat)                              |
+| `c4ai-aya-vision-32b`    | Aya Vision is a state-of-the-art multimodal model excelling at a variety of critical benchmarks for language, text, and image capabilities. Serves 23 languages. This 32 billion parameter variant is focused on state-of-art multilingual performance. | Text, Images    | 16k            | 4k                    | [Chat](/reference/chat)                              |
+
+## Multimodal Capabilities
+Aya Vision’s multimodal capabilities enable it to understand content across different media types, including text and images as input. Purpose-built to unify cultures, geographies, and people, Aya Vision is optimized for elite performance in 23 different languages. Its image captioning capabilities allow it to generate descriptive captions for images, and interpret images dynamically to answer various questions about images. Likewise, Aya Vision allows question answering, and translation across these materials, whether written or image based, laying a foundation to bridge communication and collaboration divides.
+
+Like [Aya Expanse](https://docs.cohere.com/docs/aya), Aya Vision is highly proficient in 23 languages, making it a valuable tool for researchers, academics, and developers working on multilingual projects.
+
+## How Can I Get Access to the Aya Models?
+If you want to test Aya, you have three options. First (and simplest), you can use the [Cohere playground](https://dashboard.cohere.com/playground/chat) or [Hugging Face Space](https://huggingface.co/spaces/CohereForAI/aya_expanse) to play around with them and see what they’re capable of.
+
+Second, you can use the [Cohere Chat API](https://docs.cohere.com/v2/docs/chat-api) to work with Aya programmatically. Here’s a very lightweight example of using the Cohere SDK to get Aya Vision to describe the contents of an image; if you haven’t installed the Cohere SDK, you can do that with `pip install cohere`.
+
+```python PYTHON
+import cohere
+import base64
+import os
+
+
+def generate_text(image_path, message):
+
+    model = "c4ai-aya-vision-8b"
+
+    co = cohere.ClientV2("<YOUR_API_KEY>")
+
+    with open(image_path, "rb") as img_file:
+        base64_image_url = f"data:image/jpeg;base64,{base64.b64encode(img_file.read()).decode('utf-8')}"
+
+    response = co.chat(
+        model=model,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": message},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": base64_image_url},
+                    },
+                ],
+            }
+        ],
+        temperature=0.3,
+    )
+
+    print(response.message.content[0].text)
+```
+
+Here's an image we might feed to Aya Vision:
+![A guitar-focused room](../../assets/images/guitar_room.png)
+
+And here’s an example output we might get when we run `generate_text(image_path, "What items are in the wall of this room?")` 
+
+(remember: these models are stochastic, and what you see might look quite different).
+
+```
+The wall in this room showcases a collection of musical instruments and related items, creating a unique and personalized atmosphere. Here's a breakdown of the items featured:
+
+1. **Guitar Wall Mount**: The centerpiece of the wall is a collection of guitars mounted on a wall. There are three main guitars visible:
+   - A blue electric guitar with a distinctive design.
+   - An acoustic guitar with a turquoise color and a unique shape.
+   - A red electric guitar with a sleek design.
+
+2. **Ukulele Display**: Above the guitars, there is a display featuring a ukulele and its case. The ukulele has a traditional wooden body and a colorful design.
+
+3. **Artwork and Posters**:
+   - A framed poster or artwork depicting a scene from *The Matrix*, featuring the iconic green pill and red pill.
+   - A framed picture or album artwork of *Fleetwood Mac McDonald*, including *Rumours*, *Tusk*, and *Dreams*.
+   - A framed image of the *Dark Side of the Moon* album cover by Pink Floyd.
+   - A framed poster or artwork of *Star Wars* featuring *R2-D2* (Robotic Man).
+
+4. **Album Collection**: Along the floor, there is a collection of vinyl records or album artwork displayed on a carpeted area. Some notable albums include:
+   - *Dark Side of the Moon* by Pink Floyd.
+   - *The Beatles* (White Album).
+   - *Abbey Road* by The Beatles.
+   - *Nevermind* by Nirvana.
+
+5. **Lighting and Accessories**:
+   - A blue lamp with a distinctive design, possibly serving as a floor lamp.
+   - A small table lamp with a warm-toned shade.
+```
+
+Finally, you can directly download the raw models for research purposes because Cohere For AI has released Aya Vision as open-weight models, through HuggingFace. We also released a new valuable evaluation set -- [Aya Vision Benchmark](https://huggingface.co/datasets/CohereForAI/AyaVisionBench) -- to measure progress on multilingual models here. 
+
+### Aya Expanse Integration with WhatsApp.
+
+On our [Aya Expanse](https://docs.cohere.com/docs/aya) page, you can find more information about Aya models in general, including a detailed FAQ section on how to use it with WhatsApp. There, we walk through using Aya Vision with WhatsApp.
+
+## Find More
+We hope you’re as excited about the possibilities of Aya Vision as we are! If you want to see more substantial projects, you can check out these notebooks:
+
+- [Walkthrough and Use Cases](https://docs.cohere.com/page/aya-vision-intro)
+

@@ -13,11 +13,30 @@ If you're looking to scale use cases in production, Cohere models are some of th
 
 ## How Are Costs Calculated for Different Cohere Models?
 
-Our generative models, such as [Command R](/docs/command-r) and [Command R+](/docs/command-r-plus), are priced on a per-token basis. Be aware that input tokens (i.e. tokens generated from text sent _to_ the model) and output tokens (i.e. text generated _by_ the model) are priced differently.
+Our generative models, such as [Command A](/docs/command-a), [Command R7B](/docs/command-r7b), [Command R](/docs/command-r) and [Command R+](/docs/command-r-plus), are priced on a per-token basis. Be aware that input tokens (i.e. tokens generated from text sent _to_ the model) and output tokens (i.e. text generated _by_ the model) are priced differently.
 
 Our Rerank models are priced based on the quantity of searches, and our Embedding models are priced based on the number of tokens embedded. 
 
 You can find up-to-date prices on our [dedicated pricing page](https://cohere.com/pricing).
+
+### What's the Difference Between "billed" Tokens and Generic Tokens?
+
+When using the [Chat API endpoint](https://docs.cohere.com/reference/chat), the response will contain the total count of input and output tokens, as well as the count of _billed_ tokens. Here's an example:
+
+```json JSON
+{
+  "billed_units": {
+    "input_tokens": 6772,
+    "output_tokens": 248
+  },
+  "tokens": {
+    "input_tokens": 7596,
+    "output_tokens": 645
+  }
+}
+```
+
+The rerank and embed models have their own, slightly different versions, and it may not be obvious why there are separate input and output values under `billed_units`. To clarify, the _billed_ input and output tokens are the tokens that you're actually _billed_ for. The reason these values can be different from the overall `"tokens"` value is that there are situations in which Cohere adds tokens under the hood, and there are others in which a particular model has been trained to do so (i.e. when outputting special tokens). Since these are tokens *you don't have control over, you are not charged for them.* 
 
 ## Trial Usage and Production Usage
 

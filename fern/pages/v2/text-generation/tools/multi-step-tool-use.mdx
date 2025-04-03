@@ -69,7 +69,7 @@ message = "Who is the mayor of the capital of Ontario?"
 messages = [{"role": "user", "content": message}]
 
 # 2 - Model generates tool calls, if any
-model = "command-r-plus-08-2024"
+model = "command-a-03-2025"
 res = co.chat(model=model, messages=messages, tools=[web_search_tool])
 
 # As long as the model sends back tool_calls,
@@ -180,6 +180,19 @@ Here’s an outline of the basic steps involved in multi-step tool use:
 Tool use is a natural extension of retrieval augmented generation (RAG). RAG is about enabling the model to interact with an information retrieval system (like a vector database). Our models are trained to be excellent at RAG use cases.
 
 Tool use pushes this further, allowing Cohere models to go far beyond information retrieval, interact with search engines, APIs, functions, databases, and many other tools.
+
+## Structured Outputs (Tools)
+
+Setting the `strict_tools` parameter to `True` will enforce each tool call to follow the specified tool schema. To learn more about this feature, visit the [Structured Outputs documentation](https://docs.cohere.com/v2/docs/structured-outputs).
+
+Note that `strict_tools` is currently an experimental feature.
+
+```python PYTHON {4}
+response = co.chat(model="command-a-03-2025",
+                   messages=messages,
+                   tools=tools,
+                   strict_tools=True)
+```
 
 ## A Further Example With Multiple Tools
 
@@ -293,7 +306,7 @@ Next, we run the tool use workflow involving for steps:
 - Model either generates more tool calls or returns a response with citations
 
 ```python PYTHON
-model = "command-r-plus-08-2024"
+model = "command-a-03-2025"
 tools = [web_search_tool, python_interpreter_tool]
 
 # Step 1: get user message
