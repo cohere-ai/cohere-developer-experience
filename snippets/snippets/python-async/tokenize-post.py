@@ -5,7 +5,7 @@ co = cohere.AsyncClient()
 
 
 async def main():
-    response = await co.tokenize(text="tokenize me! :D", model="command-r-plus-08-2024")
+    response = await co.tokenize(text="tokenize me! :D", model="command-a-03-2025")
     print(response)
 
 
