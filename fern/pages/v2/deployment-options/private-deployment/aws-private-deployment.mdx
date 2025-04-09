@@ -30,6 +30,7 @@ Before beginning this deployment, you should have:
 - Basic familiarity with AWS services and the AWS console
 - Understanding of Linux command line operations
 - Knowledge of containerization concepts if deploying containerized applications
+- The licence ID and model tag for the model you want to deploy. Please reach out to the [Cohere team](mailto:team@cohere.com) to get these.
 
 Follow this guide sequentially to ensure all components are properly configured for a secure and efficient private deployment in AWS.
 
@@ -122,7 +123,9 @@ docker --version
 
 ```bash
 export CUSTOMER_TAG=proxy.replicated.com/proxy/cohere/us-docker.pkg.dev/cohere-artifacts/replicated/single-serving-embed-multilingual-03:<YOUR_MODEL_TAG>
-export LICENSE_ID="<YOUR_LICENSE_ID>"export DOCKER_CONFIG=$(mktemp -d)cat <<EOF > "${DOCKER_CONFIG}/config.json" { "auths": { "proxy.replicated.com": {"auth": "$(echo -n "${LICENSE_ID}:${LICENSE_ID}" | base64 | tr -d '\n')"}}EOF
+export LICENSE_ID="<YOUR_LICENSE_ID>"
+export DOCKER_CONFIG=$(mktemp -d)
+cat <<EOF > "${DOCKER_CONFIG}/config.json" { "auths": { "proxy.replicated.com": {"auth": "$(echo -n "${LICENSE_ID}:${LICENSE_ID}" | base64 | tr -d '\n')"}}EOF
 ```
 
 [Further reference](https://docs.cohere.com/v2/docs/single-container-on-private-clouds)
@@ -200,12 +203,11 @@ You can then view the cluster information in the AWS console.
 
 Next, set environment variables from the machine where the AWS CLI and Kubectl are installed.
 
-<Note>Please reach out to the [Cohere team](mailto:team@cohere.com) to get the latest model tag.</Note>
-
 ```bash
 export CUSTOMER_TAG=proxy.replicated.com/proxy/cohere/us-docker.pkg.dev/cohere-artifacts/replicated/single-serving-embed-multilingual-03:<YOUR_MODEL_TAG>
-
-export LICENSE_ID="<YOUR_LICENSE_ID>"export DOCKER_CONFIG=$(mktemp -d)cat <<EOF > "${DOCKER_CONFIG}/config.json" { "auths": { "proxy.replicated.com": {"auth": "$(echo -n "${LICENSE_ID}:${LICENSE_ID}" | base64 | tr -d '\n')"}}EOF
+export LICENSE_ID="<YOUR_LICENSE_ID>"
+export DOCKER_CONFIG=$(mktemp -d)
+cat <<EOF > "${DOCKER_CONFIG}/config.json" { "auths": { "proxy.replicated.com": {"auth": "$(echo -n "${LICENSE_ID}:${LICENSE_ID}" | base64 | tr -d '\n')"}}EOF
 kubectl create secret generic cohere-pull-secret --from-file=.dockerconfigjson="{$DOCKER_CONFIG}/config.json" --type=kubernetes.io/dockerconfigjson
 ```
 
