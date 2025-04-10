@@ -95,7 +95,7 @@ print(embeddings[0][:5])  # Print embeddings for the first text
 The Cohere Embedding platform supports image embeddings for `embed-v4.0` and the `embed-v3.0` family. There are two ways to access this functionality: 
 
 - Pass `image` to the `input_type` parameter. Here are the steps:
-    - Pass image to the input_type parameter 
+    - Pass image to the `input_type` parameter 
     - Pass your image URL to the images parameter
 - Pass your image URL to the new `images` parameter. Here are the steps:
     - Pass in a input list of `dicts` with the key content 
@@ -357,13 +357,16 @@ ret = co.embed(
 )
 ```
 
-Finally, you can also pass several `embedding types` in as a list, in which case the endpoint will return a dictionary with both types available:
+You can specify multiple embedding types in a single call. For example, the following call will return both `int8` and `float` embeddings:
 
 ```python PYTHON
 ret = co.embed(
-    texts=['hello_world'],
+    texts=phrases,
     model='embed-v4.0',
-    input_type='search_document',
-    embedding_types=["int8"],
+    input_type=input_type,
+    embedding_types=["int8", "float"],
 )
+
+ret.embeddings.int8  # This contains your int8 embeddings
+ret.embeddings.float  # This contains your float embeddings
 ```
