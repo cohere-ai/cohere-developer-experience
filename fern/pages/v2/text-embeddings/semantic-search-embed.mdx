@@ -64,7 +64,7 @@ embed_input = [
 doc_emb = co.embed(
     inputs=embed_input,
     model="embed-v4.0",
-    output_dimensions=1024,
+    output_dimension=1024,
     input_type="search_document",
     embedding_types=["float"],
 ).embeddings.float
@@ -78,10 +78,10 @@ query_input = [{"content": [{"type": "text", "text": query}]}]
 
 # Embed the query
 query_emb = co.embed(
-    input=query_input,
+    inputs=query_input,
     model="embed-v4.0",
     input_type="search_query",
-    output_dimensions=1024,
+    output_dimension=1024,
     embedding_types=["float"],
 ).embeddings.float
 
@@ -148,7 +148,7 @@ embed_input = [
 doc_emb = co.embed(
     inputs=embed_input,
     model="embed-v4.0",
-    output_dimensions=1024,
+    output_dimension=1024,
     input_type="search_document",
     embedding_types=["float"],
 ).embeddings.float
@@ -162,10 +162,10 @@ query_input = [{"content": [{"type": "text", "text": query}]}]
 
 # Embed the query
 query_emb = co.embed(
-    input=query_input,
+    inputs=query_input,
     model="embed-v4.0",
     input_type="search_query",
-    output_dimensions=1024,
+    output_dimension=1024,
     embedding_types=["float"],
 ).embeddings.float
 
@@ -208,6 +208,8 @@ The Embed endpoint also supports multilingual semantic search via `embed-v4.0` a
 
 Specifically, you can do both multilingual and cross-lingual searches using one single model.
 
+Specifically, you can do both multilingual and cross-lingual searches using one single model.
+
 ```python PYTHON
 ### STEP 1: Embed the documents
 
@@ -227,7 +229,7 @@ embed_input = [
 doc_emb = co.embed(
     inputs=embed_input,
     model="embed-v4.0",
-    output_dimensions=1024,
+    output_dimension=1024,
     input_type="search_document",
     embedding_types=["float"],
 ).embeddings.float
@@ -241,10 +243,10 @@ query_input = [{"content": [{"type": "text", "text": query}]}]
 
 # Embed the query
 query_emb = co.embed(
-    input=query_input,
+    inputs=query_input,
     model="embed-v4.0",
     input_type="search_query",
-    output_dimensions=1024,
+    output_dimension=1024,
     embedding_types=["float"],
 ).embeddings.float
 
@@ -254,7 +256,7 @@ query_emb = co.embed(
 scores = np.dot(query_emb, np.transpose(doc_emb))[0]
 
 # Sort and filter documents based on scores
-top_n = 1
+top_n = 4
 top_doc_idxs = np.argsort(-scores)[:top_n]
 
 # Display search results
@@ -264,7 +266,17 @@ for idx, docs_idx in enumerate(top_doc_idxs):
 ```
 
 Here's a sample output:
+
 ```
 Rank: 1
 Document: Travailler de l'étranger : Il est possible de travailler à distance depuis un autre pays. Il suffit de coordonner avec votre responsable et de vous assurer d'être disponible pendant les heures de travail.
+
+Rank: 2
+Document: Avantages pour la santé et le bien-être : Nous nous soucions de votre bien-être et proposons des adhésions à des salles de sport, des cours de yoga sur site et une assurance santé complète.
+
+Rank: 3
+Document: Fréquence des évaluations de performance : Nous organisons des bilans informels tous les trimestres et des évaluations formelles deux fois par an.
+
+Rank: 4
+Document: Remboursement des frais de voyage : Gérez facilement vos frais de voyage en les soumettant via notre outil financier. Les approbations sont rapides et simples.
 ```

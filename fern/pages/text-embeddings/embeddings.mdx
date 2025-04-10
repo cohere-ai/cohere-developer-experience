@@ -21,7 +21,7 @@ In the example below we use the `embed-v4.0` model to generate embeddings for 3 
 import cohere
 import numpy as np
 
-co = cohere.Client(api_key="YOUR_API_KEY")
+co = cohere.ClientV2(api_key="YOUR_API_KEY")
 
 # get the embeddings
 phrases = ["i love soup", "soup is my favorite", "london is far away"]
@@ -33,7 +33,7 @@ res = co.embed(
     texts=phrases,
     model=model,
     input_type=input_type,
-    output_dimensions=1024,
+    output_dimension=1024,
     embedding_types=["float"],
 )
 
@@ -44,9 +44,8 @@ res = co.embed(
 def calculate_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-
-calculate_similarity(soup1, soup2)  # 0.85 - very similar!
-calculate_similarity(soup1, london)  # 0.16 - not similar!
+print(f"For the following sentences:\n1: {phrases[0]}\n2: {phrases[1]}\3 The similarity score is: {calculate_similarity(soup1, soup2):.2f}\n")
+print(f"For the following sentences:\n1: {phrases[0]}\n2: {phrases[2]}\3 The similarity score is: {calculate_similarity(soup1, london):.2f}")
 ```
 
 ## The `input_type` parameter
@@ -60,12 +59,12 @@ Cohere embeddings are optimized for different types of inputs.
 
 ## Multilingual Support
 
-`embed-v4.0` is a best-in-class best-in-class multilingual model with support for over 100 languages, including Chinese, Spanish, and French.
+`embed-v4.0` is a best-in-class best-in-class multilingual model with support for over 100 languages, including Korean, Japanese, Arabic, Chinese, Spanish, and French.
 
 ```python PYTHON
 import cohere
 
-co = cohere.Client(api_key="<YOUR API KEY>")
+co = cohere.ClientV2(api_key="YOUR_API_KEY")
 
 texts = [
     "Hello from Cohere!",
@@ -83,7 +82,7 @@ response = co.embed(
     model="embed-v4.0",
     texts=texts,
     input_type="classification",
-    output_dimensions=1024,
+    output_dimension=1024,
     embedding_types=["float"],
 )
 
@@ -96,11 +95,11 @@ print(embeddings[0][:5])  # Print embeddings for the first text
 The Cohere Embedding platform supports image embeddings for `embed-v4.0` and the `embed-v3.0` family. There are two ways to access this functionality: 
 
 - Pass `image` to the `input_type` parameter. Here are the steps:
-    - 1) Pass image to the input_type parameter 
-    - 2) Pass your image URL to the images parameter
+    - Pass image to the input_type parameter 
+    - Pass your image URL to the images parameter
 - Pass your image URL to the new `images` parameter. Here are the steps:
-    - 1) pass in a input list of `dicts` with the key content 
-    - 2) content contains a list of `dicts` with the keys `type` and `image`
+    - Pass in a input list of `dicts` with the key content 
+    - content contains a list of `dicts` with the keys `type` and `image`
 
 When using the `images` parameter the following restrictions exist: 
 
@@ -132,32 +131,28 @@ from PIL import Image
 from io import BytesIO
 import base64
 
-co = cohere.Client(api_key="<YOUR API KEY>")
+co = cohere.ClientV2(api_key="YOUR_API_KEY")
 
 # The model accepts input in base64 as a Data URL
-
 
 def image_to_base64_data_url(image_path):
     # Open the image file
     with Image.open(image_path) as img:
-        # Create a BytesIO object to hold the image data in memory
+        image_format = img.format.lower()
         buffered = BytesIO()
-        # Save the image as PNG to the BytesIO object
-        img.save(buffered, format="PNG")
+        img.save(buffered, format=img.format)
         # Encode the image data in base64
-        img_base64 = base64.b64encode(buffered.getvalue()).decode(
-            "utf-8"
-        )
-
-    # Create the Data URL and assumes the original image file type was png
-    data_url = f"data:image/png;base64,{img_base64}"
+        img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+    
+    # Create the Data URL with the inferred image type
+    data_url = f"data:image/{image_format};base64,{img_base64}"
     return data_url
 
 
 processed_image = image_to_base64_data_url("<PATH_TO_IMAGE>")
 
 input=[
-	{"content":[{"type":"image":processed_image}]}
+	{"content":[{"type":"image","image":processed_image}]}
 ]
 
 ret = co.embed(
@@ -165,7 +160,7 @@ ret = co.embed(
     embedding_types=["float"],
     input_type='search_document',
     inputs=input,
-    output_dimensions=1024
+    output_dimension=1024
 )
 
 ret.embeddings.float
@@ -178,10 +173,9 @@ from PIL import Image
 from io import BytesIO
 import base64
 
-co = cohere.Client(api_key="<YOUR API KEY>")
+co = cohere.ClientV2(api_key="YOUR_API_KEY")
 
 # The model accepts input in base64 as a Data URL
-
 
 def image_to_base64_data_url(image_path):
     # Open the image file
@@ -213,7 +207,7 @@ ret.embeddings.float
 ```
 
 ## Matryoshka Embeddings
-Matryoshka learning creates embeddings with coarse-to-fine representation within a single vector; `embed-v4.0` supports multiple output dimensions in the following values: `[256,512,1024,1536]`. To access this, you specify the parameter `output_dimensions` when creating the embeddings. 
+Matryoshka learning creates embeddings with coarse-to-fine representation within a single vector; `embed-v4.0` supports multiple output dimensions in the following values: `[256,512,1024,1536]`. To access this, you specify the parameter `output_dimension` when creating the embeddings. 
 
 ```python PYTHON
 texts = ["hello"]
@@ -221,7 +215,7 @@ texts = ["hello"]
 response = co.embed(
     model="embed-v4.0",
     texts=texts,
-    output_dimensions=1024,
+    output_dimension=1024,
     input_type="classification",
     embedding_types=["float"],
 ).embeddings
@@ -233,21 +227,38 @@ response.float  # returns a vector that is 1024 dimensions
 ## Support for Fused and Mixed Modalities
 `embed-v4.0` supports text and content-rich images such as figures, slide decks, document screen shots (i.e. screenshots of PDF pages). This eliminates the need for complex text extraction or ETL pipelines. Unlike our previous `embed-v3.0` model family, `embed-v4.0` is capable of processing both images and texts together; the inputs can either be an image that contains both text and visual content, or text and images that youd like to compress into a single vector representation. 
 
-A popular example of fused images and texts would be in e-Commerce, where you could have an asset represented as a JSON object with a corresponding image. 
-```json JSON
-{
-    "product_title": "Nike Men's Low-Top Sneaker",
-    "product_description": "Braided and synthetic fabric on the upper provides a lightweight fit and airy feel Foam midsole is soft and comfortable Elastic inner sleeve and booty-like structure create a custom fitRubber on the sole adds traction and durability",
-    "brand_name": "Nike",
-    "image_assets": [
-        "some_url",
-        "some_url",
-        "some_url",
-    ],
-}
+Here's an example:
+
+```python PYTHON
+import cohere
+import base64
+
+# Embed an Images and Texts separately 
+with open('./content/finn.jpeg', "rb") as image_file:
+    encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+
+# Step 3: Format as data URL
+data_url = f"data:image/jpeg;base64,{encoded_string}"
+
+example_doc = [
+        {"type": "text", "text": "This is a Scottish Fold Cat"},
+        {"type": "image", "image": data_url},
+        ]
+
+res=co.embed(
+    model='embed-v4.0',
+    inputs=[{"content": example_doc}],
+    input_type='search_document',
+    embedding_types=['float'],
+    output_dimension=1024
+).embeddings.float_
+
+# This will return a list of length 1 with the texts and image in a combined embedding
+
+res
 ```
 
-![Fused image and texts](../../assets/images/ecommerce_sneakers.png)
+![Fused image and texts](../../assets/images/embed-cat.png)
 
 Here's a code sample illustrating how `embed-v4.0` could be used to work with fused images and texts like the above:
 
@@ -257,7 +268,7 @@ from PIL import Image
 from io import BytesIO
 import base64
 
-co = cohere.Client(api_key="<YOUR API KEY>")
+co = cohere.ClientV2(api_key="YOUR_API_KEY")
 
 # The model accepts input in base64 as a Data URL
 
@@ -312,13 +323,12 @@ embed_input = [
     }
 ]
 
-
 ret = co.embed(
     inputs=embed_input,
     model="embed-v4.0",
     embedding_types=["float"],
     input_type="search_document",
-    output_dimensions=1024,
+    output_dimension=1024,
 )
 
 ret.embeddings.float
