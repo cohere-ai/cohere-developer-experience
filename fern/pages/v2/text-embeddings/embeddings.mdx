@@ -15,9 +15,9 @@ updatedAt: "Tue May 28 2024 19:14:00 GMT+0000 (Coordinated Universal Time)"
 <img src='../../../assets/images/e8ea586-Embeddings_Visual_1_1.png' alt='embeddings.' />
 
 
-Embeddings are a way to represent the **meaning** of text as a list of numbers. Using a simple comparison function, we can then calculate a similarity score for two embeddings to figure out whether two texts are talking about similar things. Common use-cases for embeddings include semantic search, clustering, and classification.
+Embeddings are a way to represent the meaning of texts, images, or information as a list of numbers. Using a simple comparison function, we can then calculate a similarity score for two embeddings to figure out whether two pieces of information are about similar things. Common use-cases for embeddings include semantic search, clustering, and classification.
 
-In the example below we use the `embed-english-v3.0` model to generate embeddings for 3 phrases and compare them using a similarity function. The two **similar** phrases have a **high similarity score**, and the embeddings for two **unrelated** phrases have a **low similarity score**:
+In the example below we use the `embed-v4.0` model to generate embeddings for three phrases and compare them using a similarity function. The two similar phrases have a high similarity score, and the embeddings for two unrelated phrases have a low similarity score:
 
 ```python PYTHON
 import cohere
@@ -28,13 +28,14 @@ co = cohere.ClientV2(api_key="YOUR_API_KEY")
 # get the embeddings
 phrases = ["i love soup", "soup is my favorite", "london is far away"]
 
-model = "embed-english-v3.0"
+model = "embed-v4.0"
 input_type = "search_query"
 
 res = co.embed(
     texts=phrases,
     model=model,
     input_type=input_type,
+    output_dimension=1024,
     embedding_types=["float"],
 )
 
@@ -46,8 +47,12 @@ def calculate_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 
-calculate_similarity(soup1, soup2)  # 0.85 - very similar!
-calculate_similarity(soup1, london)  # 0.16 - not similar!
+print(
+    f"For the following sentences:\n1: {phrases[0]}\n2: {phrases[1]}\3 The similarity score is: {calculate_similarity(soup1, soup2):.2f}\n"
+)
+print(
+    f"For the following sentences:\n1: {phrases[0]}\n2: {phrases[2]}\3 The similarity score is: {calculate_similarity(soup1, london):.2f}"
+)
 ```
 
 ## The `input_type` parameter
@@ -57,11 +62,11 @@ Cohere embeddings are optimized for different types of inputs.
 - When using embeddings for [semantic search](/docs/semantic-search), the search query should be embedded by setting `input_type="search_query"`
 - When using embeddings for semantic search, the text passages that are being searched over should be embedded with `input_type="search_document"`.
 - When using embedding for `classification` and `clustering` tasks, you can set `input_type` to either 'classification' or 'clustering' to optimize the embeddings appropriately.
-- When `input_type='image'`, the expected input to be embedded is an image instead of text.
+- When `input_type='image'` for `embed-v3.0`, the expected input to be embedded is an image instead of text. If you use `input_type=images` with `embed-v4.0` it will default to search_document`.
 
 ## Multilingual Support
 
-In addition to `embed-english-v3.0` we offer a best-in-class multilingual model [embed-multilingual-v3.0](/docs/embed-2#multi-lingual-models)  with support for over 100 languages, including Chinese, Spanish, and French. This model can be used with the Embed API, just like its English counterpart:
+`embed-v4.0` is a best-in-class best-in-class multilingual model with support for over 100 languages, including Korean, Japanese, Arabic, Chinese, Spanish, and French.
 
 ```python PYTHON
 import cohere
@@ -81,7 +86,7 @@ texts = [
 ]
 
 response = co.embed(
-    model="embed-multilingual-v3.0",
+    model=model,
     texts=texts,
     input_type="classification",
     embedding_types=["float"],
@@ -93,7 +98,7 @@ print(embeddings[0][:5])  # Print embeddings for the first text
 
 ## Image Embeddings
 
-The Cohere embedding platform supports image embeddings for the entire `embed-v3.0` family. This functionality can be utilized with the following steps:
+The Cohere Embedding platform supports image embeddings for `embed-v4.0` and the `embed-v3.0` family. There are two ways to access this functionality: 
 
 - Pass `image` to the `input_type` parameter (as discussed above). 
 - Pass your image URL to the new `images` parameter.
@@ -103,7 +108,7 @@ Be aware that image embedding has the following restrictions:
 - If `input_type='image'`, the `texts` field must be empty.
 - The original image file type must be in a `png`, `jpeg`, `webp`, or `gif` format and can be up to 5 MB in size.
 - The image must be base64 encoded and sent as a Data URL to the `images` parameter. 
-- Our API currently does not support batch image embeddings.
+- Our API currently does not support batch image embeddings for `embed-v3.0` models. For `embed-v4.0`, however, you can submit up to 96 images.
 
 ```python PYTHON
 import cohere
@@ -111,7 +116,7 @@ from PIL import Image
 from io import BytesIO
 import base64
 
-co = cohere.ClientV2(api_key="<YOUR API KEY>")
+co = cohere.ClientV2(api_key="YOUR_API_KEY")
 
 # The model accepts input in base64 as a Data URL
 
@@ -119,27 +124,29 @@ co = cohere.ClientV2(api_key="<YOUR API KEY>")
 def image_to_base64_data_url(image_path):
     # Open the image file
     with Image.open(image_path) as img:
-        # Create a BytesIO object to hold the image data in memory
+        image_format = img.format.lower()
         buffered = BytesIO()
-        # Save the image as PNG to the BytesIO object
-        img.save(buffered, format="PNG")
+        img.save(buffered, format=img.format)
         # Encode the image data in base64
         img_base64 = base64.b64encode(buffered.getvalue()).decode(
             "utf-8"
         )
 
-    # Create the Data URL and assumes the original image file type was png
-    data_url = f"data:image/png;base64,{img_base64}"
+    # Create the Data URL with the inferred image type
+    data_url = f"data:image/{image_format};base64,{img_base64}"
     return data_url
 
 
 processed_image = image_to_base64_data_url("<PATH_TO_IMAGE>")
 
+input = [{"content": [{"type": "image", "image": processed_image}]}]
+
 ret = co.embed(
-    images=[processed_image],
-    model="embed-english-v3.0",
+    model="embed-v4.0",
     embedding_types=["float"],
-    input_type="image",
+    input_type="search_document",
+    inputs=input,
+    output_dimension=1024,
 )
 
 ret.embeddings.float
@@ -159,17 +166,15 @@ The following embedding types are supported:
 - `binary`
 - `ubinary`
 
- To specify an embedding types, pass one of the types from the list above in as list containing a string:
+We recommend being explicit about the `embedding type(s)`. To specify an embedding types, pass one of the types from the list above in as list containing a string:
 
 ```python PYTHON
 ret = co.embed(
-    texts=phrases,
-    model=model,
-    input_type=input_type,
-    embedding_types=["float"],
+    texts=["hello_world"],
+    model="embed-v4.0",
+    input_type="search_document",
+    embedding_types=["int8"],
 )
-
-ret.embeddings  # This contains the float embeddings
 ```
 
 You can specify multiple embedding types in a single call. For example, the following call will return both `int8` and `float` embeddings:
@@ -184,7 +189,4 @@ ret = co.embed(
 
 ret.embeddings.int8  # This contains your int8 embeddings
 ret.embeddings.float  # This contains your float embeddings
-ret.embeddings.uint8  # This will be empty
-ret.embeddings.ubinary  # This will be empty
-ret.embeddings.binary  # This will be empty
 ```
