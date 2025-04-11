@@ -46,8 +46,13 @@ res = co.embed(
 def calculate_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-print(f"For the following sentences:\n1: {phrases[0]}\n2: {phrases[1]}\3 The similarity score is: {calculate_similarity(soup1, soup2):.2f}\n")
-print(f"For the following sentences:\n1: {phrases[0]}\n2: {phrases[2]}\3 The similarity score is: {calculate_similarity(soup1, london):.2f}")
+
+print(
+    f"For the following sentences:\n1: {phrases[0]}\n2: {phrases[1]}\3 The similarity score is: {calculate_similarity(soup1, soup2):.2f}\n"
+)
+print(
+    f"For the following sentences:\n1: {phrases[0]}\n2: {phrases[2]}\3 The similarity score is: {calculate_similarity(soup1, london):.2f}"
+)
 ```
 
 ## The `input_type` parameter
@@ -115,6 +120,7 @@ co = cohere.ClientV2(api_key="YOUR_API_KEY")
 
 # The model accepts input in base64 as a Data URL
 
+
 def image_to_base64_data_url(image_path):
     # Open the image file
     with Image.open(image_path) as img:
@@ -122,8 +128,10 @@ def image_to_base64_data_url(image_path):
         buffered = BytesIO()
         img.save(buffered, format=img.format)
         # Encode the image data in base64
-        img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
-    
+        img_base64 = base64.b64encode(buffered.getvalue()).decode(
+            "utf-8"
+        )
+
     # Create the Data URL with the inferred image type
     data_url = f"data:image/{image_format};base64,{img_base64}"
     return data_url
@@ -131,16 +139,14 @@ def image_to_base64_data_url(image_path):
 
 processed_image = image_to_base64_data_url("<PATH_TO_IMAGE>")
 
-input=[
-	{"content":[{"type":"image","image":processed_image}]}
-]
+input = [{"content": [{"type": "image", "image": processed_image}]}]
 
 ret = co.embed(
     model="embed-v4.0",
     embedding_types=["float"],
-    input_type='search_document',
+    input_type="search_document",
     inputs=input,
-    output_dimension=1024
+    output_dimension=1024,
 )
 
 ret.embeddings.float
@@ -164,9 +170,9 @@ We recommend being explicit about the `embedding type(s)`. To specify an embeddi
 
 ```python PYTHON
 ret = co.embed(
-    texts=['hello_world'],
-    model='embed-v4.0',
-    input_type='search_document',
+    texts=["hello_world"],
+    model="embed-v4.0",
+    input_type="search_document",
     embedding_types=["int8"],
 )
 ```
