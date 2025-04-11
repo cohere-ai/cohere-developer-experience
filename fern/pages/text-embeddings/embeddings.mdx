@@ -60,7 +60,7 @@ Cohere embeddings are optimized for different types of inputs.
 - When using embeddings for [semantic search](/docs/semantic-search), the search query should be embedded by setting `input_type="search_query"`
 - When using embeddings for semantic search, the text passages that are being searched over should be embedded with `input_type="search_document"`.
 - When using embedding for `classification` and `clustering` tasks, you can set `input_type` to either 'classification' or 'clustering' to optimize the embeddings appropriately.
-- When `input_type='image'` for `embed-v3.0`, the expected input to be embedded is an image instead of text. If you use `input_type=images` with `embed-v4.0` it will default to search_document`.
+- When `input_type='image'` for `embed-v3.0`, the expected input to be embedded is an image instead of text. If you use `input_type=images` with `embed-v4.0` it will default to `search_document`.
 
 ## Multilingual Support
 
@@ -234,7 +234,9 @@ response.float  # returns a vector that is 1024 dimensions
 ## Support for Fused and Mixed Modalities
 `embed-v4.0` supports text and content-rich images such as figures, slide decks, document screen shots (i.e. screenshots of PDF pages). This eliminates the need for complex text extraction or ETL pipelines. Unlike our previous `embed-v3.0` model family, `embed-v4.0` is capable of processing both images and texts together; the inputs can either be an image that contains both text and visual content, or text and images that youd like to compress into a single vector representation. 
 
-Here's an example:
+Here's a code sample illustrating how `embed-v4.0` could be used to work with fused images and texts like the following:
+
+![Fused image and texts](../../assets/images/embed-cat.png)
 
 ```python PYTHON
 import cohere
@@ -265,82 +267,6 @@ res = co.embed(
 # This will return a list of length 1 with the texts and image in a combined embedding
 
 res
-```
-
-![Fused image and texts](../../assets/images/embed-cat.png)
-
-Here's a code sample illustrating how `embed-v4.0` could be used to work with fused images and texts like the above:
-
-```python PYTHON
-import cohere
-from PIL import Image
-from io import BytesIO
-import base64
-
-co = cohere.ClientV2(api_key="YOUR_API_KEY")
-
-# The model accepts input in base64 as a Data URL
-
-
-def image_to_base64_data_url(image_path):
-    # Open the image file
-    with Image.open(image_path) as img:
-        # Create a BytesIO object to hold the image data in memory
-        buffered = BytesIO()
-        # Save the image as PNG to the BytesIO object
-        img.save(buffered, format="PNG")
-        # Encode the image data in base64
-        img_base64 = base64.b64encode(buffered.getvalue()).decode(
-            "utf-8"
-        )
-
-    # Create the Data URL and assumes the original image file type was png
-    data_url = f"data:image/png;base64,{img_base64}"
-    return data_url
-
-
-# Sample E-Commerce Object
-sample_object = {
-    "product_title": "Nike Men's Low-Top Sneaker",
-    "product_description": "Braided and synthetic fabric on the upper provides a lightweight fit and airy feel Foam midsole is soft and comfortable Elastic inner sleeve and booty-like structure create a custom fitRubber on the sole adds traction and durability",
-    "brand_name": "Nike",
-    "image_assets": [
-        "some_url",
-        "some_url",
-        "some_url",
-    ],
-}
-
-# Process all the images into base64 representation
-base_64_img_arr = []
-for url in sample_object["image_assets"]:
-    processed_image = image_to_base64_data_url(url)
-    base_64_img_arr.append(processed_image)
-
-
-embed_input = [
-    {
-        "content": [
-            {"type": "text", "text": sample_object["product_title"]},
-            {
-                "type": "text",
-                "text": sample_object["product_description"],
-            },
-            {"type": "text", "text": sample_object["brand_name"]},
-        ]
-        + [{"type": "image", "image": img} for img in base_64_img_arr]
-    }
-]
-
-ret = co.embed(
-    inputs=embed_input,
-    model="embed-v4.0",
-    embedding_types=["float"],
-    input_type="search_document",
-    output_dimension=1024,
-)
-
-ret.embeddings.float
 ```
 
 ## Compression Levels
