@@ -22,12 +22,11 @@ In this tutorial, we'll cover:
 
 We'll use Cohere's Embed model deployed on Azure to demonstrate these capabilities and help you understand how to effectively implement semantic search in your applications.
 
-
 ## Setup
 
 First, you will need to deploy the Embed model on Azure via Azure AI Foundry. The deployment will create a serverless API with pay-as-you-go token based billing. You can find more information on how to deploy models in the [Azure documentation](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-serverless?tabs=azure-ai-studio).
 
-In the example below, we are deploying the Embed Multilingual v3 model.
+In the example below, we are deploying the Embed v4 model.
 
 Once the model is deployed, you can access it via Cohere's Python SDK. Let's now install the Cohere SDK and set up our client.
 
@@ -44,7 +43,7 @@ import cohere
 
 co = cohere.Client(
     api_key="AZURE_API_KEY_EMBED",
-    base_url="AZURE_ENDPOINT_EMBED",  # example: "https://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/"
+    base_url="AZURE_ENDPOINT_EMBED",  # example: "https://cohere-embed-v4-xyz.eastus.models.ai.azure.com/"
 )
 ```
 
@@ -77,7 +76,6 @@ def remove_duplicates(text):
         r"((\b\w+\b.{1,2}\w+\b)+).+\1", r"\1", text, flags=re.I
     )
 
-
 df["text"] = df["text"].apply(remove_duplicates)
 
 # Keep only selected languages
@@ -93,7 +91,6 @@ top_80_df = df[:80]
 top_80_df["lang"].value_counts()
 ```
 
-
 ```mdx
 lang
 Spanish    33
@@ -102,12 +99,11 @@ Danish     18
 Name: count, dtype: int64
 ```
 
-
 ## Embed and index documents
 
-Let's embed our documents and store the embeddings. These embeddings are high-dimensional vectors (1,024 dimensions) that capture the semantic meaning of each document. We'll use Cohere's embed-multilingual-v3.0 model that we have defined in the client setup.
+Let's embed our documents and store the embeddings. These embeddings are high-dimensional vectors (1,024 dimensions) that capture the semantic meaning of each document. We'll use Cohere's `embed-v4.0` model that we have defined in the client setup.
  
-The v3.0 embedding models require us to specify an `input_type` parameter that indicates what we're embedding. For semantic search, we use `search_document` for the documents we want to search through, and `search_query` for the search queries we'll make later.
+The v4.0 embedding models require us to specify an `input_type` parameter that indicates what we're embedding. For semantic search, we use `search_document` for the documents we want to search through, and `search_query` for the search queries we'll make later.
 
 We'll also keep track information about each document's language and translation to provide richer search results.
 
@@ -206,8 +202,6 @@ TRANSLATION: New from CFOdirect: Shareholder questions for management, the SEC c
 END OF RESULTS 
 ```
     
-
-
 With the first example, notice how the retrieval system was able to surface documents similar in meaning, for example, surfacing documents related to AI when given a query about data science. This is something that keyword-based search will not be able to capture.
 
 As for the second example, this demonstrates the multilingual nature of the model. You can use the same model across different languages. The model can also perform cross-lingual search, such as the example of from the first retrieved document, where “PP&E guide” is an English term that stands for “property, plant, and equipment,”.
