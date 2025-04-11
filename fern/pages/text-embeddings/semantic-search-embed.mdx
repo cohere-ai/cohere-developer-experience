@@ -19,8 +19,9 @@ Semantic search solves the problem faced by the more traditional approach of lex
 import cohere
 import numpy as np
 
-# Get your free API key: https://dashboard.cohere.com/api-keys
-co = cohere.ClientV2(api_key="YOUR_API_KEY")
+co = cohere.Client(
+    api_key="YOUR_API_KEY"
+)  # Get your free API key: https://dashboard.cohere.com/api-keys
 ```
 
 The Embed endpoint takes in texts as input and returns embeddings as output.
@@ -276,3 +277,101 @@ Document: Fréquence des évaluations de performance : Nous organisons des bilan
 Rank: 4
 Document: Remboursement des frais de voyage : Gérez facilement vos frais de voyage en les soumettant via notre outil financier. Les approbations sont rapides et simples.
 ```
+
+## Multimodal PDF search
+
+Handling PDF files, which often contain a mix of text, images, and layout information, presents a challenge for traditional embedding methods. This usually requires a multimodal generative model to pre-process the documents into a format that is suitable for the embedding model. This intermediate text representations can lose critical information; for example, the structure and precise content of tables or complex layouts might not be accurately rendered
+
+Embed v4 solves this problem as it is designed to natively understand mixed-modality inputs. Embed v4 can directly process the PDF content, including text and images, in a single step. It generates a unified embedding that captures the semantic meaning derived from both the textual and visual elements.
+
+Here's an example of how to use the Embed endpoint to perform multimodal PDF search.
+
+First, import the required libraries.
+```python PYTHON
+from pdf2image import convert_from_path
+from io import BytesIO
+import base64
+import chromadb
+import cohere
+```
+
+Next, turn a PDF file into a list of images, with one image per page. Then format these images into the content structure expected by the Embed endpoint.
+
+```python PYTHON
+pdf_path = "https://github.com/cohere-ai/cohere-developer-experience/raw/main/notebooks/guide/embed-v4-pdf-search/data/Samsung_Home_Theatre_HW-N950_ZA_FullManual_02_ENG_180809_2.pdf"
+pages = convert_from_path(pdf_path, dpi=200)
+
+input_array = []
+for page in pages:
+    buffer = BytesIO()
+    page.save(buffer, format="PNG")
+    base64_str = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    base64_image = f"data:image/png;base64,{base64_str}"
+    page_entry = {
+        "content": [
+            {"type": "text", "text": f"{pdf_path}"},
+            {"type": "image", "image": base64_image},
+        ]
+    }
+    input_array.append(page_entry)
+```
+
+Next, generate the embeddings for these pages and store them in a vector database (in this example, we use Chroma).
+```python PYTHON
+# Generate the document embeddings
+embeddings = []
+for i in range(0, len(input_array)):
+    res = co.embed(
+        model="embed-v4.0",
+        input_type="search_document",
+        embedding_types=["float"],
+        inputs=[input_array[i]],
+    ).embeddings.float[0]
+    embeddings.append(res)
+
+# Store the embeddings in a vector database
+ids = []
+for i in range(0, len(input_array)):
+    ids.append(str(i))
+    
+chroma_client = chromadb.Client()
+collection = chroma_client.create_collection("pdf_pages")
+collection.add(
+    embeddings=embeddings,
+    ids=ids,
+)
+```
+
+Finally, provide a query and run a search over the documents. This will return a list of sorted IDs representing the most similar pages to the query.
+
+```python PYTHON
+query = "Do the speakers come with an optical cable?"
+
+# Generate the query embedding
+query_embeddings = co.embed(
+    model="embed-v4.0",
+    input_type="search_query",
+    embedding_types=["float"],
+    texts=[query],
+).embeddings.float[0]
+
+# Search the vector database
+results = collection.query(
+    query_embeddings=[query_embeddings],
+    n_results=5 # Define the top_k value
+)
+
+# Print the id of the top-ranked page
+print(results['ids'][0][0])
+```
+
+```mdx
+22
+```
+The top-ranked page is shown below:
+
+<img src='../../../assets/images/multimodal-pdf-search-example-1.png' />
+
+<Note>
+For a more complete example of multimodal PDF search, see [the cookbook version](https://github.com/cohere-ai/cohere-developer-experience/tree/main/notebooks/guides/embed-v4-pdf-search).
+</Note>
