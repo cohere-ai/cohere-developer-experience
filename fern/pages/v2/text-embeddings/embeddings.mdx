@@ -14,7 +14,6 @@ updatedAt: "Tue May 28 2024 19:14:00 GMT+0000 (Coordinated Universal Time)"
 ---
 <img src='../../assets/images/multi-modal-guide-header.png' alt='embeddings.' />
 
-
 Embeddings are a way to represent the meaning of texts, images, or information as a list of numbers. Using a simple comparison function, we can then calculate a similarity score for two embeddings to figure out whether two pieces of information are about similar things. Common use-cases for embeddings include semantic search, clustering, and classification.
 
 In the example below we use the `embed-v4.0` model to generate embeddings for three phrases and compare them using a similarity function. The two similar phrases have a high similarity score, and the embeddings for two unrelated phrases have a low similarity score:
@@ -309,4 +308,24 @@ ret = co.embed(
 
 ret.embeddings.int8  # This contains your int8 embeddings
 ret.embeddings.float  # This contains your float embeddings
+```
+
+### A Note on Bits and Bytes
+
+When doing binary compression, there's a subtlety worth pointing out: because Cohere packages _bits_ as _bytes_ under the hood, the actual length of the vector changes. This means that if you have a vector of 1024 binary embeddings, it will become `1024/8 => 128` bytes, and this might be confusing if you run `len(embeddings)`. This code shows how to unpack it so it works if you're using a vector database that does not take bytes for binary:
+
+```python PYTHON
+res=co.embed(
+    model='embed-v4.0',
+    texts=["hello"],
+    input_type='search_document',
+    embedding_types=['ubinary'], 
+    output_dimension=1024
+)
+print(f"Embed v4 Binary at 1024 dimensions results in length {len(res.embeddings.ubinary[0])}")
+
+query_emb_bin = np.asarray(res.embeddings.ubinary[0], dtype='uint8')  
+query_emb_unpacked = np.unpackbits(query_emb_bin, axis=-1).astype("int")    
+query_emb_unpacked = 2*query_emb_unpacked-1
+print(f"Embed v4 Binary at 1024 unpacked will have dimensions:{len(query_emb_unpacked)}")
 ```
