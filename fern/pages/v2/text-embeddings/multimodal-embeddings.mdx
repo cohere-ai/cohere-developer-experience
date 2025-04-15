@@ -15,20 +15,18 @@ updatedAt: "Tues Sep 17 2024 00:00:00 GMT+0000 (Coordinated Universal Time)"
 <Note title="This Guide Uses the Embed API.">  
  You can find the API reference for the api [here](/reference/embed)
  
- Image capabilities is only compatible with our embed v3.0 models
+ Image capabilities are only compatible with `v4.0` and `v3.0` models, but `v4.0` has features that `v3.0` does not have. Consult the embedding [documentation](https://docs.cohere.com/docs/cohere-embed) for more details.
 </Note>
 
 In this guide, we show you how to use the embed endpoint to embed a series of images. This guide uses a simple dataset of graphs to illustrate how semantic search can be done over images with Cohere. To see an end-to-end example of retrieval, check out this [notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/Multimodal_Semantic_Search.ipynb).
 
 ### Introduction to Multimodal Embeddings
 
-Information is often represented in multiple modalities. A document, for instance, may contain text, images, and graphs, while a product can be described through images, its title, and a written description. This combination of elements often leads to a comprehensive semantic understanding of the subject matter. Traditional embedding models have been limited to a single modality, and even multimodal embedding models often suffer from degradation in `text-to-text` or `text-to-image` retrieval tasks. The `embed-v3.0` series of models, however, is fully multimodal, enabling it to embed both images and text effectively. We have achieved state-of-the-art performance without compromising text-to-text retrieval capabilities.
+Information is often represented in multiple modalities. A document, for instance, may contain text, images, and graphs, while a product can be described through images, its title, and a written description. This combination of elements often leads to a comprehensive semantic understanding of the subject matter. Traditional embedding models have been limited to a single modality, and even multimodal embedding models often suffer from degradation in `text-to-text` or `text-to-image` retrieval tasks. `embed-v4.0` and the `embed-v3.0` series of models, however, are fully multimodal, enabling them to embed both images and text effectively. We have achieved state-of-the-art performance without compromising text-to-text retrieval capabilities.
 
 ### How to use Multimodal Embeddings
 
 #### 1\. Prepare your Image for Embeddings
-
-The Embed API takes in images with the following file formats: `png`, `jpeg`,`Webp`, and `gif`. The images must then be formatted as a Data URL.
 
 ```python PYTHON
 # Import the necessary packages
@@ -48,7 +46,7 @@ def image_to_base64_data_url(image_path):
 
 
 image_path = "<YOUR IMAGE PATH>"
-processed_image = image_to_base64_data_url(image_path)
+base64_url = image_to_base64_data_url(image_path)
 ```
 #### 2\. Call the Embed Endpoint
 ```python PYTHON
@@ -57,10 +55,17 @@ import cohere
 
 co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
+# format the input_object
+image_input = {
+    "content": [
+        {"type": "image_url", "image_url": {"url": base64_url}}
+    ]
+}
+
 co.embed(
-    model="embed-english-v3.0",
-    images=[processed_image],
-    input_type="image",
+    model="embed-v4.0",
+    inputs=[image_input],
+    input_type="search_document",
     embedding_types=["float"],
 )
 ```
