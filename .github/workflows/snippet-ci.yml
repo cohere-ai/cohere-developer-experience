@@ -25,13 +25,18 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.x'
-      
-      - name: poetry install
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install poetry
-          poetry install
 
+      - name: Bootstrap poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 2.1.2
+          virtualenvs-in-project: false
+
+      - name: Install python dependencies
+        shell: bash
+        run: |
+          poetry install --no-interaction --no-ansi
+  
       - name: Run snippet tests
         continue-on-error: true
         env:
