@@ -9,7 +9,7 @@ import (
 	"net/http"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
-	client "github.com/cohere-ai/cohere-go/v2/client"
+	"github.com/cohere-ai/cohere-go/v2/client"
 )
 
 func main() {
@@ -38,7 +38,7 @@ func main() {
 		context.TODO(),
 		&cohere.EmbedRequest{
 			Images:         []string{imageBase64},
-			Model:          cohere.String("embed-english-v3.0"),
+			Model:          cohere.String("embed-v4.0"),
 			InputType:      cohere.EmbedInputTypeImage.Ptr(),
 			EmbeddingTypes: []cohere.EmbeddingType{cohere.EmbeddingTypeFloat},
 		},
