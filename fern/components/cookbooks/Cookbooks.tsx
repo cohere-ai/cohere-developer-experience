@@ -10,16 +10,16 @@ const CARD_COLORS = ['bg-[#EEF0EF]', 'bg-[#FDF2F0]', 'bg-[#F8F1F9]', 'bg-[#F0F2F
 export const Cookbooks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<TagCategories>({
-    useCases: [],
-    endpoints: [],
-    techStack: []
+    capabilities: [],
+    products: [],
+    thirdParty: []
   });
 
-  const toggleTag = (category: keyof TagCategories, tag: string) => {
+  const toggleTag = (category: keyof TagCategories, tag: { original: string; display: string }) => {
     setSelectedTags(prev => ({
       ...prev,
-      [category]: prev[category].includes(tag)
-        ? prev[category].filter(t => t !== tag)
+      [category]: prev[category].some(t => t.original === tag.original)
+        ? prev[category].filter(t => t.original !== tag.original)
         : [...prev[category], tag]
     }));
   };
@@ -28,14 +28,20 @@ export const Cookbooks: React.FC = () => {
     const matchesQuery = searchQuery === '' || 
       cookbook.title.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesUseCases = selectedTags.useCases.length === 0 || 
-      selectedTags.useCases.every(tag => cookbook.tags.useCases.includes(tag));
+    const matchesUseCases = selectedTags.capabilities.length === 0 || 
+      selectedTags.capabilities.every(tag => 
+        cookbook.tags.capabilities.some(c => c === tag.original)
+      );
 
-    const matchesEndpoints = selectedTags.endpoints.length === 0 || 
-      selectedTags.endpoints.every(tag => cookbook.tags.endpoints.includes(tag));
+    const matchesEndpoints = selectedTags.products.length === 0 || 
+      selectedTags.products.every(tag => 
+        cookbook.tags.products.some(p => p === tag.original)
+      );
 
-    const matchesTechStack = selectedTags.techStack.length === 0 || 
-      selectedTags.techStack.every(tag => cookbook.tags.techStack.includes(tag));
+    const matchesTechStack = selectedTags.thirdParty.length === 0 || 
+      selectedTags.thirdParty.every(tag => 
+        cookbook.tags.thirdParty.some(t => t === tag.original)
+      );
 
     return matchesQuery && matchesUseCases && matchesEndpoints && matchesTechStack;
   });

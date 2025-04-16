@@ -1,0 +1,82 @@
+import csv
+
+INPUT_CSV_FILE_PATH = "cookbooks.csv"
+OUTPUT_TS_FILE_PATH = "../fern/components/cookbooks/data/cookbooks.ts"
+
+
+def is_empty(value):
+    return not value or value.strip() in ("-", "-0", "-0\r", "0", "0\r", "")
+
+def to_ts_array(value):
+    if is_empty(value):
+        return "[]"
+    return "[" + ", ".join(f'"{v.strip()}"' for v in value.split(",")) + "]"
+
+def get_author_image(author_name):
+    author_images_mapping = {
+        "marco": "https://fern-image-hosting.s3.amazonaws.com/cohere/f103c96-Marco.jpg",
+        "jason": "https://fern-image-hosting.s3.amazonaws.com/cohere/0803e3d-Jason_Jung.jpg",
+        "shaan": "https://fern-image-hosting.s3.amazonaws.com/cohere/d17fc44-Shaan.jpg",
+        "alex": "https://fern-image-hosting.s3.amazonaws.com/cohere/bf2c763-Alex.jpg",
+        "ania": "https://fern-image-hosting.s3.amazonaws.com/cohere/c5dc5a3-Ania.jpg",
+        "komal": "https://fern-image-hosting.s3.amazonaws.com/cohere/7026fcc-komal-headshot.jpg",
+        "youran": "https://fern-image-hosting.s3.amazonaws.com/cohere/929cb1c-youran-headshot.jpg",
+        "giannis": "https://fern-image-hosting.s3.amazonaws.com/cohere/73153cb-giannis.jpeg",
+        "mike": "https://fern-image-hosting.s3.amazonaws.com/cohere/d514b09-mike-headshot.jpg",
+    }
+    return  author_images_mapping.get(author_name, "")
+
+def get_author_name(author_name):
+    author_names_mapping = {
+        "marco": "Marco Del Tredici",
+        "jason": "Jason Jung",
+        "shaan": "Shaan Desai",
+        "alex": "Alex Barbet",
+        "ania": "Ania Bialas",
+        "komal": "Komal Teru",
+        "youran": "Youran Qi",
+        "giannis": "Giannis Chatziveroglou",
+        "mike": "Mike Mao",
+    }
+    return author_names_mapping.get(author_name, "")
+    
+
+
+with open(INPUT_CSV_FILE_PATH, newline='', encoding='utf-8') as csvfile, open(OUTPUT_TS_FILE_PATH, "w", encoding='utf-8') as tsfile:
+    sample = csvfile.read(1024)
+    csvfile.seek(0)
+    delimiter = '\t' if '\t' in sample else ','
+
+    reader = csv.DictReader(csvfile, delimiter=delimiter)
+
+    # Static header
+    tsfile.write("import { Cookbook } from '../types';\n\n")
+    tsfile.write("export const cookbooks: Cookbook[] = [\n")
+
+    for row in reader:
+        title = row["title"].strip()
+        if not title:
+            continue
+        description = row["description"].strip()
+        
+        
+        author_name = get_author_name(row["author"].strip().lower())
+        author_image = get_author_image(row["author"].strip().lower())
+        href = row["url"].strip().replace("https://docs.cohere.com", "")
+
+        tsfile.write("  {\n")
+        tsfile.write(f'    title: "{title}",\n')
+        tsfile.write(f'    description: "{description}",\n')
+        tsfile.write("    tags: {\n")
+        tsfile.write(f'      capabilities: {to_ts_array(row.get("capability", ""))},\n')
+        tsfile.write(f'      products: {to_ts_array(row.get("product", ""))},\n')
+        tsfile.write(f'      thirdParty: {to_ts_array(row.get("third_party", ""))},\n')
+        tsfile.write("    },\n")
+        tsfile.write(f'    href: "{href}",\n')
+        tsfile.write("    author: {\n")
+        tsfile.write(f'      name: "{author_name}",\n')
+        tsfile.write(f'      image: "{author_image}"\n')
+        tsfile.write("    }\n")
+        tsfile.write("  },\n")
+
+    tsfile.write("];\n")
