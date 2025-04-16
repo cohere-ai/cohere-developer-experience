@@ -5,7 +5,7 @@ import (
 	"log"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
-	client "github.com/cohere-ai/cohere-go/v2/client"
+	"github.com/cohere-ai/cohere-go/v2/client"
 )
 
 func main() {
@@ -15,7 +15,7 @@ func main() {
 		context.TODO(),
 		&cohere.EmbedRequest{
 			Texts:     []string{"hello", "goodbye"},
-			Model:     cohere.String("embed-english-v3.0"),
+			Model:     cohere.String("embed-v4.0"),
 			InputType: cohere.EmbedInputTypeSearchDocument.Ptr(),
 		},
 	)
