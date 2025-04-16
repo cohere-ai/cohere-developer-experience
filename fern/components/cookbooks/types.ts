@@ -5,7 +5,7 @@ export interface TagCategories {
 }
 
 export interface CookbooksTagCategories {
-  capabilities: string[]; // Simplified version for Cookbook
+  capabilities: string[]; 
   products: string[];
   thirdParty: string[];
 }
@@ -13,7 +13,7 @@ export interface CookbooksTagCategories {
 export interface Cookbook {
   title: string;
   description: string;
-  tags: CookbooksTagCategories; // Updated to use CookbooksTagCategories
+  tags: CookbooksTagCategories;
   href: string;
   author?: {
     name: string;
