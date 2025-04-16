@@ -5,7 +5,7 @@ import { TagButton } from './TagButton';
 
 interface SidebarProps {
   selectedTags: TagCategories;
-  toggleTag: (category: keyof TagCategories, tag: string) => void;
+  toggleTag: (category: keyof TagCategories, tag: { original: string; display: string }) => void;
 }
 
 function formatCategoryLabel(key: string): string {
@@ -21,14 +21,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedTags, toggleTag }) => 
       {(Object.keys(ALL_TAGS) as (keyof TagCategories)[]).map(category => (
         <div key={category} className="mb-6">
           <h3 className="text-sm font-medium mb-4">
-            {category === 'techStack' ? 'Tools' : formatCategoryLabel(category)}
+            {formatCategoryLabel(category)}
           </h3>
           <div className="flex flex-wrap gap-2">
-            {ALL_TAGS[category].map((tag: string) => (
+            {ALL_TAGS[category].map(tag => (
               <TagButton
-                key={tag}
-                tag={tag}
-                isSelected={selectedTags[category].includes(tag)}
+                key={tag.original}
+                tag={tag.display}
+                isSelected={selectedTags[category].some(t => t.original === tag.original)}
                 onClick={() => toggleTag(category, tag)}
               />
             ))}
