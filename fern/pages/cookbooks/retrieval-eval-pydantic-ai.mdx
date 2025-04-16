@@ -1,0 +1,395 @@
+---
+title: Retrieval evaluation using LLM-as-a-judge via Pydantic AI
+slug: /page/retrieval-eval-pydantic-ai
+
+description: "This page contains a tutorial on how to evaluate retrieval systems using LLMs as judges via Pydantic AI."
+image: "../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, retrieval evaluation, LLM-as-a-judge, Pydantic AI"
+---
+import { CookbookHeader } from "../../components/cookbook-header";
+
+<CookbookHeader href="https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/retrieval_eval_pydantic_ai.ipynb" />
+
+
+We'll explore how to evaluate retrieval systems using Large Language Models (LLMs) as judges.Retrieval evaluation is a critical component in building high-quality information retrieval systems, and recent advancements in LLMs have made it possible to automate this evaluation process.
+
+**What we'll cover**
+
+- How to query the Wikipedia API
+- How to implement and compare two different retrieval approaches:
+  - The original search results from the Wikipedia API
+  - Using Cohere's reranking model to rerank the search results
+- How to set up an LLM-as-a-judge evaluation framework using Pydantic AI
+
+**Tools We'll Use**
+
+- **Cohere's API**: For reranking search results and providing evaluation models
+- **Wikipedia's API**: As our information source
+- **Pydantic AI**: For creating evaluation agents
+
+This tutorial demonstrates a methodology for comparing different retrieval systems objectively. By the end, you'll have an example you can adapt to evaluate your own retrieval systems across different domains and use cases.
+
+## Setup
+
+First, let's import the necessary libraries.
+
+```python PYTHON
+%pip install -U cohere pydantic-ai
+```
+
+```python PYTHON
+import requests
+import cohere
+import pandas as pd
+from pydantic_ai import Agent
+from pydantic_ai.models import KnownModelName
+from collections import Counter
+
+import os
+co = cohere.ClientV2(os.getenv("COHERE_API_KEY"))
+```
+
+
+```python PYTHON
+import nest_asyncio
+nest_asyncio.apply()
+```
+
+## Perform Wikipedia search
+
+Next, we implement a function to query Wikipedia for relevant information based on user input. The `search_wikipedia()` function allows us to retrieve a specified number of Wikipedia search results, extracting their titles, snippets, and page IDs.
+
+This will provide us with the dataset for our retrieval evaluation experiment, where we'll compare different approaches to finding and ranking relevant information.
+
+We'll use a small dataset of 10 questions about geography to test the Wikipedia search.
+
+
+```python PYTHON
+import requests
+
+def search_wikipedia(query, limit=10):
+    url = "https://en.wikipedia.org/w/api.php"
+    params = {
+        'action': 'query',
+        'list': 'search',
+        'srsearch': query,
+        'format': 'json',
+        'srlimit': limit
+    }
+
+    response = requests.get(url, params=params)
+    data = response.json()
+    
+    # Format the results
+    results = []
+    for item in data['query']['search']:
+        results.append({
+            "title": item["title"],
+            "snippet": item["snippet"].replace("<span class=\"searchmatch\">", "").replace("</span>", ""),
+        })
+            
+    return results
+```
+
+
+```python PYTHON
+# Generate 10 questions about geography to test the Wikipedia search
+geography_questions = [
+    "What is the capital of France?",
+    "What is the longest river in the world?",
+    "What is the largest desert in the world?",
+    "What is the highest mountain peak on Earth?",
+    "What are the major tectonic plates?",
+    "What is the Ring of Fire?",
+    "What is the largest ocean on Earth?",
+    "What are the Seven Wonders of the Natural World?",
+    "What causes the Northern Lights?",
+    "What is the Great Barrier Reef?"
+]
+```
+
+
+```python PYTHON
+# Run search_wikipedia for each question
+results = []
+
+for question in geography_questions:
+    question_results = search_wikipedia(question, limit=10)
+    
+    # Format the results as requested
+    formatted_results = []
+    for item in question_results:
+        formatted_result = f"{item['title']}\n{item['snippet']}"
+        formatted_results.append(formatted_result)
+    
+    # Add to the results list
+    results.append({
+        "question": question,
+        "search_results": formatted_results
+    })
+```
+
+## Rerank the search results and filter the top_n results ("Engine A")
+
+In this section, we'll implement our first retrieval approach using Cohere's reranking model. Reranking is a technique that takes an initial set of search results and reorders them based on their relevance to the original query.
+
+We'll use Cohere's `rerank` API to:
+1. Take the Wikipedia search results we obtained earlier
+2. Send them to Cohere's reranking model along with the original query
+3. Filter to keep only the top-n most relevant results
+
+This approach will be referred to as "Engine A" in our evaluation, and we'll compare its performance against the original Wikipedia search rankings.
+
+
+```python PYTHON
+# Rerank the search results for each question
+top_n = 3
+results_reranked_top_n = []
+
+for item in results:
+    question = item["question"]
+    documents = item["search_results"]
+    
+    # Rerank the documents using Cohere
+    reranked = co.rerank(
+        model="rerank-v3.5",
+        query=question,
+        documents=documents,
+        top_n=top_n  # Get top 3 results
+    )
+    
+    # Format the reranked results
+    top_results = []
+    for result in reranked.results:
+        top_results.append(documents[result.index])
+    
+    # Add to the reranked results list
+    results_reranked_top_n.append({
+        "question": question,
+        "search_results": top_results
+    })
+
+# Print a sample of the reranked results
+print(f"Original question: {results_reranked_top_n[0]['question']}")
+print(f"Top 3 reranked results:")
+for i, result in enumerate(results_reranked_top_n[0]['search_results']):
+    print(f"\n{i+1}. {result}")
+
+```
+```
+Original question: What is the capital of France?
+Top 3 reranked results:
+
+1. France
+semi-presidential republic and its capital, largest city and main cultural and economic centre is Paris. Metropolitan France was settled during the Iron Age by Celtic
+
+2. Closed-ended question
+variants of the above closed-ended questions that possess specific responses are: On what day were you born? (&quot;Saturday.&quot;) What is the capital of France? (&quot;Paris
+
+3. Capital city
+seat of the government. A capital is typically a city that physically encompasses the government&#039;s offices and meeting places; the status as capital is often
+```
+
+## Take the original search results and filter the top_n results ("Engine B")
+
+In this section, we'll implement our second retrieval approach as a baseline comparison. For "Engine B", we'll simply take the original Wikipedia search results without any reranking and select the top-n results.
+
+This approach reflects how many traditional search engines work - returning results based on their original relevance score from the data source. By comparing this baseline against our reranked approach (Engine A), we can evaluate whether reranking provides meaningful improvements in result quality.
+
+We'll use the same number of results (top_n) as Engine A to ensure a fair comparison in our evaluation.
+
+
+```python PYTHON
+results_top_n = []
+
+for item in results:
+    results_top_n.append({
+        "question": item["question"],
+        "search_results": item["search_results"][:top_n]
+    })
+    
+# Print a sample of the top_n results (without reranking)
+print(f"Original question: {results_top_n[0]['question']}")
+print(f"Top {top_n} results (without reranking):")
+for i, result in enumerate(results_top_n[0]['search_results']):
+    print(f"\n{i+1}. {result}")
+```
+```
+Original question: What is the capital of France?
+Top 3 results (without reranking):
+
+1. Closed-ended question
+variants of the above closed-ended questions that possess specific responses are: On what day were you born? (&quot;Saturday.&quot;) What is the capital of France? (&quot;Paris
+
+2. France
+semi-presidential republic and its capital, largest city and main cultural and economic centre is Paris. Metropolitan France was settled during the Iron Age by Celtic
+
+3. What Is a Nation?
+&quot;What Is a Nation?&quot; (French: Qu&#039;est-ce qu&#039;une nation ?) is an 1882 lecture by French historian Ernest Renan (1823–1892) at the Sorbonne, known for the
+```
+
+## Run LLM-as-a-judge evaluation to compare the two engines
+
+Now we'll implement an evaluation framework using LLMs as judges to compare our two retrieval approaches:
+- Engine A: Wikipedia results reranked by Cohere's reranking model
+- Engine B: Original Wikipedia search results
+
+Using LLMs as evaluators allows us to programmatically assess the quality of search results without human annotation. The following code implements the following steps:
+
+- Setting up the evaluation protocol
+  - First, define a clear protocol for how the LLM judges will evaluate the search results. This includes creating a system prompt and a template for each evaluation.
+- Using multiple models as independent judges
+  - To get more robust results, use multiple LLM models as independent judges. This reduces bias from any single model.
+- Implementing a majority voting system
+  - Combine judgments from multiple models using a majority voting system to determine which engine performed better for each query:
+- Presenting the results
+  - After evaluating all queries, present the results to determine which retrieval approach performed better overall.
+
+This approach provides a scalable, reproducible method to evaluate and compare retrieval systems quantitatively.
+
+
+```python PYTHON
+# System prompt for the AI evaluator
+SYSTEM_PROMPT = """
+You are an AI search evaluator. You will compare search results from two engines and
+determine which set provides more relevant and diverse information. You will only
+answer with the verdict rather than explaining your reasoning; simply say "Engine A" or
+"Engine B".
+"""
+
+# Prompt template for each evaluation
+PROMPT_TEMPLATE = """
+For the following question, which search engine provides more relevant results?
+
+## Question:
+{query}
+
+## Engine A:
+{engine_a_results}
+
+## Engine B:
+{engine_b_results}
+"""
+
+def format_results(results):
+    """Format search results in a readable way"""
+    formatted = []
+    for i, result in enumerate(results):
+        formatted.append(f"Result {i+1}: {result[:200]}...")
+    return "\n\n".join(formatted)
+
+def judge_query(query, engine_a_results, engine_b_results, model_name):
+    """Use a single model to judge which engine has better results"""
+    agent = Agent(model_name, system_prompt=SYSTEM_PROMPT)
+    
+    # Format the results
+    engine_a_formatted = format_results(engine_a_results)
+    engine_b_formatted = format_results(engine_b_results)
+    
+    # Create the prompt
+    prompt = PROMPT_TEMPLATE.format(
+        query=query,
+        engine_a_results=engine_a_formatted,
+        engine_b_results=engine_b_formatted
+    )
+    
+    # Get the model's judgment
+    response = agent.run_sync(prompt)
+    return response.data
+
+def evaluate_search_results(reranked_results, regular_results, models):
+    """
+    Evaluate both sets of search results using multiple models.
+    
+    Args:
+        reranked_results: List of dictionaries with 'question' and 'search_results'
+        regular_results: List of dictionaries with 'question' and 'search_results'
+        models: List of model names to use as judges
+    
+    Returns:
+        DataFrame with evaluation results
+    """
+    # Prepare data structure for results
+    evaluation_results = []
+    
+    # Evaluate each query
+    for i in range(len(reranked_results)):
+        query = reranked_results[i]['question']
+        engine_a_results = reranked_results[i]['search_results']  # Reranked results
+        engine_b_results = regular_results[i]['search_results']   # Regular results
+        
+        # Get judgments from each model
+        judgments = []
+        for model in models:
+            judgment = judge_query(query, engine_a_results, engine_b_results, model)
+            judgments.append(judgment)
+        
+        # Determine winner by majority vote
+        votes = Counter(judgments)
+        if votes["Engine A"] > votes["Engine B"]:
+            winner = "Engine A"
+        elif votes["Engine B"] > votes["Engine A"]:
+            winner = "Engine B"
+        else:
+            winner = "Tie"
+        
+        # Add results for this query
+        row = [query] + judgments + [winner]
+        evaluation_results.append(row)
+    
+    # Create DataFrame
+    column_names = ["question"] + [f"judge_{i+1} ({model})" for i, model in enumerate(models)] + ["winner"]
+    df = pd.DataFrame(evaluation_results, columns=column_names)
+    
+    return df
+```
+
+
+```python PYTHON
+# Define the search engines
+engine_a = results_reranked_top_n
+engine_b = results_top_n
+
+# Define the models to use as judges
+models = [
+    "cohere:command-a-03-2025",
+    "cohere:command-r-plus-08-2024",
+    "cohere:command-r-08-2024",
+    "cohere:c4ai-aya-expanse-32b",
+    "cohere:c4ai-aya-expanse-8b",
+]
+
+# Get evaluation results
+results_df = evaluate_search_results(engine_a, engine_b, models)
+
+# Calculate overall statistics
+winner_counts = Counter(results_df["winner"])
+total_queries = len(results_df)
+
+# Display summary of results
+print("\nPercentage of questions won by each engine:")
+for engine, count in winner_counts.items():
+    percentage = (count / total_queries) * 100
+    print(f"{engine}: {percentage:.2f}% ({count}/{total_queries})")
+    
+# Display dataframe
+results_df.head()
+
+# Save to CSV
+results_csv = results_df.to_csv("search_results_evaluation.csv", index=False)
+```
+```
+
+Percentage of questions won by each engine:
+Engine A: 80.00% (8/10)
+Tie: 10.00% (1/10)
+Engine B: 10.00% (1/10)
+```
+
+## Conclusion
+
+This tutorial demonstrates how to evaluate retrieval systems using LLMs as judges through Pydantic AI, comparing original Wikipedia search results against those reranked by Cohere's reranking model. 
+
+The evaluation framework uses multiple Cohere models as independent judges with majority voting to determine which system provides more relevant results. 
+
+Results showed the reranked approach (Engine A) outperformed the original search rankings (Engine B) by winning 80% of queries, demonstrating the effectiveness of neural reranking in improving search relevance.
