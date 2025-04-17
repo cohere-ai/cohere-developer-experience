@@ -34,7 +34,7 @@ public class EmbedImagePost {
             .v2()
             .embed(
                 V2EmbedRequest.builder()
-                    .model("embed-english-v3.0")
+                    .model("embed-v4.0")
                     .inputType(EmbedInputType.IMAGE)
                     .images(List.of(imageBase64))
                     .embeddingTypes(List.of(EmbeddingType.FLOAT))

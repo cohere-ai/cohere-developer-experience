@@ -16,7 +16,7 @@ public class Documents {
             .v2()
             .chat(
                 V2ChatRequest.builder()
-                    .model("command-r-plus-08-2024")
+                    .model("command-a-03-2025")
                     .messages(
                         List.of(
                             ChatMessageV2.user(
