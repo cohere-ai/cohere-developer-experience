@@ -14,9 +14,6 @@ export const execCmd = async (cmd: string, cwd: string): Promise<{error: null | 
     return new Promise((resolve, reject) => {
         try {
             childProcess.exec(cmd, {cwd}, (error, stdout, stderr) => {
-                if (error) {
-                    resolve({error, stderr, stdout})
-                }
                 resolve({ error, stderr, stdout})
             })
         } catch (error) {
