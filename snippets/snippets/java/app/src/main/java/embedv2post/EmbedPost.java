@@ -15,7 +15,7 @@ public class EmbedPost {
             .v2()
             .embed(
                 V2EmbedRequest.builder()
-                    .model("embed-english-v3.0")
+                    .model("embed-v4.0")
                     .texts(List.of("hello", "goodbye"))
                     .inputType(EmbedInputType.CLASSIFICATION)
                     .build());

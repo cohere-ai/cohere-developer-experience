@@ -33,7 +33,7 @@ public class EmbedImagePost {
         cohere.embed(
             EmbedRequest.builder()
                 .images(List.of(imageBase64))
-                .model("embed-english-v3.0")
+                .model("embed-v4.0")
                 .inputType(EmbedInputType.IMAGE)
                 .embeddingTypes(List.of(EmbeddingType.FLOAT))
                 .build());
