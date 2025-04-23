@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
 	"github.com/cohere-ai/cohere-go/v2/client"
@@ -32,7 +33,7 @@ func main() {
 	contentType := resp.Header.Get("Content-Type")
 	imageBase64 := fmt.Sprintf("data:%s;base64,%s", contentType, stringifiedBuffer)
 
-	co := client.NewClient()
+	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
 
 	embed, err := co.Embed(
 		context.TODO(),
