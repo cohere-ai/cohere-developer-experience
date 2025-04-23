@@ -27,7 +27,7 @@ We'll use Cohere's Embed model deployed on Azure to demonstrate these capabiliti
 
 First, you will need to deploy the Embed model on Azure via Azure AI Foundry. The deployment will create a serverless API with pay-as-you-go token based billing. You can find more information on how to deploy models in the [Azure documentation](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-serverless?tabs=azure-ai-studio).
 
-In the example below, we are deploying the Embed Multilingual v3 model.
+In the example below, we are deploying the Embed 4 model.
 
 Once the model is deployed, you can access it via Cohere's Python SDK. Let's now install the Cohere SDK and set up our client.
 
@@ -44,7 +44,7 @@ import cohere
 
 co = cohere.ClientV2(
     api_key="AZURE_API_KEY_EMBED",
-    base_url="AZURE_ENDPOINT_EMBED",  # example: "https://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/"
+    base_url="AZURE_ENDPOINT_EMBED",  # example: "https://embed-v-4-0-xyz.eastus.models.ai.azure.com/"
 )
 ```
 
@@ -105,9 +105,9 @@ Name: count, dtype: int64
 
 ## Embed and index documents
 
-Let's embed our documents and store the embeddings. These embeddings are high-dimensional vectors (1,024 dimensions) that capture the semantic meaning of each document. We'll use Cohere's embed-multilingual-v3.0 model that we have defined in the client setup.
+Let's embed our documents and store the embeddings. These embeddings are high-dimensional vectors (1,024 dimensions) that capture the semantic meaning of each document. We'll use Cohere's Embed 4 model that we have defined in the client setup.
  
-The v3.0 embedding models require us to specify an `input_type` parameter that indicates what we're embedding. For semantic search, we use `search_document` for the documents we want to search through, and `search_query` for the search queries we'll make later.
+The Embed 4 model require us to specify an `input_type` parameter that indicates what we're embedding. For semantic search, we use `search_document` for the documents we want to search through, and `search_query` for the search queries we'll make later.
 
 We'll also keep track information about each document's language and translation to provide richer search results.
 
@@ -123,14 +123,14 @@ translated_docs = top_80_df[
     "translation"
 ].to_list()  # for reference when returning non-English results
 doc_embs = co.embed(
-    model="embed-multilingual-v3.0",
+    model="embed-v4.0",
     texts=docs,
     input_type="search_document",
     embedding_types=["float"],
 ).embeddings.float
 
 # Create a search index
-index = hnswlib.Index(space="ip", dim=1024)
+index = hnswlib.Index(space="ip", dim=1536)
 index.init_index(
     max_elements=len(doc_embs), ef_construction=512, M=64
 )
@@ -147,7 +147,7 @@ Next, we build a function that takes a query as input, embeds it, and finds the 
 def retrieval(query):
     # Embed query and retrieve results
     query_emb = co.embed(
-        model="embed-multilingual-v3.0",  # Pass a dummy string
+        model="embed-v4.0",  # Pass a dummy string
         texts=[query],
         input_type="search_query",
         embedding_types=["float"],
