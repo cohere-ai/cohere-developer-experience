@@ -27,9 +27,10 @@ First, let's handle the imports, the URLs, and the pip installs.
 
 ```python PYTHON
 from google.colab import userdata
-weaviate_url = userdata.get('WEAVIATE_ENDPOINT')
-weaviate_key = userdata.get('WEAVIATE_API_KEY')
-cohere_key = userdata.get('COHERE_API_KEY')
+
+weaviate_url = userdata.get("WEAVIATE_ENDPOINT")
+weaviate_key = userdata.get("WEAVIATE_API_KEY")
+cohere_key = userdata.get("COHERE_API_KEY")
 ```
 
 ```python PYTHON
@@ -48,9 +49,11 @@ headers = {
 
 # Connect to the Weaviate cloud instance
 client = weaviate.connect_to_weaviate_cloud(
-    cluster_url=weaviate_url, #`weaviate_url`: your Weaviate URL
-    auth_credentials=Auth.api_key(weaviate_key), #`weaviate_key`: your Weaviate API key
-    headers=headers
+    cluster_url=weaviate_url,  # `weaviate_url`: your Weaviate URL
+    auth_credentials=Auth.api_key(
+        weaviate_key
+    ),  # `weaviate_key`: your Weaviate API key
+    headers=headers,
 )
 ```
 
@@ -66,9 +69,11 @@ client.collections.create(
     vectorizer_config=[
         # Configure a named vectorizer using Cohere's  model
         Configure.NamedVectors.text2vec_cohere(
-            name="title_vector",                  # Name of the vectorizer
-            source_properties=["title"],          # Property to vectorize (in this case, the "title" field)
-            model="embed-english-v3.0"            # Cohere model to use for vectorization
+            name="title_vector",  # Name of the vectorizer
+            source_properties=[
+                "title"
+            ],  # Property to vectorize (in this case, the "title" field)
+            model="embed-english-v3.0",  # Cohere model to use for vectorization
         )
     ],
 )
@@ -84,67 +89,67 @@ Next, we'll define the list of healthcare compliance documents, retrieve the `"H
 ```python PYTHON
 # Define the list of healthcare compliance documents
 
-hl_compliance_docs= [
+hl_compliance_docs = [
     {
         "title": "HIPAA Compliance Guide",
-        "description": "Comprehensive overview of HIPAA regulations, including patient privacy rules, data security standards, and breach notification requirements."
+        "description": "Comprehensive overview of HIPAA regulations, including patient privacy rules, data security standards, and breach notification requirements.",
     },
     {
         "title": "FDA Drug Approval Process",
-        "description": "Detailed explanation of the FDA's drug approval process, covering clinical trials, safety reviews, and post-market surveillance."
+        "description": "Detailed explanation of the FDA's drug approval process, covering clinical trials, safety reviews, and post-market surveillance.",
     },
     {
         "title": "Telemedicine Regulations",
-        "description": "Analysis of state and federal regulations governing telemedicine practices, including licensing, reimbursement, and patient consent."
+        "description": "Analysis of state and federal regulations governing telemedicine practices, including licensing, reimbursement, and patient consent.",
     },
     {
         "title": "Healthcare Data Security",
-        "description": "Best practices for securing healthcare data, including encryption, access controls, and incident response planning."
+        "description": "Best practices for securing healthcare data, including encryption, access controls, and incident response planning.",
     },
     {
         "title": "Medicare and Medicaid Billing",
-        "description": "Guide to billing and reimbursement processes for Medicare and Medicaid, including coding, claims submission, and audit compliance."
+        "description": "Guide to billing and reimbursement processes for Medicare and Medicaid, including coding, claims submission, and audit compliance.",
     },
     {
         "title": "Patient Rights and Consent",
-        "description": "Overview of patient rights under federal and state laws, including informed consent, access to medical records, and end-of-life decisions."
+        "description": "Overview of patient rights under federal and state laws, including informed consent, access to medical records, and end-of-life decisions.",
     },
     {
         "title": "Healthcare Fraud and Abuse",
-        "description": "Explanation of laws and regulations related to healthcare fraud, including the False Claims Act, Anti-Kickback Statute, and Stark Law."
+        "description": "Explanation of laws and regulations related to healthcare fraud, including the False Claims Act, Anti-Kickback Statute, and Stark Law.",
     },
     {
         "title": "Occupational Safety in Healthcare",
-        "description": "Guidelines for ensuring workplace safety in healthcare settings, including infection control, hazard communication, and emergency preparedness."
+        "description": "Guidelines for ensuring workplace safety in healthcare settings, including infection control, hazard communication, and emergency preparedness.",
     },
     {
         "title": "Health Insurance Portability",
-        "description": "Discussion of COBRA and other laws ensuring continuity of health insurance coverage during job transitions or life events."
+        "description": "Discussion of COBRA and other laws ensuring continuity of health insurance coverage during job transitions or life events.",
     },
     {
         "title": "Medical Device Regulations",
-        "description": "Overview of FDA regulations for medical devices, including classification, premarket approval, and post-market surveillance."
+        "description": "Overview of FDA regulations for medical devices, including classification, premarket approval, and post-market surveillance.",
     },
     {
         "title": "Electronic Health Records (EHR) Standards",
-        "description": "Explanation of standards and regulations for EHR systems, including interoperability, data exchange, and patient privacy."
+        "description": "Explanation of standards and regulations for EHR systems, including interoperability, data exchange, and patient privacy.",
     },
     {
         "title": "Pharmacy Regulations",
-        "description": "Overview of state and federal regulations governing pharmacy practices, including prescription drug monitoring, compounding, and controlled substances."
+        "description": "Overview of state and federal regulations governing pharmacy practices, including prescription drug monitoring, compounding, and controlled substances.",
     },
     {
         "title": "Mental Health Parity Act",
-        "description": "Analysis of the Mental Health Parity and Addiction Equity Act, ensuring equal coverage for mental health and substance use disorder treatment."
+        "description": "Analysis of the Mental Health Parity and Addiction Equity Act, ensuring equal coverage for mental health and substance use disorder treatment.",
     },
     {
         "title": "Healthcare Quality Reporting",
-        "description": "Guide to quality reporting requirements for healthcare providers, including measures, submission processes, and performance benchmarks."
+        "description": "Guide to quality reporting requirements for healthcare providers, including measures, submission processes, and performance benchmarks.",
     },
     {
         "title": "Advance Directives and End-of-Life Care",
-        "description": "Overview of laws and regulations governing advance directives, living wills, and end-of-life care decisions."
-    }
+        "description": "Overview of laws and regulations governing advance directives, living wills, and end-of-life care decisions.",
+    },
 ]
 
 # Retrieve the "Healthcare_Compliance" collection from the Weaviate client
@@ -174,15 +179,19 @@ collection = client.collections.get("Healthcare_Compliance")
 # Perform a near_text search for documents related to "policies related to drug compounding"
 response = collection.query.near_text(
     query="policies related to drug compounding",  # Search query
-    limit=2,                                      # Limit the number of results to 2
-    return_metadata=MetadataQuery(distance=True)  # Include distance metadata in the results
+    limit=2,  # Limit the number of results to 2
+    return_metadata=MetadataQuery(
+        distance=True
+    ),  # Include distance metadata in the results
 )
 
 # Iterate over the retrieved objects and print their details
 for obj in response.objects:
     title = obj.properties.get("title")
     description = obj.properties.get("description")
-    distance = obj.metadata.distance              # Get the distance metadata (A lower value for a distance means that two vectors are closer to one another than a higher value)
+    distance = (
+        obj.metadata.distance
+    )  # Get the distance metadata (A lower value for a distance means that two vectors are closer to one another than a higher value)
     print(f"Title: {title}")
     print(f"Description: {description}")
     print(f"Distance: {distance}")
@@ -215,9 +224,11 @@ headers = {
 
 # Connect to the Weaviate cloud instance
 client = weaviate.connect_to_weaviate_cloud(
-    cluster_url=weaviate_url,                       # `weaviate_url`: your Weaviate URL
-    auth_credentials=Auth.api_key(weaviate_key),    # `weaviate_key`: your Weaviate API key
-    headers=headers                                 # Include the Cohere API key in the headers
+    cluster_url=weaviate_url,  # `weaviate_url`: your Weaviate URL
+    auth_credentials=Auth.api_key(
+        weaviate_key
+    ),  # `weaviate_key`: your Weaviate API key
+    headers=headers,  # Include the Cohere API key in the headers
 )
 ```
 
@@ -239,71 +250,71 @@ client.collections.create(
     # Configure the reranker to use Cohere's rerank model
     reranker_config=Configure.Reranker.cohere(
         model="rerank-english-v3.0"  # Specify the Cohere model to use for reranking
-    )
+    ),
 )
 ```
 ```python PYTHON
 legal_documents = [
     {
         "title": "Contract Law Basics",
-        "description": "An in-depth introduction to contract law, covering essential elements such as offer, acceptance, consideration, and mutual assent. Explores types of contracts, including express, implied, and unilateral contracts, as well as remedies for breach of contract, such as damages, specific performance, and rescission."
+        "description": "An in-depth introduction to contract law, covering essential elements such as offer, acceptance, consideration, and mutual assent. Explores types of contracts, including express, implied, and unilateral contracts, as well as remedies for breach of contract, such as damages, specific performance, and rescission.",
     },
     {
         "title": "Intellectual Property Rights",
-        "description": "Comprehensive overview of intellectual property laws, including patents, trademarks, copyrights, and trade secrets. Discusses the process of obtaining patents, trademark registration, and copyright protection, as well as strategies for enforcing intellectual property rights and defending against infringement claims."
+        "description": "Comprehensive overview of intellectual property laws, including patents, trademarks, copyrights, and trade secrets. Discusses the process of obtaining patents, trademark registration, and copyright protection, as well as strategies for enforcing intellectual property rights and defending against infringement claims.",
     },
     {
         "title": "Employment Law Guide",
-        "description": "Detailed guide to employment laws, covering hiring practices, termination procedures, anti-discrimination laws, and workplace safety regulations. Includes information on employee rights, such as minimum wage, overtime pay, and family and medical leave, as well as employer obligations under federal and state laws."
+        "description": "Detailed guide to employment laws, covering hiring practices, termination procedures, anti-discrimination laws, and workplace safety regulations. Includes information on employee rights, such as minimum wage, overtime pay, and family and medical leave, as well as employer obligations under federal and state laws.",
     },
     {
         "title": "Criminal Law Procedures",
-        "description": "Step-by-step explanation of criminal law procedures, from arrest and booking to trial and sentencing. Covers the rights of the accused, including the right to counsel, the right to remain silent, and the right to a fair trial, as well as rules of evidence and burden of proof in criminal cases."
+        "description": "Step-by-step explanation of criminal law procedures, from arrest and booking to trial and sentencing. Covers the rights of the accused, including the right to counsel, the right to remain silent, and the right to a fair trial, as well as rules of evidence and burden of proof in criminal cases.",
     },
     {
         "title": "Real Estate Transactions",
-        "description": "Comprehensive guide to real estate transactions, including purchase agreements, title searches, property inspections, and closing processes. Discusses common issues such as title defects, financing contingencies, and property disclosures, as well as the role of real estate agents and attorneys in the transaction process."
+        "description": "Comprehensive guide to real estate transactions, including purchase agreements, title searches, property inspections, and closing processes. Discusses common issues such as title defects, financing contingencies, and property disclosures, as well as the role of real estate agents and attorneys in the transaction process.",
     },
     {
         "title": "Corporate Governance",
-        "description": "In-depth overview of corporate governance principles, including the roles and responsibilities of boards of directors, shareholder rights, and compliance with securities laws. Explores best practices for board composition, executive compensation, and risk management, as well as strategies for maintaining transparency and accountability in corporate decision-making."
+        "description": "In-depth overview of corporate governance principles, including the roles and responsibilities of boards of directors, shareholder rights, and compliance with securities laws. Explores best practices for board composition, executive compensation, and risk management, as well as strategies for maintaining transparency and accountability in corporate decision-making.",
     },
     {
         "title": "Family Law Overview",
-        "description": "Comprehensive introduction to family law, covering marriage, divorce, child custody, child support, and adoption processes. Discusses the legal requirements for marriage and divorce, factors considered in child custody determinations, and the rights and obligations of adoptive parents under state and federal laws."
+        "description": "Comprehensive introduction to family law, covering marriage, divorce, child custody, child support, and adoption processes. Discusses the legal requirements for marriage and divorce, factors considered in child custody determinations, and the rights and obligations of adoptive parents under state and federal laws.",
     },
     {
         "title": "Tax Law for Businesses",
-        "description": "Detailed guide to tax laws affecting businesses, including corporate income tax, payroll taxes, sales and use taxes, and tax deductions. Explores tax planning strategies, such as deferring income and accelerating expenses, as well as compliance requirements and penalties for non-compliance with tax laws."
+        "description": "Detailed guide to tax laws affecting businesses, including corporate income tax, payroll taxes, sales and use taxes, and tax deductions. Explores tax planning strategies, such as deferring income and accelerating expenses, as well as compliance requirements and penalties for non-compliance with tax laws.",
     },
     {
         "title": "Immigration Law Basics",
-        "description": "Comprehensive overview of immigration laws, including visa categories, citizenship requirements, and deportation processes. Discusses the rights and obligations of immigrants, including access to public benefits and protection from discrimination, as well as the role of immigration attorneys in navigating the immigration system."
+        "description": "Comprehensive overview of immigration laws, including visa categories, citizenship requirements, and deportation processes. Discusses the rights and obligations of immigrants, including access to public benefits and protection from discrimination, as well as the role of immigration attorneys in navigating the immigration system.",
     },
     {
         "title": "Environmental Regulations",
-        "description": "In-depth overview of environmental laws and regulations, including air and water quality standards, hazardous waste management, and endangered species protection. Explores the role of federal and state agencies in enforcing environmental laws, as well as strategies for businesses to achieve compliance and minimize environmental impact."
+        "description": "In-depth overview of environmental laws and regulations, including air and water quality standards, hazardous waste management, and endangered species protection. Explores the role of federal and state agencies in enforcing environmental laws, as well as strategies for businesses to achieve compliance and minimize environmental impact.",
     },
     {
         "title": "Consumer Protection Laws",
-        "description": "Comprehensive guide to consumer protection laws, including truth in advertising, product safety, and debt collection practices. Discusses the rights of consumers under federal and state laws, such as the right to sue for damages and the right to cancel certain contracts, as well as the role of government agencies in enforcing consumer protection laws."
+        "description": "Comprehensive guide to consumer protection laws, including truth in advertising, product safety, and debt collection practices. Discusses the rights of consumers under federal and state laws, such as the right to sue for damages and the right to cancel certain contracts, as well as the role of government agencies in enforcing consumer protection laws.",
     },
     {
         "title": "Estate Planning Essentials",
-        "description": "Detailed overview of estate planning, including wills, trusts, powers of attorney, and advance healthcare directives. Explores strategies for minimizing estate taxes, protecting assets from creditors, and ensuring that assets are distributed according to the individual's wishes after death."
+        "description": "Detailed overview of estate planning, including wills, trusts, powers of attorney, and advance healthcare directives. Explores strategies for minimizing estate taxes, protecting assets from creditors, and ensuring that assets are distributed according to the individual's wishes after death.",
     },
     {
         "title": "Bankruptcy Law Overview",
-        "description": "Comprehensive introduction to bankruptcy law, including Chapter 7 and Chapter 13 bankruptcy proceedings. Discusses the eligibility requirements for filing bankruptcy, the process of liquidating assets and discharging debts, and the impact of bankruptcy on credit scores and future financial opportunities."
+        "description": "Comprehensive introduction to bankruptcy law, including Chapter 7 and Chapter 13 bankruptcy proceedings. Discusses the eligibility requirements for filing bankruptcy, the process of liquidating assets and discharging debts, and the impact of bankruptcy on credit scores and future financial opportunities.",
     },
     {
         "title": "International Trade Law",
-        "description": "In-depth overview of international trade laws, including tariffs, quotas, and trade agreements. Explores the role of international organizations such as the World Trade Organization (WTO) in regulating global trade, as well as strategies for businesses to navigate trade barriers and comply with international trade regulations."
+        "description": "In-depth overview of international trade laws, including tariffs, quotas, and trade agreements. Explores the role of international organizations such as the World Trade Organization (WTO) in regulating global trade, as well as strategies for businesses to navigate trade barriers and comply with international trade regulations.",
     },
     {
         "title": "Healthcare Law and Regulations",
-        "description": "Comprehensive guide to healthcare laws and regulations, including patient privacy rights, healthcare provider licensing, and medical malpractice liability. Discusses the impact of laws such as the Affordable Care Act (ACA) and the Health Insurance Portability and Accountability Act (HIPAA) on healthcare providers and patients, as well as strategies for ensuring compliance with healthcare regulations."
-    }
+        "description": "Comprehensive guide to healthcare laws and regulations, including patient privacy rights, healthcare provider licensing, and medical malpractice liability. Discusses the impact of laws such as the Affordable Care Act (ACA) and the Health Insurance Portability and Accountability Act (HIPAA) on healthcare providers and patients, as well as strategies for ensuring compliance with healthcare regulations.",
+    },
 ]
 ```
 
@@ -386,9 +397,9 @@ rerank_response = collection.query.near_text(
     query=search_query,
     limit=3,
     rerank=Rerank(
-        prop="description",                            # Property to rerank based on (description in this case)
-        query=search_query                             # Query to use for reranking
-    )
+        prop="description",  # Property to rerank based on (description in this case)
+        query=search_query,  # Query to use for reranking
+    ),
 )
 
 # Display the reranked search results
@@ -396,7 +407,9 @@ print("Reranked Search Results:")
 for obj in rerank_response.objects:
     title = obj.properties.get("title")
     description = obj.properties.get("description")
-    rerank_score = getattr(obj.metadata, 'rerank_score', None)  # Get the rerank score metadata
+    rerank_score = getattr(
+        obj.metadata, "rerank_score", None
+    )  # Get the rerank score metadata
     print(f"Title: {title}")
     print(f"Description: {description}")
     print(f"Rerank Score: {rerank_score}")
@@ -445,7 +458,9 @@ client.collections.create(
         model="rerank-english-v3.0"  # Specify the Cohere model to use for reranking
     ),
     # Configure the generative model to use Cohere's command r plus model
-    generative_config=Configure.Generative.cohere(model="command-r-plus"),
+    generative_config=Configure.Generative.cohere(
+        model="command-r-plus"
+    ),
 )
 ```
 
@@ -478,15 +493,15 @@ As before, we'll iterate over the object and print the result:
 from weaviate.classes.config import Configure
 from weaviate.classes.generate import GenerativeConfig
 
-#To generate text for each object in the search results, use the single prompt method.
-#The example below generates outputs for each of the n search results, where n is specified by the limit parameter.
+# To generate text for each object in the search results, use the single prompt method.
+# The example below generates outputs for each of the n search results, where n is specified by the limit parameter.
 
 collection = client.collections.get("Legal_Docs_RAG")
 response = collection.generate.near_text(
     query=search_query,
     limit=1,
-    single_prompt="Translate this into French -  {title}: {description}"
-    )
+    single_prompt="Translate this into French -  {title}: {description}",
+)
 
 for obj in response.objects:
     print("Retrieved results")
