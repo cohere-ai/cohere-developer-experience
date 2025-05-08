@@ -1,0 +1,38 @@
+name: Push to Private Repo
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  push-to-private-repo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: GitHub app authentication
+        id: push-token
+        uses: actions/create-github-app-token@0d564482f06ca65fa9e77e2510873638c82206f2 # v1.11.5
+        with:
+          owner: "cohere-ai"
+          app-id: ${{ secrets.CI_GH_APP_ID }}
+          private-key: ${{ secrets.CI_GH_APP_PRIVATE_KEY }}
+
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+
+      - name: Set up Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Push to sync-branch in cohere-ai/cohere-developer-experience-private
+        env:
+          REPO_TOKEN: ${{ steps.push-token.outputs.token }} 
+        run: |
+          git remote add private-repo https://x-access-token:${REPO_TOKEN}@github.com/cohere-ai/cohere-developer-experience-private.git
+          git fetch private-repo
+          git push private-repo main:sync-branch --force
