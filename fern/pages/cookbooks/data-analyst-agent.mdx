@@ -34,7 +34,7 @@ We'll need a Cohere API key here. Grab your key and paste it in the next slide i
 ```python PYTHON
 ### LLMs
 import os
-os.environ['COHERE_API_KEY'] = "<insert api="" cohere="" here="" key="">"
+os.environ['COHERE_API_KEY'] = "ADD_COHERE_API_KEY"
 ```
 
 ```python PYTHON
@@ -42,6 +42,7 @@ from langchain_cohere.chat_models import ChatCohere
 chat = ChatCohere(model="command-a-03-2025", temperature=0.3)
 ```
 
+## Define tools
 Our simple data analyst will be equipped with a web search tool, and a python interpreter (which we can use to run plotting code, for example).
 
 ### Web search
@@ -51,14 +52,13 @@ Let's first equip our agent with web search! We can use the Tavily API for this.
 ```python PYTHON
 from langchain_community.tools.tavily_search import TavilySearchResults
 
-os.environ['TAVILY_API_KEY'] = "<insert api="" here="" key="" tavily="">"
+os.environ['TAVILY_API_KEY'] = "ADD_TAVILY_API_KEY"
 
 internet_search = TavilySearchResults()
 internet_search.name = "internet_search"
 internet_search.description = "Returns a list of relevant document snippets for a textual query retrieved from the internet."
 
-
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 class TavilySearchInput(BaseModel):
     query: str = Field(description="Query to search the internet with")
 internet_search.args_schema = TavilySearchInput
@@ -86,6 +86,8 @@ repl_tool.args_schema = ToolInput
 
 ```
 
+### Create ReAct Agent: the data analyst
+
 ```python PYTHON
 from langchain.agents import AgentExecutor
 from langchain_cohere.react_multi_hop.agent import create_cohere_react_agent
@@ -106,6 +108,8 @@ agent = create_cohere_react_agent(
 ```python PYTHON
 agent_executor = AgentExecutor(agent=agent, tools=[internet_search, repl_tool], verbose=True)
 ```
+
+Now, let's ask the data analyst a question.
 
 ```python PYTHON
 agent_executor.invoke({
