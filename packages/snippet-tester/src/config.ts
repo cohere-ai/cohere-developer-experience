@@ -2,12 +2,13 @@ import path from "path";
 import * as childProcess from "child_process"
 import { execPythonSnippet } from "./snippets_utils";
 
+export const STATIC_DIR = path.join(__dirname, "../static"); 
+
 export interface Language {
     name: string;
     exec: (file: string, cwd:string) => string;
     snippetRoot: (base: string) => string;
     glob: string;
-    execCmd?: (cmd: string, cwd: string) => Promise<{error: null | childProcess.ExecException, stderr: string, stdout: string}>;
 }
 
 export const config: {
