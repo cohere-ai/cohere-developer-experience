@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
 	client "github.com/cohere-ai/cohere-go/v2/client"
 )
 
 func main() {
-	co := client.NewClient()
+	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
 
 	resp, err := co.V2.Chat(
 		context.TODO(),
@@ -19,7 +20,7 @@ func main() {
 				{
 					Type: cohere.String("function"),
 					Function: &cohere.ToolV2Function{
-						Name:        cohere.String("query_daily_sales_report"),
+						Name:        "query_daily_sales_report",
 						Description: cohere.String("Connects to a database to retrieve overall sales volumes and sales information for a given day."),
 						Parameters: map[string]interface{}{
 							"type": "object",
@@ -36,7 +37,7 @@ func main() {
 				{
 					Type: cohere.String("function"),
 					Function: &cohere.ToolV2Function{
-						Name:        cohere.String("query_product_catalog"),
+						Name:        "query_product_catalog",
 						Description: cohere.String("Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels."),
 						Parameters: map[string]interface{}{
 							"type": "object",

@@ -70,7 +70,7 @@ Before we dive into the technical weeds, we need to set up the notebook's runtim
 
 ```python PYTHON
 data_dir = "data/document-parsing"
-source_filename = "example-drug-label"
+source_filename = "fda-approved-drug"
 extension = "pdf"
 ```
 
@@ -141,7 +141,7 @@ def format_docs_for_chat(documents):
 
 ## Document Parsing Solutions
 
-For demonstration purposes, we have collected and saved the parsed documents from each solution in this notebook. Skip to the [next section](#document-questions) to run RAG with Command-R on the pre-fetched versions. You can find all parsed resources in detail at the link [here](https://github.com/gchatz22/temp-cohere-resources/tree/main/data).
+For demonstration purposes, we have collected and saved the parsed documents from each solution in this notebook. Skip to the [next section](#document-questions) to run RAG with Command-A on the pre-fetched versions. You can find all parsed resources in detail at the link [here](https://github.com/gchatz22/temp-cohere-resources/tree/main/data).
 
 ### Solution 1: Google Cloud Document AI [[Back to Solutions]](#top) [#gcp]
 
@@ -327,7 +327,7 @@ We assume that you are working within the AWS ecosystem (from a SageMaker notebo
 At minimum, you will need access to the following AWS resources to get started:
 
 - Textract
-- an S3 bucket containing the document(s) to process - in this case, our `example-drug-label.pdf` file
+- an S3 bucket containing the document(s) to process - in this case, our `fda-approved-drug.pdf` file
 - an SNS topic that Textract can publish to. This is used to send a notification that parsing is complete.
 - an IAM role that Textract will assume, granting access to the S3 bucket and SNS topic
 
@@ -639,7 +639,7 @@ bucket_name = "your-bucket-name"
 sns_topic_arn = "your-sns-arn" # this can be found under the topic you created in the Amazon SNS dashboard
 sns_role_arn = "sns-role-arn" # this is an IAM role that allows Textract to interact with SNS
 
-file_name = "example-drug-label.pdf"
+file_name = "fda-approved-drug.pdf"
 ```
 
 ```python PYTHON
@@ -780,7 +780,7 @@ with open(input_path, 'rb') as file_data:
         files={"files": ("{}.{}".format(source_filename, extension), file_data)},
         data={
             "output_format": (None, "application/json"),
-            "stratergy": "hi_res",
+            "strategy": "hi_res",
             "pdf_infer_table_structure": "true",
             "include_page_breaks": "true"
         },
@@ -1019,7 +1019,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 documents = []
 
 with open("{}/{}-parsed-fda-approved-drug.txt".format(data_dir, source), "r") as doc:
-doc_content = doc.read()
+    doc_content = doc.read()
 
 """
 Personal notes on chunking
@@ -1056,7 +1056,7 @@ Create document index and add embedded chunks
 
 import hnswlib
 
-index = hnswlib.Index(space='ip', dim=1024) # space: inner product
+index = hnswlib.Index(space='ip', dim=1536) # space: inner product
 index.init_index(max_elements=len(document_embeddings), ef_construction=512, M=64)
 index.add_items(document_embeddings, list(range(len(document_embeddings))))
 print("Count:", index.element_count)
@@ -1093,11 +1093,11 @@ rerank_results = co.rerank(query=prompt, documents=relevant_docs, top_n=3, model
 reranked_relevant_docs = format_docs_for_chat([x.document["text"] for x in rerank_results])
 ```
 
-## Final Step: Call Command-R + RAG!
+## Final Step: Call Command-A + RAG!
 
 ```python PYTHON
 """
-Call the /chat endpoint with command-r
+Call the /chat endpoint with command-a
 """
 
 response = co.chat(
