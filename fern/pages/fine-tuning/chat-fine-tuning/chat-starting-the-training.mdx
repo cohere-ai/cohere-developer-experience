@@ -62,7 +62,7 @@ We require a minimum of two valid conversations to begin training. Currently, us
 There a certain requirements for the data you use to fine-tune a model for Chat through the UI:
 
 - There are only three acceptable values for the `role` field: `System`, `Chatbot` or `User`. There should be at least one instance of `Chatbot` and `User` in each conversation. If your dataset includes other roles, a validation error will be thrown.
-- A system instruction(preamble) should be uploaded as the first message in the conversation, with `role: System`. All other messages with `role: System` will be treated as speakers in the conversation.
+- A system instruction should be uploaded as the first message in the conversation, with `role: System`. All other messages with `role: System` will be treated as speakers in the conversation.
 - What's more, each turn in the conversation should be within the context length of 16384 tokens to avoid being dropped from the dataset. We explain a turn in the ['Chat Customization Best Practices'](/docs/chat-preparing-the-data#:~:text=.await_validation()) section.
 
 If you need more information, see ['Preparing the Data'](/docs/chat-preparing-the-data).
@@ -265,9 +265,9 @@ Once your model completes training, you can call it via the [Chat API](/docs/cha
 
 Please note, the `model_id` is the `id` returned by the fine-tuned model object with the `"-ft"` suffix.
 
-`co.chat()` uses no system message by default for fine-tuned models. You can specify a system message using the `preamble` parameter. Note that for the `model` parameter, you must pass the finetune's id with `"-ft"` appended to the end.
+`co.chat()` uses no preamble by default for fine-tuned models. You can specify a preamble using the `preamble` parameter. Note that for the `model` parameter, you must pass the finetune's id with `"-ft"` appended to the end.
 
-By passing `return_prompt=True` in any message, you can see which system message is being used for your conversation.
+By passing `return_prompt=True` in any message, you can see which preamble is being used for your conversation.
 
 Here's a Python script to make this clearer:
 
@@ -283,7 +283,7 @@ get_response = co.finetuning.get_finetuned_model(
 response = co.chat(
     message="Hi there",
     model=get_response.finetuned_model.id + "-ft",
-    # optional (to specify a system message - `preamble`)
+    # optional (to specify a preamble)
     preamble="You are a chatbot trained to answer to my every question. Answer every question with full sentences.",
     # optional
     return_prompt=True,
