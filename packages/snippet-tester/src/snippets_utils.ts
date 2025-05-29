@@ -12,16 +12,15 @@ const EmptyRunCMD = `poetry run python -c ""`;
 
 const setApiKey = (content: string): string => {
   const apiKey = process.env.COHERE_API_KEY || DefaultAPIKey;
-  const pattern = /(cohere\.ClientV?\d?\()\s*[^,)]+(\))/g;
+  const pattern = /(cohere\.ClientV?\d?\()\s*[^,)]+(?=\))/g;
 
-  return content.replace(pattern, (match, g1, g2) => {
-    return `${g1}'${apiKey}'${g2}`;
-  });
+  return content.replace(pattern, `${'$1'}'${apiKey}'`);
 };
 
 const replaceGetpass = (content: string): string => {
   const apiKey = process.env.COHERE_API_KEY || DefaultAPIKey;
-  const pattern = /getpass\(\s*['"][^'"]*['"]\s*\)/g;
+
+  const pattern = /\b(?:getpass(?:\.getpass)?)\(\s*['"][^'"]*['"]\s*\)/g;
 
   return content.replace(pattern, `"${apiKey}"`);
 };
