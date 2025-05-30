@@ -1,5 +1,5 @@
 ---
-title: Reranking with Cohere
+title: Master Reranking with Cohere Models
 slug: /docs/reranking-with-cohere
 
 description: "This page contains a tutorial on using Cohere's ReRank models."
@@ -11,7 +11,7 @@ keywords: "Cohere, language models, ReRank models"
 
 Reranking is a technique that provides a semantic boost to the search quality of any keyword or vector search system, and is especially useful in [RAG systems](/v2/docs/retrieval-augmented-generation-rag).
 
-We can rerank results from semantic search as well as any other search systems such as lexical search. This means that companies can retain an existing keyword-based (also called “lexical”) or semantic search system for the first-stage retrieval and integrate the [Rerank endpoint](/docs/rerank-2) in the second-stage reranking.
+We can rerank results from semantic search as well as any other search systems such as lexical search. This means that companies can retain an existing keyword-based (also called “lexical”) or semantic search system for the first-stage retrieval and integrate the [Rerank endpoint](/docs/rerank) in the second-stage reranking.
 
 In this tutorial, you'll learn about:
 
@@ -32,7 +32,8 @@ To get started, first we need to install the `cohere` library and create a Coher
 import numpy as np
 import cohere
 
-co = cohere.Client("COHERE_API_KEY") # Get your API key: https://dashboard.cohere.com/api-keys
+# Get your API key: https://dashboard.cohere.com/api-keys
+co = cohere.Client("COHERE_API_KEY")
 ```
 
 ## Reranking lexical/semantic search results
@@ -51,10 +52,18 @@ This is where Rerank can help. We call the endpoint using `co.rerank()` and pass
 ```python PYTHON
 # Define the documents
 faqs = [
-    {"text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."},
-    {"text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."},
-    {"text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."},
-    {"text": "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year."}
+    {
+        "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
+    },
+    {
+        "text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."
+    },
+    {
+        "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+    },
+    {
+        "text": "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year."
+    },
 ]
 ```
 
@@ -64,7 +73,7 @@ query = "Are there fitness-related perks?"
 
 # Rerank the documents
 results = co.rerank(
-    model='rerank-v3.5',
+    model="rerank-v3.5",
     query=query,
     documents=faqs,
     top_n=1,
@@ -79,12 +88,13 @@ id='9633b278-93ff-4664-a142-7d9dcf0ec0e5' results=[RerankResponseResultsItem(doc
 
 ```python PYTHON
 # Display the reranking results
-def return_results(results, documents):    
+def return_results(results, documents):
     for idx, result in enumerate(results.results):
-        print(f"Rank: {idx+1}") 
+        print(f"Rank: {idx+1}")
         print(f"Score: {result.relevance_score}")
         print(f"Document: {documents[result.index]}\n")
-    
+
+
 return_results(results, faqs_short)
 ```
 
@@ -119,9 +129,27 @@ To perform reranking over semi-structured data, we convert the documents to YAML
 ```python PYTHON
 # Define the documents
 emails = [
-    {"from": "hr@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "A Warm Welcome to Co1t!", "text": "We are delighted to welcome you to the team! As you embark on your journey with us, you'll find attached an agenda to guide you through your first week."},
-    {"from": "it@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "Setting Up Your IT Needs", "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts."},
-    {"from": "john@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "First Week Check-In", "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!"}
+    {
+        "from": "hr@co1t.com",
+        "to": "david@co1t.com",
+        "date": "2024-06-24",
+        "subject": "A Warm Welcome to Co1t!",
+        "text": "We are delighted to welcome you to the team! As you embark on your journey with us, you'll find attached an agenda to guide you through your first week.",
+    },
+    {
+        "from": "it@co1t.com",
+        "to": "david@co1t.com",
+        "date": "2024-06-24",
+        "subject": "Setting Up Your IT Needs",
+        "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.",
+    },
+    {
+        "from": "john@co1t.com",
+        "to": "david@co1t.com",
+        "date": "2024-06-24",
+        "subject": "First Week Check-In",
+        "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!",
+    },
 ]
 ```
 
@@ -134,7 +162,7 @@ query = "Any email about check ins?"
 
 # Rerank the documents
 results = co.rerank(
-    model='rerank-v3.5',
+    model="rerank-v3.5",
     query=query,
     documents=yaml_docs,
     top_n=2,
@@ -187,7 +215,7 @@ Below, we'll get results from the Rerank endpoint:
 
 ```python PYTHON
 # Define the documents
-employees = df.to_dict('records')
+employees = df.to_dict("records")
 
 # Convert the documents to YAML format
 yaml_docs = [yaml.dump(doc, sort_keys=False) for doc in employees]
@@ -197,7 +225,7 @@ query = "Any full-time product designers who joined recently?"
 
 # Rerank the documents
 results = co.rerank(
-    model='rerank-v3.5',
+    model="rerank-v3.5",
     query=query,
     documents=yaml_docs,
     top_n=1,
@@ -219,11 +247,11 @@ In the example below, we repeat the steps of performing reranking with one diffe
 
 ```python PYTHON
 # Define the query
-query = "هل هناك مزايا تتعلق باللياقة البدنية؟" # Are there fitness benefits?
+query = "هل هناك مزايا تتعلق باللياقة البدنية؟"  # Are there fitness benefits?
 
 # Rerank the documents
 results = co.rerank(
-    model='rerank-v3.5',
+    model="rerank-v3.5",
     query=query,
     documents=faqs,
     top_n=1,

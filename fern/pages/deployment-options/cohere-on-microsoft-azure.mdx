@@ -9,27 +9,30 @@ image: "../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "generative AI, large language models, Microsoft Azure"
 
 createdAt: "Mon Apr 08 2024 14:53:59 GMT+0000 (Coordinated Universal Time)"
-updatedAt: "Wed May 01 2024 16:11:36 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Tue Feb 25 2025 13:15:36 Mountain Standard Time (MST)"
 ---
 In an effort to make our language-model capabilities more widely available, we've partnered with a few major platforms to create hosted versions of our offerings. 
 
 In this article, you learn how to use [Azure AI Foundry](https://ai.azure.com/) to deploy both the Cohere Command models and the Cohere Embed models on Microsoft's Azure cloud computing platform. You can read more about Azure AI Foundry in its documentation[here](https://learn.microsoft.com/en-us/azure/ai-studio/what-is-ai-studio).
 
-The following six models are available through Azure AI Studio with pay-as-you-go, token-based billing:
+The following models are available through Azure AI Studio with pay-as-you-go, token-based billing:
 
+- [Command A](https://docs.cohere.com/docs/command-a) 
 - Command R (and the [refreshed Command R model](https://docs.cohere.com/docs/command-r#:~:text=Command%20R%20August%202024%20Release))
 - Command R+ (and the [refreshed Command R+ model](https://docs.cohere.com/docs/command-r-plus#:~:text=Command%20R%2B%20August%202024%20Release))
+- Embed v4
 - Embed v3 - English
 - Embed v3 - Multilingual
+- Cohere Rerank V3.5
 - Cohere Rerank V3 (English)
-- Cohere Rerank V3 (Multilingual)
+- Cohere Rerank V3 (multilingual)
 
 ## Prerequisites
 
 Whether you're using Command or Embed, the initial set up is the same. You'll need:
 
 - An Azure subscription with a valid payment method. Free or trial Azure subscriptions won't work. If you don't have an Azure subscription, create a [paid Azure account](https://azure.microsoft.com/pricing/purchase-options/pay-as-you-go) to begin.
-- An [Azure AI hub resource](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-azure-ai-resource). Note: for Cohere models, the pay-as-you-go deployment offering is only available with AI hubs created in the `EastUS`, `EastUS2` or `Sweden Central` regions.
+- An [Azure AI hub resource](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-azure-ai-resource). Note: for Cohere models, the pay-as-you-go deployment offering is only available with AI hubs created in the `East US`, `East US 2`, `North Central US`, `South Central US`, `Sweden Central`, `West US` or `West US 3` regions.
 - An [Azure AI project](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-projects) in Azure AI Studio.
 - Azure role-based access controls (Azure RBAC) are used to grant access to operations in Azure AI Studio. To perform the required steps, your user account must be assigned the Azure AI Developer role on the resource group. For more information on permissions, see [Role-based access control in Azure AI Studio](https://learn.microsoft.com/en-us/azure/ai-studio/concepts/rbac-ai-studio).
 
@@ -41,7 +44,7 @@ For workflows based around Command, Embed, or Rerank, you'll also need to create
 
 ## Text Generation
 
-We expose two routes for Command R and Command R+ inference:
+We expose two routes for Command A, Command R, and Command R+ inference:
 
 - `v1/chat/completions` adheres to the Azure AI Generative Messages API schema; 
 - ` v1/chat` supports Cohere's native API schema.
@@ -68,14 +71,19 @@ data = {
 body = str.encode(json.dumps(data))
 
 # Replace the url with your API endpoint
-url = "https://your-endpoint.inference.ai.azure.com/v1/chat/completions"
+url = (
+    "https://your-endpoint.inference.ai.azure.com/v1/chat/completions"
+)
 
 # Replace this with the key for the endpoint
 api_key = "your-auth-key"
 if not api_key:
     raise Exception("API Key is missing")
 
-headers = {"Content-Type": "application/json", "Authorization": (api_key)}
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": (api_key),
+}
 
 req = urllib.request.Request(url, body, headers)
 
@@ -98,7 +106,7 @@ Finally, we released refreshed versions of Command R and Command R+ in August 20
 
 ## Embeddings
 
-We expose two routes for Embed v3 - English and Embed v3 - Multilingual inference:
+We expose two routes for Embed v4 and Embed v3 inference:
 
 - `v1/embeddings` adheres to the Azure AI Generative Messages API schema; 
     - Use `v1/images/embeddings` if you want to use one of our [multimodal embeddings models](/docs/multimodal-embeddings).
@@ -111,9 +119,7 @@ import urllib.request
 import json
 
 # Configure payload data sending to API endpoint
-data = {
-    "input": ["hi"]
-}
+data = {"input": ["hi"]}
 
 body = str.encode(json.dumps(data))
 
@@ -125,7 +131,10 @@ api_key = "your-auth-key"
 if not api_key:
     raise Exception("API Key is missing")
 
-headers = {"Content-Type": "application/json", "Authorization": (api_key)}
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": (api_key),
+}
 
 req = urllib.request.Request(url, body, headers)
 
@@ -149,7 +158,7 @@ import cohere
 
 co = cohere.Client(
     base_url="https://<endpoint>.<region>.inference.ai.azure.com/v1",
-    api_key="<key>"
+    api_key="<key>",
 )
 
 documents = [
@@ -214,19 +223,19 @@ import cohere
 # For Command models
 co_chat = cohere.Client(
     api_key="AZURE_INFERENCE_CREDENTIAL",
-    base_url="AZURE_MODEL_ENDPOINT", # Example - https://Cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/
+    base_url="AZURE_MODEL_ENDPOINT",  # Example - https://Cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/
 )
 
 # For Embed models
 co_embed = cohere.Client(
     api_key="AZURE_INFERENCE_CREDENTIAL",
-    base_url="AZURE_MODEL_ENDPOINT", # Example - hhttps://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/
+    base_url="AZURE_MODEL_ENDPOINT",  # Example - https://cohere-embed-v4-xyz.eastus.models.ai.azure.com/
 )
 
 # For Rerank models
 co_rerank = cohere.Client(
     api_key="AZURE_INFERENCE_CREDENTIAL",
-    base_url="AZURE_MODEL_ENDPOINT", # Example - hhttps://cohere-rerank-v3-multilingual-xyz.eastus.models.ai.azure.com/
+    base_url="AZURE_MODEL_ENDPOINT",  # Example - https://cohere-rerank-v3-multilingual-xyz.eastus.models.ai.azure.com/
 )
 ```
 
@@ -286,7 +295,10 @@ faqs_short = [
 query = "Are there fitness-related perks?"
 
 results = co_rerank.rerank(
-    query=query, documents=faqs_short, top_n=2, model="rerank-english-v3.0"
+    query=query,
+    documents=faqs_short,
+    top_n=2,
+    model="rerank-english-v3.0",
 )
 ```
 

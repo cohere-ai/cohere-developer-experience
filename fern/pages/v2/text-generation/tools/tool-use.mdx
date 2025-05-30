@@ -245,7 +245,7 @@ The model’s response contains the tool plan, a list of appropriate tools to ca
 
 ```python PYTHON
 response = co.chat(
-    model="command-r-plus-08-2024", messages=messages, tools=tools
+    model="command-a-03-2025", messages=messages, tools=tools
 )
 
 print("The model recommends doing the following tool calls:\n")
@@ -333,7 +333,7 @@ Call the chat endpoint again with the tool results for the model to generate the
 
 ```python PYTHON
 response = co.chat(
-    model="command-r-plus-08-2024", messages=messages, tools=tools
+    model="command-a-03-2025", messages=messages, tools=tools
 )
 
 print("Final answer:")
@@ -343,7 +343,7 @@ print(response.message.content[0].text)
 <Accordion title='Streaming option'>
 ```python PYTHON
 response = co.chat_stream(
-    model="command-r-plus-08-2024", messages=messages, tools=tools
+    model="command-a-03-2025", messages=messages, tools=tools
 )
 
 print("Final answer:")
@@ -411,17 +411,43 @@ Start: 177 | End: 204 | Text: 'Laptop: $1,000, 15 in stock'
 Start: 207 | End: 232 | Text: 'Tablet: $300, 25 in stock'
 ```
 
+## Forcing Tool Use
+
+During the tool calling step, the model may decide to either:
+- make tool call(s)
+- or, respond to a user message directly.
+
+You can force the model to make tool call(s), i.e. to not respond directly, by setting the `tool_choice` parameter to `REQUIRED`.
+
+Alternatively, you can force the model to respond directly, i.e. to not make tool call(s), by setting the `tool_choice` parameter to `NONE`.
+
+By default, if you don’t specify the `tool_choice` parameter, then the model will decide whether it's more appropriate to call tools or to respond directly.
+
+```python PYTHON {5}
+response = co.chat(
+    model="command-a-03-2025",
+    messages=messages,
+    tools=tools,
+    tool_choice="REQUIRED" # optional, to force tool calls
+    # tool_choice="NONE" # optional, to force a direct response
+)
+```
+
+<Note>This parameter is only compatible with the [Command R7B](https://docs.cohere.com/v2/docs/command-r7b) and newer models.</Note>
+
 ## Structured Outputs (Tools)
 
-Setting the `strict_tools` parameter to True will enforce each tool call to follow the specified tool schema. To learn more about this feature, visit the [Structured Outputs documentation](https://docs.cohere.com/v2/docs/structured-outputs).
+Setting the `strict_tools` parameter to `True` will enforce each tool call to follow the specified tool schema. To learn more about this feature, visit the [Structured Outputs documentation](https://docs.cohere.com/v2/docs/structured-outputs).
 
 Note that `strict_tools` is currently an experimental feature.
 
-```python PYTHON {4}
-response = co.chat(model="command-r-plus-08-2024",
-                   messages=messages,
-                   tools=tools,
-                   strict_tools=True)
+```python PYTHON {5}
+response = co.chat(
+    model="command-a-03-2025",
+    messages=messages,
+    tools=tools,
+    strict_tools=True
+)
 ```
 
 ## How to Get Good Answers With Tool Use
@@ -434,18 +460,6 @@ When you pass the tool results back to the model make sure that they are structu
 outputs = [{"number": 2343}] # Not Great
 outputs = [{"sum": 2343}] # Better
 ```
-
-## What's Next?
-
-Here, we'll preview some of the functionality we plan on adding in the coming months.
-
-### Cohere-hosted Tools
-
-The model can currently handle any tool provided by the developer. That having been said, Cohere has implemented some pre-defined tools that users can leverage out-of-the-box.
-
-Specifically we're going to roll out a **Python interpreter** tool and a **Web search** tool. 
-
-Please [reach out](mailto:MAXIMEVOISIN@COHERE.COM) to join the beta.
 
 ## Getting started
 

@@ -67,7 +67,7 @@ cohere version: 5.5.1
 
 ```python PYTHON
 COHERE_API_KEY = os.environ.get("CO_API_KEY")
-COHERE_MODEL = 'command-r-plus'
+COHERE_MODEL = 'command-a-03-2025'
 co = cohere.Client(api_key=COHERE_API_KEY)
 ```
 
@@ -130,7 +130,7 @@ db = pd.DataFrame(documents)
 db["combined"] = "Title: " + db["title"] + "\n" + "Body: " + db["body"]
 # generate embedding
 embeddings = co.embed(
-    texts=db.combined.tolist(), model="embed-english-v3.0", input_type="search_document"
+    texts=db.combined.tolist(), model="embed-v4.0", input_type="search_document"
 )
 db["embeddings"] = embeddings.embeddings
 
@@ -199,7 +199,7 @@ def retrieve_documents(query: str, n=1) -> dict:
     3. Return the top n documents with the highest similarity scores
     """
     query_emb = co.embed(
-        texts=[query], model="embed-english-v3.0", input_type="search_query"
+        texts=[query], model="embed-v4.0", input_type="search_query"
     )
 
     similarity_scores = cosine_similarity(
@@ -457,7 +457,7 @@ def retrieve_documents(query: str, n=1) -> dict:
     It also returns other references mentioned in the top matched documents.
     """
     query_emb = co.embed(
-        texts=[query], model="embed-english-v3.0", input_type="search_query"
+        texts=[query], model="embed-v4.0", input_type="search_query"
     )
 
     similarity_scores = cosine_similarity(

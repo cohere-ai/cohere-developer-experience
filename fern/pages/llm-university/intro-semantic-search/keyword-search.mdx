@@ -31,13 +31,15 @@ co = cohere.Client(cohere_api_key)
 
 # Connect to the Weaviate demo databse containing 10M wikipedia vectors
 # This uses a public READ-ONLY Weaviate API key
-auth_config = weaviate.auth.AuthApiKey(api_key="76320a90-53d8-42bc-b41d-678647c6672e")
+auth_config = weaviate.auth.AuthApiKey(
+    api_key="76320a90-53d8-42bc-b41d-678647c6672e"
+)
 client = weaviate.Client(
     url="https://cohere-demo.weaviate.network/",
     auth_client_secret=auth_config,
     additional_headers={
         "X-Cohere-Api-Key": cohere_api_key,
-    }
+    },
 )
 ```
 
@@ -46,25 +48,30 @@ client = weaviate.Client(
 To use keyword matching, we’ll first define the following function for keyword search. In this function, we’ll tell the vector database what properties we want from each retrieved document. We’ll also filter them to the English language (using results_lang), but feel free to explore searching in other languages as well!
 
 ```python PYTHON
-def keyword_search(query, results_lang='en', num_results=10):
-    properties = ["text", "title", "url", "views", "lang", "_additional {distance}"]
+def keyword_search(query, results_lang="en", num_results=10):
+    properties = [
+        "text",
+        "title",
+        "url",
+        "views",
+        "lang",
+        "_additional {distance}",
+    ]
 
     where_filter = {
         "path": ["lang"],
         "operator": "Equal",
-        "valueString": results_lang
+        "valueString": results_lang,
     }
 
     response = (
         client.query.get("Articles", properties)
-        .with_bm25(
-            query=query
-        )
+        .with_bm25(query=query)
         .with_where(where_filter)
         .with_limit(num_results)
         .do()
     )
-    result = response['data']['Get']['Articles']
+    result = response["data"]["Get"]["Articles"]
     return result
 ```
 

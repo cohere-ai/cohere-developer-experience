@@ -16,7 +16,7 @@ public class Tools {
             .v2()
             .chat(
                 V2ChatRequest.builder()
-                    .model("command-r-plus-08-2024")
+                    .model("command-a-03-2025")
                     .tools(
                         List.of(
                             ToolV2.builder()

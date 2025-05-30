@@ -46,7 +46,9 @@ We embed the query using the same `get_embeddings()` function as before, but now
 new_query = "How can I find a taxi or a bus when the plane lands?"
 
 # Get embeddings of the new query
-new_query_embeds = get_embeddings([new_query], input_type="search_query")[0]
+new_query_embeds = get_embeddings(
+    [new_query], input_type="search_query"
+)[0]
 ```
 
 ### Step 2: Compare to Embedded Documents
@@ -58,17 +60,18 @@ We define and use a function `get_similarity()` that employs cosine similarity t
 def get_similarity(target, candidates):
     # Turn list into array
     candidates = np.array(candidates)
-    target = np.expand_dims(np.array(target),axis=0)
+    target = np.expand_dims(np.array(target), axis=0)
 
     # Calculate cosine similarity
     sim = cosine_similarity(target, candidates)
     sim = np.squeeze(sim).tolist()
     sort_index = np.argsort(sim)[::-1]
     sort_score = [sim[i] for i in sort_index]
-    similarity_scores = zip(sort_index,sort_score)
+    similarity_scores = zip(sort_index, sort_score)
 
     # Return similarity scores
     return similarity_scores
+
 
 # Get the similarity between the search query and existing queries
 similarity = get_similarity(new_query_embeds, embeds[:sample])
@@ -78,12 +81,12 @@ We'll then view the documents in decreasing order of similarity.
 
 ```python PYTHON
 # View the top 5 articles
-print('Query:')
-print(new_query,'\n')
+print("Query:")
+print(new_query, "\n")
 
-print('Most Similar Documents:')
+print("Most Similar Documents:")
 for idx, sim in similarity:
-    print(f'Similarity: {sim:.2f};', df.iloc[idx]['query'])
+    print(f"Similarity: {sim:.2f};", df.iloc[idx]["query"])
 ```
 
 Below are the results, showing the FAQs with their similarity score (ranging from 0 to 1; higher scores are better). The top-3 ranked FAQs we get are inquiries about ground transportation, which are very relevant considering the other options. Notice that they don't contain the keywords “taxi” or "bus", and the search query doesn't contain the keywords “ground transportation”. But they are the most similar in meaning compared to the rest, and their embeddings capture this.

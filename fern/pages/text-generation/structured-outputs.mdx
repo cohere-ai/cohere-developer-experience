@@ -4,9 +4,9 @@ slug: "docs/structured-outputs"
 
 hidden: false
 
-description: "This page describes how to get Cohere models to create outputs in a certain format, such as JSON."
+description: "This page describes how to get Cohere models to create outputs in a certain format, such as JSON, using parameters such as `response_format`."
 image: "../../assets/images/f1cc130-cohere_meta_image.jpg"  
-keywords: "Cohere, language models, structured outputs"
+keywords: "Cohere, language models, structured outputs, response format parameter"
 
 createdAt: "Thu Jun 06 2024 05:37:56 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Tue Jun 11 2024 02:43:00 GMT+0000 (Coordinated Universal Time)"
@@ -14,9 +14,10 @@ updatedAt: "Tue Jun 11 2024 02:43:00 GMT+0000 (Coordinated Universal Time)"
 
 ## Overview
 
-Structured Outputs is a feature for forcing the LLM's output to follow a specified format 100% of the time. This increases the reliability of LLM in enterprise applications where downstream applications expect the LLM output to be correctly formatted. By forcing the model to follow a structured schema, hallucinated fields and entries in structured data can be reliably eliminated.
+Structured Outputs is a feature that forces the LLM’s response to strictly follow a schema specified by the user. When Structured Outputs is turned on, the LLM will generate structured data that follows the desired schema, provided by the user, 100% of the time. This increases the reliability of LLMs in enterprise applications where downstream applications expect the LLM output to be correctly formatted. With Structured Outputs, hallucinated fields and entries in structured data can be reliably eliminated.
 
 Compatible models:
+- Command A
 - Command R 08 2024
 - Command R
 - Command R+ 08 2024
@@ -51,7 +52,7 @@ import cohere
 co = cohere.Client(api_key="YOUR API KEY")
 
 res = co.chat(
-    model="command-r-plus-08-2024",
+    model="command-a-03-2025",
     message="Generate a JSON describing a person, with the fields 'name' and 'age'",
     response_format={"type": "json_object"},
 )
@@ -75,8 +76,8 @@ By setting the `response_format` type to `"json_object"` in the Chat API, the ou
 When using  `{ "type": "json_object" }` your `message` should always explicitly instruct the model to generate a JSON (eg: _"Generate a JSON ..."_) . Otherwise the model may end up getting stuck generating an infinite stream of characters and eventually run out of context length.
 </Info>
 
-<Note title="Experimental"> 
-This feature is currently not supported in RAG mode.
+<Note title="Note"> 
+This feature is currently not supported in [RAG](https://docs.cohere.com/v1/docs/retrieval-augmented-generation-rag) mode.
 </Note>
 
 #### JSON Schema mode
@@ -93,7 +94,7 @@ import cohere
 co = cohere.Client(api_key="YOUR API KEY")
 
 res = co.chat(
-    model="command-r-plus-08-2024",
+    model="command-a-03-2025",
     message="Generate a JSON describing a book, with the fields 'title' and 'author' and 'publication_year'",
     response_format={
         "type": "json_object",
@@ -125,15 +126,11 @@ In this schema, we defined three keys ("title," "author," "publication_year") an
 
 ```
 
-<Info title="Important"> 
-Note: Each schema provided will incur a latency overhead required for processing the schema. This is only applicable for the first few requests.
-</Info>
-
 ## Specifying a schema
 
 ### Generating nested objects
 
-The model can be configured to output objects with up to 5 levels of nesting. When a `schema` is specified, there are no limitations on the levels of nesting.
+In JSON Schema mode, there are no limitations on the levels of nesting. However, in JSON mode (no schema specified), nesting is limited to 5 levels.
 
 ### Schema constraints
 
@@ -164,3 +161,7 @@ We do not support the entirety of the [JSON Schema specification](https://json-s
 - Others:
     - `uniqueItems`
     - `additionalProperties`
+
+<Info title="Important"> 
+Note: Using Structured Outputs (in JSON Schema mode) will incur a latency overhead required for processing the structured schema. This increase in latency only applies for the first few requests, since the schema is cached afterwards.
+</Info>

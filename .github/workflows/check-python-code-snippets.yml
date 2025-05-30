@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -34,6 +36,15 @@ jobs:
 
       - name: Run Python MDX Snippet Formatter
         shell: bash
-        env:
-          CI: true
         run: poetry run python .github/scripts/check_python_code_snippets.py fern/pages
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git diff --exit-code || echo "::set-output name=changes::true"
+
+      - name: Fail if changes are detected
+        if: steps.diff.outputs.changes == 'true'
+        run: |
+          echo "Changes in python code snippets are detected. Please run check-python-code-snippets locally and commit the changes."
+          exit 1

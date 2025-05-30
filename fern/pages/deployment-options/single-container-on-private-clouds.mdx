@@ -59,7 +59,7 @@ Once you can pull the image from the registry, run a test workload to validate t
 
 To test the container image with Docker, you should have a machine with the following installed:
 
-- [Nvidia drivers](https://github.com/NVIDIA/open-gpu-kernel-modules) installed on host (the latest tested version is 545).
+- [Nvidia drivers](https://github.com/NVIDIA/open-gpu-kernel-modules) installed on host (minimum 525).
 - [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) and corresponding configuration for docker/containerd.
 
 #### Example Usage
@@ -74,20 +74,21 @@ This section provides simple examples of using each primary Cohere model in a Do
 
 **Bash Commands for Running Cohere Models Through Docker**
 
-Here are the `bash` commands you can run to use the Embed English, Embed Multilingual, Rerank English, Rerank Multilingual, and Command models through Docker.
+Here are the `bash` commands you can run to use the Embed v4, Embed Multilingual, Rerank English, Rerank Multilingual, and Command models through Docker.
 
 <CodeBlocks>
 ```Text Embed English
-docker run -d --rm --name embed-english --gpus=1 --net=host $IMAGE_TAG
+docker run -d --rm --name embed-v4 --gpus=1 --net=host $IMAGE_TAG
 
 # wait 5-10 seconds for the container to start
-# can check `curl http://localhost:8080/ping` for readiness
-curl --header "Content-Type: application/json" --request POST http://localhost:8080/embed --data-raw '{"texts": ["testing embeddings in english"], "input_type": "classification"}'
+# you can use `curl http://localhost:8080/ping` to check for readiness
+curl --header "Content-Type: application/json" --request POST http://localhost:8080/embed --data-raw '{"input_type": "search_query", "texts":["Why are embeddings good"], "embedding_types": ["float"]}'
 
-{"id":"2ffe4bca-8664-4456-b858-1b3b15411f2c","embeddings":[[-0.5019531,-2.0917969,-1.6220703,-1.2919922,-0.80029297,1.3173828,1.4677734,-1.7763672,0.03869629,1.9033203...}
+{"id":"6d54d453-f2c8-44da-aab8-39e3c11d29d5","texts":["Why are embeddings good"],"embeddings":{"float":[[0.033935547,0.06347656,0.020263672,-0.020507812,0.014160156,0.0038757324,-0.07421875,-0.05859375,...
 
-docker stop embed-english
+docker stop embed-v4
 ```
+
 ```Text Embed Multilingual
 docker run -d --rm --name multilingual--gpus=1 --net=host $IMAGE_TAG
 
@@ -338,7 +339,7 @@ Leave that running in the background, and up a new terminal session to execute a
 
 **Example Usage**
 
-Here are the `bash` commands you can run to use the Embed English, Embed Multilingual, Rerank English, Rerank Multilingual, and Command models through Kubernetes.
+Here are the `bash` commands you can run to use the Embed v4, Embed Multilingual, Rerank English, Rerank Multilingual, and Command models through Kubernetes.
 
 <CodeBlocks>
 ```Text Embed English
@@ -346,6 +347,7 @@ curl --header "Content-Type: application/json" --request POST http://localhost:8
 
 # {"id":"2ffe4bca-8664-4456-b858-1b3b15411f2c","embeddings":[[-0.5019531,-2.0917969,-1.6220703,-1.2919922,-0.80029297,1.3173828,1.4677734,-1.7763672,0.03869629,1.9033203...}
 ```
+
 ```Text Embed Multilingual
 curl --header "Content-Type: application/json" --request POST http://localhost:8080/embed --data-raw '{"texts": ["testing multilingual embeddings"], "input_type": "classification"}'
 

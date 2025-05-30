@@ -9,9 +9,10 @@ keywords: 'Cohere on AWS, language models on AWS, Amazon Bedrock, Amazon SageMak
 createdAt: 'Thu Feb 01 2024 18:08:37 GMT+0000 (Coordinated Universal Time)'
 updatedAt: 'Thu May 30 2024 16:00:53 GMT+0000 (Coordinated Universal Time)'
 ---
-In an effort to make our language-model capabilities more widely available, we've partnered with a few major platforms to create hosted versions of our offerings. 
 
-Here, you'll learn how to use Amazon Bedrock to deploy both the Cohere Command and the Cohere Embed models on the AWS cloud computing platform. The following models are available on Bedrock:
+In an effort to make our language-model capabilities more widely available, we’ve partnered with a few major platforms to create hosted versions of our offerings.
+
+Here, you’ll learn how to use Amazon Bedrock to deploy both the Cohere Command and the Cohere Embed models on the AWS cloud computing platform. The following models are available on Bedrock:
 
 - Command R
 - Command R+
@@ -19,6 +20,8 @@ Here, you'll learn how to use Amazon Bedrock to deploy both the Cohere Command a
 - Command
 - Embed - English
 - Embed - Multilingual
+
+Note that the code snippets below are in Python, but you can find the equivalent code for other languages (if they’re supported)[here](https://docs.cohere.com/docs/cohere-works-everywhere)
 
 ## Prerequisites
 
@@ -32,7 +35,7 @@ Here are the steps you'll need to get set up in advance of running Cohere models
 
 ## Embeddings
 
-You can use this code to invoke Cohere's Embed English v3 model (`cohere.embed-english-v3`) or Embed Multilingual v3 model (`cohere.embed-multilingual-v3`) on Amazon Bedrock: 
+You can use this code to invoke Cohere’s Embed English v3 model (`cohere.embed-english-v3`) or Embed Multilingual v3 model (`cohere.embed-multilingual-v3`) on Amazon Bedrock:
 
 ```python PYTHON
 import cohere
@@ -45,27 +48,33 @@ co = cohere.BedrockClient(
 )
 
 # Input parameters for embed. In this example we are embedding hacker news post titles.
-texts = ["Interesting (Non software) books?",
-         "Non-tech books that have helped you grow professionally?",
-         "I sold my company last month for $5m. What do I do with the money?",
-         "How are you getting through (and back from) burning out?",
-         "I made $24k over the last month. Now what?",
-         "What kind of personal financial investment do you do?",
-         "Should I quit the field of software development?"]
+texts = [
+    "Interesting (Non software) books?",
+    "Non-tech books that have helped you grow professionally?",
+    "I sold my company last month for $5m. What do I do with the money?",
+    "How are you getting through (and back from) burning out?",
+    "I made $24k over the last month. Now what?",
+    "What kind of personal financial investment do you do?",
+    "Should I quit the field of software development?",
+]
 input_type = "clustering"
-truncate = "NONE" # optional
-model_id = "cohere.embed-english-v3" # or "cohere.embed-multilingual-v3"
-
+truncate = "NONE"  # optional
+model_id = (
+    "cohere.embed-english-v3"  # or "cohere.embed-multilingual-v3"
+)
 
 # Invoke the model and print the response
 result = co.embed(
-						model=model_id,
-  					input_type=input_type,
-  				  texts=texts,
-  					truncate=truncate) # aws_client.invoke_model(**params)
+    model=model_id,
+    input_type=input_type,
+    texts=texts,
+    truncate=truncate,
+)  # aws_client.invoke_model(**params)
 
 print(result)
 ```
+
+Note that we've released multimodal embeddings models that are able to handle images in addition to text. Find [more information here](https://docs.cohere.com/docs/multimodal-embeddings).
 
 ## Text Generation
 
@@ -81,9 +90,10 @@ co = cohere.BedrockClient(
     aws_session_token="...",
 )
 
-result = co.chat(message="Write a LinkedIn post about starting a career in tech:",
-                 model='cohere.command-r-plus-v1:0' # or 'cohere.command-r-v1:0'
-                 )
+result = co.chat(
+    message="Write a LinkedIn post about starting a career in tech:",
+    model="cohere.command-r-plus-v1:0",  # or 'cohere.command-r-v1:0'
+)
 
 print(result)
 ```
