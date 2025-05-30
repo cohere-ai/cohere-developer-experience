@@ -6196,7 +6196,7 @@ paths:
                 			Messages: cohere.ChatMessages{
                 				{
                 					Role: "user",
-                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
                 						String: "Hello world!",
                 					}},
                 				},
@@ -6240,8 +6240,8 @@ paths:
                                     .messages(
                                         List.of(
                                             ChatMessageV2.user(
-                                                UserMessage.builder()
-                                                    .content(UserMessageContent.of("Who discovered" + " gravity?"))
+                                                UserMessageV2.builder()
+                                                    .content(UserMessageV2Content.of("Who discovered" + " gravity?"))
                                                     .build()),
                                             ChatMessageV2.assistant(
                                                 AssistantMessage.builder()
@@ -6435,9 +6435,9 @@ paths:
                                     .messages(
                                         List.of(
                                             ChatMessageV2.user(
-                                                UserMessage.builder()
+                                                UserMessageV2.builder()
                                                     .content(
-                                                        UserMessageContent.of("Who is" + " the most" + " popular?"))
+                                                        UserMessageV2Content.of("Who is" + " the most" + " popular?"))
                                                     .build())))
                                     .documents(
                                         List.of(
@@ -6595,7 +6595,7 @@ paths:
                 			Messages: cohere.ChatMessages{
                 				{
                 					Role: "user",
-                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
                 						String: "Who's the best?",
                 					}},
                 				},
@@ -7169,8 +7169,8 @@ paths:
                                     .messages(
                                         List.of(
                                             ChatMessageV2.user(
-                                                UserMessage.builder()
-                                                    .content(UserMessageContent.of("Who discovered" + " gravity?"))
+                                                UserMessageV2.builder()
+                                                    .content(UserMessageV2Content.of("Who discovered" + " gravity?"))
                                                     .build()),
                                             ChatMessageV2.assistant(
                                                 AssistantMessage.builder()
@@ -7233,7 +7233,7 @@ paths:
                 			Messages: cohere.ChatMessages{
                 				{
                 					Role: "user",
-                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
                 						String: "Hello world!",
                 					}},
                 				},
@@ -7686,7 +7686,7 @@ paths:
                 			Messages: cohere.ChatMessages{
                 				{
                 					Role: "user",
-                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
                 						String: "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
                 					}},
                 				},
@@ -22677,7 +22677,7 @@ components:
           stream-end: "#/components/schemas/ChatStreamEndEvent"
           tool-calls-chunk: "#/components/schemas/ChatToolCallsChunkEvent"
           debug: "#/components/schemas/ChatDebugEvent"
-    TextContent:
+    ChatTextContent:
       type: object
       description: Text content of the message.
       required:
@@ -22690,7 +22690,7 @@ components:
             - text
         text:
           type: string
-      x-fern-type-name: TextContent
+      x-fern-type-name: ChatTextContent
     ContentType:
       x-fern-audiences:
         - public
@@ -22735,15 +22735,15 @@ components:
       description: A Content block which contains information about the content type
         and the content itself.
       oneOf:
-        - $ref: "#/components/schemas/TextContent"
+        - $ref: "#/components/schemas/ChatTextContent"
         - $ref: "#/components/schemas/ImageContent"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextContent"
+          text: "#/components/schemas/ChatTextContent"
           image_url: "#/components/schemas/ImageContent"
       x-fern-type-name: Content
-    UserMessage:
+    UserMessageV2:
       type: object
       title: User Message
       description: A message from the user.
@@ -22764,7 +22764,7 @@ components:
             - type: array
               items:
                 $ref: "#/components/schemas/MessageContent"
-      x-fern-type-name: UserMessage
+      x-fern-type-name: UserMessageV2
     ToolCallV2:
       description: An array of tool calls to be made.
       type: object
@@ -22875,11 +22875,11 @@ components:
             - type: array
               items:
                 oneOf:
-                  - $ref: "#/components/schemas/TextContent"
+                  - $ref: "#/components/schemas/ChatTextContent"
                 discriminator:
                   propertyName: type
                   mapping:
-                    text: "#/components/schemas/TextContent"
+                    text: "#/components/schemas/ChatTextContent"
         citations:
           type: array
           items:
@@ -22903,11 +22903,11 @@ components:
             - type: array
               items:
                 oneOf:
-                  - $ref: "#/components/schemas/TextContent"
+                  - $ref: "#/components/schemas/ChatTextContent"
                 discriminator:
                   propertyName: type
                   mapping:
-                    text: "#/components/schemas/TextContent"
+                    text: "#/components/schemas/ChatTextContent"
       x-fern-type-name: SystemMessageV2
     Document:
       type: object
@@ -22946,12 +22946,12 @@ components:
       description: A content block which contains information about the content of a
         tool result
       oneOf:
-        - $ref: "#/components/schemas/TextContent"
+        - $ref: "#/components/schemas/ChatTextContent"
         - $ref: "#/components/schemas/DocumentContent"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextContent"
+          text: "#/components/schemas/ChatTextContent"
           document: "#/components/schemas/DocumentContent"
       x-fern-type-name: ToolContent
     ToolMessageV2:
@@ -22983,14 +22983,14 @@ components:
     ChatMessageV2:
       description: Represents a single message in the chat history from a given role.
       oneOf:
-        - $ref: "#/components/schemas/UserMessage"
+        - $ref: "#/components/schemas/UserMessageV2"
         - $ref: "#/components/schemas/AssistantMessage"
         - $ref: "#/components/schemas/SystemMessageV2"
         - $ref: "#/components/schemas/ToolMessageV2"
       discriminator:
         propertyName: role
         mapping:
-          user: "#/components/schemas/UserMessage"
+          user: "#/components/schemas/UserMessageV2"
           assistant: "#/components/schemas/AssistantMessage"
           system: "#/components/schemas/SystemMessageV2"
           tool: "#/components/schemas/ToolMessageV2"
@@ -23177,11 +23177,11 @@ components:
           type: array
           items:
             oneOf:
-              - $ref: "#/components/schemas/TextContent"
+              - $ref: "#/components/schemas/ChatTextContent"
             discriminator:
               propertyName: type
               mapping:
-                text: "#/components/schemas/TextContent"
+                text: "#/components/schemas/ChatTextContent"
         citations:
           type: array
           items:
