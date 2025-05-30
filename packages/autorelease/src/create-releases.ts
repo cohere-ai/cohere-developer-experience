@@ -1,4 +1,20 @@
 import { Octokit } from "@octokit/rest"
+import * as childProcess from "child_process"
+
+export const execCmd = async (cmd: string, cwd: string): Promise<{error: null | childProcess.ExecException, stderr: string, stdout: string}> => {
+    return new Promise((resolve, reject) => {
+        try {
+            childProcess.exec(cmd, {cwd}, (error, stdout, stderr) => {
+                if (error) {
+                    resolve({error, stderr, stdout})
+                }
+                resolve({ error, stderr, stdout})
+            })
+        } catch (error) {
+            resolve({error, stderr: '', stdout: ''})
+        }
+    })
+}
 
 const versionMatchRegex = /v?(\d+\.\d+\.\d+)/g
 
@@ -141,6 +157,25 @@ const createRelease = async (language: typeof languages[number], version: string
     })
 }
 
+const runFernGenerate = async (language: typeof languages[number], version: string) => {
+    const command = `fern generate --api sdks --group ${language} --version "${version}" --log-level debug`
+
+    const { error, stderr, stdout } = await execCmd(command, process.cwd())
+
+    if (stderr) {
+        console.error(stderr)
+    }
+
+    if (stdout) {
+        console.log(stdout)
+    }
+
+    if (error) {
+        console.error(`Error running fern generate for ${language}@${version}`)
+        throw error
+    }
+}
+
 (async () => {
     const bumpType = process.env.BUMP_TYPE as typeof bumpTypes[number] | undefined
     const language = process.env.LANGUAGE as typeof languages[number] | "all" | undefined
@@ -158,6 +193,10 @@ const createRelease = async (language: typeof languages[number], version: string
     await Promise.all(
         languages
             .filter(l => language === "all" ? true : l === language)
-            .map(async language => createRelease(language, nextVersions[language].next))
+            .flatMap(async language => [
+                createRelease(language, nextVersions[language].next),
+                runFernGenerate(language, nextVersions[language].next)
+            ])
     )
+    
 })()
