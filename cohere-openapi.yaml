@@ -22731,7 +22731,7 @@ components:
         image_url:
           $ref: "#/components/schemas/ImageUrl"
       x-fern-type-name: ImageContent
-    Content:
+    MessageContent:
       description: A Content block which contains information about the content type
         and the content itself.
       oneOf:
@@ -22763,7 +22763,7 @@ components:
             - type: string
             - type: array
               items:
-                $ref: "#/components/schemas/Content"
+                $ref: "#/components/schemas/MessageContent"
       x-fern-type-name: UserMessage
     ToolCallV2:
       description: An array of tool calls to be made.
@@ -22784,7 +22784,7 @@ components:
               type: string
           x-fern-type-name: ToolCallV2Function
       x-fern-type-name: ToolCallV2
-    ToolSource:
+    ChatToolSource:
       type: object
       title: Tool Output
       properties:
@@ -22794,9 +22794,9 @@ components:
         tool_output:
           type: object
           additionalProperties: true
-          x-fern-type-name: ToolSource-z53ra6
-      x-fern-type-name: ToolSource
-    DocumentSource:
+          x-fern-type-name: ChatToolSource-z53ra6
+      x-fern-type-name: ChatToolSource
+    ChatDocumentSource:
       type: object
       description: A document source object containing the unique identifier of the
         document and the document itself.
@@ -22807,19 +22807,19 @@ components:
         document:
           type: object
           additionalProperties: true
-          x-fern-type-name: DocumentSource-w70a62
-      x-fern-type-name: DocumentSource
+          x-fern-type-name: ChatDocumentSource-w70a62
+      x-fern-type-name: ChatDocumentSource
     Source:
       description: A source object containing information about the source of the data
         cited.
       oneOf:
-        - $ref: "#/components/schemas/ToolSource"
-        - $ref: "#/components/schemas/DocumentSource"
+        - $ref: "#/components/schemas/ChatToolSource"
+        - $ref: "#/components/schemas/ChatDocumentSource"
       discriminator:
         propertyName: type
         mapping:
-          tool: "#/components/schemas/ToolSource"
-          document: "#/components/schemas/DocumentSource"
+          tool: "#/components/schemas/ChatToolSource"
+          document: "#/components/schemas/ChatDocumentSource"
       x-fern-type-name: Source
     CitationType:
       type: string
@@ -22885,7 +22885,7 @@ components:
           items:
             $ref: "#/components/schemas/Citation"
       x-fern-type-name: AssistantMessage
-    SystemMessage:
+    SystemMessageV2:
       type: object
       title: System Message
       description: A message from the system.
@@ -22908,7 +22908,7 @@ components:
                   propertyName: type
                   mapping:
                     text: "#/components/schemas/TextContent"
-      x-fern-type-name: SystemMessage
+      x-fern-type-name: SystemMessageV2
     Document:
       type: object
       description: |
@@ -22985,14 +22985,14 @@ components:
       oneOf:
         - $ref: "#/components/schemas/UserMessage"
         - $ref: "#/components/schemas/AssistantMessage"
-        - $ref: "#/components/schemas/SystemMessage"
+        - $ref: "#/components/schemas/SystemMessageV2"
         - $ref: "#/components/schemas/ToolMessageV2"
       discriminator:
         propertyName: role
         mapping:
           user: "#/components/schemas/UserMessage"
           assistant: "#/components/schemas/AssistantMessage"
-          system: "#/components/schemas/SystemMessage"
+          system: "#/components/schemas/SystemMessageV2"
           tool: "#/components/schemas/ToolMessageV2"
       x-fern-type-name: ChatMessageV2
     ChatMessages:
@@ -23077,7 +23077,7 @@ components:
         - text
         - json_object
       x-fern-type-name: ResponseFormatTypeV2
-    TextResponseFormatV2:
+    ChatTextResponseFormatV2:
       x-fern-audiences:
         - public
       type: object
@@ -23086,7 +23086,7 @@ components:
           $ref: "#/components/schemas/ResponseFormatTypeV2"
       required:
         - type
-      x-fern-type-name: TextResponseFormatV2
+      x-fern-type-name: ChatTextResponseFormatV2
     JsonResponseFormatV2:
       x-fern-audiences:
         - public
@@ -23129,12 +23129,12 @@ components:
 
         **Limitation**: The parameter is not supported when used in combinations with the `documents` or `tools` parameters.
       oneOf:
-        - $ref: "#/components/schemas/TextResponseFormatV2"
+        - $ref: "#/components/schemas/ChatTextResponseFormatV2"
         - $ref: "#/components/schemas/JsonResponseFormatV2"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextResponseFormatV2"
+          text: "#/components/schemas/ChatTextResponseFormatV2"
           json_object: "#/components/schemas/JsonResponseFormatV2"
       x-fern-type-name: ResponseFormatV2
     ChatFinishReason:
