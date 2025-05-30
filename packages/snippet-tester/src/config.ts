@@ -1,8 +1,12 @@
 import path from "path";
+import * as childProcess from "child_process"
+import { execPythonSnippet } from "./snippets_utils";
+
+export const STATIC_DIR = path.join(__dirname, "../static"); 
 
 export interface Language {
     name: string;
-    exec: (file: string) => string;
+    exec: (file: string, cwd:string) => string;
     snippetRoot: (base: string) => string;
     glob: string;
 }
@@ -13,13 +17,13 @@ export const config: {
     "languages": [
         {
             "name": "node",
-            "exec": (file: string) => `node ${file}`,
+            "exec": (file: string, cwd: string) => `node ${file}`,
             "snippetRoot": (base: string) => path.join(base, "./snippets/node"),
             "glob": "**/*.js"
         },
         {
             "name": "java",
-            "exec": (file: string) => {
+            "exec": (file: string, cwd: string) => {
                 const classPath = file.replace("app/src/main/java/", "").replace(".java", "").split("/").join(".");
                 
                 return `gradle -PmainClass=${classPath} run`
@@ -29,13 +33,19 @@ export const config: {
         },
         {
             "name": "python",
-            "exec": (file: string) => `poetry run python ${file}`,
+            "exec": (file: string, cwd: string) => `poetry run python ${file}`,
             "snippetRoot": (base: string) => path.join(base, "./snippets/python"),
             "glob": "**/*.py"   
         },
         {
+            "name": "Python code snippets",
+            "exec": execPythonSnippet,
+            "snippetRoot": (base: string) => path.join(base, "./fern/pages"),
+            "glob": "**/*.mdx",
+        },
+        {
             "name": "golang",
-            "exec": (file: string) => `go run ${file}`,
+            "exec": (file: string, cwd: string) => `go run ${file}`,
             "snippetRoot": (base: string) => path.join(base, "./snippets/go"),
             "glob": "**/*.go"
         }
