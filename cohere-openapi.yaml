@@ -21923,7 +21923,7 @@ components:
             additionalProperties: true
             x-fern-type-name: ToolResult-68w0tx
       x-fern-type-name: ToolResult
-    ToolMessage:
+    ChatToolMessage:
       description: |
         Represents tool result in the chat history.
       required:
@@ -21935,18 +21935,18 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ToolResult"
-      x-fern-type-name: ToolMessage
-    MessageX:
+      x-fern-type-name: ChatToolMessage
+    Message:
       oneOf:
         - $ref: "#/components/schemas/ChatMessage"
-        - $ref: "#/components/schemas/ToolMessage"
+        - $ref: "#/components/schemas/ChatToolMessage"
       discriminator:
         propertyName: role
         mapping:
           CHATBOT: "#/components/schemas/ChatMessage"
           SYSTEM: "#/components/schemas/ChatMessage"
           USER: "#/components/schemas/ChatMessage"
-          TOOL: "#/components/schemas/ToolMessage"
+          TOOL: "#/components/schemas/ChatToolMessage"
       x-fern-type-name: Message
     ChatConnector:
       description: |
@@ -22065,7 +22065,7 @@ components:
         - text
         - json_object
       x-fern-type-name: ResponseFormatType
-    TextResponseFormat:
+    ChatTextResponseFormat:
       x-fern-audiences:
         - public
       title: Text Response
@@ -22075,7 +22075,7 @@ components:
           $ref: "#/components/schemas/ResponseFormatType"
       required:
         - type
-      x-fern-type-name: TextResponseFormat
+      x-fern-type-name: ChatTextResponseFormat
     JSONResponseFormat:
       x-fern-audiences:
         - public
@@ -22117,12 +22117,12 @@ components:
         **Note**: When using  `{ "type": "json_object" }` your `message` should always explicitly instruct the model to generate a JSON (eg: _"Generate a JSON ..."_) . Otherwise the model may end up getting stuck generating an infinite stream of characters and eventually run out of context length.
         **Limitation**: The parameter is not supported in RAG mode (when any of `connectors`, `documents`, `tools`, `tool_results` are provided).
       oneOf:
-        - $ref: "#/components/schemas/TextResponseFormat"
+        - $ref: "#/components/schemas/ChatTextResponseFormat"
         - $ref: "#/components/schemas/JSONResponseFormat"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextResponseFormat"
+          text: "#/components/schemas/ChatTextResponseFormat"
           json_object: "#/components/schemas/JSONResponseFormat"
       x-fern-type-name: ResponseFormat
     ChatCitation:
