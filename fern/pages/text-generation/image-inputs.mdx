@@ -7,33 +7,49 @@ image: "../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "Cohere, large language models, vision models"
 ---
 
-We currently have support for image inputs with the Aya-Vision models. In the coming weeks we will be releasing a Command Vision model, with support for image inputs. This document outlines how this feature will work in the API.
+## Introduction 
+Vision Language Models (VLMs) are AI systems that combine computer vision and natural language processing (NLP) to understand and interpret visual data, such as images. VLMs map relationships between text and visual inputs, enabling tasks like image captioning, visual question-answering, and object identification. 
 
-## [REVISE] Basic Request Shape
+Command Vision deliveres a robust VLM capable of accurate, versatile, and reliable performance across diverse applications. It excels in tasks like detailed image description, complex query answering, and real-world integration, setting a new standard for vision-language AI.
 
-Just like with Aya models, users will be able to send in images as base64 data url strings by using content type “image_url”:
+This document outlines how to work with Command Vision.
+
+## Getting Started
+[Work with Meor to do this]
+
+## Image Preparation
+
+## Image Formats
+
+- Base64 - how to encode, API structure
+- URL - how to format, API structure
+
+[TODO] Comparison - pros and cons of both
+
+### Passing in an Image
+
+As with Cohere's [Aya models](link), users will be able to send in images as base64 data url strings (e.g., `“data:image/png;base64,...”`) by setting content type to `“image_url”`:
 
 ```python PYTHON
 co.chat(
   model="command-vision",
   messages=[
 	{ "role": "user", "content": [
-        {"type": "text", "text": "what's in this image?"},
-        {"type": "image_url", "image_url": {"url": "data:image..."}}
-        
-    ]}
+        {"type": "text",
+        "text": "what's in this image?"},
+        {"type": "image_url",
+        "image_url": {"url": "data:image..."}
+        }
+      ]
+    }
   ]
 )
 ```
 
-## New API Features
+In addition to specifying images as base64 data urls the api will support HTTP and HTTPS URLs (eg “https://cohere.com/favicon-32x32.png”). This is useful for two reasons:
 
-### Support for HTTP URLs
-
-In addition to specifying images as base64 data urls (eg “data:image/png;base64,...”) the api will support HTTP and HTTPS URLs (eg “https://cohere.com/favicon-32x32.png”). This is useful in two scenarios:
-
-Makes the API easy to try out in postman (data URLs are long and hard to deal with)
-Including long data URLs in the request increases the request size and adds network latency. For cases such as chatbots, where the old images accumulate in the chat history, it is recommended to use image URLs, since the request size will be smaller, and with server-side caching will result in faster response times.
+- First, it makes the API easy to try out in postman, as data URLs are long and hard to deal with.
+- Second, including long data URLs in the request increases the request size and increases network latency. For use cases such as chatbots, where the old images accumulate in the chat history, it is recommended to use image URLs, since the request size will be smaller, and with server-side caching will result in faster response times.
 
 ```python PYTHON
 co.chat(
@@ -49,103 +65,61 @@ co.chat(
 )
 ```
 
-## Image “detail” field
+## Image Counts 
 
-Matching what OpenAI offers, our API will add controls for the level of “detail” of the image sent to the model. The “detail” property is specified per image and can be set to “low”, “high” or “auto”, defaulting to “auto” if not specified.
+- Single images, multiple images, etc
+- API structure
+
+## Image Resolution
+
+- Supported image resolution (e.g. file size/pixels/ratios/etc)
+
+Cohere's API will allow users to control the level of image “detail” sent to the model. This property is specified for each image and can be set to `“low”`, `“high”` or `“auto”`, defaulting to `“auto”` if not specified. This works exactly the same way as OpenAI's image models. 
 
 ```python PYTHON 
 co.chat(
   model="command-vision",
   messages=[
 	{ "role": "user", "content": [
-            {"type": "text", "text": "what's in this image?"},
-            {"type": "image_url", "image_url": {
-            "url": "https://cohere.com/favicon-32x32.png",
-            "detail": "high"
-        }},
-    ]}
+            {"type": "text",
+              "text": "what's in this image?"
+              },
+            {"type": "image_url",
+            "image_url": {
+              "url": "https://cohere.com/favicon-32x32.png",
+              "detail": "high"
+          }
+        },
+      ]
+    }
   ]
 )
 ```
-When detail is set to “low”:
-- The image area is larger than 512x512px  it will be resized to fit that area without changing the aspect ratio. That way it can be cached.
-- Each “low” detail image takes up 256 tokens that count towards the model’s context length.
 
-When detail is set to “high”:
-- if the image area is larger than 1536x2048px it will be resized to fit that area without changing the aspect ratio. This image will be cached.
-- Under the hood, the model will divide the image into tiles of 512x512px tiles + one 512x512px preview tile, where each tile takes up 256 tokens that count towards the model’s context length. 
+When detail is set to `“low”`:
+- If the image is larger than 512x512 pixels it will be resized to fit into these dimensions without changing the aspect ratio, so that it can be cached.
+- Each `“low”` detail image takes up 256 tokens that count towards the model’s context length.
 
-When detail is unspecified or is set to “auto”: 
-- If any of the sides is larger than 768px (configurable per model) then use detail HIGH otherwise use detail LOW
-- NOTE: the 768px setting will be configured on the API level. If we ever want to change it for a future model, we can add a field into the model config and make this a per-model setting
-- NOTE: we don’t need to document this strategy publicly. it’s sufficient to [TODO]
+When detail is set to `“high”`:
+- If the image is larger than 1536x2048 pixels it will be resized to fit into these dimensions without changing the aspect ratio, so that it can be cached.
+- Under the hood, the model will divide the image into one or more tiles of 512x512 pixels plus one 512x512 pixel preview tile; each of these tiles takes up 256 tokens that count towards the model’s context length. 
 
-## Image Resizing implementation
+## Prompt Engineering for Image Models
 
-We will use a different resizing library on the API layer than the one used in vllm (PIL). We will ensure that image resizing is done using bicubic interpolation in both places. In the future we may look into standardizing this by using a library like vips across the stack.
+- How to create effective prompts (system prompt/user prompt)
+- Image/text ordering
+- Referencing Images (e.g., "Image 1:", "Image 2:")
+- Multi-turn prompting (e.g. In multi-turn chat, does the API hold context/tokens of the images in the previous turns?)
 
-### API Input Limitations
-
-Total number of images
-
-TODO.
-
-Depending on our caching implementation, we may need to limit the number of images allowed in a given request.  
-
-### Max size of a single image
-
-TODO.
-
-OpenAI limitations: Up to 20MB per image.
-
-### File types
-
-- PNG (.png)
-- JPEG (.jpeg and .jpg)
-- WEBP (.webp)
-- Non-animated GIF (.gif)
-
-### File Content Moderation
-
-- No real-time content blocking will take place in the API
-- Images cached in GCS will go through CSAM checks
-- Should work with Safety team to ensure we document this properly
-
-### Rate Limits
-
-TODO: Images per minute limit Lucas Fayoux + Walter Beller-Morales
-
-OAI rate limits:
-- images per minute 
-
-## System Flow
-No Images
-
-    1) Chat API V2 request comes in, gets validated
-    2) Inputs are populated into prompt template to produce a text prompt
-    3) Text Prompt gets tokenized and sent to the model
-
-[IMAGE 1]
-
-#### With Images
-    1) Chat API V2 request comes in, gets validated
-    2) Images are downloaded from the specified URLSs and saved as bytes
-    3) Depending on the value of the Detail parameter (“high”, “low”), each image gets resized to the appropriate dimensions. The resized image is cached
-    4) The dimensions of the processed image are passed to the Image Tiler, which produces Tiling Data
-    5) Inputs and Tiling Data are populated into prompt template to produce a text prompt
-    6) Text Prompt gets tokenized and sent to the model along with the raw image bytes
-
-[IMAGE 2]
-
-## Raw Prompting
+### Raw Prompting
 
 Currently there is no Raw Prompting API with support for images. This is because in addition to the prompt, raw image bytes get sent to the model. To allow modelling teams to try various raw prompts on the hosted models, we can implement the following options.
 
-### Option 1: Expose “images” internal-only param in Generate API
+[TODO: SHOULD THIS EVEN BE IN HERE?] #### Option 1: Expose “images” internal-only param in Generate API
 
 This is the true “raw prompting” solution. The user is expected to handle image resizing and to invoke the Image Tiler logic when building the prompt. Image Tiler is available as a python library in the datatools repo.
 
-### Option 2: Use `skip_preamble` parameter in Chat + `detail=”unprocessed”`
+#### Option 2: Use `skip_preamble` parameter in Chat along with `detail=”unprocessed”`
 
 This is the “raw turns” approach, leaves turn formatting and image tiling logic to the API, while allowing the developer to experiment with various system and user instructions. Setting the `detail` level for each image to “unprocessed” will skip all API-level image processing (the model will do the image resizing).
 
@@ -205,3 +179,62 @@ turn message: <image1> how is the image above different from the image below? <i
 turn in the prompt: <|START_TURN|>how is the image above different from the image below? <image1> <image2><|END_TURN|>
 
 This was a requirement for the current set of multi-modal models, but the API will support mix-and-matching content within the same turn soon after launch.
+
+## Example Use Cases
+
+- Question answering
+- Data extraction with structured outputs
+- Multilingual multimodal
+- Multimodal RAG
+- more… (cookbook)
+
+## Best Practices
+
+- Handling common errors
+- Recommended image size/resolution
+- Resizing Large Images (Benefits: latency, cost, performance; recommended dimensions)
+- Impact of image Quality (Clarity, blurriness, legibility of text)
+- Getting best results out of
+
+## Limitations of working with the Image API
+
+- Image input limits (e.g. max file size, max num of images per call, resolution, etc)
+- Accuracy Considerations (Low-quality images, complex scenes)
+- Specific Task Limitations (e.g., precise counting, spatial reasoning, identifying people, detecting AI-generated images)
+- Safety and Responsible AI (Prohibited content, biased interpretations)
+
+### Total number of images
+
+TODO.
+
+### Max size of a single image
+
+TODO.
+
+
+### File types
+
+- PNG (`.png`)
+- JPEG (`.jpeg` and `.jpg`)
+- WEBP (`.webp`)
+- Non-animated GIF (`.gif`)
+
+### File Content Moderation
+
+- No real-time content blocking will take place in the API
+- Images cached in GCS will go through CSAM checks
+- Should work with Safety team to ensure we document this properly
+
+### Rate Limits
+
+TODO
+
+## Understanding Costs 
+
+- How image tokens are estimated (e.g., (width_px * height_px) / xyz)
+- Impact of image size and number on cost
+- Example cost calculations
+
+## FAQs
+
+TODO
