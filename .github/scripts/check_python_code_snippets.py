@@ -62,8 +62,7 @@ def format_python_snippets_in_mdx(file_path, line_length=DEFAULT_LINE_LENGTH):
             return match.group(0)  # Return the original block if nothing changed
         except black.parsing.InvalidInput as e:
             print(f"Error formatting Python code in {file_path}: {e}")
-            # Optionally return original unformatted code or handle differently
-            return match.group(0)
+            return ""
 
         # Revert the temporary comments back to their original form
         reverted_code = re.sub(r"^\s*# TEMP_COMMENT_(!|%)(.*)", r"\1\2", formatted_code, flags=re.MULTILINE)
