@@ -3388,49 +3388,6 @@ paths:
           \    index_url=COMPASS_API_URL,\n    bearer_token=BEARER_TOKEN,\n)\n\nr\
           \ = compass_client.refresh_index(index_name=INDEX_NAME)\nif r.error:\n \
           \   raise Exception(f\"Failed to refresh indexes: {r.error}\")\n"
-  /v1/indexes/{index_name}/atlas/_ingest_webhook:
-    post:
-      description: Push a list of URLs for processing. The URLs are fetched, and the
-        resulting file is processed asynchronously and will be available for search
-        after processing is complete.
-      operationId: atlas_webhook_v1_indexes__index_name__atlas__ingest_webhook_post
-      parameters:
-      - description: The name of the index for documents to be inserted into
-        in: path
-        name: index_name
-        required: true
-        schema:
-          description: The name of the index for documents to be inserted into
-          title: Index Name
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              discriminator:
-                mapping:
-                  EVENT_DATA: '#/components/schemas/AtlasEventData'
-                  EVENT_JOB_STATUS: '#/components/schemas/AtlasEventJobStatus'
-                propertyName: event_type
-              oneOf:
-              - $ref: '#/components/schemas/AtlasEventData'
-              - $ref: '#/components/schemas/AtlasEventJobStatus'
-              title: Webhook Request
-        required: true
-      responses:
-        '202':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AtlasWebhookResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      summary: Async insertion of Documents into an Index
   /v1/indexes/{index_name}/documents:
     put:
       description: This endpoint allows users to update or insert documents into a
