@@ -5384,7 +5384,7 @@ paths:
                       {
                         "name": "query_daily_sales_report",
                         "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
-                        "parameterDefinitions": {
+                        "parameter_definitions": {
                           "day": {
                             "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
                             "type": "str",
@@ -5395,7 +5395,7 @@ paths:
                       {
                         "name": "query_product_catalog",
                         "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
-                        "parameterDefinitions": {
+                        "parameter_definitions": {
                           "category": {
                             "description": "Retrieves product information data for all products in this category.",
                             "type": "str",
@@ -5886,54 +5886,9 @@ paths:
 
           Follow the [Migration Guide](https://docs.cohere.com/v2/docs/migrating-v1-to-v2) for instructions on moving from API v1 to API v2.
         response:
-          required:
-            - id
-            - finish_reason
-            - message
-          properties:
-            id:
-              type: string
-              description: Unique identifier for the generated reply. Useful for submitting
-                feedback.
-            finish_reason:
-              $ref: "#/components/schemas/ChatFinishReason"
-            message:
-              $ref: "#/components/schemas/AssistantMessageResponse"
-            usage:
-              $ref: "#/components/schemas/Usage"
-            logprobs:
-              type: array
-              items:
-                $ref: "#/components/schemas/LogprobItem"
+          $ref: "#/components/schemas/ChatResponse"
         response-stream:
-          description: StreamedChatResponse is returned in streaming mode (specified with
-            `stream=True` in the request).
-          oneOf:
-            - $ref: "#/components/schemas/ChatMessageStartEvent"
-            - $ref: "#/components/schemas/ChatContentStartEvent"
-            - $ref: "#/components/schemas/ChatContentDeltaEvent"
-            - $ref: "#/components/schemas/ChatContentEndEvent"
-            - $ref: "#/components/schemas/ChatToolPlanDeltaEvent"
-            - $ref: "#/components/schemas/ChatToolCallStartEvent"
-            - $ref: "#/components/schemas/ChatToolCallDeltaEvent"
-            - $ref: "#/components/schemas/ChatToolCallEndEvent"
-            - $ref: "#/components/schemas/ChatMessageEndEvent"
-            - $ref: "#/components/schemas/ChatDebugEvent"
-          discriminator:
-            propertyName: type
-            mapping:
-              message-start: "#/components/schemas/ChatMessageStartEvent"
-              content-start: "#/components/schemas/ChatContentStartEvent"
-              content-delta: "#/components/schemas/ChatContentDeltaEvent"
-              content-end: "#/components/schemas/ChatContentEndEvent"
-              tool-plan-delta: "#/components/schemas/ChatToolPlanDeltaEvent"
-              tool-call-start: "#/components/schemas/ChatToolCallStartEvent"
-              tool-call-delta: "#/components/schemas/ChatToolCallDeltaEvent"
-              tool-call-end: "#/components/schemas/ChatToolCallEndEvent"
-              citation-start: "#/components/schemas/CitationStartEvent"
-              citation-end: "#/components/schemas/CitationEndEvent"
-              message-end: "#/components/schemas/ChatMessageEndEvent"
-              debug: "#/components/schemas/ChatDebugEvent"
+          $ref: "#/components/schemas/StreamedChatResponseV2"
       description: |
         Generates a text response to a user message and streams it down, token by token. To learn how to use the Chat API with streaming follow our [Text Generation guides](https://docs.cohere.com/v2/docs/chat-api).
 
@@ -6086,8 +6041,7 @@ paths:
                 k:
                   x-fern-audiences:
                     - public
-                  type: number
-                  format: float
+                  type: integer
                   default: 0
                   minimum: 0
                   maximum: 500
@@ -6241,7 +6195,7 @@ paths:
                 			Messages: cohere.ChatMessages{
                 				{
                 					Role: "user",
-                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
                 						String: "Hello world!",
                 					}},
                 				},
@@ -6285,8 +6239,8 @@ paths:
                                     .messages(
                                         List.of(
                                             ChatMessageV2.user(
-                                                UserMessage.builder()
-                                                    .content(UserMessageContent.of("Who discovered" + " gravity?"))
+                                                UserMessageV2.builder()
+                                                    .content(UserMessageV2Content.of("Who discovered" + " gravity?"))
                                                     .build()),
                                             ChatMessageV2.assistant(
                                                 AssistantMessage.builder()
@@ -6480,9 +6434,9 @@ paths:
                                     .messages(
                                         List.of(
                                             ChatMessageV2.user(
-                                                UserMessage.builder()
+                                                UserMessageV2.builder()
                                                     .content(
-                                                        UserMessageContent.of("Who is" + " the most" + " popular?"))
+                                                        UserMessageV2Content.of("Who is" + " the most" + " popular?"))
                                                     .build())))
                                     .documents(
                                         List.of(
@@ -6640,7 +6594,7 @@ paths:
                 			Messages: cohere.ChatMessages{
                 				{
                 					Role: "user",
-                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
                 						String: "Who's the best?",
                 					}},
                 				},
@@ -7214,8 +7168,8 @@ paths:
                                     .messages(
                                         List.of(
                                             ChatMessageV2.user(
-                                                UserMessage.builder()
-                                                    .content(UserMessageContent.of("Who discovered" + " gravity?"))
+                                                UserMessageV2.builder()
+                                                    .content(UserMessageV2Content.of("Who discovered" + " gravity?"))
                                                     .build()),
                                             ChatMessageV2.assistant(
                                                 AssistantMessage.builder()
@@ -7278,7 +7232,7 @@ paths:
                 			Messages: cohere.ChatMessages{
                 				{
                 					Role: "user",
-                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
                 						String: "Hello world!",
                 					}},
                 				},
@@ -7731,7 +7685,7 @@ paths:
                 			Messages: cohere.ChatMessages{
                 				{
                 					Role: "user",
-                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
                 						String: "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
                 					}},
                 				},
@@ -21070,6 +21024,7 @@ paths:
               required:
                 - name
                 - settings
+                - finetuned_model
         required: true
       x-fern-examples:
         - code-samples:
@@ -21968,7 +21923,7 @@ components:
             additionalProperties: true
             x-fern-type-name: ToolResult-68w0tx
       x-fern-type-name: ToolResult
-    ToolMessage:
+    ChatToolMessage:
       description: |
         Represents tool result in the chat history.
       required:
@@ -21980,18 +21935,18 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ToolResult"
-      x-fern-type-name: ToolMessage
+      x-fern-type-name: ChatToolMessage
     Message:
       oneOf:
         - $ref: "#/components/schemas/ChatMessage"
-        - $ref: "#/components/schemas/ToolMessage"
+        - $ref: "#/components/schemas/ChatToolMessage"
       discriminator:
         propertyName: role
         mapping:
           CHATBOT: "#/components/schemas/ChatMessage"
           SYSTEM: "#/components/schemas/ChatMessage"
           USER: "#/components/schemas/ChatMessage"
-          TOOL: "#/components/schemas/ToolMessage"
+          TOOL: "#/components/schemas/ChatToolMessage"
       x-fern-type-name: Message
     ChatConnector:
       description: |
@@ -22110,7 +22065,7 @@ components:
         - text
         - json_object
       x-fern-type-name: ResponseFormatType
-    TextResponseFormat:
+    ChatTextResponseFormat:
       x-fern-audiences:
         - public
       title: Text Response
@@ -22120,7 +22075,7 @@ components:
           $ref: "#/components/schemas/ResponseFormatType"
       required:
         - type
-      x-fern-type-name: TextResponseFormat
+      x-fern-type-name: ChatTextResponseFormat
     JSONResponseFormat:
       x-fern-audiences:
         - public
@@ -22162,12 +22117,12 @@ components:
         **Note**: When using  `{ "type": "json_object" }` your `message` should always explicitly instruct the model to generate a JSON (eg: _"Generate a JSON ..."_) . Otherwise the model may end up getting stuck generating an infinite stream of characters and eventually run out of context length.
         **Limitation**: The parameter is not supported in RAG mode (when any of `connectors`, `documents`, `tools`, `tool_results` are provided).
       oneOf:
-        - $ref: "#/components/schemas/TextResponseFormat"
+        - $ref: "#/components/schemas/ChatTextResponseFormat"
         - $ref: "#/components/schemas/JSONResponseFormat"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextResponseFormat"
+          text: "#/components/schemas/ChatTextResponseFormat"
           json_object: "#/components/schemas/JSONResponseFormat"
       x-fern-type-name: ResponseFormat
     ChatCitation:
@@ -22722,7 +22677,7 @@ components:
           stream-end: "#/components/schemas/ChatStreamEndEvent"
           tool-calls-chunk: "#/components/schemas/ChatToolCallsChunkEvent"
           debug: "#/components/schemas/ChatDebugEvent"
-    TextContent:
+    ChatTextContent:
       type: object
       description: Text content of the message.
       required:
@@ -22735,7 +22690,7 @@ components:
             - text
         text:
           type: string
-      x-fern-type-name: TextContent
+      x-fern-type-name: ChatTextContent
     ContentType:
       x-fern-audiences:
         - public
@@ -22776,19 +22731,19 @@ components:
         image_url:
           $ref: "#/components/schemas/ImageUrl"
       x-fern-type-name: ImageContent
-    Content:
+    MessageContent:
       description: A Content block which contains information about the content type
         and the content itself.
       oneOf:
-        - $ref: "#/components/schemas/TextContent"
+        - $ref: "#/components/schemas/ChatTextContent"
         - $ref: "#/components/schemas/ImageContent"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextContent"
+          text: "#/components/schemas/ChatTextContent"
           image_url: "#/components/schemas/ImageContent"
       x-fern-type-name: Content
-    UserMessage:
+    UserMessageV2:
       type: object
       title: User Message
       description: A message from the user.
@@ -22808,8 +22763,8 @@ components:
             - type: string
             - type: array
               items:
-                $ref: "#/components/schemas/Content"
-      x-fern-type-name: UserMessage
+                $ref: "#/components/schemas/MessageContent"
+      x-fern-type-name: UserMessageV2
     ToolCallV2:
       description: An array of tool calls to be made.
       type: object
@@ -22829,7 +22784,7 @@ components:
               type: string
           x-fern-type-name: ToolCallV2Function
       x-fern-type-name: ToolCallV2
-    ToolSource:
+    ChatToolSource:
       type: object
       title: Tool Output
       properties:
@@ -22839,9 +22794,9 @@ components:
         tool_output:
           type: object
           additionalProperties: true
-          x-fern-type-name: ToolSource-z53ra6
-      x-fern-type-name: ToolSource
-    DocumentSource:
+          x-fern-type-name: ChatToolSource-z53ra6
+      x-fern-type-name: ChatToolSource
+    ChatDocumentSource:
       type: object
       description: A document source object containing the unique identifier of the
         document and the document itself.
@@ -22852,19 +22807,19 @@ components:
         document:
           type: object
           additionalProperties: true
-          x-fern-type-name: DocumentSource-w70a62
-      x-fern-type-name: DocumentSource
+          x-fern-type-name: ChatDocumentSource-w70a62
+      x-fern-type-name: ChatDocumentSource
     Source:
       description: A source object containing information about the source of the data
         cited.
       oneOf:
-        - $ref: "#/components/schemas/ToolSource"
-        - $ref: "#/components/schemas/DocumentSource"
+        - $ref: "#/components/schemas/ChatToolSource"
+        - $ref: "#/components/schemas/ChatDocumentSource"
       discriminator:
         propertyName: type
         mapping:
-          tool: "#/components/schemas/ToolSource"
-          document: "#/components/schemas/DocumentSource"
+          tool: "#/components/schemas/ChatToolSource"
+          document: "#/components/schemas/ChatDocumentSource"
       x-fern-type-name: Source
     CitationType:
       type: string
@@ -22920,17 +22875,17 @@ components:
             - type: array
               items:
                 oneOf:
-                  - $ref: "#/components/schemas/TextContent"
+                  - $ref: "#/components/schemas/ChatTextContent"
                 discriminator:
                   propertyName: type
                   mapping:
-                    text: "#/components/schemas/TextContent"
+                    text: "#/components/schemas/ChatTextContent"
         citations:
           type: array
           items:
             $ref: "#/components/schemas/Citation"
       x-fern-type-name: AssistantMessage
-    SystemMessage:
+    SystemMessageV2:
       type: object
       title: System Message
       description: A message from the system.
@@ -22948,12 +22903,12 @@ components:
             - type: array
               items:
                 oneOf:
-                  - $ref: "#/components/schemas/TextContent"
+                  - $ref: "#/components/schemas/ChatTextContent"
                 discriminator:
                   propertyName: type
                   mapping:
-                    text: "#/components/schemas/TextContent"
-      x-fern-type-name: SystemMessage
+                    text: "#/components/schemas/ChatTextContent"
+      x-fern-type-name: SystemMessageV2
     Document:
       type: object
       description: |
@@ -22991,12 +22946,12 @@ components:
       description: A content block which contains information about the content of a
         tool result
       oneOf:
-        - $ref: "#/components/schemas/TextContent"
+        - $ref: "#/components/schemas/ChatTextContent"
         - $ref: "#/components/schemas/DocumentContent"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextContent"
+          text: "#/components/schemas/ChatTextContent"
           document: "#/components/schemas/DocumentContent"
       x-fern-type-name: ToolContent
     ToolMessageV2:
@@ -23028,16 +22983,16 @@ components:
     ChatMessageV2:
       description: Represents a single message in the chat history from a given role.
       oneOf:
-        - $ref: "#/components/schemas/UserMessage"
+        - $ref: "#/components/schemas/UserMessageV2"
         - $ref: "#/components/schemas/AssistantMessage"
-        - $ref: "#/components/schemas/SystemMessage"
+        - $ref: "#/components/schemas/SystemMessageV2"
         - $ref: "#/components/schemas/ToolMessageV2"
       discriminator:
         propertyName: role
         mapping:
-          user: "#/components/schemas/UserMessage"
+          user: "#/components/schemas/UserMessageV2"
           assistant: "#/components/schemas/AssistantMessage"
-          system: "#/components/schemas/SystemMessage"
+          system: "#/components/schemas/SystemMessageV2"
           tool: "#/components/schemas/ToolMessageV2"
       x-fern-type-name: ChatMessageV2
     ChatMessages:
@@ -23122,7 +23077,7 @@ components:
         - text
         - json_object
       x-fern-type-name: ResponseFormatTypeV2
-    TextResponseFormatV2:
+    ChatTextResponseFormatV2:
       x-fern-audiences:
         - public
       type: object
@@ -23131,7 +23086,7 @@ components:
           $ref: "#/components/schemas/ResponseFormatTypeV2"
       required:
         - type
-      x-fern-type-name: TextResponseFormatV2
+      x-fern-type-name: ChatTextResponseFormatV2
     JsonResponseFormatV2:
       x-fern-audiences:
         - public
@@ -23174,12 +23129,12 @@ components:
 
         **Limitation**: The parameter is not supported when used in combinations with the `documents` or `tools` parameters.
       oneOf:
-        - $ref: "#/components/schemas/TextResponseFormatV2"
+        - $ref: "#/components/schemas/ChatTextResponseFormatV2"
         - $ref: "#/components/schemas/JsonResponseFormatV2"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextResponseFormatV2"
+          text: "#/components/schemas/ChatTextResponseFormatV2"
           json_object: "#/components/schemas/JsonResponseFormatV2"
       x-fern-type-name: ResponseFormatV2
     ChatFinishReason:
@@ -23222,11 +23177,11 @@ components:
           type: array
           items:
             oneOf:
-              - $ref: "#/components/schemas/TextContent"
+              - $ref: "#/components/schemas/ChatTextContent"
             discriminator:
               propertyName: type
               mapping:
-                text: "#/components/schemas/TextContent"
+                text: "#/components/schemas/ChatTextContent"
         citations:
           type: array
           items:
@@ -23545,8 +23500,12 @@ components:
                     - public
                 finish_reason:
                   $ref: "#/components/schemas/ChatFinishReason"
+                  x-fern-audiences:
+                    - public
                 usage:
                   $ref: "#/components/schemas/Usage"
+                  x-fern-audiences:
+                    - public
               x-fern-type-name: ChatMessageEndEventDelta
           x-fern-type-name: ChatMessageEndEvent-u3fzny
       x-fern-type-name: ChatMessageEndEvent
@@ -24970,6 +24929,7 @@ components:
       required:
         - id
         - embeddings
+        - texts
         - api_version
       properties:
         response_type:

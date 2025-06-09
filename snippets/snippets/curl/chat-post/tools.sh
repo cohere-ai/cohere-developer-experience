@@ -9,7 +9,7 @@ curl --request POST \
       {
         "name": "query_daily_sales_report",
         "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
-        "parameterDefinitions": {
+        "parameter_definitions": {
           "day": {
             "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
             "type": "str",
@@ -20,7 +20,7 @@ curl --request POST \
       {
         "name": "query_product_catalog",
         "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
-        "parameterDefinitions": {
+        "parameter_definitions": {
           "category": {
             "description": "Retrieves product information data for all products in this category.",
             "type": "str",
