@@ -7,78 +7,44 @@ image: "../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "Cohere, large language models, vision models"
 ---
 
+[NOTES from MICHAEL 06/09/2025]
+- ~This is possible~
+- Simplest possible example
+- ~Image detail~
+  - Discuss tradeoffs, when does each make scenes
+  - Talk about the default ('auto')
+    - Chooses for you, based on image dimension 
+  - 'high' means image is split into tiles (up to `n`, whatever the max is), each tile is 256*something 
+    - Provide an example, i.e., 1000x1000, you'll have 1000/256x1000/256, plus the preview tile, this will result in `n` tokens.
+  - Token counting
+- passing an Image
+  - Base 64 and HTTP URLs 
+    - Base64 can be used anywhere
+    - HTTP means you don't have to re-upload the image on every request.
+      - With the ChatAPI, you have to append messages, which would be prohibitive if you're sending massive images. But with an HTTP URL, multi-turn is leaner. This is much lower latency.
+- Image specs  
+  - formats 
+    - PNG, JPEG, GIF 
+  - How many can you send at once? 
+  - How big can an image be? 
+  - Works will in JSON mode (THINK ABOUT WHERE TO PUT THIS.)
+
+
+
 ## Introduction 
-Vision Language Models (VLMs) are AI systems that combine computer vision and natural language processing (NLP) to understand and interpret visual data, such as images. VLMs map relationships between text and visual inputs, enabling tasks like image captioning, visual question-answering, and object identification. 
+Multimodality has become an important part of the modern generative AI landscape, as there's real demand for models able to understand and interpret visual data, map relationships between text and visual inputs, and handle use cases like image captioning, visual question-answering, and object identification. 
 
-Command Vision deliveres a robust VLM capable of accurate, versatile, and reliable performance across diverse applications. It excels in tasks like detailed image description, complex query answering, and real-world integration, setting a new standard for vision-language AI.
+[MENTION DIFFERENT SCENARIOS WHERE IT'S USEFUL, PULL FROM ANTHROPIC COOKBOOK]
+[ENTERPRISE-SPECIFIC USE CASES, parsing reports, etc., talk to Cassie.]
+[TRANSLATING LANGUAGES IN AN IMAGE]
 
-This document outlines how to work with Command Vision.
+[Work with Meor to get a very simple example]
 
-## Getting Started
-[Work with Meor to do this]
+This document outlines how to work with Cohere's Vision models.
 
-## Image Preparation
 
-## Image Formats
 
-- Base64 - how to encode, API structure
-- URL - how to format, API structure
-
-[TODO] Comparison - pros and cons of both
-
-### Passing in an Image
-
-As with Cohere's [Aya models](https://docs.cohere.com/docs/aya-vision), users will be able to send in images as base64 data url strings (e.g., `“data:image/png;base64,...”`) by setting content type to `“image_url”`:
-
-```python PYTHON
-co.chat(
-    model="command-vision",
-    messages=[
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": "what's in this image?"},
-                {
-                    "type": "image_url",
-                    "image_url": {"url": "data:image..."},
-                },
-            ],
-        }
-    ],
-)
-```
-
-In addition to specifying images as base64 data urls the api will support HTTP and HTTPS URLs (eg “https://cohere.com/favicon-32x32.png”). This is useful for two reasons:
-
-- First, it makes the API easy to try out in postman, as data URLs are long and hard to deal with.
-- Second, including long data URLs in the request increases the request size and increases network latency. For use cases like chatbots, where the old images accumulate in the chat history, we recommend you use image URLs, since the request size will be smaller, and with server-side caching will result in faster response times.
-
-```python PYTHON
-co.chat(
-    model="command-vision",
-    messages=[
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": "what's in this image?"},
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": "https://cohere.com/favicon-32x32.png"
-                    },
-                },
-            ],
-        }
-    ],
-)
-```
-
-## Image Counts 
-
-- Single images, multiple images, etc
-- API structure
-
-## Image Resolution
+## Image Detail
 
 - Supported image resolution (e.g. file size/pixels/ratios/etc)
 
@@ -111,6 +77,119 @@ When detail is set to `“low”`:
 When detail is set to `“high”`:
 - If the image is larger than 1536x2048 pixels it will be resized to fit into these dimensions without changing the aspect ratio, so that it can be cached.
 - Under the hood, the model will divide the image into one or more tiles of 512x512 pixels plus one 512x512 pixel preview tile; each of these tiles takes up 256 tokens that count towards the model’s context length. 
+
+[TODO]
+Discuss tradeoffs, when does each make scenes
+  - Talk about the default ('auto')
+    - Chooses for you, based on image dimension 
+  - 'high' means image is split into tiles (up to `n`, whatever the max is), each tile is 256*something 
+    - Provide an example, i.e., 1000x1000, you'll have 1000/256x1000/256, plus the preview tile, this will result in `n` tokens.
+  - Token counting
+
+## Passing in an Image
+
+As with Cohere's [Aya models](https://docs.cohere.com/docs/aya-vision), users will be able to send in images as base64 data url strings (e.g., `“data:image/png;base64,...”`) by setting content type to `“image_url”`:
+
+```python PYTHON
+co.chat(
+    model="command-vision",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "what's in this image?"},
+                {
+                    "type": "image_url",
+                    "image_url": {"url": "data:image..."},
+                },
+            ],
+        }
+    ],
+)
+```
+
+In addition to specifying images as base64 data urls the API will support HTTP and HTTPS URLs (eg “https://cohere.com/favicon-32x32.png”). This is useful for two reasons:
+
+- First, it makes the API easy to try out in postman, as data URLs are long and hard to deal with.
+- Second, including long data URLs in the request increases the request size and increases network latency. For use cases like chatbots, where the old images accumulate in the chat history, we recommend you use image URLs, since the request size will be smaller, and with server-side caching will result in faster response times.
+
+```python PYTHON
+co.chat(
+    model="command-vision",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "what's in this image?"},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": "https://cohere.com/favicon-32x32.png"
+                    },
+                },
+            ],
+        }
+    ],
+)
+```
+
+## Image Preparation
+
+### Image Formats
+
+- HTTP URL - faster, but you need to upload your image somewhere, and not available outside platform (not in Azure, Bedrock)
+- Base64 - how to encode, API structure
+- URL - how to format, API structure
+
+[TODO] Comparison - pros and cons of both
+
+### Image Counts 
+
+- Single images, multiple images, etc
+- API structure
+
+### File Content Moderation
+
+- No real-time content blocking will take place in the API
+- Images cached in GCS will go through CSAM checks
+- Should work with Safety team to ensure we document this properly
+
+### Rate Limits
+
+TODO
+
+### Understanding Costs 
+
+- How image tokens are estimated (e.g., (width_px * height_px) / xyz)
+- Impact of image size and number on cost
+- Example cost calculations
+
+### Limitations of working with the Image API
+
+- Image input limits (e.g. max file size, max num of images per call, resolution, etc)
+- Accuracy Considerations (Low-quality images, complex scenes)
+- Specific Task Limitations (e.g., precise counting, spatial reasoning, identifying people, detecting AI-generated images)
+- Safety and Responsible AI (Prohibited content, biased interpretations)
+
+### Total number of images
+
+TODO.
+
+### Max size of a single image
+
+TODO.
+
+
+### File types
+
+- PNG (`.png`)
+- JPEG (`.jpeg` and `.jpg`)
+- WEBP (`.webp`)
+- Non-animated GIF (`.gif`)
+
+
+
+
 
 ## Prompt Engineering for Image Models
 
@@ -206,44 +285,7 @@ This was a requirement for the current set of multi-modal models, but the API wi
 - Impact of image Quality (Clarity, blurriness, legibility of text)
 - Getting best results out of
 
-## Limitations of working with the Image API
 
-- Image input limits (e.g. max file size, max num of images per call, resolution, etc)
-- Accuracy Considerations (Low-quality images, complex scenes)
-- Specific Task Limitations (e.g., precise counting, spatial reasoning, identifying people, detecting AI-generated images)
-- Safety and Responsible AI (Prohibited content, biased interpretations)
-
-### Total number of images
-
-TODO.
-
-### Max size of a single image
-
-TODO.
-
-
-### File types
-
-- PNG (`.png`)
-- JPEG (`.jpeg` and `.jpg`)
-- WEBP (`.webp`)
-- Non-animated GIF (`.gif`)
-
-### File Content Moderation
-
-- No real-time content blocking will take place in the API
-- Images cached in GCS will go through CSAM checks
-- Should work with Safety team to ensure we document this properly
-
-### Rate Limits
-
-TODO
-
-## Understanding Costs 
-
-- How image tokens are estimated (e.g., (width_px * height_px) / xyz)
-- Impact of image size and number on cost
-- Example cost calculations
 
 ## FAQs
 
