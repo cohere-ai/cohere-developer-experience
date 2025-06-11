@@ -12,11 +12,9 @@ keywords: "Cohere, chatbot"
 As its name implies, the Chat endpoint enables developers to build chatbots that can handle conversations. At the core of a conversation is a multi-turn dialog between the user and the chatbot. This requires the chatbot to have the state (or “memory”) of all the previous turns to maintain the state of the conversation.
 
 In this tutorial, you'll learn about:
-- Creating a custom system message
-- Creating a single-turn conversation
-- Building the conversation memory
-- Running a multi-turn conversation
-- Viewing the chat history
+- Sending messages to the model
+- Crafting a system message
+- Maintaining conversation state
 
 You'll learn these by building an onboarding assistant for new hires.
 
@@ -34,36 +32,65 @@ import cohere
 co = cohere.ClientV2(api_key="COHERE_API_KEY")
 ```
 
-## Creating a custom system instruction
+## Sending messages to the model
 
-A conversation starts with a system instruction to help steer a chatbot’s response toward certain characteristics.
+We will use the Cohere Chat API to send messages and genereate responses from the model. The required inputs to the Chat endpoint are the `model` (the model name) and `messages` (a list of messages in chronological order). In the example below, we send a single message to the model `command-a-03-2025`:
 
-For example, if we want the chatbot to adopt a formal style, the system instruction can be used to encourage the generation of more business-like and professional responses.
 
-The recommended approach is to use two H2 Markdown headers: "Task and Context" and "Style Guide" in the exact order.
+```python PYTHON
+response = co.chat(
+    model="command-a-03-2025",
+    messages=[
+        {
+            "role": "user",
+            "content": "I'm joining a new startup called Co1t today. Could you help me write a short introduction message to my teammates."
+        },
+    ],
+)
+
+print(response.message)
+```
+
+Notice that in addition to the message "content", there is also a field titled "role". Messages with the role "user" represent prompts from the user interacting with the chatbot. Responses from model will always have a message with the role "assistant". Below is the response message from the API:
+
+```PYTHON
+{
+    role='assistant',
+    content=[
+        {
+            type='text', 
+            text='Absolutely! Here’s a warm and professional introduction message you can use to connect with your new teammates at Co1t:\n\n---\n\n**Subject:** Excited to Join the Co1t Team!  \n\nHi everyone,  \n\nMy name is [Your Name], and I’m thrilled to officially join Co1t as [Your Role] starting today! I’ve been looking forward to this opportunity and can’t wait to contribute to the incredible work this team is doing.  \n\nA little about me: [Share a brief personal or professional detail, e.g., "I’ve spent the last few years working in [industry/field], and I’m passionate about [specific skill or interest]." or "Outside of work, I love [hobby or interest] and am always up for a good [book/podcast/movie] recommendation!"]  \n\nI’m excited to get to know each of you, learn from your experiences, and collaborate on driving Co1t’s mission forward. Please feel free to reach out—I’d love to chat and hear more about your roles and what you’re working on.  \n\nLooking forward to an amazing journey together!  \n\nBest regards,  \n[Your Name]  \n[Your Role]  \nCo1t  \n\n---\n\nFeel free to customize it further to match your style and the culture of Co1t. Good luck on your first day! 🚀'
+        }
+    ],
+}
+```
+
+## Crafting a system message
+
+When building a chatbot, it may be useful to constrain its behavior. For example, you may want to prevent the assistant from responding to certain prompts, or force it to respond in a desired tone. To achieve this, you can include a message with the role "system" in the `messages` array. Instructions in system messages always take precedence over instructions in user messages, so as a developer you have control over the chatbot behavior.
+
+For example, if we want the chatbot to adopt a formal style, the system instruction can be used to encourage the generation of more business-like and professional responses. We can also instruct the chatbot to refuse requests that are unrelated to onboarding. When writing a system message, the recommended approach is to use two H2 Markdown headers: "Task and Context" and "Style Guide" in the exact order.
 
 In the example below, the system instruction provides context for the assistant's task (task and context) and encourages the generation of rhymes as much as possible (style guide).
 
 
 ```python PYTHON
-# Add the user message
-message = "I'm joining a new startup called Co1t today. Could you help me write a short introduction message to my teammates."
-
-# Create a custom system instruction
-system_message = """## Task and Context
-You are an assistant who assist new employees of Co1t with their first week.
+# Create a custom system instruction that guides all of the Assistant's responses
+system_instruction = """## Task and Context
+You assist new employees of Co1t with their first week of onboarding at Co1t, a startup founded by Mr. Colt.
+If the user asks any questions unrelated to onboarding, politely refuse to answer them.
 
 ## Style Guide
 Try to speak in rhymes as much as possible. Be professional."""
 
-# Add the messages
-messages = [
-    {"role": "system", "content": system_message},
-    {"role": "user", "content": message},
-]
-
-# Generate the response
-response = co.chat(model="command-a-03-2025", messages=messages)
+# Send messages to the model
+response = co.chat(
+    model="command-a-03-2025",
+    messages=[
+        {"role": "system", "content": system_instruction},
+        {"role": "user", "content": "I'm joining a new startup called Co1t today. Could you help me write a short introduction message to my teammates."},
+    ],
+)
 
 print(response.message.content[0].text)
 ```
@@ -87,141 +114,51 @@ Cheers to a great start!
 Your enthusiastic new mate.
 ```
 
-Further reading:
-- [Documentation on system instructions](https://docs.cohere.com/docs/system-instructions)
+## Maintaining conversation state
 
-## Starting the first conversation turn
-
-Let's start with the first conversation turn.
-
-Here, we are also adding a custom system instruction for generating a concise response, just to keep the outputs brief for this tutorial.
+Conversations with your chatbot will often span more than one turn. In order to not lose context of previous turns, the entire chat history will need to be passed in the `messages` array when making calls with the Chat API.
+In the example below, we keep adding "assistant" and "user" messages to the `messages` array to build up the chat history over multiple turns:
 
 
 ```python PYTHON
-# Add the user message
-message = "I'm joining a new startup called Co1t today. Could you help me write a short introduction message to my teammates."
-
-# Create a custom system message
-system_message = """## Task and Context
-Generate concise responses, with maximum one-sentence."""
-
-# Add the messages
 messages = [
-    {"role": "system", "content": system_message},
-    {"role": "user", "content": message},
+    {"role": "system", "content": system_instruction},
 ]
 
-# Generate the response
-response = co.chat(model="command-a-03-2025", messages=messages)
+# user turn 1
+messages.append(
+    {
+        "role": "user",
+        "content": "I'm joining a new startup called Co1t today. Could you help me write a short introduction message to my teammates."
+    },
+)
+response = co.chat(
+    model="command-a-03-2025",
+    messages=messages,
+)
+
+# assistant turn 1
+messages.append(response.message) # add the Assistant message to the messages array to include it in the chat history for the next turn
+
+# user turn 2
+messages.append(
+    {
+        "role": "user",
+        "content": "Who founded co1t?"
+    }
+)
+
+response = co.chat(
+    model="command-a-03-2025",
+    messages=messages,
+)
+
+# assistant turn 2
+messages.append(response.message)
 
 print(response.message.content[0].text)
 ```
-```
-"Hello, teammates! I'm thrilled to join the Co1t family today and looking forward to getting to know you all and contributing to our shared success."
-```
 
-## Building the conversation memory
-
-Now, we want the model to refine the earlier response. This requires the next generation to have access to the state, or memory, of the conversation.
-
-To do this, we append the `messages` with the model's previous response using the `assistant` role.
-
-Next, we also append a new user message (for the second turn) to the `messages` list.
-
-Looking at the response, we see that the model is able to get the context from the chat history. The model is able to capture that "it" in the user message refers to the introduction message it had generated earlier.
-
-
-```python PYTHON
-# Append the previous response
-messages.append(
-    {"role": "assistant", "content": response.message.content[0].text}
-)
-
-# Add the user message
-message = "Make it more upbeat and conversational."
-
-# Append the user message
-messages.append({"role": "user", "content": message})
-
-# Generate the response with the current chat history as the context
-response = co.chat(model="command-a-03-2025", messages=messages)
-
-print(response.message.content[0].text)
-```
-```
-"Hey, future Co1t buddies! Stoked to join this awesome team, let's get to know each other and make some startup magic together!"
-```
-
-Further reading:
-- [Documentation on using the Chat endpoint](https://docs.cohere.com/docs/chat-api)
-
-## Running a multi-turn conversation
-
-You can continue doing this for any number of turns by continuing to append the chatbot's response and the new user message to the `messages` list.
-
-
-```python PYTHON
-# Append the previous response
-messages.append(
-    {"role": "assistant", "content": response.message.content[0].text}
-)
-
-# Add the user message
-message = (
-    "Thanks. Could you create another one for my DM to my manager."
-)
-
-# Append the user message
-messages.append({"role": "user", "content": message})
-
-# Generate the response with the current chat history as the context
-response = co.chat(model="command-a-03-2025", messages=messages)
-
-print(response.message.content[0].text)
-```
-```
-"Hi, boss! So excited to dive into my new role at Co1t and eager to learn from your mentorship and guidance. Let's crush it!"
-```
-
-## Viewing the chat history
-
-To look at the current chat history, you can print the `messages` list, which contains a list of `user` and `assistant` turns in the same sequence as they were created.
-
-
-```python PYTHON
-# Append the previous response
-messages.append(
-    {"role": "assistant", "content": response.message.content[0].text}
-)
-
-# View the chat history
-for message in messages:
-    print(message, "\n")
-```
-```
-{'role': 'system', 'content': '## Task and Context\nGenerate concise responses, with maximum one-sentence.'} 
-
-{'role': 'user', 'content': "I'm joining a new startup called Co1t today. Could you help me write a short introduction message to my teammates."} 
-
-{'role': 'assistant', 'content': '"Hello, teammates! I\'m thrilled to join the Co1t family today and looking forward to getting to know you all and contributing to our shared success."'} 
-
-{'role': 'user', 'content': 'Make it more upbeat and conversational.'} 
-
-{'role': 'assistant', 'content': '"Hey, future Co1t buddies! Stoked to join this awesome team, let\'s get to know each other and make some startup magic together!"'} 
-
-{'role': 'user', 'content': 'Thanks. Could you create another one for my DM to my manager.'} 
-
-{'role': 'assistant', 'content': '"Hi, boss! So excited to dive into my new role at Co1t and eager to learn from your mentorship and guidance. Let\'s crush it!"'} 
-```
-
-## Conclusion
-
-In this tutorial, you learned about:
-- How to create a custom system instruction
-- How to create a single-turn conversation
-- How to build the conversation memory
-- How to run a multi-turn conversation
-- How to view the chat history
 
 You will use the same method for running a multi-turn conversation when you learn about other use cases such as RAG (Part 6) and tool use (Part 7).
 
