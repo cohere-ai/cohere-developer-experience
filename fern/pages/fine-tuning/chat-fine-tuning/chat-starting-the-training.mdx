@@ -10,6 +10,7 @@ keywords: 'fine-tuning, fine-tuning language models'
 createdAt: 'Fri Nov 10 2023 18:22:10 GMT+0000 (Coordinated Universal Time)'
 updatedAt: 'Wed Jun 12 2024 00:17:37 GMT+0000 (Coordinated Universal Time)'
 ---
+{/* [skip-file-snippets] */}
 In this section, we will walk through how you can start training a fine-tuning model for Chat on both the Web UI and the Python SDK.
 
 ## Cohere Dashboard
@@ -144,7 +145,7 @@ Using the `co.finetuning.create_finetuned_model()` method of the Cohere client, 
 ```python PYTHON
 import cohere
 
-co = cohere.Client("Your API key")
+co = cohere.Client()
 
 # Single train file upload
 chat_dataset = co.datasets.create(
@@ -221,13 +222,14 @@ from cohere.finetuning import (
     WandbConfig,
 )
 
-co = cohere.Client("Your API key")
+co = cohere.Client()
 
 chat_dataset = co.datasets.create(
     name="chat-dataset",
     data=open("path/to/train.jsonl", "rb"),
     type="chat-finetune-input",
 )
+co.wait(chat_dataset)
 # optional (define custom hyperparameters)
 hp = Hyperparameters(
     early_stopping_patience=10,
@@ -274,7 +276,7 @@ Here's a Python script to make this clearer:
 ```python PYTHON
 import cohere
 
-co = cohere.Client("Your API key")
+co = cohere.Client()
 # get the fine-tuned model object
 get_response = co.finetuning.get_finetuned_model(
     create_response.finetuned_model.id
