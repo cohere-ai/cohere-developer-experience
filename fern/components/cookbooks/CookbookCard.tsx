@@ -10,7 +10,7 @@ interface CookbookCardProps {
 export const CookbookCard: React.FC<CookbookCardProps> = ({ cookbook, bgColor }) => (
   <a
     href={cookbook.href}
-    className={`block border border-gray-200 rounded-lg hover:shadow-md transition-shadow ${bgColor}`}
+    className={`block border border-gray-200 rounded-lg hover:shadow-md transition-shadow ${bgColor} dark:hover:brightness-110 dark:hover:border-gray-500 transition-colors `}
   >
     <div className="p-6 flex flex-col justify-between h-full">
       <h3 className="text-base font-medium text-gray-800 mb-3">{cookbook.title}</h3>
