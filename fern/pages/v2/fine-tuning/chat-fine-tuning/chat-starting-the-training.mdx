@@ -64,7 +64,7 @@ We require a minimum of two valid conversations to begin training. Currently, us
 There a certain requirements for the data you use to fine-tune a model for Chat through the UI:
 
 - There are only three acceptable values for the `role` field: `System`, `Chatbot` or `User`. There should be at least one instance of `Chatbot` and `User` in each conversation. If your dataset includes other roles, a validation error will be thrown.
-- A preamble should be uploaded as the first message in the conversation, with `role: System`. All other messages with `role: System` will be treated as speakers in the conversation.
+- A system message should be uploaded as the first message in the conversation, with `role: System`. All other messages with `role: System` will be treated as speakers in the conversation.
 - What's more, each turn in the conversation should be within the context length of 16384 tokens to avoid being dropped from the dataset. We explain a turn in the ['Chat Customization Best Practices'](/v2/docs/chat-preparing-the-data#chat-customization-best-practices) section.
 
 If you need more information, see ['Preparing the Data'](/v2/docs/chat-preparing-the-data).
@@ -87,7 +87,7 @@ Here's what that looks like:
 
 Note that this page shows you the total number of conversations for both the training and validation datasets, the total number of turns in the respective files, and the average turns per conversation. It also includes a sample of the conversations in your data files.
 
-As a reminder, even if you specify a preamble in your dataset, the default inference request to `co.chat()` will have an empty preamble. If you want to make an inference request with preamble, [please pass the parameter](/reference/chat) `preamble`. 
+As a reminder, the system message specified in the dataset will always automatically be added to the beginning to the prompt. To override that system message in API calls, include a different system message as the first element in the `messages` array.
 
 If you are happy with how the samples look, click on 'Continue' at the bottom of the page.
 
@@ -178,11 +178,11 @@ After uploading your dataset, via `co.datasets.create()`, it will be validated. 
 
 Below is a table of errors or warnings you may receive and how to fix them.
 
-| Error/Warning | Error/Warning Text                                                                                                                                                  | Meaning                                                                                                                                                                                                                                            | Fix                                                                                   |
+| Error/Warning | Error/Warning Text                                                                                                                                                  | Meaning                                                                                                                                                                                                                                             | Fix                                                                                   |
 |---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
-| Error         | 'not enough valid examples: found only X valid train examples of Y received (A incorrectly encoded, B duplicated, C too many tokens); at least 2 valid examples required since no eval data was provided' | Is thrown for any incorrectly encoded or duplicated messages, as well as when turns are above the context length (in which case those turns will be dropped).                                                                                      | You need to upload more valid examples in your dataset for a minimum of 2 examples.   |
-| Error         | 'train preambles are too long:..'  \nOR  \n'invalid eval file: preambles are too long:..'                                                                            | Is thrown when uploaded train preambles in train and/or eval data are above the context length of 2048 tokens. The error message will contain the preamble which needs to be shortened.                                                             | Shorten or upload new preambles.                                                      |
-| Error         | 'extra speaker in example: \<extra_speaker_name> (line : X)'                                                                                                         | This means that the uploaded training dataset has speakers which are not one of the allowed roles: `System`,`User` or `Chatbot`                                                                                                                     | Rename or remove the extra speaker and re-upload the dataset.                         |
+| Error         | 'not enough valid examples: found only X valid train examples of Y received (A incorrectly encoded, B duplicated, C too many tokens); at least 2 valid examples required since no eval data was provided' | Is thrown for any incorrectly encoded or duplicated messages, as well as when turns are above the context length (in which case those turns will be dropped).                                                 | You need to upload more valid examples in your dataset for a minimum of 2 examples.   |
+| Error         | 'train preambles are too long:..'  \nOR  \n'invalid eval file: preambles are too long:..'                                                                            | Is thrown when uploaded train system messages (preambles) in train and/or eval data are above the context length of 2048 tokens. The error message will contain the preamble which needs to be shortened.                                          | Shorten or upload new system messages.                                                      |
+| Error         | 'extra speaker in example: \<extra_speaker_name> (line : X)'                                                                                                         | This means that the uploaded training dataset has speakers which are not one of the allowed roles: `System`,`User` or `Chatbot`                                                                                                                    | Rename or remove the extra speaker and re-upload the dataset.                         |
 | Error         | 'missing Chatbot in example'  \nOR  \n'missing User in example'                                                                                                      | This means the uploaded training dataset is missing either `Chatbot` or `User` speaker, both of which are required.                                                                                                                                | Upload your dataset with required speakers `Chatbot` and `User`                       |
 | Warning       | 'dataset has 0 valid eval rows. dataset will be auto-split'                                                                                                          | This error is thrown when eval data was not uploaded, in which case the dataset will be auto-split with 80% going to training and 20% to evaluation.                                                                                               | None                                                                                  |
 | Warning       | 'train dataset has conversations with too many tokens. conversation number: number of turns with too many tokens is as follows, x:y'  \nOR  \n'eval dataset has conversations with too many tokens. conversation number: number of turns with too many tokens is as follows, x:y' | This means the train and/or eval dataset has turns which exceed the context length of 16384 tokens, and will be dropped for training. The message specifies the conversation index x (which starts at 0), as well as the number of turns over the context length in that conversation, y. | If you do not want any turns dropped, consider shortening turns.                      |
@@ -267,9 +267,9 @@ Once your model completes training, you can call it via [co.chat()](/v2/docs/cha
 
 Please note, the `model_id` is the `id` returned by the fine-tuned model object with the `"-ft"` suffix.
 
-`co.chat()` uses no preamble by default for fine-tuned models. You can specify a preamble using the `preamble` parameter. Note that for the `model` parameter, you must pass the finetune's id with `"-ft"` appended to the end.
+`co.chat()` uses no system message by default for fine-tuned models. You can specify a system message using the `preamble` parameter. Note that for the `model` parameter, you must pass the finetune's id with `"-ft"` appended to the end.
 
-By passing `return_prompt=True` in any message, you can see which preamble is being used for your conversation.
+By passing `return_prompt=True` in any message, you can see which system message is being used for your conversation.
 
 Here's a Python script to make this clearer:
 
@@ -284,7 +284,6 @@ get_response = co.finetuning.get_finetuned_model(
 
 response = co.chat(
     model=get_response.finetuned_model.id + "-ft",
-    # Required - user message. Optional (to specify a preamble/system message)
     messages=[
         {
             "role": "system",
@@ -306,7 +305,6 @@ After your first message with the model, you can build the `messages` list with 
 # Continuing the above conversation with `response.id`.
 response_2 = co.chat(
     model=get_response.finetuned_model.id + "-ft",
-    # optional (to specify a preamble)
     messages=[
         {
             "role": "system",

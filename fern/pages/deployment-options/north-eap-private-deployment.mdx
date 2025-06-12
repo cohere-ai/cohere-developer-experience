@@ -5,7 +5,7 @@ slug: "docs/north-eap-private-deployments"
 hidden: true
 
 description: "This document describes the steps required for a POC install of North."
-image: "../../assets/images/f1cc130-cohere_meta_image.jpg"  
+image: "../../assets/images/f1cc130-cohere_meta_image.jpg"
 keywords: "generative AI, large language models, knowledge management, enterprise AI"
 
 createdAt: "Wed Feb 26 2025 10:54:00 (MST)"
@@ -48,8 +48,8 @@ This document describes the steps taken during a POC install. Where North is in 
 ### External Resources / Infrastructure
 
 - Postgres Instance
-    - With a user with permission to create and manage databases for North and Compass.
-    - The user can create these databases beforehand to minimize the set of permissions. The required databases are `north` and `compass`.
+    - With a user with permission to create and manage databases for North and Compass, Dex and OpenFGA.
+    - The user can create these databases beforehand to minimize the set of permissions. The required databases are `north`, `compass`, `openfga` and `dex`.
 - Redis
 
 ### Firewall & Network Communication
@@ -71,34 +71,34 @@ The installation process documented below assumes direct access to the Kubernete
 </warning>
 
 1. **Confirm connection to cluster**
-    
+
     ```bash
     kubectl config current-context
     ```
-    
+
 2. **Create a namespace for the installation**
-    
+
     ```bash
     kubectl create namespace cohere
-    
-    kubectl config set-context --current --namespace cohere 
+
+    kubectl config set-context --current --namespace cohere
     ```
-    
+
 3. **Install cluster dependencies**
-    
+
     ```bash
     helm repo add stakater https://stakater.github.io/stakater-charts
     helm repo add opensearch-operator https://opensearch-project.github.io/opensearch-k8s-operator/
     helm repo update
-    
+
     helm install reloader stakater/reloader --create-namespace -n reloader
     helm install opensearch-operator opensearch-operator/opensearch-operator \
     	-n cohere --create-namespace
     ```
-    
+
 4. **Create a secret with the credentials to your external databases**
-The defaults are set up to expect a secret named `credentials` in your installation namespace with the keys `postgresPassword` and `redisPassword` 
-    
+The defaults are set up to expect a secret named `credentials` in your installation namespace with the keys `postgresPassword` and `redisPassword`
+
     ```bash
     (cat <<EOF
     apiVersion: v1
@@ -114,11 +114,11 @@ The defaults are set up to expect a secret named `credentials` in your installat
     EOF
     ) | kubectl apply -f -
     ```
-    
+
 5. **Create a file** `values.yaml` **with the following content**
 
 - **Locally Deployed Models**
-    
+
     ```yaml
     global:
       config:
@@ -152,14 +152,11 @@ The defaults are set up to expect a secret named `credentials` in your installat
             caCerts:
               secretName: ""
               secretKey: ""
-    
+
     secretsGenerator:
-      secrets:
-        - name: auth-secret-key
-          key: secretKey
-        - name: opensearch-password
-          key: password
-    
+      disabledDefaults:
+        valkey-password: true
+
     compass:
       opensearch-operator:
         enabled: false
@@ -186,7 +183,7 @@ The defaults are set up to expect a secret named `credentials` in your installat
         cohere:
           apiKey:
             value: "none"
-    
+
     toolkit:
       config:
         authSecretKey:
@@ -197,6 +194,8 @@ The defaults are set up to expect a secret named `credentials` in your installat
           basic:
             enabled: true
           oidc:
+            enabled: false
+          dex:
             enabled: false
         database:
           name: north
@@ -219,24 +218,31 @@ The defaults are set up to expect a secret named `credentials` in your installat
               key: ""
         defaultModelDeployment: single_container
         enabledModelDeployments:
-        - single_container
+          - single_container
         singleContainer:
-	      model: "command"
+          model: "command"
+      openfgaService:
+        enabled: false
+        init:
+          enabled: false
       backend:
         monitoring:
           enabled: false
       postgresql:
         enabled: false
-    
+
     models:
       enabled: true
-    
+
+    dex:
+      enabled: false
+
     agent:
       enabled: false
-    
+
     ingress:
       enabled: false
-    
+
     valkey:
       enabled: true
       fullnameOverride: "north-valkey"
@@ -253,9 +259,9 @@ The defaults are set up to expect a secret named `credentials` in your installat
           limits:
             memory: 8Gi
     ```
-    
+
 - **Cohere Platform Models**
-    
+
     ```yaml
     global:
       config:
@@ -280,18 +286,15 @@ The defaults are set up to expect a secret named `credentials` in your installat
             secretKeyRef:
               name: credentials
               key: redisPassword
-    
+
     config:
       cohere:
         apiKey: ""
-    
+
     secretsGenerator:
-      secrets:
-        - name: auth-secret-key
-          key: secretKey
-        - name: opensearch-password
-          key: password
-    
+      disabledDefaults:
+        valkey-password: true
+
     compass:
       config:
         postgres:
@@ -315,7 +318,7 @@ The defaults are set up to expect a secret named `credentials` in your installat
             secretKeyRef:
               name: ""
               key: ""
-    
+
     toolkit:
       config:
         cohereApiKey:
@@ -326,6 +329,8 @@ The defaults are set up to expect a secret named `credentials` in your installat
           basic:
             enabled: true
           oidc:
+            enabled: false
+          dex:
             enabled: false
         database:
           name: north
@@ -345,37 +350,44 @@ The defaults are set up to expect a secret named `credentials` in your installat
               key: ""
         defaultModelDeployment: cohere_platform
         enabledModelDeployments:
-        - cohere_platform
+          - cohere_platform
       backend:
         env:
           OTEL_DISABLE_AUTO_INSTRUMENTATION: "True"
         monitoring:
           enabled: false
+      openfgaService:
+        enabled: false
+        init:
+          enabled: false
       postgresql:
         enabled: false
-    
+
     models:
       enabled: false
-    
+
+    dex:
+      enabled: false
+
     agent:
       enabled: false
-    
+
     ingress:
       enabled: false
-    
+
     valkey:
       enabled: false
-    
+
     ```
 
 6. **Deploy the north helm chart**
-    
+
     ```bash
     # Login to the private helm registry with your customer email and license id
     helm registry login helm.cohere.com \
     	--username <YOUR_EMAIL> \
     	--password <password>
-    	
+
     # Install the helm chart, making sure the required values are provided
     helm install north oci://helm.cohere.com/north/stable/cohere-eno -n cohere \
     	-f values.yaml --timeout 10m \
@@ -386,28 +398,28 @@ The defaults are set up to expect a secret named `credentials` in your installat
     ```
 
 7. **Create the ingress routes.**
-    
-    This installation excludes setting up any ingress to the cluster, and it won’t be complete without it. 
-    
+
+    This installation excludes setting up any ingress to the cluster, and it won’t be complete without it.
+
     The following routes should be defined in the `cohere` namespace:
-    
+
     - `/` → `toolkit-frontend.cohere.svc.cluster.local:80`
     - `/api/v1` → `toolkit-backend.cohere.svc.cluster.local:80/v1`
     - `/api/internal/v1` →`toolkit-backend.cohere.svc.cluster.local:80/internal/v1`
-    
+
     These routes can be set up with any desired ingress controller, allowing users to integrate their Ingress and certificate management solutions.
-    
+
 8. **Validate the installation**
     - Check that all pods in the `cohere` namespace are up and `Ready`.
-        
+
         ```bash
         kubectl get pods -n cohere --watch
         ```
-        
+
         <aside>
         ℹ️ *Container images for models are very large and can take several minutes to reach a `Ready` state.*
         </aside>
-        
+
     - Check if the UI is accessible using the hostname defined by the ingress routes in the previous step.
 
 ## Configuration Options
@@ -417,9 +429,9 @@ This section provides advanced configuration options to modify or harden the bas
 ### OIDC Authentication
 
 The base installation described above ships with basic authentication as the login option. This is the simplest authentication option, but it is not recommended for production use cases.
-We recommend setting up Open-ID Connect (OIDC) as the authentication strategy. 
+We recommend setting up Open-ID Connect (OIDC) as the authentication strategy.
 
-It’s up to the user to create an OIDC application with an identity provider (e.g., Okta, Google, Azure, etc). Once the OIDC application is created, you must store the OIDC credentials in the cluster and configure the North Helm installation. 
+It’s up to the user to create an OIDC application with an identity provider (e.g., Okta, Google, Azure, etc). Once the OIDC application is created, you must store the OIDC credentials in the cluster and configure the North Helm installation.
 
 Start by creating a secret in Kubernetes with the client ID and secret:
 
@@ -442,7 +454,7 @@ Once the secret is created, you have two options: modifying the `values.yaml` di
 
 **Option 1): Edit the `values.yaml` file**
 
-Add these values to your `values.yaml`file. This option is preferred if you’re working with GitOps deployment tools. 
+Add these values to your `values.yaml`file. This option is preferred if you’re working with GitOps deployment tools.
 
 ```yaml
 toolkit:
@@ -599,4 +611,3 @@ toolkit:
 --set global.config.cohere.apiKey.secretKeyRef.name="<name>" \
 --set global.config.cohere.apiKey.secretKeyRef.key="<key>"
 ```
-

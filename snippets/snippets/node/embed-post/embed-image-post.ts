@@ -10,7 +10,7 @@ const cohere = new CohereClient({});
   const imageBase64 = `data:${contentType};base64,${stringifiedBuffer}`;
 
   const embed = await cohere.embed({
-    model: 'embed-english-v3.0',
+    model: 'embed-v4.0',
     inputType: 'image',
     embeddingTypes: ['float'],
     images: [imageBase64],

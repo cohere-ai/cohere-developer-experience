@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log"
+	"os"
 	"strings"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
@@ -20,7 +21,7 @@ func (m *MyReader) Name() string {
 }
 
 func main() {
-	co := client.NewClient()
+	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
 
 	resp, err := co.Datasets.Create(
 		context.TODO(),

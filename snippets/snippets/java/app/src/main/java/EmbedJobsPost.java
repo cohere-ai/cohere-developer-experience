@@ -13,7 +13,7 @@ public class EmbedJobsPost {
             .embedJobs()
             .create(
                 CreateEmbedJobRequest.builder()
-                    .model("embed-english-v3.0")
+                    .model("embed-v4.0")
                     .datasetId("ds.id")
                     .inputType(EmbedInputType.SEARCH_DOCUMENT)
                     .build());
