@@ -5,7 +5,7 @@ import { CookbookCard } from './CookbookCard';
 import { TagCategories } from './types';
 import { cookbooks } from './data/cookbooks';
 
-const CARD_COLORS = ['bg-[#EEF0EF]', 'bg-[#FDF2F0]', 'bg-[#F8F1F9]', 'bg-[#F0F2FB]'];
+const CARD_COLORS = ['bg-[#EEF0EF] dark:bg-[#bcc2bf]', 'bg-[#FDF2F0] dark:bg-[#e9ada2]', 'bg-[#F8F1F9] dark:bg-[#d2b1d7]', 'bg-[#F0F2FB] dark:bg-[#a9b3e0]'];
 
 export const Cookbooks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
