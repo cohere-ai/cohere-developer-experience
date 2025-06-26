@@ -40,40 +40,29 @@ You can use this code to invoke Cohere’s Embed English v3 model (`cohere.embed
 
 ```python PYTHON
 import cohere
-
-co = cohere.BedrockClient(
-    aws_region="us-east-1",
+co = cohere.BedrockClientV2(
+    aws_region="...",
     aws_access_key="...",
     aws_secret_key="...",
     aws_session_token="...",
 )
 
-# Input parameters for embed. In this example we are embedding hacker news post titles.
-texts = [
-    "Interesting (Non software) books?",
-    "Non-tech books that have helped you grow professionally?",
-    "I sold my company last month for $5m. What do I do with the money?",
-    "How are you getting through (and back from) burning out?",
-    "I made $24k over the last month. Now what?",
-    "What kind of personal financial investment do you do?",
-    "Should I quit the field of software development?",
-]
-input_type = "clustering"
-truncate = "NONE"  # optional
-model_id = (
-    "cohere.embed-english-v3"  # or "cohere.embed-multilingual-v3"
+result = co.embed(
+    model="cohere.embed-english-v3",
+    input_type="clustering",
+    embedding_types=["float"],
+    texts=[
+        "Interesting (Non software) books?",
+        "Non-tech books that have helped you grow professionally?",
+        "I sold my company last month for $5m. What do I do with the money?",
+        "How are you getting through (and back from) burning out?",
+        "I made $24k over the last month. Now what?",
+        "What kind of personal financial investment do you do?",
+        "Should I quit the field of software development?",
+    ],
 )
 
-
-# Invoke the model and print the response
-result = co.embed(
-    model=model_id,
-    input_type=input_type,
-    texts=texts,
-    truncate=truncate,
-)  # aws_client.invoke_model(**params)
-
-print(result)
+print(result.embeddings.float)
 ```
 
 Note that we've released multimodal embeddings models that are able to handle images in addition to text. Find [more information here](https://docs.cohere.com/docs/multimodal-embeddings).
@@ -106,9 +95,8 @@ You can use this code to invoke our latest Rerank models on Bedrock
 
 ```python PYTHON
 import cohere
-
 co = cohere.BedrockClientV2(
-    aws_region="us-west-2",  # pick a region where the model is available
+    aws_region="...",
     aws_access_key="...",
     aws_secret_key="...",
     aws_session_token="...",
@@ -121,13 +109,11 @@ docs = [
     "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
     "Capital punishment has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.",
 ]
-
 response = co.rerank(
     model="cohere.rerank-v3-5:0",
     query="What is the capital of the United States?",
     documents=docs,
     top_n=3,
 )
-
 print(response)
 ```
