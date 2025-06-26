@@ -34,9 +34,14 @@ keywords: "Cohere, large language models, vision models"
 ## Introduction 
 Multimodality has become an important part of the modern generative AI landscape, as there's real demand for models able to understand and interpret visual data, map relationships between text and visual inputs, and handle use cases like image captioning, visual question-answering, and object identification. 
 
-[MENTION DIFFERENT SCENARIOS WHERE IT'S USEFUL, PULL FROM ANTHROPIC COOKBOOK]
-[ENTERPRISE-SPECIFIC USE CASES, parsing reports, etc., talk to Cassie.]
-[TRANSLATING LANGUAGES IN AN IMAGE]
+[PULL FROM ANTHROPIC COOKBOOK]
+[THIS IS DUPLICATIVE OF THE 'USE CASES' SECTION BELOW, I'LL HAVE TO FIND A WAY TO CONSOLIDATE]
+Excellent in enterprise use cases that benefit from processing images and documents' visual components, such as:
+
+- Chart, graph, diagram, table understanding, and analysis
+- Document OCR and Q&A
+- Real-world natural image processing, including translation of text found in images.
+- more… (cookbook)
 
 [Work with Meor to get a very simple example]
 
@@ -71,12 +76,14 @@ co.chat(
 ```
 
 When detail is set to `“low”`:
-- If the image is larger than 512x512 pixels it will be resized to fit into these dimensions without changing the aspect ratio, so that it can be cached.
+- If the image is larger than 512x512 pixels it will be resized to fit into these dimensions while attempting to approximate the aspect ratio.
 - Each `“low”` detail image takes up 256 tokens that count towards the model’s context length.
 
 When detail is set to `“high”`:
 - If the image is larger than 1536x2048 pixels it will be resized to fit into these dimensions without changing the aspect ratio, so that it can be cached.
 - Under the hood, the model will divide the image into one or more tiles of 512x512 pixels plus one 512x512 pixel preview tile; each of these tiles takes up 256 tokens that count towards the model’s context length. 
+[Per Cassie's comment, add a bit of the details on how we exactly calculate the numbers of 512 X 512 tiles? And I believe we have a max limit of the number being 9?]
+[Per Cassie's comment: We can also discuss this calculation logic in the pricing section like OpenAI's page https://platform.openai.com/docs/guides/images-vision?api-mode=chat]
 
 [TODO]
 Discuss tradeoffs, when does each make scenes
@@ -145,14 +152,8 @@ co.chat(
 
 ### Image Counts 
 
-- Single images, multiple images, etc
+- You can pass in a maximum of 20 images per request, or 20 megabytes (mb) in total data, whichever comes first.
 - API structure
-
-### File Content Moderation
-
-- No real-time content blocking will take place in the API
-- Images cached in GCS will go through CSAM checks
-- Should work with Safety team to ensure we document this properly
 
 ### Rate Limits
 
@@ -169,16 +170,20 @@ TODO
 - Image input limits (e.g. max file size, max num of images per call, resolution, etc)
 - Accuracy Considerations (Low-quality images, complex scenes)
 - Specific Task Limitations (e.g., precise counting, spatial reasoning, identifying people, detecting AI-generated images)
-- Safety and Responsible AI (Prohibited content, biased interpretations)
+Non-Latin Alphabets: Performance may vary when processing images containing text in non-Latin scripts, like Japanese or Korean characters.
+Text Size: To enhance accuracy, consider enlarging small text in images while ensuring no crucial visual information is lost.
+Potential Errors: In some cases, the model might produce inaccurate descriptions or captions.
 
 ### Total number of images
 
-TODO.
+For Command Vision, you can pass in a maximum of 20 images per request, or 20 megabytes (mb) in total data, whichever comes first.
 
 ### Max size of a single image
 
-TODO.
-
+For Command Vision:
+- Low-resolution: 512px x 512px
+- High-resolution: 1536px (short side) x 2048px (long side)
+  - Walter says "high-resolution can be up to 512px*12 total pixels but maybe that's harder to communicate," but I'm not sure what he means.
 
 ### File types
 
@@ -187,95 +192,30 @@ TODO.
 - WEBP (`.webp`)
 - Non-animated GIF (`.gif`)
 
-
-
-
-
 ## Prompt Engineering for Image Models
 
 - How to create effective prompts (system prompt/user prompt)
 - Image/text ordering
-- Referencing Images (e.g., "Image 1:", "Image 2:")
+- [MAYBE LEAVE THIS OUT, Cassie says "We don't support interleaved image and text"] Referencing Images (e.g., "Image 1:", "Image 2:")
 - Multi-turn prompting (e.g. In multi-turn chat, does the API hold context/tokens of the images in the previous turns?)
-
-### Raw Prompting
-
-Currently there is no Raw Prompting API with support for images. This is because, in addition to the prompt, raw image bytes get sent to the model. To allow modelling teams to try various raw prompts on the hosted models, we can implement the following options.
-
-[TODO: SHOULD THIS EVEN BE IN HERE?] #### Option 1: Expose “images” internal-only param in Generate API
-
-This is the true “raw prompting” solution. The user is expected to handle image resizing and to invoke the Image Tiler logic when building the prompt. Image Tiler is available as a python library in the datatools repo.
-
-#### Option 2: Use `skip_preamble` parameter in Chat along with `detail=”unprocessed”`
-
-This is the “raw turns” approach, leaves turn formatting and image tiling logic to the API, while allowing the developer to experiment with various system and user instructions. Setting the `detail` level for each image to “unprocessed” will skip all API-level image processing (the model will do the image resizing).
-
-Request (no images)
-
-```python PYTHON 
-{
-  model="command-vision"
-  skip_preamble=True,
-  messages=[
-	{ "role": "system", "content": "custom system message" },
-	{ "role": "user", "content": "custom user message" },
-    { "role": "system", "content": "custom system message" }
-  ]
-}
-```
-
-**Prompt**
-```bash
-<BOS_TOKEN><|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|>custom system message<|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|USER_TOKEN|>custom user message<|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|>custom system message<|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>"
-```
-
-**Request** 
-
-```python PYTHON
-{
-  model="command-vision"
-  skip_preamble=True,
-  messages=[
-	{
-        "role": "system",
-        "content": "custom system message"
-    },
-    {
-        "role": "user", 
-        "content": [{ "type": "image_url", "image_url": {
-            "url": "..",
-            "detail": "unprocessed"
-          }
-        }
-      ]
-    },
-  ]
-}
-```
-
-**Prompt** 
-
-```txt 
-<BOS_TOKEN><|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|>custom system message<|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|ofUSER_TOKEN|><|START_OF_IMG|>GLOBAL_TILE<|IMG_PATCH|><|IMG_PATCH|><|IMG_PATCH|>...<|IMG_PATCH|><|END_OF_IMG|><|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
-```
-
-**Note:** there are currently some limitations in the API around interweaving text and images in the same message object. Specifically, if **the same message (aka turn)** object contains both images and text, the images will always make it after the text **of that message (aka turn)** in the prompt.
-
-Example:
-
-This turn message: `<image1> how is the image above different from the image below? <image2>`
-
-Becomes this turn in the prompt: `<|START_TURN|>how is the image above different from the image below? <image1> <image2><|END_TURN|>`
-
-This was a requirement for the current set of multi-modal models, but the API will support mix-and-matching content within the same turn soon after launch.
 
 ## Example Use Cases
 
-- Question answering
-- Data extraction with structured outputs
-- Multilingual multimodal
-- Multimodal RAG
+Excellent in enterprise use cases that benefit from processing images and documents' visual components, such as:
+
+- Chart, graph, diagram, table understanding, and analysis
+- Document OCR and Q&A
+- Real-world natural image processing
 - more… (cookbook)
+
+## Guidelines 
+
+- No real-time content blocking will take place in the API
+- Images cached in GCS will go through CSAM checks
+- Cohere Tokens
+- Put'Inappropriate Use' in the guidelines section (IF I decide to include one).
+- Safety and Responsible AI (Prohibited content, biased interpretations)
+- Should work with Safety team to ensure we document this properly
 
 ## Best Practices
 
@@ -283,7 +223,8 @@ This was a requirement for the current set of multi-modal models, but the API wi
 - Recommended image size/resolution
 - Resizing Large Images (Benefits: latency, cost, performance; recommended dimensions)
 - Impact of image Quality (Clarity, blurriness, legibility of text)
-- Getting best results out of
+- Getting best results out of the model
+- Official languages: English, Portuguese, Italian, French, German, and Spanish.
 
 
 
