@@ -1,11 +1,11 @@
 export interface TagCategories {
-  capabilities: { original: string; display: string }[];
+  useCases: { original: string; display: string }[];
   products: { original: string; display: string }[];
   thirdParty: { original: string; display: string }[];
 }
 
 export interface CookbooksTagCategories {
-  capabilities: string[]; 
+  useCases: string[]; 
   products: string[];
   thirdParty: string[];
 }

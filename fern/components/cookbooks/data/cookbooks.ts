@@ -7,7 +7,7 @@ export const cookbooks: Cookbook[] = [
     title: "Agent API Calls",
     description: "A walkthrough of how to use Langchain cohere_react_agent to make API calls to external services that require regex.",
     tags: {
-      capabilities: ["agents"],
+      useCases: ["agents"],
       products: ["command"],
       thirdParty: ["langchain"],
     },
@@ -21,7 +21,7 @@ export const cookbooks: Cookbook[] = [
     title: "Short-Term Memory Handling for Agents",
     description: "A walkthrough of how to use Langchain cohere_react_agent to effectively manage short-term chat history that contains tool calls with Langchain.",
     tags: {
-      capabilities: ["agents"],
+      useCases: ["agents"],
       products: ["command"],
       thirdParty: ["langchain"],
     },
@@ -35,7 +35,7 @@ export const cookbooks: Cookbook[] = [
     title: "Agentic Multi-Stage RAG with Cohere Tools API",
     description: "How to use Agents to improve RAG performance.",
     tags: {
-      capabilities: ["agents", "rag"],
+      useCases: ["agents", "rag"],
       products: ["command", "embed"],
       thirdParty: [],
     },
@@ -49,7 +49,7 @@ export const cookbooks: Cookbook[] = [
     title: "Agentic RAG for PDFs with mixed data",
     description: "A walkthrough of how to use Langchain cohere_react_agent to run RAG as an agent tool to handle PDFs with mixed table and text data.",
     tags: {
-      capabilities: ["agents", "rag"],
+      useCases: ["agents", "rag"],
       products: ["command", "embed"],
       thirdParty: ["langchain"],
     },
@@ -63,7 +63,7 @@ export const cookbooks: Cookbook[] = [
     title: "Analysis of Form 10-K/10-Q Using Cohere and RAG",
     description: "Jumpstart financial analysis of 10-Ks or 10-Qs with Cohere's Command model and LlamaIndex tooling.",
     tags: {
-      capabilities: ["summarization"],
+      useCases: ["summarization"],
       products: ["command", "embed"],
       thirdParty: ["langchain"],
     },
@@ -77,7 +77,7 @@ export const cookbooks: Cookbook[] = [
     title: "Analyzing Hacker News with Cohere",
     description: "Learn how to analyze textual data using Cohere's tools.",
     tags: {
-      capabilities: ["clustering"],
+      useCases: ["clustering"],
       products: ["embed"],
       thirdParty: ["bertopic"],
     },
@@ -91,7 +91,7 @@ export const cookbooks: Cookbook[] = [
     title: "Multi-Step Tool Use with Cohere",
     description: "Multi-step tool use allows developers to connect Cohere's models to external tools like search engines, APIs, and databases.",
     tags: {
-      capabilities: ["agents"],
+      useCases: ["agents"],
       products: ["command", "embed"],
       thirdParty: ["langchain"],
     },
@@ -105,7 +105,7 @@ export const cookbooks: Cookbook[] = [
     title: "Basic RAG: Retrieval-Augmented Generation with Cohere",
     description: "RAG boosts the accuracy of language models by combining them with a retrieval system.",
     tags: {
-      capabilities: ["rag"],
+      useCases: ["rag"],
       products: ["command", "embed", "rerank"],
       thirdParty: ["langchain"],
     },
@@ -119,7 +119,7 @@ export const cookbooks: Cookbook[] = [
     title: "Basic Semantic Search with Cohere Models",
     description: "Learn how to build a simple semantic search engine using sentence embeddings.",
     tags: {
-      capabilities: ["search"],
+      useCases: ["search"],
       products: ["embed"],
       thirdParty: [],
     },
@@ -133,7 +133,7 @@ export const cookbooks: Cookbook[] = [
     title: "Getting Started with Basic Tool Use",
     description: "Connect large language models to external tools, like search engines, APIs, and databases, to access and utilise a wider range of data.",
     tags: {
-      capabilities: ["agents"],
+      useCases: ["agents"],
       products: ["command"],
       thirdParty: [],
     },
@@ -147,7 +147,7 @@ export const cookbooks: Cookbook[] = [
     title: "Calendar Agent with Native Multi Step Tool",
     description: "A minimal working example of how to use our chat API to call tools.",
     tags: {
-      capabilities: ["agents"],
+      useCases: ["agents"],
       products: ["command"],
       thirdParty: [],
     },
@@ -161,7 +161,7 @@ export const cookbooks: Cookbook[] = [
     title: "Effective Chunking Strategies for RAG",
     description: "Explore chunking strategies for RAG systems.",
     tags: {
-      capabilities: ["rag"],
+      useCases: ["rag"],
       products: ["command", "embed", "rerank"],
       thirdParty: ["langchain", "llamaindex"],
     },
@@ -175,7 +175,7 @@ export const cookbooks: Cookbook[] = [
     title: "Creating a QA Bot From Technical Documentation",
     description: "Create a chatbot that answers user questions based on technical documentation using Cohere embeddings and LlamaIndex.",
     tags: {
-      capabilities: ["rag"],
+      useCases: ["rag"],
       products: ["command", "embed", "rerank"],
       thirdParty: ["llamaindex"],
     },
@@ -189,7 +189,7 @@ export const cookbooks: Cookbook[] = [
     title: "Financial CSV Agent with Native Multi-Step Cohere API",
     description: "This notebook demonstrates how to setup a Cohere Native API sequence of tool calls to answer questions over the income statement and balance sheet from Apple's SEC10K 2020 form.",
     tags: {
-      capabilities: ["agents"],
+      useCases: ["agents"],
       products: ["command"],
       thirdParty: ["langchain"],
     },
@@ -203,7 +203,7 @@ export const cookbooks: Cookbook[] = [
     title: "Financial CSV Agent with Langchain",
     description: "The notebook demonstrates how to setup a Langchain Cohere ReAct Agent to answer questions over the income statement and balance sheet from Apple's SEC10K 2020 form.",
     tags: {
-      capabilities: ["agents"],
+      useCases: ["agents"],
       products: ["command"],
       thirdParty: ["langchain"],
     },
@@ -217,7 +217,7 @@ export const cookbooks: Cookbook[] = [
     title: "Migrating away from deprecated create_csv_agent in langchain-cohere",
     description: "This page contains a tutorial on how to build a CSV agent without the deprecated 'create_csv_agent abstraction in langchain-cohere v0.3.5 and beyond.",
     tags: {
-      capabilities: ["agent"],
+      useCases: ["agent"],
       products: ["command"],
       thirdParty: ["langchain"],
     },
@@ -231,7 +231,7 @@ export const cookbooks: Cookbook[] = [
     title: "A Data Analyst Agent Built with Cohere and Langchain",
     description: "Build a data analyst agent with Python and Cohere's Command R+ mode and Langchain.",
     tags: {
-      capabilities: ["agent"],
+      useCases: ["agent"],
       products: ["command"],
       thirdParty: ["langchain"],
     },
@@ -245,7 +245,7 @@ export const cookbooks: Cookbook[] = [
     title: "Advanced Document Parsing For Enterprises",
     description: "Learn how to parse PDFs into text with a real-world example.",
     tags: {
-      capabilities: ["rag"],
+      useCases: ["rag"],
       products: ["command", "embed", "rerank"],
       thirdParty: [],
     },
@@ -259,7 +259,7 @@ export const cookbooks: Cookbook[] = [
     title: "End-to-end RAG using Elasticsearch and Cohere",
     description: "Learn how to use Cohere and Elastic for semantic search and retrieval-augmented generation.",
     tags: {
-      capabilities: ["rag"],
+      useCases: ["rag"],
       products: ["command", "embed", "rerank"],
       thirdParty: ["elasticsearch"],
     },
@@ -273,7 +273,7 @@ export const cookbooks: Cookbook[] = [
     title: "Serverless Semantic Search with Cohere and Pinecone",
     description: "Learn how to use Cohere's Embed Jobs and Pinecone's serverless solution to perform semantic search.",
     tags: {
-      capabilities: ["search"],
+      useCases: ["search"],
       products: ["embed", "rerank", "datasets"],
       thirdParty: ["pinecone"],
     },
@@ -287,7 +287,7 @@ export const cookbooks: Cookbook[] = [
     title: "Semantic Search with Cohere Embed Jobs",
     description: "Learn how to use Cohere Embed Jobs to create semantic search functionality.",
     tags: {
-      capabilities: ["search"],
+      useCases: ["search"],
       products: ["embed_jobs", "embed", "rerank"],
       thirdParty: [],
     },
@@ -301,7 +301,7 @@ export const cookbooks: Cookbook[] = [
     title: "Fueling Generative Content with Keyword Research",
     description: "Enhance content creation with keyword-based topic clusters, generating blog ideas with Cohere's Chat model.",
     tags: {
-      capabilities: ["generation", "clustering"],
+      useCases: ["generation", "clustering"],
       products: ["chat", "embed"],
       thirdParty: [],
     },
@@ -315,7 +315,7 @@ export const cookbooks: Cookbook[] = [
     title: "Grounded Summarization Using Command R",
     description: "Learn how to summarise long documents with citations, reducing cost and improving latency.",
     tags: {
-      capabilities: ["summarization"],
+      useCases: ["summarization"],
       products: ["chat", "embed"],
       thirdParty: [],
     },
@@ -329,7 +329,7 @@ export const cookbooks: Cookbook[] = [
     title: "Long-Form Text Strategies with Cohere",
     description: "Techniques to address lengthy documents exceeding the context window of LLMs.",
     tags: {
-      capabilities: ["generation", "rag"],
+      useCases: ["generation", "rag"],
       products: ["command", "embed", "rerank"],
       thirdParty: [],
     },
@@ -343,7 +343,7 @@ export const cookbooks: Cookbook[] = [
     title: "Migrating Monolithic Prompts to Command-R with RAG",
     description: "Command-R simplifies prompt migration to RAG, reducing hallucination and improving conciseness and grounding.",
     tags: {
-      capabilities: ["generation"],
+      useCases: ["generation"],
       products: ["command"],
       thirdParty: [],
     },
@@ -357,7 +357,7 @@ export const cookbooks: Cookbook[] = [
     title: "Multilingual Search with Cohere and Langchain",
     description: "Multilingual search with Cohere and Langchain.",
     tags: {
-      capabilities: ["search"],
+      useCases: ["search"],
       products: ["command", "embed"],
       thirdParty: ["langchain"],
     },
@@ -371,7 +371,7 @@ export const cookbooks: Cookbook[] = [
     title: "PDF Extractor with Native Multi Step Tool Use",
     description: "How we can leverage agents to extract information from PDFs?",
     tags: {
-      capabilities: ["agents"],
+      useCases: ["agents"],
       products: ["command"],
       thirdParty: ["unstructured"],
     },
@@ -385,7 +385,7 @@ export const cookbooks: Cookbook[] = [
     title: "Deep Dive Into Evaluating RAG Outputs",
     description: "Learn how to evaluate RAG models.",
     tags: {
-      capabilities: ["rag"],
+      useCases: ["rag"],
       products: [],
       thirdParty: ["llamaindex"],
     },
@@ -399,7 +399,7 @@ export const cookbooks: Cookbook[] = [
     title: "RAG With Chat Embed and Rerank via Pinecone",
     description: "This notebook shows how to build a RAG-powered chatoot with Cohere's Chat endpoint.",
     tags: {
-      capabilities: ["rag"],
+      useCases: ["rag"],
       products: ["command", "embed", "rerank"],
       thirdParty: [],
     },
@@ -413,7 +413,7 @@ export const cookbooks: Cookbook[] = [
     title: "Learn How Cohere’s Rerank Models Work",
     description: "Improve search results with Cohere's Relevance Endpoint, which reranks documents for better accuracy.",
     tags: {
-      capabilities: ["search"],
+      useCases: ["search"],
       products: ["rerank"],
       thirdParty: [],
     },
@@ -427,7 +427,7 @@ export const cookbooks: Cookbook[] = [
     title: "Build a SQL Agent with Cohere’s LLM Platform",
     description: "In this notebook we explore how to setup a Cohere ReAct Agent to answer questions over SQL Databases using Langchain's SQLDBToolkit.",
     tags: {
-      capabilities: ["agents"],
+      useCases: ["agents"],
       products: ["command"],
       thirdParty: ["langchain"],
     },
@@ -441,7 +441,7 @@ export const cookbooks: Cookbook[] = [
     title: "Evaluating Text Summarization Models",
     description: "This cookbook demonstrates an approach to evaluating summarization tasks using LLM evaluation.",
     tags: {
-      capabilities: ["summarization"],
+      useCases: ["summarization"],
       products: ["command"],
       thirdParty: [],
     },
@@ -455,7 +455,7 @@ export const cookbooks: Cookbook[] = [
     title: "Text Classification Using Embeddings",
     description: "Build a text classifier with Cohere embeddings. This notebook shows you how to train a sentiment analysis model with a small dataset.",
     tags: {
-      capabilities: ["classification"],
+      useCases: ["classification"],
       products: ["embed"],
       thirdParty: [],
     },
@@ -469,7 +469,7 @@ export const cookbooks: Cookbook[] = [
     title: "Topic Modeling System for AI Papers",
     description: "Topic Modeling System for AI Papers",
     tags: {
-      capabilities: ["clustering"],
+      useCases: ["clustering"],
       products: ["embed"],
       thirdParty: [],
     },
@@ -483,7 +483,7 @@ export const cookbooks: Cookbook[] = [
     title: "Wikipedia Semantic Search with Cohere + Weaviate",
     description: "Search 10 million Wikipedia vectors with Cohere's multilingual model and Weaviate's public dataset.",
     tags: {
-      capabilities: ["search"],
+      useCases: ["search"],
       products: ["embed"],
       thirdParty: ["weaviate"],
     },
@@ -497,7 +497,7 @@ export const cookbooks: Cookbook[] = [
     title: "Wikipedia Semantic Search with Cohere Embedding Archives",
     description: "Find relevant Wikipedia passages with semantic search and Cohere embeddings.",
     tags: {
-      capabilities: ["search"],
+      useCases: ["search"],
       products: ["embed"],
       thirdParty: [],
     },
@@ -511,7 +511,7 @@ export const cookbooks: Cookbook[] = [
     title: "Build Chatbots with MongoDB and Cohere",
     description: "Build a chatbot that provides actionable insights on technology company market reports.",
     tags: {
-      capabilities: ["rag"],
+      useCases: ["rag"],
       products: ["command", "embed", "rerank"],
       thirdParty: ["mongodb"],
     },
@@ -525,7 +525,7 @@ export const cookbooks: Cookbook[] = [
     title: "Finetuning on Cohere’s Platform",
     description: "An example of finetuning using Cohere's platform and a financial dataset.",
     tags: {
-      capabilities: ["finetuning"],
+      useCases: ["finetuning"],
       products: ["command"],
       thirdParty: [],
     },
@@ -539,7 +539,7 @@ export const cookbooks: Cookbook[] = [
     title: "Deploy your finetuned model on AWS Marketplace",
     description: "Learn how to deploy your finetuned model on AWS Marketplace.",
     tags: {
-      capabilities: ["finetuning"],
+      useCases: ["finetuning"],
       products: ["command"],
       thirdParty: ["aws"],
     },
@@ -553,7 +553,7 @@ export const cookbooks: Cookbook[] = [
     title: "Finetuning Cohere Models on AWS Sagemaker",
     description: "Learn how to finetune one of Cohere's models on AWS Sagemaker.",
     tags: {
-      capabilities: ["finetuning"],
+      useCases: ["finetuning"],
       products: ["command"],
       thirdParty: ["aws"],
     },
@@ -567,7 +567,7 @@ export const cookbooks: Cookbook[] = [
     title: "SQL Agent with Cohere and LangChain (i-5O Case Study)",
     description: "Build a SQL agent with Cohere and LangChain in the manufacturing industry.",
     tags: {
-      capabilities: ["rag"],
+      useCases: ["rag"],
       products: ["command"],
       thirdParty: ["langchain"],
     },
@@ -581,7 +581,7 @@ export const cookbooks: Cookbook[] = [
     title: "Introduction to Aya Vision",
     description: "Explore the capabilities of Aya Vision, which can take text and image inputs to generates text responses.",
     tags: {
-      capabilities: ["multimodal"],
+      useCases: ["multimodal"],
       products: ["aya"],
       thirdParty: [],
     },

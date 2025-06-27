@@ -10,7 +10,7 @@ const CARD_COLORS = ['bg-[#EEF0EF] dark:bg-[#636363]', 'bg-[#FDF2F0] dark:bg-[#3
 export const Cookbooks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<TagCategories>({
-    capabilities: [],
+    useCases: [],
     products: [],
     thirdParty: []
   });
@@ -28,9 +28,9 @@ export const Cookbooks: React.FC = () => {
     const matchesQuery = searchQuery === '' || 
       cookbook.title.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesUseCases = selectedTags.capabilities.length === 0 || 
-      selectedTags.capabilities.every(tag => 
-        cookbook.tags.capabilities.some(c => c === tag.original)
+    const matchesUseCases = selectedTags.useCases.length === 0 || 
+      selectedTags.useCases.every(tag => 
+        cookbook.tags.useCases.some(c => c === tag.original)
       );
 
     const matchesEndpoints = selectedTags.products.length === 0 || 

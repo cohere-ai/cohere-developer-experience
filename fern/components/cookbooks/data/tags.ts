@@ -15,8 +15,8 @@ function transformTags(tags: string[]): { original: string; display: string }[] 
 }
 
 export const ALL_TAGS: TagCategories = {
-  capabilities: transformTags(
-    cookbooks.flatMap((cookbook) => cookbook.tags.capabilities)
+  useCases: transformTags(
+    cookbooks.flatMap((cookbook) => cookbook.tags.useCases)
   ),
   products: transformTags(
     cookbooks.flatMap((cookbook) => cookbook.tags.products)

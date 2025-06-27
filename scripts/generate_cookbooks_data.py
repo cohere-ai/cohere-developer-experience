@@ -70,7 +70,7 @@ with open(INPUT_CSV_FILE_PATH, newline='', encoding='utf-8') as csvfile, open(OU
         tsfile.write(f'    title: "{title}",\n')
         tsfile.write(f'    description: "{description}",\n')
         tsfile.write("    tags: {\n")
-        tsfile.write(f'      capabilities: {to_ts_array(row.get("capability", ""))},\n')
+        tsfile.write(f'      useCases: {to_ts_array(row.get("use_cases", ""))},\n')
         tsfile.write(f'      products: {to_ts_array(row.get("product", ""))},\n')
         tsfile.write(f'      thirdParty: {to_ts_array(row.get("third_party", ""))},\n')
         tsfile.write("    },\n")
