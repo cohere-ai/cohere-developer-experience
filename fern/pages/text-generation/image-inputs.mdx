@@ -11,16 +11,9 @@ keywords: "Cohere, large language models, vision models"
 - Simplest possible example
 - ~Image detail~
   - Discuss tradeoffs, when does each make scenes
-  - Talk about the default ('auto')
-    - Chooses for you, based on image dimension 
   - 'high' means image is split into tiles (up to `n`, whatever the max is), each tile is 256*something 
     - Provide an example, i.e., 1000x1000, you'll have 1000/256x1000/256, plus the preview tile, this will result in `n` tokens.
   - Token counting
-- passing an Image
-  - Base 64 and HTTP URLs 
-    - Base64 can be used anywhere
-    - HTTP means you don't have to re-upload the image on every request.
-      - With the ChatAPI, you have to append messages, which would be prohibitive if you're sending massive images. But with an HTTP URL, multi-turn is leaner. This is much lower latency.
 - Image specs  
   - formats 
     - PNG, JPEG, GIF 
@@ -128,8 +121,8 @@ When detail is set to “high”:
 When detail is unspecified or is set to “auto”: 
 - If any of the sides is larger than 768px (configurable per model) then use detail `high`, otherwise use detail `low`.
 
+For an example of how these cost calculations work, check out the section below. 
 
-[Per Cassie's comment, add a bit of the details on how we exactly calculate the numbers of 512 X 512 tiles? And I believe we have a max limit of the number being 9?]
 [Per Cassie's comment: We can also discuss this calculation logic in the pricing section like OpenAI's page https://platform.openai.com/docs/guides/images-vision?api-mode=chat]
 
 Here are some tradeoffs to keep in mind when deciding between different levels of detail:
@@ -140,9 +133,15 @@ Here are some tradeoffs to keep in mind when deciding between different levels o
 ### Image Formats
 Cohere's Vision models support images in three formats:
 
-- Base64: how to encode, API structure
+- Base64: can be used anywhere,
+  - how to encode
+  - API structure
 - HTTP URL: faster, but you need to upload your image somewhere, and not available outside platform (not in Azure, Bedrock)
+  - HTTP means you don't have to re-upload the image on every request.
+    - With the ChatAPI, you have to append messages, which would be prohibitive if you're sending massive images. But with an HTTP URL, multi-turn is leaner. This is much lower latency.
 - URL: how to format, API structure [HOW IS THIS DIFFERENT?]
+
+
 
 As with Cohere's [Aya models](https://docs.cohere.com/docs/aya-vision), users can send in images as base64 data url strings (e.g., `“data:image/png;base64,...”`) by setting the `content` type to `image_url”`:
 
@@ -191,9 +190,7 @@ co.chat(
 )
 ```
 
-## Image Preparation
-
-
+## Limitations of working with the Image API
 
 ### Image Counts 
 The Cohere API has the following limitations with respect to image counts:
@@ -207,31 +204,43 @@ For Command Vision:
 - High-resolution: 1536px (short side) x 2048px (long side)
   - Walter says "high-resolution can be up to 512px*12 total pixels but maybe that's harder to communicate," but I'm not sure what he means.
 
+### File types
+These are the supported file types:
+- PNG (`.png`)
+- JPEG (`.jpeg` and `.jpg`)
+- WEBP (`.webp`)
+- Non-animated GIF (`.gif`)
+
+### Accuracy considerations
+(Low-quality images, complex scenes)
+
+
+### Specific Task Limitations
+(e.g., precise counting, spatial reasoning, identifying people, detecting AI-generated images)
+
+### Non-Latin Alphabets
+Performance may vary when processing images containing text in non-Latin scripts, like Japanese or Korean characters.
+
+### Text Size
+If looking at small text in images, set `detail='high'`
+
+### Potential Errors
+In some cases, the model might produce inaccurate descriptions or captions.
+
 ### Rate Limits
 
-TODO
+Image inputs don't change rate limit considerations; for more detail, check out our dedicated [rate limit documentation](https://docs.cohere.com/docs/rate-limits).
 
 ### Understanding Costs 
 
 - How image tokens are estimated (e.g., (width_px * height_px) / xyz)
 - Impact of image size and number on cost
-- Example cost calculations
 
-### Limitations of working with the Image API
-
-- Image input limits (e.g. max file size, max num of images per call, resolution, etc)
-- Accuracy Considerations (Low-quality images, complex scenes)
-- Specific Task Limitations (e.g., precise counting, spatial reasoning, identifying people, detecting AI-generated images)
-Non-Latin Alphabets: Performance may vary when processing images containing text in non-Latin scripts, like Japanese or Korean characters.
-Text Size: if looking at small text in images, set `detail='high'`
-Potential Errors: In some cases, the model might produce inaccurate descriptions or captions.
-
-### File types
-
-- PNG (`.png`)
-- JPEG (`.jpeg` and `.jpg`)
-- WEBP (`.webp`)
-- Non-animated GIF (`.gif`)
+Here's an example calculation of how an image is broken down by the model:
+- Suppose a user provides a 10,000px x 20,000px image.
+- This image would be resized down to 1024x2048px (since the longest side has to be at most 2048 pixels long)
+the 1024x2048 image fits 8 tiles of 512x512
+- What ultimately gets sent to the model is one 512x512 preview thumbnail in addition to eight tiles of 512x512. Since the thumbnail is 256 tokens, and each of the 8 tiles is 256 tokens, that means the image will take up 9 x 256 = 2304 tokens.
 
 ## Prompt Engineering for Image Models
 
@@ -266,9 +275,3 @@ Excellent in enterprise use cases that benefit from processing images and docume
 - Impact of image Quality (Clarity, blurriness, legibility of text)
 - Getting best results out of the model
 - Official languages: English, Portuguese, Italian, French, German, and Spanish.
-
-
-
-## FAQs
-
-TODO
