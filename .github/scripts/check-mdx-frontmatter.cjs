@@ -15,6 +15,7 @@ const validators = [checkDescriptionLength, checkTitleLength];
 
 // List of folders to exclude (relative to mdxDir)
 const excludedFolders = ["-ARCHIVE-", "api-reference", "llm-university"];
+const filesToExclude = ["fern/pages/changelog/overview.mdx"];
 
 function logInvalidMessage(message) {
     console.error(`[INVALID]: ${message}`);
@@ -28,6 +29,12 @@ function shouldExcludeFolder(dirPath) {
 
 async function shouldExcludeFile(filePath) {
   try {
+    for (const excludedFile of filesToExclude) {
+      if (filePath.endsWith(excludedFile)) {
+        return true;
+      }
+    }
+    
     const fileContent = await fs.readFile(filePath, "utf8");
     const { data } = matter(fileContent);
     return data.hidden === true;
