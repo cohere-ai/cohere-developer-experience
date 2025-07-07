@@ -50,7 +50,7 @@ paths:
           example: text/event-stream
       x-fern-audiences:
         - public
-      summary: Chat
+      summary: Chat V1 API
       operationId: chat
       x-fern-streaming:
         stream-description: |
@@ -5384,7 +5384,7 @@ paths:
                       {
                         "name": "query_daily_sales_report",
                         "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
-                        "parameterDefinitions": {
+                        "parameter_definitions": {
                           "day": {
                             "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
                             "type": "str",
@@ -5395,7 +5395,7 @@ paths:
                       {
                         "name": "query_product_catalog",
                         "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
-                        "parameterDefinitions": {
+                        "parameter_definitions": {
                           "category": {
                             "description": "Retrieves product information data for all products in this category.",
                             "type": "str",
@@ -5872,7 +5872,7 @@ paths:
           $ref: "#/components/responses/GatewayTimeout"
   /v2/chat:
     post:
-      summary: Chat with the model
+      summary: Chat V2 API
       operationId: chatv2
       x-fern-audiences:
         - v2-beta
@@ -5981,9 +5981,9 @@ paths:
                   items:
                     $ref: "#/components/schemas/ToolV2"
                   description: |
-                    A list of available tools (functions) that the model may suggest invoking before producing a text response.
+                    A list of tools (functions) available to the model. The model response may contain 'tool_calls' to the specified tools.
 
-                    When `tools` is passed (without `tool_results`), the `text` content in the response will be empty and the `tool_calls` field in the response will be populated with a list of tool calls that need to be made. If no calls need to be made, the `tool_calls` array will be empty.
+                    Learn more in the [Tool Use guide](https://docs.cohere.com/docs/tools).
                 strict_tools:
                   x-fern-audiences:
                     - public
@@ -6022,7 +6022,7 @@ paths:
                     Used to select the [safety instruction](https://docs.cohere.com/v2/docs/safety-modes) inserted into the prompt. Defaults to `CONTEXTUAL`.
                     When `OFF` is specified, the safety instruction will be omitted.
 
-                    Safety modes are not yet configurable in combination with `tools`, `tool_results` and `documents` parameters.
+                    Safety modes are not yet configurable in combination with `tools` and `documents` parameters.
 
                     **Note**: This parameter is only compatible newer Cohere models, starting with [Command R 08-2024](https://docs.cohere.com/docs/command-r#august-2024-release) and [Command R+ 08-2024](https://docs.cohere.com/docs/command-r-plus#august-2024-release).
 
@@ -8355,7 +8355,7 @@ paths:
     post:
       x-fern-audiences:
         - public
-      summary: Embed
+      summary: Embed V1 API
       operationId: embed
       parameters:
         - $ref: "#/components/parameters/RequestSource"
@@ -11937,7 +11937,7 @@ paths:
         - v2-beta
       x-fern-sdk-group-name: v2
       x-fern-sdk-method-name: embed
-      summary: Embed
+      summary: Embed V2 API
       operationId: embedv2
       parameters:
         - $ref: "#/components/parameters/RequestSource"
@@ -12001,8 +12001,17 @@ paths:
 
                 co = cohere.ClientV2()
 
+                text_inputs = [
+                    {
+                        "content": [
+                            {"type": "text", "text": "hello"},
+                            {"type": "text", "text": "goodbye"}
+                        ]
+                    },
+                ]
+
                 response = co.embed(
-                    texts=["hello", "goodbye"],
+                    inputs=text_inputs,
                     model="embed-v4.0",
                     input_type="classification",
                     embedding_types=["float"],
@@ -14254,11 +14263,23 @@ paths:
                 f"data:{content_type};base64,{stringified_buffer}"
 
 
+                image_inputs = [
+                    {
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": image_base64}
+                            }
+                        ]
+                    }
+                ]
+
+
                 response = co.embed(
                     model="embed-v4.0",
                     input_type="image",
                     embedding_types=["float"],
-                    images=[image_base64],
+                    inputs=image_inputs
                 )
 
 
@@ -16166,7 +16187,7 @@ paths:
     post:
       x-fern-audiences:
         - public
-      summary: Rerank
+      summary: Rerank V1 API
       operationId: rerank
       parameters:
         - $ref: "#/components/parameters/RequestSource"
@@ -16583,7 +16604,7 @@ paths:
                   search_units: 1
   /v2/rerank:
     post:
-      summary: Rerank
+      summary: Rerank V2 API
       operationId: rerankv2
       x-fern-audiences:
         - v2-beta
@@ -21069,6 +21090,7 @@ paths:
               required:
                 - name
                 - settings
+                - finetuned_model
         required: true
       x-fern-examples:
         - code-samples:
@@ -27593,6 +27615,11 @@ components:
             - public
           description: Specify this name in the `model` parameter of API requests to use
             your chosen model.
+        is_deprecated:
+          type: boolean
+          x-fern-audiences:
+            - public
+          description: Whether the model is deprecated or not.
         endpoints:
           type: array
           x-fern-audiences:
@@ -28065,7 +28092,9 @@ components:
           schema:
             type: object
             properties:
-              data:
+              message:
+                type: string
+              id:
                 type: string
             x-fern-type-name: NotFoundErrorBody
       x-fern-type-name: BadRequest
@@ -28079,7 +28108,9 @@ components:
           schema:
             type: object
             properties:
-              data:
+              message:
+                type: string
+              id:
                 type: string
             x-fern-type-name: UnauthorizedErrorBody
       x-fern-type-name: Unauthorized
@@ -28093,7 +28124,9 @@ components:
           schema:
             type: object
             properties:
-              data:
+              message:
+                type: string
+              id:
                 type: string
             x-fern-type-name: BadRequestErrorBody
       x-fern-type-name: Forbidden
@@ -28107,7 +28140,9 @@ components:
           schema:
             type: object
             properties:
-              data:
+              message:
+                type: string
+              id:
                 type: string
             x-fern-type-name: UnauthorizedErrorBody
       x-fern-type-name: NotFound
@@ -28122,7 +28157,9 @@ components:
           schema:
             type: object
             properties:
-              data:
+              message:
+                type: string
+              id:
                 type: string
             x-fern-type-name: UnprocessableEntityErrorBody
       x-fern-type-name: UnprocessableEntity
@@ -28133,7 +28170,9 @@ components:
           schema:
             type: object
             properties:
-              data:
+              message:
+                type: string
+              id:
                 type: string
             x-fern-type-name: GatewayTimeoutErrorBody
       x-fern-type-name: RateLimit
@@ -28145,7 +28184,9 @@ components:
           schema:
             type: object
             properties:
-              data:
+              message:
+                type: string
+              id:
                 type: string
             x-fern-type-name: ForbiddenErrorBody
       x-fern-type-name: InvalidToken
@@ -28157,7 +28198,9 @@ components:
           schema:
             type: object
             properties:
-              data:
+              message:
+                type: string
+              id:
                 type: string
             x-fern-type-name: InternalServerErrorBody
       x-fern-type-name: RequestCancelled
@@ -28169,7 +28212,9 @@ components:
           schema:
             type: object
             properties:
-              data:
+              message:
+                type: string
+              id:
                 type: string
             x-fern-type-name: ServiceUnavailableErrorBody
       x-fern-type-name: InternalServerError
@@ -28181,7 +28226,9 @@ components:
           schema:
             type: object
             properties:
-              data:
+              message:
+                type: string
+              id:
                 type: string
             x-fern-type-name: NotImplementedErrorBody
       x-fern-type-name: NotImplemented
@@ -28194,7 +28241,9 @@ components:
           schema:
             type: object
             properties:
-              data:
+              message:
+                type: string
+              id:
                 type: string
             x-fern-type-name: TooManyRequestsErrorBody
       x-fern-type-name: ServiceUnavailable
@@ -28207,7 +28256,9 @@ components:
           schema:
             type: object
             properties:
-              data:
+              message:
+                type: string
+              id:
                 type: string
             x-fern-type-name: InvalidTokenErrorBody
       x-fern-type-name: GatewayTimeout
