@@ -10,22 +10,22 @@ keywords: "Cohere, large language models, vision models"
 ## Introduction 
 Multimodality has become an important part of the modern generative AI landscape, as there's real demand for models able to understand and interpret visual data, map relationships between text and visual inputs, and handle use cases like image captioning, visual question-answering, and object identification. 
 
-[THIS IS DUPLICATIVE OF THE 'USE CASES' SECTION BELOW, I'LL HAVE TO FIND A WAY TO CONSOLIDATE]
-Excellent in enterprise use cases that benefit from processing images and documents' visual components, such as:
+Cohere has released models capable of interacting with images, and they're excellent in enterprise use cases such as:
 
 - Analysis of charts, graphs, and diagrams;
 - Extracting and understanding in-image tables;
 - Document optical character recognition (OCR) and question answering;
 - Natural-language image processing, including translation of text found in images.
-- more… (cookbook)
+
+For more detailed breakdowns of these and other applications, check out our [cookbooks]().
 
 Cohere's vision models are designed to work through an interface and API structure that looks almost exactly like all of our other Command models, making it easy to get started with our image-processing functionality straightaway. 
 
-This image, for example, contains a summary of retrieval accuracy data from multiple languages:
+This image, for example, contains a graph of earnings for various waste management companies:
 
-![](../../assets/images/retrieval-multilingual-data.png)
+![](../../assets/images/waste-management-request.png)
 
-We can have Command Vision caption this image for us with the following:
+We can have Command Vision analyze this image for us with the following:
 
 ```pyton PYTHON 
 response = co.chat(
@@ -34,7 +34,7 @@ response = co.chat(
         {
             "role": "user",
             "content": [
-                {"type": "text", "text": "what's in this image?"},
+                {"type": "text", "text": "Please create two markdown tables. One for Revenue. One for CAGR. the company names should be in alphabetical order in both."},
                 {"type": "image_url", "image_url": {"url": base64_url}},
             ],
         }
@@ -46,37 +46,17 @@ print(response.message.content[0].text)
 
 And you should get something like this: 
 
-```mdx 
-This image is a bar chart titled "Retrieval Accuracy on Multilingual Data". It compares the retrieval accuracy of five different models across four languages. 
-
-Here's a breakdown of the chart:
-
-* **Models:**
-    * Embed 4 (represented by light blue bars)
-    * OpenAI text-embedding-3-large (represented by dark blue bars)
-    * GME-7BN (represented by purple bars)
-    * ColQwen (represented by green bars)
-    * BM25 (represented by orange bars)
-
-* **Languages:**
-    * General Multilingual
-    * Arabic
-    * French
-    * Japanese
-    * Korean
-
-* **Accuracy:** The y-axis represents retrieval accuracy as a percentage, ranging from 0% to 80%.
-
-The chart shows that Embed 4 generally achieves the highest retrieval accuracy across all languages, followed closely by OpenAI text-embedding-3-large. GME-7BN, ColQwen, and BM25 show varying levels of accuracy, with BM25 generally performing the lowest.
-
-It's important to note that this is just a snapshot of retrieval accuracy and doesn't provide information about other factors such as model size, training data, or computational requirements.
-```
+![](../../assets/images/waste-management-response.png)
 
 The rest of this document fleshes out Cohere's Vision models work, including information on limitations, token calculations, and more.
 
 ## Image Detail
 
-Cohere's API will allow users to control the level of image “detail” sent to the model. This property is specified for each image and can be set to `“low”`, `“high”` or `“auto”` (the default). Here' what that look like: 
+Cohere's API will allow users to control the level of image `“detail”` sent to the model, choosing one of `“low”`, `“high”`, or `“auto”` (the default).
+
+Lower detail helps reduce the overall token count (and therefore price and latency), but may result in poorer performance. We recommend trying both levels of detail to identify whether the performance is sufficient at `"low"`.
+
+The `detail` property is specified for each image, here's what that look like: 
 
 ```python PYTHON 
 co.chat(
@@ -99,37 +79,28 @@ co.chat(
 ```
 
 When detail is set to “low”:
-- If the image area is larger than 512x512px, it will be resized to fit into these dimensions while attempting to approximate the aspect ratio.
+- If the image area is larger than 512x512px, it will be resized to fit into these dimensions while attempting to maintain the aspect ratio.
 - Each “low” detail image takes up 256 tokens that count towards the model’s context length.
 
 When detail is set to “high”:
-- If the image area is larger than 1536x2048px it will be resized to fit into these dimensions while attempting to approximate the aspect ratio, so that it can be cached.
-- Under the hood, the model will divide the image into one or more tiles of 512x512 pixels, plus one additional 512x512 pixel _preview_ tile; each of these tiles takes up 256 tokens that count towards the model’s context length. 
+- If the image area is larger than 1536x2048px it will be resized to fit into these dimensions while attempting to maintain the aspect ratio, so that it can be cached.
+- Under the hood, the API will divide the image into one or more tiles of 512x512 pixels, plus one additional 512x512 pixel _preview_ tile; each of these tiles takes up 256 tokens that count towards the model’s context length. 
 
 When detail is unspecified or is set to “auto”: 
-- If any of the sides is larger than 768px (configurable per model) then use detail `high`, otherwise use detail `low`.
+- If any of the image sides are larger than 768px then `high` detail will be used, otherwise detail will be set to `low`.
 
-Here's an example calculation of how an image is broken down by the model:
+Here's an example calculation of how an image is processed into tokens:
 
 - Suppose a user provides a 10,000px x 20,000px image.
 - This image would be resized down to 1024x2048px (since the longest side has to be at most 2048 pixels long), which fits into eight tiles of 512x512.
 - What ultimately gets sent to the model is one 512x512 preview thumbnail in addition to eight tiles of 512x512. Since the thumbnail is 256 tokens, and each of the eight tiles is 256 tokens, that means the image will take up 9 x 256 = 2304 tokens. 
 
-[Per Cassie's comment: We can also discuss this calculation logic in the pricing section like OpenAI's page https://platform.openai.com/docs/guides/images-vision?api-mode=chat] 
-
 ## Passing in an Image
 
-### Image Formats
-Cohere's Vision models support images in three formats:
+### Image URL Formats
+Cohere supports images in two formats, base64 _data_ URLs and HTTP _image_ URLs.
 
-- Base64: can be used anywhere,
-  - how to encode
-  - API structure
-- HTTP URL: faster, but you need to upload your image somewhere, and not available outside platform (not in Azure, Bedrock)
-  - HTTP means you don't have to re-upload the image on every request.
-    - With the ChatAPI, you have to append messages, which would be prohibitive if you're sending massive images. But with an HTTP URL, multi-turn is leaner. This is much lower latency.
-
-As with Cohere's [Aya models](https://docs.cohere.com/docs/aya-vision), users can send in images as base64 data url strings (e.g., `“data:image/png;base64,...”`) by setting the `content` type to `image_url”`:
+A base64 data URL (e.g., `“data:image/png;base64,...”`) has the advantage of being usable anywhere. Here's what that looks like:
 
 ```python PYTHON
 co.chat(
@@ -149,10 +120,7 @@ co.chat(
 )
 ```
 
-In addition to specifying images as base64 data urls, the API supports HTTP and HTTPS URLs (eg “https://cohere.com/favicon-32x32.png”). This is useful for two reasons:
-
-- First, it makes the API easy to try out in postman, as data URLs are long and hard to deal with.
-- Second, including long data URLs in the request increases the request size and increases network latency. For use cases like chatbots, where the old images accumulate in the chat history, we recommend you use image URLs, since the request size will be smaller, and with server-side caching will result in faster response times.
+An HTTP image URL (e.g., “https://cohere.com/favicon-32x32.png”) is faster, but requires you to upload your image somewhere and is not available in outside platforms (Azure, Bedrock, etc.) HTTP image URLs make the API easy to try out, as data URLs are long and difficult to deal with. Moreover, including long data URLs in the request increases the request size and the corresponding network latency.
 
 Here's what that looks like:
 
@@ -176,18 +144,13 @@ co.chat(
 )
 ```
 
+For use cases like chatbots, where the images accumulate in the chat history, we recommend you use HTTP/HTTPs image URLs, since the request size will be smaller, and, with server-side caching, will result in faster response times.
+
 ## Limitations of working with the Image API
 
 ### Image Counts 
 The Cohere API has the following limitations with respect to image counts:
 - You can pass in a maximum of 20 images per request, or 20 megabytes (mb) in total data, whichever comes first.
-- API structure [?]
-
-### Max size of a single image
-
-For Command Vision:
-- Low-resolution: 512px x 512px
-- High-resolution: 1536px (short side) x 2048px (long side)
 
 ### File types
 These are the supported file types:
@@ -196,58 +159,39 @@ These are the supported file types:
 - WEBP (`.webp`)
 - Non-animated GIF (`.gif`)
 
-### Accuracy considerations
-If images are low quality or they convey complex scenes, the model may struggle to parse them. 
-
-## Structured Outputs and JSON Mode
+### Structured Outputs and JSON Mode
 Many use cases (such as OCR) work best when Cohere's structured output capabilities. To learn more about this, consult the [structured output guide](https://docs.cohere.com/v2/docs/structured-outputs).
 
 ### Non-Latin Alphabets
 Performance may vary when processing images containing text in non-Latin scripts, like Japanese or Korean characters.
-- Official languages: English, Portuguese, Italian, French, German, and Spanish.
 
 ### Text Size
-To enhance accuracy, consider enlarging small text in images while ensuring no crucial visual information is lost. If you're inspecting small text in images, set `detail='high'`.
+To enhance accuracy, consider enlarging small text in images while ensuring no crucial visual information is lost. If you're expecting small text in images, set `detail='high'`.
 
 A good rule of thumb is: 'if you have trouble reading image in a text, then the model will too.'
-
-### Potential Errors
-In some cases, the model might produce inaccurate descriptions or captions. Be sure to verify any model outputs before using them. 
 
 ### Rate Limits
 Image inputs don't change rate limit considerations; for more detail, check out our dedicated [rate limit documentation](https://docs.cohere.com/docs/rate-limits).
 
 ### Understanding Costs
-To understand how to calculate costs for an image model, consult the breakdown above about how _tokens_ are determined by the model, then consult our dedicated [pricing page](https://cohere.com/pricing?_gl=1*9o1g49*_gcl_au*MTE3MTc3OTk1OC4xNzUwMjQ1NzE0*_ga*MTAxNTg1NTM1MS4xNjk1MjMwODQw*_ga_CRGS116RZS*czE3NTEyOTcxMDQkbzMyMyRnMSR0MTc1MTI5NzExMiRqNTIkbDAkaDA.) to figure out what your ultimate spend will be.
+To understand how to calculate costs for a model, consult the breakdown above about how _tokens_ are determined by the model, then consult our dedicated [pricing page](https://cohere.com/pricing?_gl=1*9o1g49*_gcl_au*MTE3MTc3OTk1OC4xNzUwMjQ1NzE0*_ga*MTAxNTg1NTM1MS4xNjk1MjMwODQw*_ga_CRGS116RZS*czE3NTEyOTcxMDQkbzMyMyRnMSR0MTc1MTI5NzExMiRqNTIkbDAkaDA.) to figure out what your ultimate spend will be.
+
+### Tool Use
+- [Tool use](https://docs.cohere.com/docs/tools) isn't supported as yet, though it may be in future iterations.
+
+### Acceptable Use 
+- Please refer to our [usage policy](https://docs.cohere.com/docs/usage-policy)
 
 ## Prompt Engineering for Image Models
 Prompting for text-generation and vision models is very similar. If you're having success with a prompt in one of Cohere's standard language models, it should work for our image models as well. 
 
-### Acceptable Use 
-
-- No real-time content blocking will take place in the API
-- Please refer to our [usage policy](https://docs.cohere.com/docs/usage-policy)
-
-## Example Use Cases
-
-Excellent in enterprise use cases that benefit from processing images and documents' visual components, such as:
-
-- Chart, graph, diagram, table understanding, and analysis
-- Document OCR and Q&A
-- Real-world natural image processing
-- more… (cookbook)
-
 ## Best Practices
-
-### Handling common errors
 
 ### Resizing Large Images
 - (Benefits: latency, cost, performance; recommended dimensions) 
 - If you're working with images that are larger than the model can handle, consider resizing them yourself. 
 
-[ADD SAMPLE CODE TO RESIZE IMAGES WHILE MAINTAINING THE ASPECT RATIO]
-
 ### Getting best results out of the model
 - Use whatever prompts are working well for a standard text-generation model.
-- Resize larger images
+- Reduce network latency by shrinking large images on the client before sending them via the API.
 - Enlarge small text in images to improve readability and model performance.
