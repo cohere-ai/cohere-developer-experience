@@ -49,6 +49,7 @@ def format_python_snippets_in_mdx(file_path, line_length=DEFAULT_LINE_LENGTH):
         """
         Formats the matched Python code block using Black
         """
+        global IS_ALL_MDX_VALID  # Add this line to modify the global variable
         backtick_count = match.group(1)  # Preserve the backtick count (``` or ````)
         block_label = match.group(2)  # Capture the label (python or python PYTHON)
         code = match.group(3)
