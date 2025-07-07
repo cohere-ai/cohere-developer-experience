@@ -6131,7 +6131,7 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - $ref: "#/components/schemas/ChatResponse"
+                  - $ref: "#/components/schemas/ChatResponseV2"
                   - $ref: "#/components/schemas/StreamedChatResponseV2"
         "400":
           $ref: "#/components/responses/BadRequest"
@@ -16250,7 +16250,6 @@ paths:
                             is not accurate to assume a score of 0.9 means the
                             document is 2x more relevant than a document with a
                             score of 0.45
-                          readOnly: true
                       required:
                         - index
                         - relevance_score
@@ -16656,7 +16655,6 @@ paths:
                             is not accurate to assume a score of 0.9 means the
                             document is 2x more relevant than a document with a
                             score of 0.45
-                          readOnly: true
                       required:
                         - index
                         - relevance_score
@@ -17260,7 +17258,6 @@ paths:
                     type: string
                     x-fern-audiences:
                       - public
-                    readOnly: true
                   classifications:
                     type: array
                     x-fern-audiences:
@@ -17274,20 +17271,17 @@ paths:
                           type: string
                           x-fern-audiences:
                             - public
-                          readOnly: true
                         input:
                           type: string
                           x-fern-audiences:
                             - public
                           description: The input text that was classified
-                          readOnly: true
                         prediction:
                           type: string
                           x-fern-audiences:
                             - public
                           description: The predicted label for the associated query (only filled for
                             single-label models)
-                          readOnly: true
                           deprecated: true
                         predictions:
                           type: array
@@ -17299,7 +17293,6 @@ paths:
                               - public
                           description: An array containing the predicted labels for the associated query
                             (only filled for single-label classification)
-                          readOnly: true
                         confidence:
                           type: number
                           x-fern-audiences:
@@ -17307,7 +17300,6 @@ paths:
                           format: float
                           description: The confidence score for the top predicted class (only filled for
                             single-label classification)
-                          readOnly: true
                           deprecated: true
                         confidences:
                           type: array
@@ -17320,7 +17312,6 @@ paths:
                             format: float
                           description: An array containing the confidence scores of all the predictions in
                             the same order
-                          readOnly: true
                         labels:
                           type: object
                           x-fern-audiences:
@@ -17335,14 +17326,11 @@ paths:
                                 x-fern-audiences:
                                   - public
                                 format: float
-                                readOnly: true
-                            readOnly: true
                           description: A map containing each label and its confidence score according to
                             the classifier. All the confidence scores add up to
                             1 for single-label classification. For multi-label
                             classification the label confidences are independent
                             of each other, so they don't have to sum up to 1.
-                          readOnly: true
                         classification_type:
                           type: string
                           x-fern-audiences:
@@ -17351,15 +17339,12 @@ paths:
                             - single-label
                             - multi-label
                           description: The type of classification performed
-                          readOnly: true
                       required:
                         - id
                         - predictions
                         - confidences
                         - labels
                         - classification_type
-                      readOnly: true
-                    readOnly: true
                   meta:
                     $ref: "#/components/schemas/ApiMeta"
                     x-fern-audiences:
@@ -18992,8 +18977,6 @@ paths:
                       type: integer
                       x-fern-audiences:
                         - public
-                      readOnly: true
-                    readOnly: true
                   token_strings:
                     type: array
                     x-fern-audiences:
@@ -19251,7 +19234,6 @@ paths:
                     x-fern-audiences:
                       - public
                     description: A string representing the list of tokens.
-                    readOnly: true
                   meta:
                     $ref: "#/components/schemas/ApiMeta"
                     x-fern-audiences:
@@ -21989,7 +21971,7 @@ components:
             additionalProperties: true
             x-fern-type-name: ToolResult-68w0tx
       x-fern-type-name: ToolResult
-    ToolMessage:
+    ChatToolMessage:
       description: |
         Represents tool result in the chat history.
       required:
@@ -22001,18 +21983,18 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ToolResult"
-      x-fern-type-name: ToolMessage
+      x-fern-type-name: ChatToolMessage
     Message:
       oneOf:
         - $ref: "#/components/schemas/ChatMessage"
-        - $ref: "#/components/schemas/ToolMessage"
+        - $ref: "#/components/schemas/ChatToolMessage"
       discriminator:
         propertyName: role
         mapping:
           CHATBOT: "#/components/schemas/ChatMessage"
           SYSTEM: "#/components/schemas/ChatMessage"
           USER: "#/components/schemas/ChatMessage"
-          TOOL: "#/components/schemas/ToolMessage"
+          TOOL: "#/components/schemas/ChatToolMessage"
       x-fern-type-name: Message
     ChatConnector:
       description: |
@@ -22131,7 +22113,7 @@ components:
         - text
         - json_object
       x-fern-type-name: ResponseFormatType
-    TextResponseFormat:
+    ChatTextResponseFormat:
       x-fern-audiences:
         - public
       title: Text Response
@@ -22141,7 +22123,7 @@ components:
           $ref: "#/components/schemas/ResponseFormatType"
       required:
         - type
-      x-fern-type-name: TextResponseFormat
+      x-fern-type-name: ChatTextResponseFormat
     JSONResponseFormat:
       x-fern-audiences:
         - public
@@ -22183,12 +22165,12 @@ components:
         **Note**: When using  `{ "type": "json_object" }` your `message` should always explicitly instruct the model to generate a JSON (eg: _"Generate a JSON ..."_) . Otherwise the model may end up getting stuck generating an infinite stream of characters and eventually run out of context length.
         **Limitation**: The parameter is not supported in RAG mode (when any of `connectors`, `documents`, `tools`, `tool_results` are provided).
       oneOf:
-        - $ref: "#/components/schemas/TextResponseFormat"
+        - $ref: "#/components/schemas/ChatTextResponseFormat"
         - $ref: "#/components/schemas/JSONResponseFormat"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextResponseFormat"
+          text: "#/components/schemas/ChatTextResponseFormat"
           json_object: "#/components/schemas/JSONResponseFormat"
       x-fern-type-name: ResponseFormat
     ChatCitation:
@@ -22743,7 +22725,7 @@ components:
           stream-end: "#/components/schemas/ChatStreamEndEvent"
           tool-calls-chunk: "#/components/schemas/ChatToolCallsChunkEvent"
           debug: "#/components/schemas/ChatDebugEvent"
-    TextContent:
+    ChatTextContent:
       type: object
       description: Text content of the message.
       required:
@@ -22756,7 +22738,7 @@ components:
             - text
         text:
           type: string
-      x-fern-type-name: TextContent
+      x-fern-type-name: ChatTextContent
     ContentType:
       x-fern-audiences:
         - public
@@ -22801,15 +22783,15 @@ components:
       description: A Content block which contains information about the content type
         and the content itself.
       oneOf:
-        - $ref: "#/components/schemas/TextContent"
+        - $ref: "#/components/schemas/ChatTextContent"
         - $ref: "#/components/schemas/ImageContent"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextContent"
+          text: "#/components/schemas/ChatTextContent"
           image_url: "#/components/schemas/ImageContent"
       x-fern-type-name: Content
-    UserMessage:
+    UserMessageV2:
       type: object
       title: User Message
       description: A message from the user.
@@ -22830,7 +22812,7 @@ components:
             - type: array
               items:
                 $ref: "#/components/schemas/Content"
-      x-fern-type-name: UserMessage
+      x-fern-type-name: UserMessageV2
     ToolCallV2:
       description: An array of tool calls to be made.
       type: object
@@ -22850,7 +22832,7 @@ components:
               type: string
           x-fern-type-name: ToolCallV2Function
       x-fern-type-name: ToolCallV2
-    ToolSource:
+    ChatToolSource:
       type: object
       title: Tool Output
       properties:
@@ -22860,9 +22842,9 @@ components:
         tool_output:
           type: object
           additionalProperties: true
-          x-fern-type-name: ToolSource-z53ra6
-      x-fern-type-name: ToolSource
-    DocumentSource:
+          x-fern-type-name: ChatToolSource-z53ra6
+      x-fern-type-name: ChatToolSource
+    ChatDocumentSource:
       type: object
       description: A document source object containing the unique identifier of the
         document and the document itself.
@@ -22873,19 +22855,19 @@ components:
         document:
           type: object
           additionalProperties: true
-          x-fern-type-name: DocumentSource-w70a62
-      x-fern-type-name: DocumentSource
+          x-fern-type-name: ChatDocumentSource-w70a62
+      x-fern-type-name: ChatDocumentSource
     Source:
       description: A source object containing information about the source of the data
         cited.
       oneOf:
-        - $ref: "#/components/schemas/ToolSource"
-        - $ref: "#/components/schemas/DocumentSource"
+        - $ref: "#/components/schemas/ChatToolSource"
+        - $ref: "#/components/schemas/ChatDocumentSource"
       discriminator:
         propertyName: type
         mapping:
-          tool: "#/components/schemas/ToolSource"
-          document: "#/components/schemas/DocumentSource"
+          tool: "#/components/schemas/ChatToolSource"
+          document: "#/components/schemas/ChatDocumentSource"
       x-fern-type-name: Source
     CitationType:
       type: string
@@ -22915,7 +22897,7 @@ components:
         type:
           $ref: "#/components/schemas/CitationType"
       x-fern-type-name: Citation
-    AssistantMessage:
+    AssistantMessageV2:
       type: object
       title: Assistant Message
       description: A message from the assistant role can contain text and tool call
@@ -22941,17 +22923,17 @@ components:
             - type: array
               items:
                 oneOf:
-                  - $ref: "#/components/schemas/TextContent"
+                  - $ref: "#/components/schemas/ChatTextContent"
                 discriminator:
                   propertyName: type
                   mapping:
-                    text: "#/components/schemas/TextContent"
+                    text: "#/components/schemas/ChatTextContent"
         citations:
           type: array
           items:
             $ref: "#/components/schemas/Citation"
       x-fern-type-name: AssistantMessage
-    SystemMessage:
+    SystemMessageV2:
       type: object
       title: System Message
       description: A message from the system.
@@ -22969,12 +22951,12 @@ components:
             - type: array
               items:
                 oneOf:
-                  - $ref: "#/components/schemas/TextContent"
+                  - $ref: "#/components/schemas/ChatTextContent"
                 discriminator:
                   propertyName: type
                   mapping:
-                    text: "#/components/schemas/TextContent"
-      x-fern-type-name: SystemMessage
+                    text: "#/components/schemas/ChatTextContent"
+      x-fern-type-name: SystemMessageV2
     Document:
       type: object
       description: |
@@ -23012,12 +22994,12 @@ components:
       description: A content block which contains information about the content of a
         tool result
       oneOf:
-        - $ref: "#/components/schemas/TextContent"
+        - $ref: "#/components/schemas/ChatTextContent"
         - $ref: "#/components/schemas/DocumentContent"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextContent"
+          text: "#/components/schemas/ChatTextContent"
           document: "#/components/schemas/DocumentContent"
       x-fern-type-name: ToolContent
     ToolMessageV2:
@@ -23049,16 +23031,16 @@ components:
     ChatMessageV2:
       description: Represents a single message in the chat history from a given role.
       oneOf:
-        - $ref: "#/components/schemas/UserMessage"
-        - $ref: "#/components/schemas/AssistantMessage"
-        - $ref: "#/components/schemas/SystemMessage"
+        - $ref: "#/components/schemas/UserMessageV2"
+        - $ref: "#/components/schemas/AssistantMessageV2"
+        - $ref: "#/components/schemas/SystemMessageV2"
         - $ref: "#/components/schemas/ToolMessageV2"
       discriminator:
         propertyName: role
         mapping:
-          user: "#/components/schemas/UserMessage"
-          assistant: "#/components/schemas/AssistantMessage"
-          system: "#/components/schemas/SystemMessage"
+          user: "#/components/schemas/UserMessageV2"
+          assistant: "#/components/schemas/AssistantMessageV2"
+          system: "#/components/schemas/SystemMessageV2"
           tool: "#/components/schemas/ToolMessageV2"
       x-fern-type-name: ChatMessageV2
     ChatMessages:
@@ -23143,7 +23125,7 @@ components:
         - text
         - json_object
       x-fern-type-name: ResponseFormatTypeV2
-    TextResponseFormatV2:
+    ChatTextResponseFormatV2:
       x-fern-audiences:
         - public
       type: object
@@ -23152,7 +23134,7 @@ components:
           $ref: "#/components/schemas/ResponseFormatTypeV2"
       required:
         - type
-      x-fern-type-name: TextResponseFormatV2
+      x-fern-type-name: ChatTextResponseFormatV2
     JsonResponseFormatV2:
       x-fern-audiences:
         - public
@@ -23195,12 +23177,12 @@ components:
 
         **Limitation**: The parameter is not supported when used in combinations with the `documents` or `tools` parameters.
       oneOf:
-        - $ref: "#/components/schemas/TextResponseFormatV2"
+        - $ref: "#/components/schemas/ChatTextResponseFormatV2"
         - $ref: "#/components/schemas/JsonResponseFormatV2"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextResponseFormatV2"
+          text: "#/components/schemas/ChatTextResponseFormatV2"
           json_object: "#/components/schemas/JsonResponseFormatV2"
       x-fern-type-name: ResponseFormatV2
     ChatFinishReason:
@@ -23243,11 +23225,11 @@ components:
           type: array
           items:
             oneOf:
-              - $ref: "#/components/schemas/TextContent"
+              - $ref: "#/components/schemas/ChatTextContent"
             discriminator:
               propertyName: type
               mapping:
-                text: "#/components/schemas/TextContent"
+                text: "#/components/schemas/ChatTextContent"
         citations:
           type: array
           items:
@@ -23311,7 +23293,7 @@ components:
             type: number
             format: float
       x-fern-type-name: LogprobItem
-    ChatResponse:
+    ChatResponseV2:
       required:
         - id
         - finish_reason
@@ -23926,8 +23908,6 @@ components:
               type: number
               x-fern-audiences:
                 - public
-            readOnly: true
-          readOnly: true
         texts:
           type: array
           x-fern-audiences:
@@ -25025,8 +25005,6 @@ components:
                   type: number
                   x-fern-audiences:
                     - public
-                readOnly: true
-              readOnly: true
             int8:
               type: array
               x-fern-audiences:
@@ -25041,8 +25019,6 @@ components:
                   type: integer
                   x-fern-audiences:
                     - public
-                readOnly: true
-              readOnly: true
             uint8:
               type: array
               x-fern-audiences:
@@ -25057,8 +25033,6 @@ components:
                   type: integer
                   x-fern-audiences:
                     - public
-                readOnly: true
-              readOnly: true
             binary:
               type: array
               x-fern-audiences:
@@ -25074,8 +25048,6 @@ components:
                   type: integer
                   x-fern-audiences:
                     - public
-                readOnly: true
-              readOnly: true
             ubinary:
               type: array
               x-fern-audiences:
@@ -25091,7 +25063,6 @@ components:
                   type: integer
                   x-fern-audiences:
                     - public
-                readOnly: true
           items:
             type: array
             x-fern-audiences:
@@ -25100,8 +25071,6 @@ components:
               type: number
               x-fern-audiences:
                 - public
-            readOnly: true
-          readOnly: true
           x-fern-type-name: EmbedByTypeResponseEmbeddings
         texts:
           type: array
@@ -27012,7 +26981,6 @@ components:
           x-fern-audiences:
             - public
           description: Total number of connectors.
-          readOnly: true
       x-fern-type-name: ListConnectorsResponse
     CreateConnectorOAuth:
       required:
@@ -27275,7 +27243,6 @@ components:
         total:
           type: number
           description: Total number of connector logs
-          readOnly: true
       x-fern-type-name: GetConnectorsLogsResponse
     FeedbackResponse:
       type: object
@@ -27385,40 +27352,34 @@ components:
           description: Time of job creation in RFC3339 format
           format: date-time
           example: 2023-04-28T21:00:56.646257Z
-          readOnly: true
         embeddings_url:
           type: string
           x-fern-audiences:
             - public
           description: The input file URL used for the job
-          readOnly: true
         input_dataset_id:
           type: string
           x-fern-audiences:
             - public
           description: The input dataset ID used for the job
-          readOnly: true
         min_cluster_size:
           type: integer
           x-fern-audiences:
             - public
           description: The parameter used in the job creation. Please refer to the job
             creation endpoint for more details
-          readOnly: true
         n_neighbors:
           type: integer
           x-fern-audiences:
             - public
           description: The parameter used in the job creation. Please refer to the job
             creation endpoint for more details
-          readOnly: true
         is_deterministic:
           type: boolean
           x-fern-audiences:
             - public
           description: The parameter used in the job creation. Please refer to the job
             creation endpoint for more details
-          readOnly: true
         status:
           type: string
           x-fern-audiences:
@@ -27435,25 +27396,21 @@ components:
             - public
           description: A boolean indicating whether the job is in a final state, whether
             completed or failed
-          readOnly: true
         output_clusters_url:
           type: string
           x-fern-audiences:
             - public
           description: The output file URL for the clusters (signed url that expires)
-          readOnly: true
         output_outliers_url:
           type: string
           x-fern-audiences:
             - public
           description: The output file URL for the outliers (signed url that expires)
-          readOnly: true
         clusters:
           type: array
           x-fern-audiences:
             - public
           description: The list of cluster summaries for the job
-          readOnly: true
           items:
             $ref: "#/components/schemas/Cluster"
         error:
