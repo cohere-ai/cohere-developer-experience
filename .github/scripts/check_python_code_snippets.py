@@ -8,6 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent
 MDX_DIR = BASE_DIR / "../../fern/pages"
 FILE_PATTERN = re.compile(r"\.mdx$")
 EXCLUDE_DIRS = ["cookbooks"]  # Add directory names to exclude
+IS_ALL_MDX_VALID = True
 
 
 def find_files_by_pattern(directory, pattern, exclude_dirs=None):
@@ -48,6 +49,7 @@ def format_python_snippets_in_mdx(file_path, line_length=DEFAULT_LINE_LENGTH):
         """
         Formats the matched Python code block using Black
         """
+        global IS_ALL_MDX_VALID
         backtick_count = match.group(1)  # Preserve the backtick count (``` or ````)
         block_label = match.group(2)  # Capture the label (python or python PYTHON)
         code = match.group(3)
@@ -62,7 +64,7 @@ def format_python_snippets_in_mdx(file_path, line_length=DEFAULT_LINE_LENGTH):
             return match.group(0)  # Return the original block if nothing changed
         except black.parsing.InvalidInput as e:
             print(f"Error formatting Python code in {file_path}: {e}")
-            # Optionally return original unformatted code or handle differently
+            IS_ALL_MDX_VALID = False
             return match.group(0)
 
         # Revert the temporary comments back to their original form
@@ -107,3 +109,7 @@ if __name__ == "__main__":
             print("The specified file does not match the MDX pattern.")
     else:
         print("Provided path is not valid.")
+    
+    if not IS_ALL_MDX_VALID:
+        print("Some MDX files contain invalid Python code snippets.")
+        sys.exit(1)
