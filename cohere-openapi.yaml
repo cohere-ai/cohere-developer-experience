@@ -6408,15 +6408,17 @@ paths:
         - code-samples:
             - sdk: typescript
               name: Documents
-              code: |
+              code: >
                 const { CohereClientV2 } = require('cohere-ai');
 
+
                 const cohere = new CohereClientV2({});
+
 
                 (async () => {
                   const response = await cohere.chat({
                     model: 'command-a-03-2025',
-                    documents: [{ id: '1', data: 'Cohere is the best!' }],
+                    documents: [{ id: '1', data: { text: 'Cohere is the best!' } }],
                     messages: [
                       {
                         role: 'user',
@@ -7145,7 +7147,7 @@ paths:
                   output_tokens: 434
         - code-samples:
             - sdk: typescript
-              name: Streaming
+              name: Default
               code: |
                 const { CohereClientV2 } = require('cohere-ai');
 
@@ -7169,7 +7171,7 @@ paths:
                   }
                 })();
             - sdk: python
-              name: Streaming
+              name: Default
               code: |
                 import cohere
 
@@ -7184,7 +7186,7 @@ paths:
                     if event.type == "content-delta":
                         print(event.delta.message.content.text, end="")
             - sdk: java
-              name: Streaming
+              name: Default
               code: >
                 /* (C)2024 */
 
@@ -7250,7 +7252,7 @@ paths:
                   }
                 }
             - sdk: go
-              name: Streaming
+              name: Default
               code: >
                 package main
 
@@ -7308,7 +7310,7 @@ paths:
                 	}
                 }
             - sdk: curl
-              name: Streaming
+              name: Default
               code: |
                 curl --request POST \
                   --url https://api.cohere.com/v2/chat \
@@ -7340,10 +7342,6 @@ paths:
                   delta:
                     message:
                       role: 'assistant'
-                      # content: []
-                      # tool_plan: ""
-                      # tool_calls: []
-                      # citations: []
               - event: text-generation
                 data:
                   type: content-start
@@ -7859,6 +7857,1405 @@ paths:
                 tokens:
                   input_tokens: 1032
                   output_tokens: 124
+        - code-samples:
+            - sdk: typescript
+              name: Documents
+              code: |
+                const { CohereClientV2 } = require('cohere-ai');
+
+                const cohere = new CohereClientV2({});
+
+                (async () => {
+                  const stream = await cohere.chatStream({
+                    model: 'command-a-03-2025',
+                    documents: [
+                      {
+                        data: {
+                          text: 'Cohere is the best!',
+                        },
+                      },
+                    ],
+                    messages: [
+                      {
+                        role: 'user',
+                        content: [{ type: 'text', text: "Who's the best?" }],
+                      },
+                    ],
+                  });
+
+                  for await (const chatEvent of stream) {
+                    console.log(chatEvent);
+                  }
+                })();
+            - sdk: python
+              name: Documents
+              code: >+
+                import cohere
+
+
+                co = cohere.ClientV2()
+
+
+                response = co.chat_stream(
+                    model="command-a-03-2025",
+                    documents=[
+                        {"id": "1", "data": {"text": "Cohere is the best!", "title": "The best"}}
+                    ],
+                    messages=[{"role": "user", "content": "Who's the best?"}],
+                )
+
+
+                for event in response:
+                    if event.type == "message-start":
+                        print("\nMessage started.")
+                    elif event.type == "message-end":
+                        print("\nMessage ended.")
+                    elif event.type == "content-delta":
+                        print(event.delta.message.content.text, end="")
+
+            - sdk: java
+              name: Documents
+              code: |
+                /* (C)2024 */
+                package chatv2post;
+
+                import com.cohere.api.Cohere;
+                import com.cohere.api.resources.v2.requests.V2ChatStreamRequest;
+                import com.cohere.api.resources.v2.types.V2ChatStreamRequestDocumentsItem;
+                import com.cohere.api.types.*;
+                import java.util.List;
+
+                public class StreamDocuments {
+                  public static void main(String[] args) {
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
+
+                    Iterable<StreamedChatResponseV2> response =
+                        cohere
+                            .v2()
+                            .chatStream(
+                                V2ChatStreamRequest.builder()
+                                    .model("command-a-03-2025")
+                                    .messages(
+                                        List.of(
+                                            ChatMessageV2.user(
+                                                UserMessage.builder()
+                                                    .content(
+                                                        UserMessageContent.of("Who is the most popular?"))
+                                                    .build())))
+                                    .documents(
+                                        List.of(
+                                            V2ChatStreamRequestDocumentsItem.of(
+                                                "↓ Skip to Main Content\n\n"
+                                                    + "Music industry – One step closer to being accurate\n\n"
+                                                    + "CSPC: Backstreet Boys Popularity Analysis\n\n"
+                                                    + "At one point, Backstreet Boys defined success: massive album sales..."),
+                                            V2ChatStreamRequestDocumentsItem.of(
+                                                "↓ Skip to Main Content\n\n"
+                                                    + "CSPC: NSYNC Popularity Analysis\n\n"
+                                                    + "At the turn of the millennium, three teen acts were huge: Backstreet Boys, Britney Spears, and NSYNC..."),
+                                            V2ChatStreamRequestDocumentsItem.of(
+                                                "Yet the way many music consumers embraced Backstreet Boys deserves its own chapter..."),
+                                            V2ChatStreamRequestDocumentsItem.of(
+                                                "Was NSYNC only successful in the US, or were they a global phenomenon?...")))
+                                    .build());
+
+                    for (StreamedChatResponseV2 chatResponse : response) {
+                      if (chatResponse.isContentDelta()) {
+                        String text =
+                            chatResponse
+                                .getContentDelta()
+                                .flatMap(ChatContentDeltaEvent::getDelta)
+                                .flatMap(ChatContentDeltaEventDelta::getMessage)
+                                .flatMap(ChatContentDeltaEventDeltaMessage::getContent)
+                                .flatMap(ChatContentDeltaEventDeltaMessageContent::getText)
+                                .orElse("");
+                        System.out.println(text);
+                      }
+                    }
+                  }
+                }
+            - sdk: go
+              name: Documents
+              code: >
+                package main
+
+
+                import (
+                	"context"
+                	"errors"
+                	"io"
+                	"log"
+                	"os"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
+
+                	resp, err := co.V2.ChatStream(
+                		context.TODO(),
+                		&cohere.V2ChatStreamRequest{
+                			Model: "command-r-plus",
+                			Documents: []*cohere.V2ChatStreamRequestDocumentsItem{
+                				{
+                					String: "Cohere is the best!",
+                				},
+                			},
+                			Messages: cohere.ChatMessages{
+                				{
+                					Role: "user",
+                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                						String: "Who's the best?",
+                					}},
+                				},
+                			},
+                		},
+                	)
+
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+                	defer resp.Close()
+
+                	for {
+                		message, err := resp.Recv()
+
+                		if errors.Is(err, io.EOF) {
+                			// An io.EOF error means the server is done sending messages
+                			// and should be treated as a success.
+                			break
+                		}
+
+                		// Log the received message
+                		if message.ContentDelta != nil {
+                			log.Printf("%+v", message)
+                		}
+                	}
+                }
+            - sdk: curl
+              name: Documents
+              code: |
+                curl --request POST \
+                  --url https://api.cohere.com/v2/chat \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY" \
+                  --data "{
+                    \"stream\": true,
+                    \"model\": \"command-a-03-2025\",
+                    \"documents\": [
+                      {
+                        \"id\": \"1\",
+                        \"data\": \"Cohere is the best!\"
+                      }
+                    ],
+                    \"messages\": [
+                      {
+                        \"role\": \"user\",
+                        \"content\": \"Who's the best?\"
+                      }
+                    ]
+                  }"
+          request:
+            stream: true
+            model: 'command-a-03-2025'
+            documents:
+              - id: '1'
+                data:
+                  content: 'Cohere is the best!'
+                  snippet: 'Cohere is the best!'
+            messages:
+              - role: 'user'
+                content: "Who's the best?"
+          response:
+            stream:
+              - event: message-start
+                data:
+                  type: message-start
+                  id: 8268c123-8264-4046-afd9-ae3d328f85f3
+                  delta:
+                    message:
+                      role: 'assistant'
+              - event: content-start
+                data:
+                  type: content-start
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        type: 'text'
+                        text: ''
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: 'Coh'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: 'ere'
+              - event: citation-start
+                data:
+                  type: citation-start
+                  index: 0
+                  delta:
+                    message:
+                      citations:
+                        start: 0
+                        end: 6
+                        text: 'Cohere'
+                        sources:
+                          - type: 'document'
+                            id: '1'
+                            document:
+                              id: '1'
+                              text: 'Cohere is the best!'
+                              title: 'The best'
+                        type: 'TEXT_CONTENT'
+              - event: citation-end
+                data:
+                  type: citation-end
+                  index: 0
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' is'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' the'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' best'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: '!'
+              - event: content-end
+                data:
+                  type: content-end
+                  index: 0
+              - event: message-end
+                data:
+                  type: message-end
+                  delta:
+                    finish_reason: COMPLETE
+                    usage:
+                      billed_units:
+                        input_tokens: 18.0
+                        output_tokens: 6.0
+                      tokens:
+                        input_tokens: 1661.0
+                        output_tokens: 19.0
+        - code-samples:
+            - sdk: typescript
+              name: Tools
+              code: >
+                const { CohereClientV2 } = require('cohere-ai');
+
+
+                const cohere = new CohereClientV2({});
+
+
+                (async () => {
+                  const stream = await cohere.chatStream({
+                    model: 'command-a-03-2025',
+                    tools: [
+                      {
+                        type: 'function',
+                        function: {
+                          name: 'query_daily_sales_report',
+                          description:
+                            'Connects to a database to retrieve overall sales volumes and sales information for a given day.',
+                          parameters: {
+                            type: 'object',
+                            properties: {
+                              day: {
+                                description: 'Retrieves sales data for this day, formatted as YYYY-MM-DD.',
+                                type: 'string',
+                              },
+                            },
+                          },
+                        },
+                      },
+                      {
+                        type: 'function',
+                        function: {
+                          name: 'query_product_catalog',
+                          description:
+                            'Connects to a product catalog with information about all the products being sold, including categories, prices, and stock levels.',
+                          parameters: {
+                            type: 'object',
+                            properties: {
+                              category: {
+                                description:
+                                  'Retrieves product information data for all products in this category.',
+                                type: 'string',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    ],
+                    messages: [
+                      {
+                        role: 'user',
+                        content:
+                          "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
+                      },
+                    ],
+                  });
+
+                  for await (const chatEvent of stream) {
+                    if (chatEvent.type === 'tool-call-delta') {
+                      console.log(chatEvent.delta?.message);
+                    }
+                  }
+                })();
+            - sdk: python
+              name: Tools
+              code: >
+                import cohere
+
+
+                co = cohere.ClientV2()
+
+
+                response = co.chat_stream(
+                    model="command-a-03-2025",
+                    tools=[
+                        cohere.ToolV2(
+                            type="function",
+                            function={
+                                "name": "query_daily_sales_report",
+                                "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+                                "parameters": {
+                                    "type": "object",
+                                    "properties": {
+                                        "day": {
+                                            "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
+                                            "type": "string",
+                                        }
+                                    },
+                                    "required": ["day"],
+                                },
+                            },
+                        ),
+                        cohere.ToolV2(
+                            type="function",
+                            function={
+                                "name": "query_product_catalog",
+                                "description": "Connects to a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
+                                "parameters": {
+                                    "type": "object",
+                                    "properties": {
+                                        "category": {
+                                            "description": "Retrieves product information data for all products in this category.",
+                                            "type": "string",
+                                        }
+                                    },
+                                    "required": ["category"],
+                                },
+                            },
+                        ),
+                    ],
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
+                        }
+                    ],
+                )
+
+
+                for event in response:
+                    if event.type in ["tool-call-start", "tool-call-delta"]:
+                        for tool_call in event.delta.message.tool_calls:
+                            print(tool_call)
+            - sdk: java
+              name: Tools
+              code: >
+                /* (C)2024 */
+
+                package chatv2post;
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.resources.v2.requests.V2ChatStreamRequest;
+
+                import com.cohere.api.types.*;
+
+                import java.util.List;
+
+                import java.util.Map;
+
+
+                public class StreamTools {
+                  public static void main(String[] args) {
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
+
+                    Iterable<StreamedChatResponseV2> response =
+                        cohere
+                            .v2()
+                            .chatStream(
+                                V2ChatStreamRequest.builder()
+                                    .model("command-a-03-2025")
+                                    .tools(
+                                        List.of(
+                                            ToolV2.builder()
+                                                .function(
+                                                    ToolV2Function.builder()
+                                                        .name("query_daily_sales_report")
+                                                        .description(
+                                                            "Connects to a database to retrieve overall sales volumes and sales information for a given day.")
+                                                        .parameters(
+                                                            Map.of(
+                                                                "day",
+                                                                ToolParameterDefinitionsValue.builder()
+                                                                    .type("str")
+                                                                    .description(
+                                                                        "Retrieves sales data for this day, formatted as YYYY-MM-DD.")
+                                                                    .required(true)
+                                                                    .build()))
+                                                        .build())
+                                                .build(),
+                                            ToolV2.builder()
+                                                .function(
+                                                    ToolV2Function.builder()
+                                                        .name("query_product_catalog")
+                                                        .description(
+                                                            "Connects to a product catalog with information about all the products being sold, including categories, prices, and stock levels.")
+                                                        .parameters(
+                                                            Map.of(
+                                                                "category",
+                                                                ToolParameterDefinitionsValue.builder()
+                                                                    .type("str")
+                                                                    .description(
+                                                                        "Retrieves product information data for all products in this category.")
+                                                                    .required(true)
+                                                                    .build()))
+                                                        .build())
+                                                .build()))
+                                    .messages(
+                                        List.of(
+                                            ChatMessageV2.user(
+                                                UserMessage.builder()
+                                                    .content(
+                                                        UserMessageContent.of(
+                                                            "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category?"))
+                                                    .build())))
+                                    .build());
+
+                    for (StreamedChatResponseV2 chatResponse : response) {
+                      if (chatResponse.isContentDelta()) {
+                        String text =
+                            chatResponse
+                                .getContentDelta()
+                                .flatMap(ChatContentDeltaEvent::getDelta)
+                                .flatMap(ChatContentDeltaEventDelta::getMessage)
+                                .flatMap(ChatContentDeltaEventDeltaMessage::getContent)
+                                .flatMap(ChatContentDeltaEventDeltaMessageContent::getText)
+                                .orElse("");
+                        System.out.println(text);
+                      }
+                    }
+                  }
+                }
+            - sdk: go
+              name: Tools
+              code: >
+                package main
+
+
+                import (
+                	"context"
+                	"errors"
+                	"io"
+                	"log"
+                	"os"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
+
+                	resp, err := co.V2.ChatStream(
+                		context.TODO(),
+                		&cohere.V2ChatStreamRequest{
+                			Model: "command-a-03-2025",
+                			Tools: []*cohere.ToolV2{
+                				{
+                					Type: cohere.String("function"),
+                					Function: &cohere.ToolV2Function{
+                						Name:        "query_daily_sales_report",
+                						Description: cohere.String("Connects to a database to retrieve overall sales volumes and sales information for a given day."),
+                						Parameters: map[string]interface{}{
+                							"type": "object",
+                							"properties": map[string]interface{}{
+                								"date": map[string]interface{}{
+                									"type":        "string",
+                									"description": "Retrieves sales data from this day, formatted as YYYY-MM-DD",
+                								},
+                							},
+                							"required": []string{"date"},
+                						},
+                					},
+                				},
+                				{
+                					Type: cohere.String("function"),
+                					Function: &cohere.ToolV2Function{
+                						Name:        "query_product_catalog",
+                						Description: cohere.String("Connects to a product catalog with information about all the products being sold, including categories, prices, and stock levels."),
+                						Parameters: map[string]interface{}{
+                							"type": "object",
+                							"properties": map[string]interface{}{
+                								"category": map[string]interface{}{
+                									"type":        "string",
+                									"description": "Retrieves product information data for all products in this category.",
+                								},
+                							},
+                							"required": []string{"category"},
+                						},
+                					},
+                				},
+                			},
+                			Messages: cohere.ChatMessages{
+                				{
+                					Role: "user",
+                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                						String: "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
+                					}},
+                				},
+                			},
+                		},
+                	)
+
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	// Make sure to close the stream when you're done reading.
+                	// This is easily handled with defer.
+                	defer resp.Close()
+
+                	for {
+                		message, err := resp.Recv()
+
+                		if errors.Is(err, io.EOF) {
+                			// An io.EOF error means the server is done sending messages
+                			// and should be treated as a success.
+                			break
+                		}
+
+                		// Log the received message
+                		if message.ToolCallDelta != nil {
+                			log.Printf("%+v", message)
+                		}
+                	}
+                }
+            - sdk: curl
+              name: Tools
+              code: >
+                curl --request POST \
+                  --url https://api.cohere.com/v2/chat \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY" \
+                  --data '{
+                        "stream": true,
+                        "model": "command-a-03-2025",
+                        "tools": [
+                            {
+                                "type": "function",
+                                "function": {
+                                    "name": "query_daily_sales_report",
+                                    "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+                                    "parameters": {
+                                        "type": "object",
+                                        "properties": {
+                                            "day": {
+                                                "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "type": "function",
+                                "function": {
+                                    "name": "query_product_catalog",
+                                    "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
+                                    "parameters": {
+                                        "type": "object",
+                                        "properties": {
+                                            "category": {
+                                                "description": "Retrieves product information data for all products in this category.",
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
+                            }
+                        ]
+                    }'
+          request:
+            stream: true
+            model: 'command-a-03-2025'
+            tools:
+              - type: 'function'
+                function:
+                  name: 'query_daily_sales_report'
+                  description: 'Connects to a database to retrieve overall sales volumes and sales
+                    information for a given day.'
+                  parameters:
+                    type: 'object'
+                    properties:
+                      day:
+                        description: 'Retrieves sales data for this day, formatted as YYYY-MM-DD.'
+                        type: 'string'
+              - type: 'function'
+                function:
+                  name: 'query_product_catalog'
+                  description: 'Connects to a product catalog with information about all the
+                    products being sold, including categories, prices, and stock
+                    levels.'
+                  parameters:
+                    type: 'object'
+                    properties:
+                      category:
+                        description: 'Retrieves product information data for all products in this
+                          category.'
+                        type: 'string'
+            messages:
+              - role: 'user'
+                content: 'Can you provide a sales summary for 29th September 2023, and also give
+                  me some details about the products in the ''Electronics''
+                  category, for example their prices and stock levels?'
+          response:
+            stream:
+              - event: message-start
+                data:
+                  type: message-start
+                  id: 2edfdf70-019c-4f7a-be20-3cdbfaa3dca6
+                  delta:
+                    message:
+                      role: 'assistant'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: 'I'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' will'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' use'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' the'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' query'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '_'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: 'daily'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '_'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: 'sales'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '_'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: 'report'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' tool'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' to'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' find'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' the'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' sales'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' summary'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' for'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' 2'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '9'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: 'th'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' September'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' 2'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '0'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '2'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '3'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '.'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' I'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' will'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' also'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' use'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' the'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' query'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '_'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: 'product'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '_'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: 'catalog'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' tool'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' to'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' find'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' the'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' details'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' of'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' the'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' products'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' in'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' the'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' Electronics'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' category'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '.'
+              - event: tool-call-start
+                data:
+                  type: tool-call-start
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        id: 'query_daily_sales_report_j3f0adww9pmr'
+                        type: 'function'
+                        function:
+                          name: 'query_daily_sales_report'
+                          arguments: ''
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '{"'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: 'day'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '": '
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '"'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '2'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '0'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '2'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '3'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '-'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '0'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '9'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '-'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '2'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '9'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '"}'
+              - event: tool-call-end
+                data:
+                  type: tool-call-end
+                  index: 0
+              - event: tool-call-start
+                data:
+                  type: tool-call-start
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        id: 'query_product_catalog_c66nf11r6s8g'
+                        type: 'function'
+                        function:
+                          name: 'query_product_catalog'
+                          arguments: ''
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '{"'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: 'category'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '": '
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '"'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: 'Electron'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: 'ics'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '"}'
+              - event: tool-call-end
+                data:
+                  type: tool-call-end
+                  index: 1
+              - event: message-end
+                data:
+                  type: message-end
+                  delta:
+                    finish_reason: TOOL_CALL
+                    usage:
+                      billed_units:
+                        input_tokens: 126
+                        output_tokens: 84
+                      tokens:
+                        input_tokens: 1589
+                        output_tokens: 135
+        - code-samples:
+            - sdk: python
+              name: Async
+              code: |
+                import cohere
+                import asyncio
+
+                co = cohere.AsyncClientV2()
+
+                async def main():
+                    response = co.chat_stream(
+                        model="command-a-03-2025",
+                        messages=[{"role": "user", "content": "hello world!"}],
+                    )
+
+                    async for event in response:
+                        if event.type == "message-start":
+                            print("\nMessage started.")
+                        elif event.type == "content-delta":
+                            print(event.delta.message.content.text, end="")
+                        elif event.type == "message-end":
+                            print("\nMessage ended.")
+
+                asyncio.run(main())
+          request:
+            model: 'command-r'
+            messages:
+              - role: 'user'
+                content: 'Hello!'
+            stream: true
+          response:
+            stream:
+              - event: message-start
+                data:
+                  type: message-start
+                  id: 9aa9afb8-f90f-4275-b537-85e751e10e56
+                  delta:
+                    message:
+                      role: 'assistant'
+              - event: content-start
+                data:
+                  type: content-start
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        type: 'text'
+                        text: ''
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: 'Hello'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: '!'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' How'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' can'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' I'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' assist'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' you'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' today'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: '?'
+              - event: content-end
+                data:
+                  type: content-end
+                  index: 0
+              - event: message-end
+                data:
+                  type: message-end
+                  delta:
+                    finish_reason: COMPLETE
+                    usage:
+                      billed_units:
+                        input_tokens: 3.0
+                        output_tokens: 9.0
+                      tokens:
+                        input_tokens: 498.0
+                        output_tokens: 11.0
   /v1/generate:
     post:
       x-fern-audiences:
