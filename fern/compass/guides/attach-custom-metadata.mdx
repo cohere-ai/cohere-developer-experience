@@ -1,0 +1,182 @@
+---
+title: How to Attach Custom Metadata to Compass Documents
+slug: "docs/attach-custom-metadata"
+hidden: false
+description: >-
+  How to attach custom metadata to Compass for filtering and search context enrichment
+image: ../../assets/images/6c1b0e4-cohere_meta_image.jpg
+keywords: 'compass search api unstructured search lexical symantic keyword rerank dense sparse'
+createdAt: 'Mon Jan 27 2024 10:14:00 MST (U.S. Mountain Time)'
+updatedAt: 'Mon Jan 27 2024 10:14:00 MST (U.S. Mountain Time)'
+---
+
+# Option One: Including Filters at Parsing time
+
+The first way to attach metadata to documents is by including them when parsing the files. This can be done by including a dictionary in calls to [`process_file`](https://github.com/cohere-ai/cohere-compass-sdk/blob/main/cohere/compass/clients/parser.py#L182). This dictionary will be propagated to the `content` field of the underlying documents, and will be become a filterable field.
+
+To demonstrate, we will modify the example used [when creating your first index](/docs/first-index-creation), but with metadata attached: 
+
+```python PYTHON
+index_data='{Your File Path}'
+index = '{Your Index Name}'
+
+# Grabbing the file paths to each file in our local folder
+files = scan_folder(folder_path=index_data, recursive=True)
+
+for idx, file in enumerate(files):
+    # Each file should call the parser to be processed
+    parsed_chunks=co_parser.process_file(
+	    filename=file,
+	    custom_context= {
+				"static_field": "testing",
+				"file_count": idx
+	    }
+    )
+    
+    # Each file is pre-processed into Compass Chunks which are then inserted into the Index
+    res=co_compass.insert_docs(
+        index_name=index,
+        docs=parsed_chunks
+    )
+```
+
+Once completed, you will have files decorated with a static_field set to “testing, and a file_count set to their order of indexing. Search queries can then be constructor using these fields as follows: 
+
+```python PYTHON
+from cohere.compass.models.search import SearchFilter
+
+filters = [SearchFilter(field="content.file_count", value="3", type=SearchFilter.FilterType.LT_EQ)]
+results = co_compass.search_documents(index_name=index, query="test_query", filters=filters)
+print(f"{len(results.hits)} documents returned")
+print(f"First document:\n {results.hits[0].content}")
+```
+
+**Output:**
+
+```python PYTHON
+##### Outputs #### 
+3 documents returned
+First document:
+{'file_count': 1, 'meta': '[{"filename": "35b86043-f862-4ed8-b4ed-7a3acad1087d_sample.pdf"}]', 'static_field': 'testing', 'text': '[...]'}
+```
+
+# **Option Two: Attaching Metadata via a Custom Lambda**
+
+In the previous example, a static dictionary is attached to several files. The [process_files](https://github.com/cohere-ai/cohere-compass-sdk/blob/main/cohere/compass/clients/parser.py#L147) SDK function also supports a Function argument for custom context, which enables custom logic to calculate metadata based on the content of the parsed files. 
+
+In the following example, a lambda function is defined to look for a keyword. When it exists, this becomes a field in the attached metadata. 
+
+```python PYTHON
+
+[...]
+# Define a function that returns a dictionary 
+def mentions_keyword(chunk, keyword)->dict:
+    "Look for a keyword in fields, and attach True or False"
+    mentions_keyword = keyword in chunk.content['text']
+
+    # Return a dictionary with the custom metadata to be attached
+    if mentions_keyword:
+        return {'mentions_keyword': "1"}
+    
+    return {}
+        
+# Pass function as custom_context input, in this case looking for keywork "metadata"
+parsed_chunks=co_parser.process_files(
+    filenames=files,
+    custom_context=lambda chunk: mentions_keyword(chunk, "metadata")
+)
+
+# Each file is pre-processed into Compass Chunks which are then inserted into the Index
+res = co_compass.insert_docs(
+    index_name=index,
+    docs=parsed_chunks
+)
+
+# Search for files with value of 1  
+filters = [SearchFilter(field="content.mentions_keyword", value="1", type=SearchFilter.FilterType.EQ)]
+results = co_compass.search_documents(index_name=index, query="metadata")
+print(f"{len(results.hits)} documents returned")
+print(f"Document text: \n{results.hits[0].content['text'][:50]} ... ")
+```
+
+### Output:
+
+```python PYTHON
+#### Outputs #### 
+4 documents returned
+Document text: 
+Compass APIs 2
+Endpoint Purpose Description Extra ... 
+```
+
+# Option Three: Adding Metadata to Existing Documents with `add_attributes`
+
+In the previous example, it is shown how to attach metadata that is known at document creation time. In other cases, you may wish to attach metadata to an existing file. 
+
+This is supported using the [`add_attributes`](https://github.com/cohere-ai/cohere-compass-sdk/blob/main/cohere/compass/clients/compass.py#L247) SDK function. This takes an index name, document_id, and a dictionary to be attached. In the following example, we search a file, attach metadata, and then filter against this new value. 
+
+```python PYTHON
+from cohere.compass.models.documents import DocumentAttributes
+from cohere.compass.models.search import SearchFilter
+
+index = '{Your Index Name}'
+
+# Fetch one document from your index to modify 
+results = co_compass.search_documents(index_name=index, query="*", filters=filters, top_k=1)
+
+# Extract parent document id, and attach attribute "new_field" set to "new_value"
+parent_doc_id = results.hits[0].parent_document_id 
+co_compass.add_attributes(
+    index_name=index,
+    document_id=parent_doc_id,
+    attributes=DocumentAttributes(**{"new_field": "new_value"}))
+
+### Now searching with the 'new_field' attribute equal to 'new_value' should return one document
+filters = [SearchFilter(field="content.new_field", value="new_value", type=SearchFilter.FilterType.EQ)]
+results = co_compass.search_documents(index_name=index, query="*", filters=filters, top_k=10)
+print(f"Result count: {len(results.hits)}")
+print(f"New field value: {results.hits[0].content['new_field']}")
+
+#### Outputs 
+Result count: 1
+New field value: new_value
+```
+
+# Advanced Content - Making Metadata Semantically Searchable
+
+By default, metadata exists only as a filterable field, intended to constrain search results on known dimensions. Sometimes however, a document may be enriched with data that should be relevant to its semantic retrieval. This case is possible with the Compass SDK by modifying the CompassDocument before indexing to modify the ‘`index_fields`’ value. 
+
+Picking up the initial example once again, in the following snippet, the `static_field` value will be added to the index_fields before inserting to compass. This makes this metadata searchable without a filter, and will make these documents more relevant for the keyword “cohere” in any query. 
+
+```python PYTHON
+index_data='{Your File Path}'
+index = '{Your Index Name}'
+
+# Grabbing the file paths to each file in our local folder
+files = scan_folder(folder_path=index_data, recursive=True)
+
+for idx, file in enumerate(files):
+    # Each file should call the parser to be processed
+    parsed_chunks=co_parser.process_file(
+	    filename=file,
+	    custom_context= {
+				"static_field": "search me with keyword cohere",
+				"file_count": idx
+	    }
+    )
+    
+    for chunk in parsed_chunks:
+	    chunk.index_fields.append("static_field")
+    
+    # Each file is pre-processed into Compass Chunks which are then inserted into the Index
+    res=co_compass.insert_docs(
+        index_name=index,
+        docs=parsed_chunks
+    )
+```
+
+## When to Enrich Semantic Fields
+
+Generally users are not expected to modify the embedded fields of their documents. The generic file handling and indexing strategy should yield strong results out of the box.
+
+Sometimes unique client data may be highly relevant to a query, for example if connecting to a knowledge graph. The entities related to a document may be changing, and keeping these up to date and searchable would be a valuable feature.
