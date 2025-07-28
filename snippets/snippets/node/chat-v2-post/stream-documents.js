@@ -3,9 +3,15 @@ const { CohereClientV2 } = require('cohere-ai');
 const cohere = new CohereClientV2({});
 
 (async () => {
-  const response = await cohere.chat({
+  const stream = await cohere.chatStream({
     model: 'command-a-03-2025',
-    documents: [{ id: '1', data: { text: 'Cohere is the best!' } }],
+    documents: [
+      {
+        data: {
+          text: 'Cohere is the best!',
+        },
+      },
+    ],
     messages: [
       {
         role: 'user',
@@ -14,5 +20,7 @@ const cohere = new CohereClientV2({});
     ],
   });
 
-  console.log(response);
+  for await (const chatEvent of stream) {
+    console.log(chatEvent);
+  }
 })();
