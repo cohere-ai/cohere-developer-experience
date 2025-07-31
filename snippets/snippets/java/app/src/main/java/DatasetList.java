@@ -1,4 +1,3 @@
-
 /* (C)2024 */
 import com.cohere.api.Cohere;
 import com.cohere.api.resources.datasets.types.DatasetsListResponse;

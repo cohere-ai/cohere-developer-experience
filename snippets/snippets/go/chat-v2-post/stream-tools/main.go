@@ -57,7 +57,7 @@ func main() {
 			Messages: cohere.ChatMessages{
 				{
 					Role: "user",
-					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
 						String: "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
 					}},
 				},
