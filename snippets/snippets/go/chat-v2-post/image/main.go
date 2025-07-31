@@ -16,17 +16,19 @@ func main() {
 		context.TODO(),
 		&cohere.V2ChatRequest{
 			Model: "command-a-03-2025",
-			Documents: []*cohere.V2ChatRequestDocumentsItem{
-				{
-					String: "Cohere is the best!",
-				},
-			},
 			Messages: cohere.ChatMessages{
 				{
 					Role: "user",
 					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
-						String: "Who's the best?",
-					}},
+						ContentList: []*cohere.Content{
+							{Type: "text", Text: &cohere.ChatTextContent{Text: "Describe the logo!"}},
+							{Type: "image_url", ImageUrl: &cohere.ImageContent{
+								ImageUrl: &cohere.ImageUrl{
+									Url:    "https://cohere.com/favicon-32x32.png",
+									Detail: cohere.ImageUrlDetailAuto.Ptr(),
+								},
+							}},
+						}}},
 				},
 			},
 		},
