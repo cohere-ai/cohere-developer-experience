@@ -21,8 +21,7 @@ public class StreamDocuments {
                         List.of(
                             ChatMessageV2.user(
                                 UserMessage.builder()
-                                    .content(
-                                        UserMessageContent.of("Who is the most popular?"))
+                                    .content(UserMessageContent.of("Who is the most popular?"))
                                     .build())))
                     .documents(
                         List.of(
@@ -30,15 +29,19 @@ public class StreamDocuments {
                                 "↓ Skip to Main Content\n\n"
                                     + "Music industry – One step closer to being accurate\n\n"
                                     + "CSPC: Backstreet Boys Popularity Analysis\n\n"
-                                    + "At one point, Backstreet Boys defined success: massive album sales..."),
+                                    + "At one point, Backstreet Boys defined success: massive album"
+                                    + " sales..."),
                             V2ChatStreamRequestDocumentsItem.of(
                                 "↓ Skip to Main Content\n\n"
                                     + "CSPC: NSYNC Popularity Analysis\n\n"
-                                    + "At the turn of the millennium, three teen acts were huge: Backstreet Boys, Britney Spears, and NSYNC..."),
+                                    + "At the turn of the millennium, three teen acts were huge:"
+                                    + " Backstreet Boys, Britney Spears, and NSYNC..."),
                             V2ChatStreamRequestDocumentsItem.of(
-                                "Yet the way many music consumers embraced Backstreet Boys deserves its own chapter..."),
+                                "Yet the way many music consumers embraced Backstreet Boys deserves"
+                                    + " its own chapter..."),
                             V2ChatStreamRequestDocumentsItem.of(
-                                "Was NSYNC only successful in the US, or were they a global phenomenon?...")))
+                                "Was NSYNC only successful in the US, or were they a global"
+                                    + " phenomenon?...")))
                     .build());
 
     for (StreamedChatResponseV2 chatResponse : response) {
