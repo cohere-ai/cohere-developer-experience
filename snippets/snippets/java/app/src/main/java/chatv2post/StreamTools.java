@@ -24,14 +24,16 @@ public class StreamTools {
                                     ToolV2Function.builder()
                                         .name("query_daily_sales_report")
                                         .description(
-                                            "Connects to a database to retrieve overall sales volumes and sales information for a given day.")
+                                            "Connects to a database to retrieve overall sales"
+                                                + " volumes and sales information for a given day.")
                                         .parameters(
                                             Map.of(
                                                 "day",
                                                 ToolParameterDefinitionsValue.builder()
                                                     .type("str")
                                                     .description(
-                                                        "Retrieves sales data for this day, formatted as YYYY-MM-DD.")
+                                                        "Retrieves sales data for this day,"
+                                                            + " formatted as YYYY-MM-DD.")
                                                     .required(true)
                                                     .build()))
                                         .build())
@@ -41,14 +43,17 @@ public class StreamTools {
                                     ToolV2Function.builder()
                                         .name("query_product_catalog")
                                         .description(
-                                            "Connects to a product catalog with information about all the products being sold, including categories, prices, and stock levels.")
+                                            "Connects to a product catalog with information about"
+                                                + " all the products being sold, including"
+                                                + " categories, prices, and stock levels.")
                                         .parameters(
                                             Map.of(
                                                 "category",
                                                 ToolParameterDefinitionsValue.builder()
                                                     .type("str")
                                                     .description(
-                                                        "Retrieves product information data for all products in this category.")
+                                                        "Retrieves product information data for all"
+                                                            + " products in this category.")
                                                     .required(true)
                                                     .build()))
                                         .build())
@@ -59,7 +64,9 @@ public class StreamTools {
                                 UserMessage.builder()
                                     .content(
                                         UserMessageContent.of(
-                                            "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category?"))
+                                            "Can you provide a sales summary for 29th September"
+                                                + " 2023, and also give me some details about the"
+                                                + " products in the 'Electronics' category?"))
                                     .build())))
                     .build());
 

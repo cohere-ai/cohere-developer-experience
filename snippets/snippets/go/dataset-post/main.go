@@ -25,11 +25,11 @@ func main() {
 
 	resp, err := co.Datasets.Create(
 		context.TODO(),
-		&MyReader{Reader: strings.NewReader(`{"text": "The quick brown fox jumps over the lazy dog"}`), name: "test.jsonl"},
-		&MyReader{Reader: strings.NewReader(""), name: "a.jsonl"},
 		&cohere.DatasetsCreateRequest{
-			Name: "embed-dataset",
-			Type: cohere.DatasetTypeEmbedResult,
+			Name:     "embed-dataset",
+			Type:     cohere.DatasetTypeEmbedResult,
+			Data:     &MyReader{Reader: strings.NewReader(`{"text": "The quick brown fox jumps over the lazy dog"}`), name: "test.jsonl"},
+			EvalData: &MyReader{Reader: strings.NewReader(""), name: "a.jsonl"},
 		},
 	)
 
