@@ -1,0 +1,129 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'com.diffplug.spotless' version '6.11.0'
+    id 'signing'
+    id 'cl.franciscosolis.sonatype-central-upload' version '1.0.3'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+    }
+}
+
+dependencies {
+    api 'com.squareup.okhttp3:okhttp:4.12.0'
+    api 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
+    api 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.17.2'
+    api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+}
+
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+tasks.withType(Javadoc) {
+    failOnError false
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+spotless {
+    java {
+        palantirJavaFormat()
+    }
+}
+
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+
+group = 'com.cohere'
+
+version = '0.0.2'
+
+jar {
+    dependsOn(":generatePomFileForMavenPublication")
+    archiveBaseName = "cohere-java"
+}
+
+sourcesJar {
+    archiveBaseName = "cohere-java"
+}
+
+javadocJar {
+    archiveBaseName = "cohere-java"
+}
+
+signing {
+    sign(publishing.publications)
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        showStandardStreams = true
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'com.cohere'
+            artifactId = 'cohere-java'
+            version = '0.0.2'
+            from components.java
+            pom {
+                name = 'cohere'
+                description = 'The official Java library for Cohere\'s API.'
+                url = 'https://docs.cohere.com'
+                licenses {
+                    license {
+                        name = 'MIT'
+                    }
+                }
+                developers {
+                    developer {
+                        name = 'cohere'
+                        email = 'platform@cohere.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/cohere-ai/cohere-developer-experience.git'
+                    developerConnection = 'scm:git:git://github.com/cohere-ai/cohere-developer-experience.git'
+                    url = 'https://github.com/cohere-ai/cohere-developer-experience'
+                }
+            }
+        }
+    }
+}
+
+sonatypeCentralUpload {
+    username = "$System.env.MAVEN_USERNAME"
+    password = "$System.env.MAVEN_PASSWORD"
+
+    archives = files(
+        "$buildDir/libs/cohere-java-" + version + ".jar",
+        "$buildDir/libs/cohere-java-" + version + "-sources.jar",
+        "$buildDir/libs/cohere-java-" + version + "-javadoc.jar"
+    )
+
+    pom = file("$buildDir/publications/maven/pom-default.xml")
+    signingKey = "$System.env.MAVEN_SIGNATURE_SECRET_KEY"
+    signingKeyPassphrase = "$System.env.MAVEN_SIGNATURE_PASSWORD"
+}
+
+signing {
+    def signingKeyId = "$System.env.MAVEN_SIGNATURE_SECRET_KEY"
+    def signingPassword = "$System.env.MAVEN_SIGNATURE_PASSWORD"
+    useInMemoryPgpKeys(signingKeyId, signingPassword)
+    sign publishing.publications.maven
+}
+
+sonatypeCentralUpload.dependsOn build
