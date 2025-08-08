@@ -1,0 +1,158 @@
+---
+title: Working with Reasoning Models
+subtitle: Command A reasoning model details and specifications
+slug: docs/reasoning-models
+hidden: false
+description: >-
+    Command A reasoning is a performant mode good at tool use, RAG, agents, and multilingual use cases. It has 111 billion parameters and a 256k context length.
+image: ../../../assets/images/edb3e49-cohere_meta_image.jpg
+keywords: 'generative AI, Cohere, reasoning models, large language models'
+createdAt: 'Thu Aug 7th 2025'
+updatedAt: ''
+---
+
+[Introduction]
+
+## What are Thinking Models?
+[pull from openAI etc.]
+
+
+### The Nuts and Bolts of Reasoning Models 
+
+```python PYTHON 
+from cohere import ClientV2
+
+co = ClientV2(api_key=<"YOUR_API_KEY">)
+
+response=co.chat(
+	model="command-a-reasoning",
+	messages=[
+		{
+			"role": "assistant",
+			"content": [
+        {"type": "thinking",
+         "thinking": "I will greet the user"},
+				{
+					"type": "text",
+					"text": "Could you tell me about quantum physics?"
+				}
+			]
+		}
+  ]
+)
+
+print(response.message.content[0].thinking)
+```
+
+And you should get an output like this:
+
+```mdx 
+Okay, the user asked me to tell them about quantum physics. Let me start by breaking down what they might need. They probably want a basic overview since it's a broad topic.
+
+First, I should define quantum physics in simple terms. Maybe mention that it's a branch of physics dealing with particles at atomic and subatomic levels. Then, key principles like wave-particle duality, superposition, and entanglement should be explained. I need to make these concepts accessible, avoiding jargon as much as possible.
+
+Next, historical context would be helpful. Touching on pioneers like Planck, Einstein, Bohr, and Schrödinger. Maybe mention the photoelectric effect and Planck's constant. The development of quantum mechanics in the early 20th century is important to set the stage.
+
+Applications are crucial to show real-world relevance. Semiconductors, lasers, MRI technology, and quantum computing come to mind. Explaining how quantum principles enable these technologies without getting too technical.
+
+I should also address the philosophical implications, like the uncertainty principle and how it challenges classical intuitions. Maybe mention interpretations such as the Copenhagen interpretation or many-worlds, but keep it brief.
+
+Finally, wrap it up by connecting quantum physics to current research and future possibilities, like quantum computing advancements. Ensure the explanation is clear, concise, and engaging for someone new to the topic. Check for any misunderstandings and present the information in a logical flow.
+```
+
+Note that this outputs the _thinking_ tokens, and to get the actual model _text_, you'd need to use the following:
+
+```python PYTHON 
+print(response.message.content[1].text)
+```
+
+Which should give you something similar to this:
+
+```mdx 
+Quantum physics is a branch of physics that explores the behavior of matter and energy at the smallest scales, such as atoms and subatomic particles (electrons, photons, quarks, etc.). It reveals a world profoundly different from our everyday experiences, governed by rules that defy classical intuition. Here's a breakdown of its core concepts and significance:
+
+### Key Principles:
+1. **Wave-Particle Duality**:  
+   Particles like electrons and photons exhibit both particle-like and wave-like properties. For example, light (a wave) can act as discrete particles (photons), while electrons (particles) diffract like waves.
+
+2. **Superposition**:  
+   Quantum systems can exist in multiple states simultaneously until measured. A famous example is Schrödinger's cat, a thought experiment where a cat in a box is simultaneously alive *and* dead until observed.
+
+3. **Entanglement**:  
+   Particles can become interconnected, such that the state of one instantly influences the state of another, even across vast distances. Einstein called this "spooky action at a distance," but experiments confirm its reality.
+
+4. **Uncertainty Principle**:  
+   Formulated by Heisenberg, this states that certain pairs of properties (e.g., position and momentum) cannot be precisely measured simultaneously. The act of measurement itself disturbs the system.
+
+5. **Quantization**:  
+   Energy, angular momentum, and other quantities are discrete, not continuous. For instance, electrons in atoms occupy specific energy levels.
+
+### Historical Context:
+- **Early 20th Century**: Developed by pioneers like Max Planck (who introduced energy quantization), Albert Einstein (explained the photoelectric effect), Niels Bohr (atomic model), and Erwin Schrödinger (wave mechanics).
+- **Revolutionary Impact**: Overturned classical Newtonian physics, reshaping our understanding of reality.
+
+### Applications:
+- **Technology**: Enables semiconductors (electronics), lasers, MRI machines, and GPS (relying on precise atomic clocks).
+- **Quantum Computing**: Leverages superposition and entanglement to solve complex problems intractable for classical computers (e.g., drug discovery, cryptography).
+- **Materials Science**: Explains superconductivity, leading to advancements in energy transmission and magnet technology.
+
+### Philosophical Implications:
+Quantum physics challenges deterministic views of the universe. It introduces probabilistic outcomes and questions the role of the observer. Interpretations like the Copenhagen interpretation (probabilistic collapse) and many-worlds theory (all possibilities occur in branching universes) remain debated.
+
+### Modern Frontiers:
+- **Quantum Gravity**: Unifying quantum mechanics with general relativity (e.g., string theory, loop quantum gravity).
+- **Quantum Biology**: Exploring quantum effects in biological systems (e.g., photosynthesis, bird navigation).
+
+In essence, quantum physics is both a foundational scientific framework and a gateway to transformative technologies, continuing to inspire awe and curiosity about the nature of reality.
+```
+
+For reasoning models, `thinking` is enabled by default. To disable it, send the following value to the `"thinking"` parameter:
+
+```python PYTHON 
+"thinking": { 
+"type": “disabled” # turns off thinking. It is set to “enabled” by default.
+}
+```
+
+#### Thinking Budgets
+
+A thinking token budget can also be specified, to set an upper limit on how many thinking tokens the model can produce. When the budget is exceeded, the model will immediately stop generating thinking tokens and proceed with the rest of the response.
+
+```python "thinking": { 
+"token_budget": 500 # limits the model’s thinking output to at most 500 tokens
+  } 
+
+For most cases, the recommended thinking token budget is 500. 
+
+
+#### Streaming with a Reasoning Model
+
+
+output
+
+
+message: {
+	"role": "assistant",
+  	"content": [
+		{“type”: “thinking”, “thinking”: “i will greet the user”},
+		{“type”: “text”, “text”: “hello world”}
+]
+}
+
+streamed output (pseudo-code)
+
+
+<message_start>
+
+<content_start> # the reasoning content part
+<content_delta> I will
+<content_delta> greet the
+<content_delta> user
+<content_end>
+
+<content_start> # the final response content part
+<content_delta> hello
+<content_delta> world
+<content_end>
+
+<message_end>
