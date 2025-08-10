@@ -33,7 +33,7 @@ const IconBrackets: IconComponent = ({size=16, stroke=1.5}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={stroke} stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></svg>
 );
 const IconWrench: IconComponent = ({size=16, stroke=1.5}) => (
-  <svg xmlns="http://www.w3.org/2000/svg" stroke-width={stroke} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wrench-icon lucide-wrench"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" stroke-width={stroke} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></svg>
 );
 const IconZap: IconComponent = ({size=16, stroke=1.5}) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} width={size} height={size} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -43,12 +43,12 @@ const IconZap: IconComponent = ({size=16, stroke=1.5}) => (
 
 // Mapping capabilities to icons. Expand as needed.
 const capabilityIconMap: Record<string, IconComponent> = {
-  Reasoning: IconThinking,
-  Vision: IconEye,
-  'Safety Modes': IconShield,
-  Citations: IconFileText,
-  'Tool Use': IconCode,
-  'Structured Outputs': IconBrackets,
+  "reasoning": IconThinking,
+  "vision": IconEye,
+  "safety-modes": IconShield,
+  "citations": IconFileText,
+  "tool-use": IconCode,
+  "structured-outputs": IconBrackets,
 };
 
 type CardProps = {
@@ -70,11 +70,12 @@ const Card = ({ title, icon: Icon, children }: CardProps) => (
 type TagProps = {
   icon?: React.ComponentType<{ className?: string }>;
   label: React.ReactNode;
+  disabled?: boolean;
 } & React.HTMLAttributes<HTMLSpanElement>;
 
-const Tag = ({ icon: Icon, label, className, ...rest }: TagProps) => (
+const Tag = ({ icon: Icon, label, disabled, className, ...rest }: TagProps) => (
   <span
-    className={`inline-flex items-center gap-2 px-3 py-1 bg-(color:--grayscale-a3) rounded-full text-sm font-medium ${className ?? ''}`}
+    className={`inline-flex items-center gap-2 px-3 py-1 bg-(color:--grayscale-a3) rounded-full text-sm font-medium ${disabled ? 'opacity-50 text-gray-400' : ''}} ${className ?? ''}`}
     {...rest}
   >
     {Icon ? <Icon className="w-4 h-4 text-gray-600" /> : null}
@@ -82,19 +83,20 @@ const Tag = ({ icon: Icon, label, className, ...rest }: TagProps) => (
   </span>
 );
 
-type TagListProps = { items: string[], className?: string };
+type TagListProps = {className?: string, items: { id: string, label: string, disabled?: boolean }[] };
 
 const TagList = ({ items, className }: TagListProps) => (
   <div className={`flex flex-wrap gap-2 ${className ?? ''}`}>
     {items.map((item, idx) => {
-      const Icon = capabilityIconMap[item]
-      return <Tag key={idx} icon={Icon} label={item} />;
+      const Icon = capabilityIconMap[item.id]
+      return <Tag key={idx} icon={Icon} label={item.label} disabled={item.disabled} />;
     })}
   </div>
 );
 
 type Model = {
   name: string;
+  id: string;
   description: string;
   longDescription?: string;
   capabilities: string[];
@@ -103,13 +105,37 @@ type Model = {
   endpoints: string[];
 };
 
+const getCapabilities = (enabledCapabilities: string[]) => {
+  let capabilities = [
+    {id: "reasoning", label: "Reasoning", disabled: !enabledCapabilities.includes("reasoning")},
+    {id: "vision", label: "Vision", disabled: !enabledCapabilities.includes("vision")},
+    {id: "safety-modes", label: "Safety Modes", disabled: !enabledCapabilities.includes("safety-modes")},
+    {id: "citations", label: "Citations", disabled: !enabledCapabilities.includes("citations")},
+    {id: "tool-use", label: "Tool Use", disabled: !enabledCapabilities.includes("tool-use")},
+    {id: "structured-outputs", label: "Structured Outputs", disabled: !enabledCapabilities.includes("structured-outputs")},
+  ]
+  // update order such that disabled capabilites are at the bottom
+  capabilities.sort((a, b) => Number(a.disabled) - Number(b.disabled));
+  return capabilities;
+}
+
+const getEndpoints = (enabledEndpoints: string[]) => {
+  let endpoints = [
+    {id: "chat-v2", label: "Chat V2", disabled: !enabledEndpoints.includes("chat-v2")},
+    {id: "chat-v1", label: "Chat V1", disabled: !enabledEndpoints.includes("chat-v1")},
+    {id: "chat-completions", label: "Chat Completions", disabled: !enabledEndpoints.includes("chat-completions")},
+  ]
+  // update order such that disabled endpoints are at the bottom
+  endpoints.sort((a, b) => Number(a.disabled) - Number(b.disabled));
+  return endpoints;
+}
+
 export const ModelShowcase = ({ model }: { model: Model }) => (
   <div className="max-w-5xl mx-auto space-y-6 font-sans">
-
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Capabilities */}
       <Card title="Capabilities" icon={IconSparkles}>
-        <TagList items={model.capabilities} />
+        <TagList items={getCapabilities(model.capabilities)} />
       </Card>
 
       {/* Pricing (compact card) */}
@@ -136,13 +162,26 @@ export const ModelShowcase = ({ model }: { model: Model }) => (
       </Card>
 
       {/* Endpoints */}
-      <Card title="Endpoints" icon={IconZap}>
+      <Card title="API Endpoints" icon={IconZap}>
+        <p className='text-sm mb-3'>
+          <strong>Model ID</strong>
+          <div className="text-sm text-gray-500 ml-3">{model.id}</div>
+        </p>
         <div className="flex flex-wrap gap-2">
-          {model.endpoints.map((ep, i) => (
-            <Tag key={i} label={ep} />
+          {getEndpoints(model.endpoints).map((ep, i) => (
+            <Tag key={i} label={ep.label} disabled={ep.disabled} />
           ))}
         </div>
       </Card>
+    </div>
+    <div className="flex justify-end mt-6">
+      <a
+        href="/playground"
+        className="inline-block px-8 py-3 bg-blue-600 text-white font-semibold rounded-full shadow hover:bg-blue-700 transition-all duration-150"
+        style={{ borderRadius: '999px' }}
+      >
+        Try in Playground
+      </a>
     </div>
   </div>
 );
