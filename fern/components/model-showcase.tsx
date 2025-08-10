@@ -106,7 +106,7 @@ type Model = {
   longDescription?: string;
   capabilities: string[];
   pricing: { input: number; output: number };
-  specs: { contextWindow: number; maxOutputTokens: number; knowledgeCutoff: string };
+  specs: { contextWindow: number; maxOutputTokens: number; knowledgeCutoff: string, customSpecs: { name: string; value: string }[] };
   endpoints: string[];
 };
 
@@ -149,11 +149,11 @@ export const ModelShowcase = ({ model }: { model: Model }) => (
         <div className="grid grid-cols-2 gap-4 text-center">
           <div>
             <div className="text-sm text-gray-500">Input</div>
-            <p className="text-lg font-semibold">${model.pricing.input} / token</p>
+            <p className="text-lg font-medium">${model.pricing.input} / 1M tokens</p>
           </div>
           <div>
             <div className="text-sm text-gray-500">Output</div>
-            <p className="text-lg font-semibold">${model.pricing.output} / token</p>
+            <p className="text-lg font-medium">${model.pricing.output} / 1M tokens</p>
           </div>
         </div>
       </Card>
@@ -161,9 +161,12 @@ export const ModelShowcase = ({ model }: { model: Model }) => (
       {/* Specs */}
       <Card title="Specifications" icon={IconWrench}>
         <ul className="space-y-2 text-sm">
-          <div><strong>Context Window:</strong> {model.specs.contextWindow.toLocaleString()} tokens</div>
-          <div><strong>Max Output Tokens:</strong> {model.specs.maxOutputTokens.toLocaleString()}</div>
+          <div><strong>Context Window:</strong> {model.specs.contextWindow} tokens</div>
+          <div><strong>Max Output Tokens:</strong> {model.specs.maxOutputTokens} tokens</div>
           <div><strong>Knowledge Cutoff:</strong> {model.specs.knowledgeCutoff}</div>
+          {model.specs.customSpecs?.map((spec, i) => (
+            <div key={i}><strong>{spec.name}:</strong> {spec.value}</div>
+          ))}
         </ul>
       </Card>
 
