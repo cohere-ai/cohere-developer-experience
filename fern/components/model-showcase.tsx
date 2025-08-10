@@ -1,81 +1,54 @@
 import React from 'react';
 
-type IconComponent = React.ComponentType<{ className?: string }>;
+type IconComponent = React.ComponentType<{ className?: string, size?: number, stroke?: number }>;
 
-// Local SVG icon components to avoid any external dependencies (e.g. lucide-react CDN).
-// Each icon is a minimal, accessible SVG that uses currentColor for easy theming.
-const IconCpu: IconComponent = ({ className = 'w-5 h-5' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <rect x="3" y="3" width="18" height="18" rx="2" />
-    <rect x="8" y="8" width="8" height="8" rx="1" />
-    <path d="M12 1v2" />
-    <path d="M12 21v2" />
-    <path d="M4 12H2" />
-    <path d="M22 12h-2" />
-  </svg>
-);
-const IconEye: IconComponent = ({ className = 'w-5 h-5' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+const IconEye: IconComponent = ({size=16, stroke=1.5}) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} width={size} height={size} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
     <path d="M2 12s4-8 10-8 10 8 10 8-4 8-10 8S2 12 2 12z" />
     <circle cx="12" cy="12" r="3" />
   </svg>
 );
-const IconShield: IconComponent = ({ className = 'w-5 h-5' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M12 2l7 3v6c0 5-3.8 9.7-7 11-3.2-1.3-7-6-7-11V5l7-3z" />
-  </svg>
+
+const IconSparkles: IconComponent = ({size=16, stroke=1.5}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={stroke}stroke-linecap="round" stroke-linejoin="round"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>
 );
-const IconFileText: IconComponent = ({ className = 'w-5 h-5' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-    <path d="M14 2v6h6" />
-    <path d="M8 13h8" />
-    <path d="M8 17h8" />
-    <path d="M8 9h4" />
-  </svg>
+const IconShield: IconComponent = ({size=16, stroke=1.5}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={stroke} stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
 );
-const IconTool: IconComponent = ({ className = 'w-5 h-5' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M14.7 14.7L21 8.4l-4.2-4.2-6.3 6.3" />
-    <path d="M7 17l-3 3 3 3 3-3" />
-  </svg>
+const IconFileText: IconComponent = ({size=16, stroke=1.5}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={stroke} stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
 );
-const IconCode: IconComponent = ({ className = 'w-5 h-5' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <polyline points="16 18 22 12 16 6" />
-    <polyline points="8 6 2 12 8 18" />
-  </svg>
+
+const IconThinking: IconComponent = ({size=16, stroke=1.5}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={stroke} stroke-linecap="round" stroke-linejoin="round"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/></svg>
+)
+
+const IconCode: IconComponent = ({size=16, stroke=1.5}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={stroke} stroke-linecap="round" stroke-linejoin="round"><path d="m17 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg>
 );
-const IconDollar: IconComponent = ({ className = 'w-5 h-5' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M12 1v22" />
-    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H15a3.5 3.5 0 0 1 0 7H6" />
-  </svg>
+const IconDollar: IconComponent = ({ size=16, stroke=1.5 }) => (
+  <svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={stroke} stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg>
 );
-const IconList: IconComponent = ({ className = 'w-5 h-5' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <line x1="8" y1="6" x2="21" y2="6" />
-    <line x1="8" y1="12" x2="21" y2="12" />
-    <line x1="8" y1="18" x2="21" y2="18" />
-    <circle cx="3" cy="6" r="1" />
-    <circle cx="3" cy="12" r="1" />
-    <circle cx="3" cy="18" r="1" />
-  </svg>
+const IconBrackets: IconComponent = ({size=16, stroke=1.5}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={stroke} stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></svg>
 );
-const IconZap: IconComponent = ({ className = 'w-5 h-5' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+const IconWrench: IconComponent = ({size=16, stroke=1.5}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" stroke-width={stroke} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wrench-icon lucide-wrench"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"/></svg>
+);
+const IconZap: IconComponent = ({size=16, stroke=1.5}) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} width={size} height={size} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
   </svg>
 );
 
 // Mapping capabilities to icons. Expand as needed.
 const capabilityIconMap: Record<string, IconComponent> = {
-  Reasoning: IconCode,
+  Reasoning: IconThinking,
   Vision: IconEye,
   'Safety Modes': IconShield,
-  Documents: IconFileText,
-  'Tools Use': IconTool,
-  'Structured Outputs': IconList,
+  Citations: IconFileText,
+  'Tool Use': IconCode,
+  'Structured Outputs': IconBrackets,
 };
 
 type CardProps = {
@@ -85,10 +58,10 @@ type CardProps = {
 };
 
 const Card = ({ title, icon: Icon, children }: CardProps) => (
-  <div className="p-5 bg-white border border-gray-200 rounded-2xl shadow-md">
-    <div className="flex items-center mb-3 space-x-3">
-      {Icon && <Icon className="w-6 h-6 text-gray-700" />}
-      <h2 className="text-lg font-semibold">{title}</h2>
+  <div className="p-5 border rounded-2xl shadow-md fern-card">
+    <div className="flex items-center space-x-2 mb-5">
+      {Icon && <Icon className="text-gray-700" size={22} stroke={1} />}
+      <div className="text-lg font-semibold">{title}</div>
     </div>
     {children}
   </div>
@@ -101,7 +74,7 @@ type TagProps = {
 
 const Tag = ({ icon: Icon, label, className, ...rest }: TagProps) => (
   <span
-    className={`inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-sm font-medium ${className ?? ''}`}
+    className={`inline-flex items-center gap-2 px-3 py-1 bg-(color:--grayscale-a3) rounded-full text-sm font-medium ${className ?? ''}`}
     {...rest}
   >
     {Icon ? <Icon className="w-4 h-4 text-gray-600" /> : null}
@@ -109,12 +82,12 @@ const Tag = ({ icon: Icon, label, className, ...rest }: TagProps) => (
   </span>
 );
 
-type TagListProps = { items: string[] };
+type TagListProps = { items: string[], className?: string };
 
-const TagList = ({ items }: TagListProps) => (
-  <div className="flex flex-wrap gap-2">
+const TagList = ({ items, className }: TagListProps) => (
+  <div className={`flex flex-wrap gap-2 ${className ?? ''}`}>
     {items.map((item, idx) => {
-      const Icon = capabilityIconMap[item] || IconCpu; // fallback icon
+      const Icon = capabilityIconMap[item]
       return <Tag key={idx} icon={Icon} label={item} />;
     })}
   </div>
@@ -125,44 +98,26 @@ type Model = {
   description: string;
   longDescription?: string;
   capabilities: string[];
-  pricing: { input: number; cachedInput: number; output: number };
+  pricing: { input: number; output: number };
   specs: { contextWindow: number; maxOutputTokens: number; knowledgeCutoff: string };
   endpoints: string[];
 };
 
 export const ModelShowcase = ({ model }: { model: Model }) => (
-  <div className="max-w-5xl mx-auto p-8 space-y-6 font-sans">
-    {/* Header */}
-    <div className="flex items-center justify-between">
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-3">
-          <IconCpu className="w-8 h-8 text-indigo-600" />
-          <span>{model.name}</span>
-        </h1>
-        <p className="text-gray-600 mt-1">{model.description}</p>
-      </div>
-      <div className="flex gap-3 items-center">
-        <button className="px-4 py-2 rounded-lg border bg-white">Compare</button>
-        <button className="px-4 py-2 rounded-lg bg-indigo-600 text-white">Try in Playground</button>
-      </div>
-    </div>
+  <div className="max-w-5xl mx-auto space-y-6 font-sans">
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Capabilities */}
-      <Card title="Capabilities" icon={IconEye}>
+      <Card title="Capabilities" icon={IconSparkles}>
         <TagList items={model.capabilities} />
       </Card>
 
       {/* Pricing (compact card) */}
       <Card title="Pricing" icon={IconDollar}>
-        <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="grid grid-cols-2 gap-4 text-center">
           <div>
             <p className="text-sm text-gray-500">Input</p>
             <p className="text-lg font-semibold">${model.pricing.input}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Cached Input</p>
-            <p className="text-lg font-semibold">${model.pricing.cachedInput}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Output</p>
@@ -172,11 +127,11 @@ export const ModelShowcase = ({ model }: { model: Model }) => (
       </Card>
 
       {/* Specs */}
-      <Card title="Specifications" icon={IconList}>
-        <ul className="space-y-2 text-sm text-gray-700">
-          <li><strong>Context Window:</strong> {model.specs.contextWindow.toLocaleString()} tokens</li>
-          <li><strong>Max Output Tokens:</strong> {model.specs.maxOutputTokens.toLocaleString()}</li>
-          <li><strong>Knowledge Cutoff:</strong> {model.specs.knowledgeCutoff}</li>
+      <Card title="Specifications" icon={IconWrench}>
+        <ul className="space-y-2 text-sm">
+          <div><strong>Context Window:</strong> {model.specs.contextWindow.toLocaleString()} tokens</div>
+          <div><strong>Max Output Tokens:</strong> {model.specs.maxOutputTokens.toLocaleString()}</div>
+          <div><strong>Knowledge Cutoff:</strong> {model.specs.knowledgeCutoff}</div>
         </ul>
       </Card>
 
