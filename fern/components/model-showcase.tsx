@@ -48,7 +48,7 @@ const IconLanguages: IconComponent = ({size=16, stroke=1.5}) => (
 const capabilityIconMap: Record<string, IconComponent> = {
   "reasoning": IconThinking,
   "multilingual": IconLanguages,
-  "vision": IconEye,
+  "image-inputs": IconEye,
   "safety-modes": IconShield,
   "citations": IconFileText,
   "tool-use": IconCode,
@@ -113,7 +113,7 @@ const getCapabilities = (enabledCapabilities: string[]) => {
   let capabilities = [
     {id: "reasoning", label: "Reasoning", disabled: !enabledCapabilities.includes("reasoning")},
     {id: "multilingual", label: "Multilingual", disabled: !enabledCapabilities.includes("multilingual")},
-    {id: "vision", label: "Vision", disabled: !enabledCapabilities.includes("vision")},
+    {id: "image-inputs", label: "Image Inputs", disabled: !enabledCapabilities.includes("image-inputs")},
     {id: "safety-modes", label: "Safety Modes", disabled: !enabledCapabilities.includes("safety-modes")},
     {id: "citations", label: "Citations", disabled: !enabledCapabilities.includes("citations")},
     {id: "tool-use", label: "Tool Use", disabled: !enabledCapabilities.includes("tool-use")},
