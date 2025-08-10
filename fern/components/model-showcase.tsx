@@ -142,12 +142,12 @@ export const ModelShowcase = ({ model }: { model: Model }) => (
       <Card title="Pricing" icon={IconDollar}>
         <div className="grid grid-cols-2 gap-4 text-center">
           <div>
-            <p className="text-sm text-gray-500">Input</p>
-            <p className="text-lg font-semibold">${model.pricing.input}</p>
+            <div className="text-sm text-gray-500">Input</div>
+            <p className="text-lg font-semibold">${model.pricing.input} / token</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Output</p>
-            <p className="text-lg font-semibold">${model.pricing.output}</p>
+            <div className="text-sm text-gray-500">Output</div>
+            <p className="text-lg font-semibold">${model.pricing.output} / token</p>
           </div>
         </div>
       </Card>
