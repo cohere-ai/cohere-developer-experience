@@ -182,7 +182,7 @@ export const ModelShowcase = ({ model }: { model: Model }) => (
     </div>
       <div className="flex justify-end mt-6">
         <a
-          href="https://dashboard.cohere.com/playground"
+          href={"https://dashboard.cohere.com/playground?model=" + model.id}
           className="group relative overflow-hidden inline-flex items-center justify-center px-8 py-3 text-white font-semibold rounded-full shadow transition-all duration-200 no-underline"
           style={{
             borderRadius: '999px',
