@@ -41,9 +41,14 @@ const IconZap: IconComponent = ({size=16, stroke=1.5}) => (
   </svg>
 );
 
+const IconLanguages: IconComponent = ({size=16, stroke=1.5}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={stroke} stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-languages-icon lucide-languages"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+);
+
 // Mapping capabilities to icons. Expand as needed.
 const capabilityIconMap: Record<string, IconComponent> = {
   "reasoning": IconThinking,
+  "multilingual": IconLanguages,
   "vision": IconEye,
   "safety-modes": IconShield,
   "citations": IconFileText,
@@ -108,6 +113,7 @@ type Model = {
 const getCapabilities = (enabledCapabilities: string[]) => {
   let capabilities = [
     {id: "reasoning", label: "Reasoning", disabled: !enabledCapabilities.includes("reasoning")},
+    {id: "multilingual", label: "Multilingual", disabled: !enabledCapabilities.includes("multilingual")},
     {id: "vision", label: "Vision", disabled: !enabledCapabilities.includes("vision")},
     {id: "safety-modes", label: "Safety Modes", disabled: !enabledCapabilities.includes("safety-modes")},
     {id: "citations", label: "Citations", disabled: !enabledCapabilities.includes("citations")},
@@ -165,7 +171,7 @@ export const ModelShowcase = ({ model }: { model: Model }) => (
       <Card title="API Endpoints" icon={IconZap}>
         <p className='text-sm mb-3'>
           <strong>Model ID</strong>
-          <div className="text-sm text-gray-500 ml-3">{model.id}</div>
+          <div className="text-sm text-gray-500">{model.id}</div>
         </p>
         <div className="flex flex-wrap gap-2">
           {getEndpoints(model.endpoints).map((ep, i) => (
@@ -174,14 +180,18 @@ export const ModelShowcase = ({ model }: { model: Model }) => (
         </div>
       </Card>
     </div>
-    <div className="flex justify-end mt-6">
-      <a
-        href="/playground"
-        className="inline-block px-8 py-3 bg-blue-600 text-white font-semibold rounded-full shadow hover:bg-blue-700 transition-all duration-150"
-        style={{ borderRadius: '999px' }}
-      >
-        Try in Playground
-      </a>
-    </div>
+      <div className="flex justify-end mt-6">
+        <a
+          href="https://dashboard.cohere.com/playground"
+          className="group relative overflow-hidden inline-flex items-center justify-center px-8 py-3 text-white font-semibold rounded-full shadow transition-all duration-200 no-underline"
+          style={{
+            borderRadius: '999px',
+            backgroundColor: '#2563eb',
+            textDecoration: 'none',
+          }}
+        >
+          <span className="relative z-10">Try in Playground</span>
+        </a>
+      </div>
   </div>
 );
