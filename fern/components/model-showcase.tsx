@@ -28,7 +28,7 @@ const IconFileText: IconComponent = (props) => {
   return getSvg({...props, children})
 }
 const IconThinking: IconComponent = (props) => {
-  const children = <><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/></>
+  const children = <><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></>
   return getSvg({...props, children})
 }
 const IconCode: IconComponent = (props) => {
