@@ -128,7 +128,7 @@ type Model = {
   capabilities: Capability[];
   pricing: { input: number; output: number };
   specs: { contextWindow: number; maxOutputTokens: number; knowledgeCutoff: string, customSpecs: { name: string; value: string }[] };
-  endpoints: string[];
+  endpoints: Endpoint[];
 };
 
 const getCapabilities = (enabledCapabilities: Capability[]) => {
@@ -146,11 +146,17 @@ const getCapabilities = (enabledCapabilities: Capability[]) => {
   return capabilities;
 }
 
-const getEndpoints = (enabledEndpoints: string[]) => {
+export enum Endpoint {
+  ChatV1,
+  ChatV2,
+  ChatCompletions
+}
+
+const getEndpoints = (enabledEndpoints: Endpoint[]) => {
   let endpoints = [
-    {id: "chat-v2", label: "Chat V2", disabled: !enabledEndpoints.includes("chat-v2")},
-    {id: "chat-v1", label: "Chat V1", disabled: !enabledEndpoints.includes("chat-v1")},
-    {id: "chat-completions", label: "Chat Completions", disabled: !enabledEndpoints.includes("chat-completions")},
+    {id: Endpoint.ChatV2, label: "Chat V2", disabled: !enabledEndpoints.includes(Endpoint.ChatV2)},
+    {id: Endpoint.ChatV1, label: "Chat V1", disabled: !enabledEndpoints.includes(Endpoint.ChatV1)},
+    {id: Endpoint.ChatCompletions, label: "Chat Completions", disabled: !enabledEndpoints.includes(Endpoint.ChatCompletions)},
   ]
   // update order such that disabled endpoints are at the bottom
   endpoints.sort((a, b) => Number(a.disabled) - Number(b.disabled));
