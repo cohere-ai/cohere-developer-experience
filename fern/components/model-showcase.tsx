@@ -56,15 +56,25 @@ const IconLanguages: IconComponent = (props) => {
   return getSvg({...props, children})
 }
 
+export enum Capability {
+  Reasoning,
+  Multilingual,
+  ImageInputs,
+  SafetyModes,
+  Citations,
+  ToolUse,
+  StructuredOutputs
+}
+
 // Mapping capabilities to icons. Expand as needed.
-const capabilityIconMap: Record<string, IconComponent> = {
-  "reasoning": IconThinking,
-  "multilingual": IconLanguages,
-  "image-inputs": IconEye,
-  "safety-modes": IconShield,
-  "citations": IconFileText,
-  "tool-use": IconCode,
-  "structured-outputs": IconBrackets,
+const capabilityIconMap: Record<Capability, IconComponent> = {
+  [Capability.Reasoning]: IconThinking,
+  [Capability.Multilingual]: IconLanguages,
+  [Capability.ImageInputs]: IconEye,
+  [Capability.SafetyModes]: IconShield,
+  [Capability.Citations]: IconFileText,
+  [Capability.ToolUse]: IconCode,
+  [Capability.StructuredOutputs]: IconBrackets,
 };
 
 type CardProps = {
@@ -99,7 +109,7 @@ const Tag = ({ icon: Icon, label, disabled, className, ...rest }: TagProps) => (
   </span>
 );
 
-type TagListProps = {className?: string, items: { id: string, label: string, disabled?: boolean }[] };
+type TagListProps = {className?: string, items: { id: Capability, label: string, disabled?: boolean }[] };
 
 const TagList = ({ items, className }: TagListProps) => (
   <div className={`flex flex-wrap gap-2 ${className ?? ''}`}>
@@ -115,21 +125,21 @@ type Model = {
   id: string;
   description: string;
   longDescription?: string;
-  capabilities: string[];
+  capabilities: Capability[];
   pricing: { input: number; output: number };
   specs: { contextWindow: number; maxOutputTokens: number; knowledgeCutoff: string, customSpecs: { name: string; value: string }[] };
   endpoints: string[];
 };
 
-const getCapabilities = (enabledCapabilities: string[]) => {
+const getCapabilities = (enabledCapabilities: Capability[]) => {
   let capabilities = [
-    {id: "reasoning", label: "Reasoning", disabled: !enabledCapabilities.includes("reasoning")},
-    {id: "multilingual", label: "Multilingual", disabled: !enabledCapabilities.includes("multilingual")},
-    {id: "image-inputs", label: "Image Inputs", disabled: !enabledCapabilities.includes("image-inputs")},
-    {id: "safety-modes", label: "Safety Modes", disabled: !enabledCapabilities.includes("safety-modes")},
-    {id: "citations", label: "Citations", disabled: !enabledCapabilities.includes("citations")},
-    {id: "tool-use", label: "Tool Use", disabled: !enabledCapabilities.includes("tool-use")},
-    {id: "structured-outputs", label: "Structured Outputs", disabled: !enabledCapabilities.includes("structured-outputs")},
+    {id: Capability.Reasoning, label: "Reasoning", disabled: !enabledCapabilities.includes(Capability.Reasoning)},
+    {id: Capability.Multilingual, label: "Multilingual", disabled: !enabledCapabilities.includes(Capability.Multilingual)},
+    {id: Capability.ImageInputs, label: "Image Inputs", disabled: !enabledCapabilities.includes(Capability.ImageInputs)},
+    {id: Capability.SafetyModes, label: "Safety Modes", disabled: !enabledCapabilities.includes(Capability.SafetyModes)},
+    {id: Capability.Citations, label: "Citations", disabled: !enabledCapabilities.includes(Capability.Citations)},
+    {id: Capability.ToolUse, label: "Tool Use", disabled: !enabledCapabilities.includes(Capability.ToolUse)},
+    {id: Capability.StructuredOutputs, label: "Structured Outputs", disabled: !enabledCapabilities.includes(Capability.StructuredOutputs)},
   ]
   // update order such that disabled capabilites are at the bottom
   capabilities.sort((a, b) => Number(a.disabled) - Number(b.disabled));
