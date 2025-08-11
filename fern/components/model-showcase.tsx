@@ -2,7 +2,7 @@ import React from 'react';
 
 type IconComponent = React.ComponentType<{ className?: string, size?: number, stroke?: number, disabled?: boolean }>;
 
-const getSvg = ({size=16, stroke=1.5, disabled=false, children}: {size?: number, stroke?: number, disabled?: boolean, children: React.ReactNode}) => {
+const getSvg = ({size=16, stroke=1.5, disabled, children}: {size?: number, stroke?: number, disabled?: boolean, children: React.ReactNode}) => {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} width={size} height={size} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       {disabled && <path d="M2 2 22 22"/>}
@@ -15,7 +15,7 @@ const IconEye: IconComponent = (props) => {
   const children = <><path d="M2 12s4-8 10-8 10 8 10 8-4 8-10 8S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></>
   return getSvg({...props, children})
 }
-const IconSparkles: IconComponent = (props) => {
+const IconStar: IconComponent = (props) => {
   const children = <><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></>
   return getSvg({...props, children})
 }
@@ -35,7 +35,7 @@ const IconCode: IconComponent = (props) => {
   const children = <><path d="m17 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></>
   return getSvg({...props, children})
 }
-const IconDollar: IconComponent = (props) => {
+const IconCoins: IconComponent = (props) => {
   const children = <><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></>
   return getSvg({...props, children})
 }
@@ -151,12 +151,12 @@ export const ModelShowcase = ({ model }: { model: Model }) => (
   <div className="max-w-5xl mx-auto space-y-6 font-sans">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Capabilities */}
-      <Card title="Capabilities" icon={IconSparkles}>
+      <Card title="Capabilities" icon={IconStar}>
         <TagList items={getCapabilities(model.capabilities)} />
       </Card>
 
-      {/* Pricing (compact card) */}
-      <Card title="Pricing" icon={IconDollar}>
+      {/* Pricing */}
+      <Card title="Pricing" icon={IconCoins}>
         <div className="grid grid-cols-2 gap-4 text-center">
           <div>
             <div className="text-sm text-gray-500">Input</div>
@@ -194,18 +194,18 @@ export const ModelShowcase = ({ model }: { model: Model }) => (
         </div>
       </Card>
     </div>
-      <div className="flex justify-end mt-6">
-        <a
-          href={"https://dashboard.cohere.com/playground?model=" + model.id}
-          className="group relative overflow-hidden inline-flex items-center justify-center px-8 py-3 text-white font-semibold rounded-full shadow transition-all duration-200 no-underline"
-          style={{
-            borderRadius: '999px',
-            backgroundColor: '#2563eb',
-            textDecoration: 'none',
-          }}
-        >
-          <span className="relative z-10">Try in Playground</span>
-        </a>
-      </div>
+    <div className="flex justify-end mt-6">
+      <a
+        href={"https://dashboard.cohere.com/playground?model=" + model.id}
+        className="group relative overflow-hidden inline-flex items-center justify-center px-8 py-3 text-white font-semibold rounded-full shadow transition-all duration-200 no-underline"
+        style={{
+          borderRadius: '999px',
+          backgroundColor: '#2563eb',
+          textDecoration: 'none',
+        }}
+      >
+        <span className="relative z-10">Try in Playground</span>
+      </a>
+    </div>
   </div>
 );
