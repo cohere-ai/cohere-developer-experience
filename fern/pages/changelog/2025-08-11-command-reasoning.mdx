@@ -1,0 +1,82 @@
+---
+title: "Announcing Cohere's Command A Reasoning Model"
+slug: "changelog/2025-08-11-command-a-reasoning"
+createdAt: "Mon Aug 11 2025 00:00:00 (MST)"
+hidden: false
+description: >-
+ This announcement covers the release of Command A Reasoning, Cohere's first model able to engage in thinking and reasoning.
+---
+
+We’re excited to announce the release of **Command A Reasoning**, Cohere’s first reasoning model designed to excel at complex problem-solving, step-by-step planning, and code analysis. With 111 billion parameters and a 256K context length, this model brings advanced reasoning capabilities to your applications through the familiar Command API interface.
+
+**Key Features**  
+- **Thinking Capabilities**: Generates internal reasoning steps before producing final responses, ideal for nuanced tasks like mathematical problem-solving, code analysis, and logical reasoning.  
+- **Enterprise-Grade Performance**: Optimized for real-world enterprise tasks, including tool use, retrieval-augmented generation (RAG), and agent-based workflows.  
+- **Multilingual Support**: Excels in multilingual use cases, ensuring broad applicability across diverse applications.  
+- **Efficient Infrastructure**: Runs on just two GPUs (A100s / H100s) despite its scale.  
+
+**Technical Specifications**  
+- **Model Name**: `command-a-reasoning-08-2025`  
+- **Context Length**: 256K tokens  
+- **Maximum Output**: 64K tokens  
+- **API Endpoint**: Chat API  
+
+### Getting Started
+Integrating Command A Reasoning is straightforward using the Chat API. Here’s a non-streaming example:  
+
+```python
+from cohere import ClientV2
+
+co = ClientV2(api_key="YOUR_API_KEY")
+
+response = co.chat(
+    model="command-a-reasoning-08-2025",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Solve this equation: 2x + 5 = 13"
+                }
+            ]
+        }
+    ]
+)
+
+print(response.message.content[0].thinking)  # Optional: Print internal reasoning  
+print(response.message.content[1].text)      # Final output
+```  
+
+**Streaming Output**  
+For applications requiring real-time output, streaming is supported. Here’s how to stream both reasoning and final text:  
+
+```python
+response = co.chat_stream(
+    model="command-a-reasoning-08-2025",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Explain quantum physics."
+                }
+            ]
+        }
+    ]
+)
+
+for event in response:
+    if event.type == "content-delta":
+        if hasattr(event.delta.message.content, 'thinking'):
+            print(event.delta.message.content.thinking, end="")
+        if hasattr(event.delta.message.content, 'text'):
+            print(event.delta.message.content.text, end="")
+```  
+
+**Customization Options**  
+- **Thinking Control**: Enable or disable thinking capabilities using the `thinking` parameter.  
+- **Token Budgets**: Set a budget to limit the depth of reasoning (default: 500 tokens).  
+
+For more details on token budgets, advanced configurations, and best practices, refer to our dedicated [Reasoning documentation](/docs/reasoning).  

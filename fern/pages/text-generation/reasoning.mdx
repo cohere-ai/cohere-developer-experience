@@ -11,13 +11,35 @@ createdAt: 'Thu Aug 7th 2025'
 updatedAt: ''
 ---
 
-[Introduction]
+Thinking models represent an advanced approach to AI reasoning that enables more sophisticated problem-solving capabilities. These models work by generating internal reasoning processes before delivering their final responses, allowing them to tackle complex tasks with enhanced analytical depth.
 
-## What are Thinking Models?
-[pull from openAI etc.]
+### How Thinking Models Work
 
+When a thinking model processes a request, it first generates internal reasoning content that breaks down the problem step-by-step. This reasoning process happens in dedicated "thinking" content blocks where the model works through its analysis, planning, and logical steps. Only after completing this internal reasoning does the model produce its final text response.
+
+The key benefit is that thinking models can handle complex problems—such as mathematical calculations, code analysis, or multi-step reasoning tasks—by first working through the problem internally before presenting a well-reasoned solution. This approach leads to more accurate, thorough, and logically sound responses compared to models that generate answers directly without intermediate reasoning steps.
+
+### Use Cases and Applications
+
+Thinking models excel at tasks that benefit from step-by-step analysis, including:
+
+- **Mathematical Problem Solving**: Breaking down complex equations into manageable steps
+- **Code Analysis and Generation**: Planning program structure before writing actual code
+- **Logical Reasoning**: Working through multi-step arguments systematically
+- **Data Analysis**: Planning analysis approaches before executing them
+- **Creative Problem Solving**: Exploring different solution paths before selecting the best approach
+
+### Technical Implementation
+
+The thinking process is controlled through specific parameters that allow developers to:
+- Enable or disable thinking capabilities
+- Set token budgets to control the depth of reasoning
+- Stream responses to see reasoning and final answers in real-time
+
+This architecture makes thinking models particularly valuable for applications requiring high accuracy, transparency in reasoning, and the ability to handle complex, multi-faceted problems that benefit from systematic analysis.
 
 ### The Nuts and Bolts of Reasoning Models 
+Working with a Cohere Reasoning Model is straightforward, and works through the basic Chat API. Here's a non-streaming example (a streaming example can be found below):
 
 ```python PYTHON 
 from cohere import ClientV2
@@ -30,8 +52,9 @@ response=co.chat(
 		{
 			"role": "assistant",
 			"content": [
-        {"type": "thinking",
-         "thinking": "I will greet the user"},
+        {
+			"type": "thinking",
+         	"thinking": "I will greet the user"},
 				{
 					"type": "text",
 					"text": "Could you tell me about quantum physics?"
@@ -106,11 +129,88 @@ Quantum physics challenges deterministic views of the universe. It introduces pr
 In essence, quantum physics is both a foundational scientific framework and a gateway to transformative technologies, continuing to inspire awe and curiosity about the nature of reality.
 ```
 
+#### Streaming with a Reasoning Model
+There may be specific applications for which you'd want to stream a reasoning model's output, which is easy to accomplish. The only real difference is that you'll get the `thinking` streamed first, followed by the actual output, as in the example above.
+
+Here's a pair of code snippets showing how you'd do that (note that it's just a bit more complicated, as we first have to get all the thinking tokens, _then_ get all the output tokens): 
+
+```python PYTHON 
+from cohere import ClientV2
+
+co = ClientV2(api_key="<YOUR_API_KEY>")        
+
+response=co.chat_stream(
+	model="command-a-reasoning",
+	messages=[
+		{
+			"role": "assistant",
+			"content": [
+        {"type": "thinking",
+         "thinking": "I will greet the user"},
+				{
+					"type": "text",
+					"text": "Could you tell me about quantum physics?"
+				}
+			]
+		}
+  ]
+)
+
+for event in response:
+  if event.type == "content-delta":
+    # Check if the 'thinking' attribute exists before trying to access it
+    if hasattr(event.delta.message.content, 'thinking') and event.delta.message.content.thinking:
+      print(event.delta.message.content.thinking, end="")
+    if hasattr(event.delta.message.content, 'text') and event.delta.message.content.text:
+      print(event.delta.message.content.text, end="")
+```
+
+And, as before, you there is a set of tokens produced by the model as it thinks, followed by its actual response (except this time, the tokens should be streamed): 
+
+```mdx 
+Okay, the user asked me to tell them about quantum physics. Let me start by breaking down what they might be looking for. Since they're asking for an explanation, they probably want a clear and concise overview.
+
+First, I should define quantum physics in simple terms. Maybe mention that it's a branch of physics dealing with the very small, like atoms and particles. Then, I need to highlight the key principles. Superposition comes to mind—particles existing in multiple states at once. Entanglement is another important concept, where particles are linked regardless of distance.
+
+I should also touch on the uncertainty principle by Heisenberg, explaining that we can't know certain properties precisely. Maybe include some applications like quantum computing, cryptography, and technologies such as MRI or semiconductors. But I need to keep it simple, avoiding too much jargon.
+
+Wait, the user might not have a strong physics background, so examples would help. Schrödinger's cat is a classic thought experiment for superposition. Also, mentioning how quantum mechanics revolutionized our understanding of the universe compared to classical physics.
+
+I should structure the response logically: start with a definition, then key principles with brief explanations, followed by applications. Make sure each point is clear and builds on the previous one. Avoid diving too deep into math or complex theories unless the user asks for more details later.
+
+Let me check if I'm missing any major points. Oh, maybe wave-particle duality? That's a fundamental concept too. Particles behaving as both waves and particles. Also, the role of observation in collapsing quantum states.
+
+Putting it all together, the response should be informative but accessible. Use analogies where possible, like comparing superposition to a spinning coin. Keep paragraphs short to maintain readability. End with an invitation for further questions in case they want to explore specific topics more deeply.Quantum physics is a branch of physics that explores the behavior of matter and energy at the smallest scales, such as atoms, electrons, and photons. It reveals a universe that is profoundly different from our everyday experiences, governed by rules that defy classical intuition. Here's a concise breakdown of its core ideas and significance:
+
+### Key Principles:
+1. **Superposition**: Particles can exist in multiple states simultaneously until measured. For example, an electron might be in two locations at once, described by a "probability wave." This is famously illustrated by *Schrödinger's cat*, a thought experiment where a cat is simultaneously alive and dead in a sealed box until observed.
+
+2. **Wave-Particle Duality**: Quantum entities like electrons and photons exhibit both wave-like and particle-like properties. Light, for instance, can behave as a wave (interfering with itself) or a stream of particles (photons), depending on the experiment.
+
+3. **Entanglement**: Particles can become "entangled," meaning their properties (e.g., spin) remain correlated even when separated by vast distances. Measuring one instantly affects the other, a phenomenon Einstein called "spooky action at a distance."
+
+4. **Uncertainty Principle**: Formulated by Werner Heisenberg, this states that certain pairs of properties (e.g., position and momentum) cannot be precisely measured simultaneously. The act of observation inherently disturbs the system, introducing fundamental limits to knowledge.
+
+5. **Quantization**: Energy, and other properties, are discrete rather than continuous. For example, electrons in an atom occupy specific energy levels, emitting or absorbing photons when transitioning between them.
+
+### Why It Matters:
+Quantum mechanics reshaped our understanding of reality, showing that the microscopic world is probabilistic, interconnected, and observer-dependent. It also underpins modern technology:
+- **Quantum Computing**: Leverages superposition and entanglement to solve complex problems (e.g., cryptography, drug discovery) far faster than classical computers.
+- **Semiconductors & Lasers**: Transistors in electronics and laser technology rely on quantum principles.
+- **Medical Imaging**: MRI machines use quantum effects to map the body's internal structures.
+
+### Philosophical Implications:
+Quantum physics challenges classical notions of determinism and locality, sparking debates about the role of the observer and the nature of reality. Interpretations like the Copenhagen interpretation (probabilistic outcomes) and many-worlds theory (parallel universes) attempt to explain its paradoxes.
+
+In essence, quantum physics bridges the gap between the abstract and the practical, revealing a universe that is both bewilderingly strange and technologically transformative. If you'd like to dive deeper into any aspect—like specific experiments, math, or applications—just ask!
+```
+
+#### Enabling a Reasoning Model
 For reasoning models, `thinking` is enabled by default. To disable it, send the following value to the `"thinking"` parameter:
 
 ```python PYTHON 
 "thinking": { 
-"type": “disabled” # turns off thinking. It is set to “enabled” by default.
+"type": "disabled" # turns off thinking. It is set to “enabled” by default.
 }
 ```
 
@@ -121,38 +221,6 @@ A thinking token budget can also be specified, to set an upper limit on how many
 ```python "thinking": { 
 "token_budget": 500 # limits the model’s thinking output to at most 500 tokens
   } 
+```
 
 For most cases, the recommended thinking token budget is 500. 
-
-
-#### Streaming with a Reasoning Model
-
-
-output
-
-
-message: {
-	"role": "assistant",
-  	"content": [
-		{“type”: “thinking”, “thinking”: “i will greet the user”},
-		{“type”: “text”, “text”: “hello world”}
-]
-}
-
-streamed output (pseudo-code)
-
-
-<message_start>
-
-<content_start> # the reasoning content part
-<content_delta> I will
-<content_delta> greet the
-<content_delta> user
-<content_end>
-
-<content_start> # the final response content part
-<content_delta> hello
-<content_delta> world
-<content_end>
-
-<message_end>
