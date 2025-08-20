@@ -1,226 +1,114 @@
 ---
-title: Working with Reasoning
-subtitle: Command A reasoning model details and specifications
+title: Reasoning Capabilities
 slug: docs/reasoning
 hidden: false
 description: >-
-    Command A reasoning is a performant mode good at tool use, RAG, agents, and multilingual use cases. It has 111 billion parameters and a 256k context length.
+    Reasoning models excel at tool use, agentic workflows, and complex problem-solving. This page provides a general overview of Cohere's reasoning capalities.
 image: ../../../assets/images/edb3e49-cohere_meta_image.jpg
 keywords: 'generative AI, Cohere, reasoning models, large language models'
 createdAt: 'Thu Aug 7th 2025'
 updatedAt: ''
 ---
 
-Thinking models represent an advanced approach to AI reasoning that enables more sophisticated problem-solving capabilities. These models work by generating internal reasoning processes before delivering their final responses, allowing them to tackle complex tasks with enhanced analytical depth.
+Reasoning models represent an advanced approach to AI that enables more sophisticated problem-solving capabilities. Cohere's _hybrid_ reasoning models can work by generating internal reasoning processes before delivering their final responses, allowing them to tackle complex tasks with deeper analysis.
 
-### How Thinking Models Work
+### How Reasoning Models Work
 
-When a thinking model processes a request, it first generates internal reasoning content that breaks down the problem step-by-step. This reasoning process happens in dedicated "thinking" content blocks where the model works through its analysis, planning, and logical steps. Only after completing this internal reasoning does the model produce its final text response.
+When a reasoning model processes a request, it first works internally to break the problem down step-by-step. This reasoning process happens in dedicated "thinking" content blocks where the model works through its analysis, planning, and logical steps. Only after completing this internal reasoning does the model produce its final text response.
 
-The key benefit is that thinking models can handle complex problems—such as mathematical calculations, code analysis, or multi-step reasoning tasks—by first working through the problem internally before presenting a well-reasoned solution. This approach leads to more accurate, thorough, and logically sound responses compared to models that generate answers directly without intermediate reasoning steps.
+The key benefit is that reasoning models can handle complex problems—such as leveraging tools and agentic problem solving in the 23 supported languages—by first working through the problem internally before presenting a well-reasoned solution. This approach leads to more accurate and thorough responses, while pushing the boundary for the complexity of problems the model is able to solve.
 
-### Use Cases and Applications
+### Getting Started
+Models with Reasoning capabilities are accessible via the Chat API. Here's an example:
 
-Thinking models excel at tasks that benefit from step-by-step analysis, including:
-
-- **Mathematical Problem Solving**: Breaking down complex equations into manageable steps
-- **Code Analysis and Generation**: Planning program structure before writing actual code
-- **Logical Reasoning**: Working through multi-step arguments systematically
-- **Data Analysis**: Planning analysis approaches before executing them
-- **Creative Problem Solving**: Exploring different solution paths before selecting the best approach
-
-### Technical Implementation
-
-The thinking process is controlled through specific parameters that allow developers to:
-- Enable or disable thinking capabilities
-- Set token budgets to control the depth of reasoning
-- Stream responses to see reasoning and final answers in real-time
-
-This architecture makes thinking models particularly valuable for applications requiring high accuracy, transparency in reasoning, and the ability to handle complex, multi-faceted problems that benefit from systematic analysis.
-
-### The Nuts and Bolts of Reasoning Models 
-Working with a Cohere Reasoning Model is straightforward, and works through the basic Chat API. Here's a non-streaming example (a streaming example can be found below):
-
+<CodeBlocks>
 ```python PYTHON 
 from cohere import ClientV2
 
-co = ClientV2(api_key=<"YOUR_API_KEY">)
+co = ClientV2(api_key="<YOUR_API_KEY>")
 
-response=co.chat(
-	model="command-a-reasoning",
-	messages=[
-		{
-			"role": "assistant",
-			"content": [
+prompt = """
+Alice has 3 brothers and she also has 2 sisters. How many sisters does Alice's brother have?
+"""
+
+response = co.chat(
+    model="command-a-reasoning-08-2025",
+    messages=[
         {
-			"type": "thinking",
-         	"thinking": "I will greet the user"},
-				{
-					"type": "text",
-					"text": "Could you tell me about quantum physics?"
-				}
-			]
-		}
-  ]
+            "role": "user",
+            "content": prompt,
+        }
+    ],
 )
 
-print(response.message.content[0].thinking)
+for content in response.message.content:
+	if content.type == "thinking":
+		print("Thinking:", content.thinking)
+
+	if content.type == "text":
+		print("Response:", content.text)
 ```
-
-And you should get an output like this:
-
-```mdx 
-Okay, the user asked me to tell them about quantum physics. Let me start by breaking down what they might need. They probably want a basic overview since it's a broad topic.
-
-First, I should define quantum physics in simple terms. Maybe mention that it's a branch of physics dealing with particles at atomic and subatomic levels. Then, key principles like wave-particle duality, superposition, and entanglement should be explained. I need to make these concepts accessible, avoiding jargon as much as possible.
-
-Next, historical context would be helpful. Touching on pioneers like Planck, Einstein, Bohr, and Schrödinger. Maybe mention the photoelectric effect and Planck's constant. The development of quantum mechanics in the early 20th century is important to set the stage.
-
-Applications are crucial to show real-world relevance. Semiconductors, lasers, MRI technology, and quantum computing come to mind. Explaining how quantum principles enable these technologies without getting too technical.
-
-I should also address the philosophical implications, like the uncertainty principle and how it challenges classical intuitions. Maybe mention interpretations such as the Copenhagen interpretation or many-worlds, but keep it brief.
-
-Finally, wrap it up by connecting quantum physics to current research and future possibilities, like quantum computing advancements. Ensure the explanation is clear, concise, and engaging for someone new to the topic. Check for any misunderstandings and present the information in a logical flow.
-```
-
-Note that this outputs the _thinking_ tokens, and to get the actual model _text_, you'd need to use the following:
-
-```python PYTHON 
-print(response.message.content[1].text)
-```
-
-Which should give you something similar to this:
-
-```mdx 
-Quantum physics is a branch of physics that explores the behavior of matter and energy at the smallest scales, such as atoms and subatomic particles (electrons, photons, quarks, etc.). It reveals a world profoundly different from our everyday experiences, governed by rules that defy classical intuition. Here's a breakdown of its core concepts and significance:
-
-### Key Principles:
-1. **Wave-Particle Duality**:  
-   Particles like electrons and photons exhibit both particle-like and wave-like properties. For example, light (a wave) can act as discrete particles (photons), while electrons (particles) diffract like waves.
-
-2. **Superposition**:  
-   Quantum systems can exist in multiple states simultaneously until measured. A famous example is Schrödinger's cat, a thought experiment where a cat in a box is simultaneously alive *and* dead until observed.
-
-3. **Entanglement**:  
-   Particles can become interconnected, such that the state of one instantly influences the state of another, even across vast distances. Einstein called this "spooky action at a distance," but experiments confirm its reality.
-
-4. **Uncertainty Principle**:  
-   Formulated by Heisenberg, this states that certain pairs of properties (e.g., position and momentum) cannot be precisely measured simultaneously. The act of measurement itself disturbs the system.
-
-5. **Quantization**:  
-   Energy, angular momentum, and other quantities are discrete, not continuous. For instance, electrons in atoms occupy specific energy levels.
-
-### Historical Context:
-- **Early 20th Century**: Developed by pioneers like Max Planck (who introduced energy quantization), Albert Einstein (explained the photoelectric effect), Niels Bohr (atomic model), and Erwin Schrödinger (wave mechanics).
-- **Revolutionary Impact**: Overturned classical Newtonian physics, reshaping our understanding of reality.
-
-### Applications:
-- **Technology**: Enables semiconductors (electronics), lasers, MRI machines, and GPS (relying on precise atomic clocks).
-- **Quantum Computing**: Leverages superposition and entanglement to solve complex problems intractable for classical computers (e.g., drug discovery, cryptography).
-- **Materials Science**: Explains superconductivity, leading to advancements in energy transmission and magnet technology.
-
-### Philosophical Implications:
-Quantum physics challenges deterministic views of the universe. It introduces probabilistic outcomes and questions the role of the observer. Interpretations like the Copenhagen interpretation (probabilistic collapse) and many-worlds theory (all possibilities occur in branching universes) remain debated.
-
-### Modern Frontiers:
-- **Quantum Gravity**: Unifying quantum mechanics with general relativity (e.g., string theory, loop quantum gravity).
-- **Quantum Biology**: Exploring quantum effects in biological systems (e.g., photosynthesis, bird navigation).
-
-In essence, quantum physics is both a foundational scientific framework and a gateway to transformative technologies, continuing to inspire awe and curiosity about the nature of reality.
-```
-
-#### Streaming with a Reasoning Model
-There may be specific applications for which you'd want to stream a reasoning model's output, which is easy to accomplish. The only real difference is that you'll get the `thinking` streamed first, followed by the actual output, as in the example above.
-
-Here's a pair of code snippets showing how you'd do that (note that it's just a bit more complicated, as we first have to get all the thinking tokens, _then_ get all the output tokens): 
-
-```python PYTHON 
+```python PYTHON (Streaming) 
 from cohere import ClientV2
 
 co = ClientV2(api_key="<YOUR_API_KEY>")        
 
-response=co.chat_stream(
-	model="command-a-reasoning",
-	messages=[
-		{
-			"role": "assistant",
-			"content": [
-        {"type": "thinking",
-         "thinking": "I will greet the user"},
-				{
-					"type": "text",
-					"text": "Could you tell me about quantum physics?"
-				}
-			]
-		}
-  ]
+
+prompt = """
+Alice has 3 brothers and she also has 2 sisters. How many sisters does Alice's brother have?
+"""
+
+response = co.chat(
+    model="command-a-reasoning-08-2025",
+    messages=[
+        {
+            "role": "user",
+            "content": prompt,
+        }
+    ],
 )
-
 for event in response:
-  if event.type == "content-delta":
-    # Check if the 'thinking' attribute exists before trying to access it
-    if hasattr(event.delta.message.content, 'thinking') and event.delta.message.content.thinking:
-      print(event.delta.message.content.thinking, end="")
-    if hasattr(event.delta.message.content, 'text') and event.delta.message.content.text:
-      print(event.delta.message.content.text, end="")
+    if event.type == "content-delta":
+        if event.delta.message.content.type == "thinking":
+            print(event.delta.message.content.thinking, end="")
+        if event.delta.message.content.type == "text":
+            print(event.delta.message.content.text, end="")
 ```
+</CodeBlocks>
 
-And, as before, you there is a set of tokens produced by the model as it thinks, followed by its actual response (except this time, the tokens should be streamed): 
 
-```mdx 
-Okay, the user asked me to tell them about quantum physics. Let me start by breaking down what they might be looking for. Since they're asking for an explanation, they probably want a clear and concise overview.
-
-First, I should define quantum physics in simple terms. Maybe mention that it's a branch of physics dealing with the very small, like atoms and particles. Then, I need to highlight the key principles. Superposition comes to mind—particles existing in multiple states at once. Entanglement is another important concept, where particles are linked regardless of distance.
-
-I should also touch on the uncertainty principle by Heisenberg, explaining that we can't know certain properties precisely. Maybe include some applications like quantum computing, cryptography, and technologies such as MRI or semiconductors. But I need to keep it simple, avoiding too much jargon.
-
-Wait, the user might not have a strong physics background, so examples would help. Schrödinger's cat is a classic thought experiment for superposition. Also, mentioning how quantum mechanics revolutionized our understanding of the universe compared to classical physics.
-
-I should structure the response logically: start with a definition, then key principles with brief explanations, followed by applications. Make sure each point is clear and builds on the previous one. Avoid diving too deep into math or complex theories unless the user asks for more details later.
-
-Let me check if I'm missing any major points. Oh, maybe wave-particle duality? That's a fundamental concept too. Particles behaving as both waves and particles. Also, the role of observation in collapsing quantum states.
-
-Putting it all together, the response should be informative but accessible. Use analogies where possible, like comparing superposition to a spinning coin. Keep paragraphs short to maintain readability. End with an invitation for further questions in case they want to explore specific topics more deeply.Quantum physics is a branch of physics that explores the behavior of matter and energy at the smallest scales, such as atoms, electrons, and photons. It reveals a universe that is profoundly different from our everyday experiences, governed by rules that defy classical intuition. Here's a concise breakdown of its core ideas and significance:
-
-### Key Principles:
-1. **Superposition**: Particles can exist in multiple states simultaneously until measured. For example, an electron might be in two locations at once, described by a "probability wave." This is famously illustrated by *Schrödinger's cat*, a thought experiment where a cat is simultaneously alive and dead in a sealed box until observed.
-
-2. **Wave-Particle Duality**: Quantum entities like electrons and photons exhibit both wave-like and particle-like properties. Light, for instance, can behave as a wave (interfering with itself) or a stream of particles (photons), depending on the experiment.
-
-3. **Entanglement**: Particles can become "entangled," meaning their properties (e.g., spin) remain correlated even when separated by vast distances. Measuring one instantly affects the other, a phenomenon Einstein called "spooky action at a distance."
-
-4. **Uncertainty Principle**: Formulated by Werner Heisenberg, this states that certain pairs of properties (e.g., position and momentum) cannot be precisely measured simultaneously. The act of observation inherently disturbs the system, introducing fundamental limits to knowledge.
-
-5. **Quantization**: Energy, and other properties, are discrete rather than continuous. For example, electrons in an atom occupy specific energy levels, emitting or absorbing photons when transitioning between them.
-
-### Why It Matters:
-Quantum mechanics reshaped our understanding of reality, showing that the microscopic world is probabilistic, interconnected, and observer-dependent. It also underpins modern technology:
-- **Quantum Computing**: Leverages superposition and entanglement to solve complex problems (e.g., cryptography, drug discovery) far faster than classical computers.
-- **Semiconductors & Lasers**: Transistors in electronics and laser technology rely on quantum principles.
-- **Medical Imaging**: MRI machines use quantum effects to map the body's internal structures.
-
-### Philosophical Implications:
-Quantum physics challenges classical notions of determinism and locality, sparking debates about the role of the observer and the nature of reality. Interpretations like the Copenhagen interpretation (probabilistic outcomes) and many-worlds theory (parallel universes) attempt to explain its paradoxes.
-
-In essence, quantum physics bridges the gap between the abstract and the practical, revealing a universe that is both bewilderingly strange and technologically transformative. If you'd like to dive deeper into any aspect—like specific experiments, math, or applications—just ask!
-```
-
-#### Enabling a Reasoning Model
+#### Enabling / Disabling Reasoning Capabilities
 For reasoning models, `thinking` is enabled by default. To disable it, send the following value to the `"thinking"` parameter:
 
 ```python PYTHON 
 "thinking": { 
-"type": "disabled" # turns off thinking. It is set to “enabled” by default.
+    "type": "disabled" # turns off thinking. It is set to "enabled" by default.
 }
 ```
 
 #### Thinking Budgets
 
-A thinking token budget can also be specified, to set an upper limit on how many thinking tokens the model can produce. When the budget is exceeded, the model will immediately stop generating thinking tokens and proceed with the rest of the response.
+A thinking token budget can also be specified, to set an upper limit on how many thinking tokens the model can produce. When the budget is exceeded, the model will immediately proceed with the final response.
 
-```python "thinking": { 
+```python PYTHON
+"thinking": { 
 "token_budget": 500 # limits the model’s thinking output to at most 500 tokens
   } 
 ```
 
-For most cases, the recommended thinking token budget is 500. 
+### Use Cases and Applications
+
+Reasoning models excel at tasks that benefit from step-by-step analysis, including:
+
+- **Agentic Use Cases**: Taking autonomous actions and interacting with the environment to solve problems.
+- **Tool Use**: Able to leverage a variety of tools, such as search engines and APIs.
+- **Multilingual**: Able to reason over multilingual inputs, providing support to user queries in 23 different languages.
+
+### Technical Implementation
+
+The reasoning process is controlled through specific parameters that allow developers to:
+- Enable or disable reasoning capabilities
+- Set token budgets to control the depth of reasoning
+- Stream responses to see reasoning and final answers in real-time
+
+This architecture makes reasoning models particularly valuable for applications requiring high accuracy, transparency in reasoning, and the ability to handle complex, multi-faceted problems that benefit from systematic analysis. 
