@@ -58,7 +58,7 @@ prompt = """
 Alice has 3 brothers and she also has 2 sisters. How many sisters does Alice's brother have?
 """
 
-response = co.chat(
+response = co.chat_stream(
     model="command-a-reasoning-08-2025",
     messages=[
         {
@@ -69,9 +69,9 @@ response = co.chat(
 )
 for event in response:
     if event.type == "content-delta":
-        if event.delta.message.content.type == "thinking":
+        if event.delta.message.content.thinking:
             print(event.delta.message.content.thinking, end="")
-        if event.delta.message.content.type == "text":
+        if event.delta.message.content.text:
             print(event.delta.message.content.text, end="")
 ```
 </CodeBlocks>
@@ -81,7 +81,7 @@ for event in response:
 For reasoning models, `thinking` is enabled by default. To disable it, send the following value to the `"thinking"` parameter:
 
 ```python PYTHON 
-"thinking": { 
+thinking={ 
     "type": "disabled" # turns off thinking. It is set to "enabled" by default.
 }
 ```
@@ -93,7 +93,7 @@ A thinking token budget can also be specified, to set an upper limit on how many
 When the budget is exceeded, the model will immediately proceed with the final response.
 
 ```python PYTHON
-"thinking": { 
+thinking={ 
 	"token_budget": 500 # limits the model’s thinking output to at most 500 tokens
   } 
 ```
