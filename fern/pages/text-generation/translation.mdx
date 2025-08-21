@@ -1,0 +1,111 @@
+---
+title: Translation
+slug: docs/translation
+hidden: false
+description: >-
+    Command A Translate is [FILL IN]
+image: ../../../assets/images/edb3e49-cohere_meta_image.jpg
+keywords: 'generative AI, Cohere, translation, large language models'
+createdAt: 'Thu Aug 7th 2025'
+updatedAt: ''
+---
+
+[INTRODUCTION]
+
+Translating Text with the Chat Endpoint
+Cohere’s command A Translate model has been optimized for text translation in 23 languages via the Chat endpoint.
+
+The languages translation is optimized for are: English, French, Spanish, Italian, German, Portuguese, Japanese, Korean, Chinese, Arabic, Russian, Polish, Turkish, Vietnamese, Dutch, Czech, Indonesian, Ukrainian, Romanian, Greek, Hindi, Hebrew, Persian.
+
+Command A Translate supports a 256K input and 32K output context length, enabling you to translate long documents.
+
+## Translation methods
+You can perform translation of a text into another language with a simple prompt asking the model to translate a piece of text.
+
+```python PYTHON 
+
+import cohere
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
+
+target_language = "spanish"
+content_to_translate = "Initial applications to Harvard for a psychology masters were rejected, but was eventually admitted. The initial setbacks were due to Milgramm not taking any undergraduate courses in psychology at Queens College. In 1961, Milgram received a PhD in social psychology. He became an assistant professor at Yale around the same time."
+
+message = f"Translate everything that follows into {target_language}:\n\n{content_to_translate}"
+response = co.chat(
+    model="command-a-translate-08-2025",
+    messages=[{"role": "user", "content": message}],
+)
+print(response.message.content[0].text)
+```
+
+(NOTE: Here, we are passing the target language and content to translate as a variable, but you can also just include them directly into the message asking for the translation.)
+
+Here’s a sample output:
+
+```mdx 
+Las primeras solicitudes de ingreso a Harvard para cursar un máster en psicología fueron rechazadas, pero finalmente fue admitido. Los primeros contratiempos se debieron a que Milgram no había cursado ninguna asignatura de psicología de grado en el Queens College. En 1961, Milgram obtuvo un doctorado en psicología social. Por esas mismas fechas se convirtió en profesor adjunto en Yale.
+```
+
+## Translating long content
+Command A Translate has been optimized to translate content up to 8k tokens in length. If the input you wish to translate is longer than 8k tokens, you will need to chunk it and translate each chunk via a separate API call. 
+
+Generations will automatically stop after 8k tokens of output, meaning that any translation beyond 8k tokens willwil result in an error.
+
+```python PYTHON 
+import cohere
+from typing import List
+
+# Initialize the Cohere client
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
+
+# Function to split text into chunks of approximately max_tokens length
+def split_text_into_chunks(text: str, max_tokens: int = 7500) -> List[str]:
+    words = text.split()
+    chunks = []
+    current_chunk = []
+    current_length = 0
+
+    for word in words:
+        word_length = len(word.split())  # Count tokens as words for simplicity
+        if current_length + word_length > max_tokens:
+            chunks.append(" ".join(current_chunk))
+            current_chunk = [word]
+            current_length = word_length
+        else:
+            current_chunk.append(word)
+            current_length += word_length
+
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+
+    return chunks
+
+# Function to translate a single chunk
+def translate_chunk(chunk: str, target_language: str) -> str:
+    message = f"Translate everything that follows into {target_language}:\n\n{chunk}"
+    response = co.chat(
+        model="command-a-translate-08-2025",
+        messages=[{"role": "user", "content": message}],
+    )
+    return response.message.content[0].text
+
+# Function to translate the entire text by chunking and merging
+def translate_text(text: str, target_language: str, max_tokens: int = 7500) -> str:
+    chunks = split_text_into_chunks(text, max_tokens)
+    translated_chunks = [translate_chunk(chunk, target_language) for chunk in chunks]
+    return " ".join(translated_chunks)
+
+# Example usage
+target_language = "Spanish"
+content_to_translate = """
+Initial applications to Harvard for a psychology masters were rejected, but was eventually admitted. 
+The initial setbacks were due to Milgramm not taking any undergraduate courses in psychology at Queens College. 
+In 1961, Milgram received a PhD in social psychology. 
+He became an assistant professor at Yale around the same time. 
+This is a longer text to test chunking and translation. 
+It includes multiple sentences to ensure the text exceeds the token limit.
+"""
+
+translated_text = translate_text(content_to_translate, target_language)
+print(translated_text)
+```
