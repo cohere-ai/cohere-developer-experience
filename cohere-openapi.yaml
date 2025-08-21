@@ -5508,14 +5508,6 @@ paths:
               required:
                 - message
               properties:
-                raw_prompting:
-                  x-fern-audiences: ['sdk-only']
-                  type: boolean
-                  description: |
-                    When enabled, the user's prompt will be sent to the model without
-                    any pre-processing.
-
-                    Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 message:
                   type: string
                   x-fern-audiences:
@@ -5773,6 +5765,15 @@ paths:
 
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   writeOnly: true
+                raw_prompting:
+                  x-fern-audiences:
+                    - sdk-only
+                  type: boolean
+                  description: |
+                    When enabled, the user's prompt will be sent to the model without
+                    any pre-processing.
+
+                    Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 tools:
                   x-fern-audiences:
                     - public
@@ -5980,8 +5981,6 @@ paths:
                   x-fern-audiences:
                     - public
                   $ref: "#/components/schemas/ChatMessages"
-                reasoning_effort:
-                  $ref: "#/components/schemas/ReasoningEffort"
                 tools:
                   x-fern-audiences:
                     - public
@@ -6015,14 +6014,6 @@ paths:
                   x-fern-audiences:
                     - public
                   $ref: "#/components/schemas/CitationOptions"
-                raw_prompting:
-                  x-fern-audiences: ['sdk-only']
-                  type: boolean
-                  description: |
-                    When enabled, the user's prompt will be sent to the model without
-                    any pre-processing.
-
-                    Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 response_format:
                   x-fern-audiences:
                     - public
@@ -6048,9 +6039,11 @@ paths:
                     - public
                   type: integer
                   description: |
-                    The maximum number of tokens the model will generate as part of the response.
+                    The maximum number of output tokens the model will generate in the response. If not set, `max_tokens` defaults to the model's maximum output token limit. You can find the maximum output token limits for each model in the [model documentation](https://docs.cohere.com/docs/models).
 
-                    **Note**: Setting a low value may result in incomplete generations.
+                    **Note**: Setting a low value may result in incomplete generations. In such cases, the `finish_reason` field in the response will be set to `"MAX_TOKENS"`.
+
+                    **Note**: If `max_tokens` is set higher than the model's maximum output token limit, the generation will be capped at that model-specific maximum limit.
                 stop_sequences:
                   x-fern-audiences:
                     - public
@@ -6138,8 +6131,19 @@ paths:
                     If tool_choice isn't specified, then the model is free to choose whether to use the specified tools or not.
 
                     **Note**: This parameter is only compatible with models [Command-r7b](https://docs.cohere.com/v2/docs/command-r7b) and newer.
+                thinking:
+                  x-fern-audiences:
+                    - public
+                  $ref: "#/components/schemas/Thinking"
+                raw_prompting:
+                  x-fern-audiences:
+                    - sdk-only
+                  type: boolean
+                  description: |
+                    When enabled, the user's prompt will be sent to the model without
+                    any pre-processing.
 
-                    **Note**: The same functionality can be achieved in `/v1/chat` using the `force_single_step` parameter. If `force_single_step=true`, this is equivalent to specifying `REQUIRED`. While if `force_single_step=true` and `tool_results` are passed, this is equivalent to specifying `NONE`.
+                    Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
       responses:
         "200":
           description: OK
@@ -17180,6 +17184,7 @@ paths:
                     * `"uint8"`: Use this when you want to get back unsigned int8 embeddings. Supported with Embed v3.0 and newer Embed models.
                     * `"binary"`: Use this when you want to get back signed binary embeddings. Supported with Embed v3.0 and newer Embed models.
                     * `"ubinary"`: Use this when you want to get back unsigned binary embeddings. Supported with Embed v3.0 and newer Embed models.
+                    * `"base64"`: Use this when you want to get back base64 embeddings. Supported with Embed v3.0 and newer Embed models.
                   writeOnly: true
                   default:
                     - float
@@ -23147,8 +23152,7 @@ paths:
         - public
   "/v1/finetuning/finetuned-models/{finetuned_model_id}/events":
     get:
-      summary: Retrieves the chronology of statuses the fine-tuned model has been
-        through.
+      summary: Fetch history of statuses for a fine-tuned model.
       description: |-
         Returns a list of events that occurred during the life-cycle of the fine-tuned model.
         The events are ordered by creation time, with the most recent event first.
@@ -23344,7 +23348,7 @@ paths:
       x-fern-request-name: FinetuningListEventsRequest
   "/v1/finetuning/finetuned-models/{finetuned_model_id}/training-step-metrics":
     get:
-      summary: Retrieves metrics measured during the training of a fine-tuned model.
+      summary: Retrieve training metrics for fine-tuned models.
       description: |-
         Returns a list of metrics measured during the training of a fine-tuned model.
         The metrics are ordered by step number, with the most recent step first.
@@ -24486,6 +24490,20 @@ components:
               type: string
           x-fern-type-name: ToolCallV2Function
       x-fern-type-name: ToolCallV2
+    ChatThinkingContent:
+      type: object
+      description: Thinking content of the message. This will be present when
+        `thinking` is enabled, and will contain the models internal reasoning.
+      required:
+        - type
+        - thinking
+      properties:
+        type:
+          type: string
+          enum:
+            - thinking
+        thinking:
+          type: string
     ChatToolSource:
       type: object
       title: Tool Output
@@ -24582,10 +24600,12 @@ components:
               items:
                 oneOf:
                   - $ref: "#/components/schemas/ChatTextContent"
+                  - $ref: "#/components/schemas/ChatThinkingContent"
                 discriminator:
                   propertyName: type
                   mapping:
                     text: "#/components/schemas/ChatTextContent"
+                    thinking: "#/components/schemas/ChatThinkingContent"
         citations:
           type: array
           items:
@@ -24710,15 +24730,6 @@ components:
       items:
         $ref: "#/components/schemas/ChatMessageV2"
       x-fern-type-name: ChatMessages
-    ReasoningEffort:
-      description: |
-        The reasoning effort level of the model. This affects the model's performance and the time it takes to generate a response.
-      type: string
-      enum:
-        - low
-        - medium
-        - high
-      x-fern-type-name: ReasoningEffort
     ToolV2:
       type: object
       properties:
@@ -24843,6 +24854,32 @@ components:
           text: "#/components/schemas/ChatTextResponseFormatV2"
           json_object: "#/components/schemas/JsonResponseFormatV2"
       x-fern-type-name: ResponseFormatV2
+    Thinking:
+      x-fern-audiences:
+        - public
+      description: |
+        Configuration for [reasoning features](https://docs.cohere.com/docs/reasoning).
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          x-fern-audiences:
+            - public
+          type: string
+          enum:
+            - enabled
+            - disabled
+          description: |
+            Reasoning is enabled by default for models that support it, but can be turned off by setting `"type": "disabled"`.
+        token_budget:
+          x-fern-audiences:
+            - public
+          type: integer
+          description: |
+            The maximum number of tokens the model can use for thinking, which must be set to a positive integer.
+            The model will stop thinking if it reaches the thinking token budget and will proceed with the response.
+          minimum: 1
     ChatFinishReason:
       description: |
         The reason a chat request has finished.
@@ -24884,6 +24921,7 @@ components:
           items:
             oneOf:
               - $ref: "#/components/schemas/ChatTextContent"
+              - $ref: "#/components/schemas/ChatThinkingContent"
             discriminator:
               propertyName: type
               mapping:
@@ -25034,6 +25072,8 @@ components:
                     content:
                       type: object
                       properties:
+                        thinking:
+                          type: string
                         text:
                           type: string
                         type:
@@ -25063,6 +25103,8 @@ components:
                     content:
                       type: object
                       properties:
+                        thinking:
+                          type: string
                         text:
                           type: string
                       x-fern-type-name: ChatContentDeltaEventDeltaMessageContent
@@ -25505,6 +25547,7 @@ components:
         - uint8
         - binary
         - ubinary
+        - base64
       x-fern-type-name: EmbeddingType
     Image:
       type: object
@@ -26727,6 +26770,17 @@ components:
                   type: integer
                   x-fern-audiences:
                     - public
+            base64:
+              type: array
+              x-fern-audiences:
+                - public
+              description: An array of base64 embeddings. Each string is the result of
+                appending the float embedding bytes together and base64 encoding
+                that.
+              items:
+                type: string
+                x-fern-audiences:
+                  - public
           items:
             type: array
             x-fern-audiences:
