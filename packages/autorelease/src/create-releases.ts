@@ -60,7 +60,7 @@ const getJavaVersion = async () => {
     const response = await fetch("https://search.maven.org/solrsearch/select?q=g:com.cohere+AND+a:cohere-java&rows=1&wt=json")
     const json = await response.json() as { response: { docs: Array<{ latestVersion: string }> } }
     const latest = json.response.docs[0]?.latestVersion
-    return latest ?? "0.0.0"
+    return latest
 }
 
 const updateVersion = async (version: string, update: typeof bumpTypes[number]) => {
@@ -187,6 +187,16 @@ const runFernGenerate = async (language: typeof languages[number], version: stri
 (async () => {
     const bumpType = process.env.BUMP_TYPE as typeof bumpTypes[number] | undefined
     const language = process.env.LANGUAGE as typeof languages[number] | "all" | undefined
+    const version = process.env.VERSION as string | undefined
+
+    if (version) {
+        if (!language || language === "all") {
+            throw new Error("When VERSION is set, LANGUAGE must be a specific language (not 'all').")
+        }
+        await createRelease(language, version)
+        await runFernGenerate(language, version)
+        return
+    }
 
     if (!bumpType) {
         throw new Error("BUMP_TYPE is not defined.")
@@ -197,6 +207,10 @@ const runFernGenerate = async (language: typeof languages[number], version: stri
     }
 
     const nextVersions = await getNextVersions(bumpType)
+
+    if (Object.values(nextVersions).map(v => v.next).some(v => !v)) {
+        throw new Error("Failed to determine next versions, please try setting them manually", { cause: nextVersions })
+    }
 
     await Promise.all(
         languages
