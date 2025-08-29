@@ -20,34 +20,48 @@ on:
           - 'java'
           - 'python'
           - 'typescript'
-        version:
-          description: 'Set a specific version to release (disables "all" for language)'
-          required: false
-          type: string
+      version:
+        description: 'Set a specific version to release (disables "all" for language)'
+        required: false
+        type: string
+      dry_run:
+        description: 'If true, run fern generate with --preview (dry run)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+  pull_request:
+    branches:
+      - main
 jobs:
-  run:
+  release:
+    name: release-${{ matrix.language }}
     runs-on: ubuntu-latest
     environment: sdk-release
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, typescript, go, java]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
-
       - name: Install Dependencies
         shell: bash
-        run: pnpm install             
-
-      - name: Run snippet tests
+        run: pnpm install
+      - name: Run SDK release
+        if: ${{ github.event_name == 'pull_request' || github.event.inputs.language == 'all' || github.event.inputs.language == matrix.language }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_OWNER: ${{ github.repository_owner }}
           GITHUB_REPO: ${{ github.event.repository.name }}
-          BUMP_TYPE: ${{ github.event.inputs.bump_type }}
-          LANGUAGE: ${{ github.event.inputs.language }}
+          BUMP_TYPE: ${{ github.event_name == 'pull_request' && 'minor' || github.event.inputs.bump_type }}
+          LANGUAGE: ${{ matrix.language }}
           VERSION: ${{ github.event.inputs.version }}
           FERN_TOKEN: ${{ secrets.FERN_TOKEN }}
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
@@ -57,4 +71,5 @@ jobs:
           MAVEN_CENTRAL_SECRET_KEY_PASSWORD: ${{ secrets.MAVEN_CENTRAL_SECRET_KEY_PASSWORD }}
           MAVEN_CENTRAL_SECRET_KEY: ${{ secrets.MAVEN_CENTRAL_SECRET_KEY }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          DRY_RUN: ${{ github.event_name == 'pull_request' && 'true' || github.event.inputs.dry_run }}
         run: pnpm run --filter autorelease release

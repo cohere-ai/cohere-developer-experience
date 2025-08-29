@@ -57,10 +57,67 @@ const getGoVersions = async () => {
 }
 
 const getJavaVersion = async () => {
-    const response = await fetch("https://search.maven.org/solrsearch/select?q=g:com.cohere+AND+a:cohere-java&rows=1&wt=json")
-    const json = await response.json() as { response: { docs: Array<{ latestVersion: string }> } }
-    const latest = json.response.docs[0]?.latestVersion
-    return latest
+    // Maven Central can occasionally return transient 5xx / empty docs. Use multiple fallback
+    // query patterns described in their REST API docs. We short‑circuit on the first
+    // successfully parsed semantic version.
+    type MCResponse = { response?: { docs?: any[] } }
+
+    const candidates: Array<{
+        url: string,
+        extract: (json: MCResponse) => string | undefined
+    }> = [
+            // Existing endpoint: artifact summary containing latestVersion
+            {
+                url: "https://search.maven.org/solrsearch/select?q=g:com.cohere+AND+a:cohere-java&rows=1&wt=json",
+                extract: j => j.response?.docs?.[0]?.latestVersion
+            },
+            // core=gav returns per-version docs; pick first doc's version field 'v'
+            {
+                url: "https://search.maven.org/solrsearch/select?q=g:com.cohere+AND+a:cohere-java&core=gav&rows=1&wt=json",
+                extract: j => j.response?.docs?.[0]?.v
+            },
+            // Group search (multiple artifacts) then filter for our artifact
+            {
+                url: "https://search.maven.org/solrsearch/select?q=g:com.cohere&rows=20&wt=json",
+                extract: j => j.response?.docs?.find(d => d.a === "cohere-java")?.latestVersion
+            },
+            // Artifact search (any group) then filter for our group to be safe
+            {
+                url: "https://search.maven.org/solrsearch/select?q=a:cohere-java&rows=20&wt=json",
+                extract: j => j.response?.docs?.find(d => d.g === "com.cohere")?.latestVersion || j.response?.docs?.[0]?.latestVersion
+            }
+        ]
+
+    const versionRegex = /^\d+\.\d+\.\d+(?:[-+].*)?$/
+
+    const timeoutMs = 5000
+
+    for (const { url, extract } of candidates) {
+        try {
+            const controller = new AbortController()
+            const timeout = setTimeout(() => controller.abort(), timeoutMs)
+            const res = await fetch(url, { signal: controller.signal })
+            clearTimeout(timeout)
+            if (!res.ok) {
+                console.warn(`[getJavaVersion] Non-OK response ${res.status} for ${url}`)
+                continue
+            }
+            const json = await res.json() as MCResponse
+            const candidate = extract(json)
+            if (candidate && versionRegex.test(candidate)) {
+                if (url !== candidates[0].url) {
+                    console.warn(`[getJavaVersion] Used fallback Maven endpoint: ${url}`)
+                }
+                return candidate
+            }
+            console.warn(`[getJavaVersion] Unable to extract version from ${url}`)
+        } catch (e: any) {
+            console.warn(`[getJavaVersion] Error fetching ${url}: ${e?.message || e}`)
+            continue
+        }
+    }
+
+    throw new Error("Failed to resolve latest Java SDK version from Maven Central after all fallbacks.")
 }
 
 const updateVersion = async (version: string, update: typeof bumpTypes[number]) => {
@@ -143,6 +200,10 @@ const maybeDeleteRelease = async (language: typeof languages[number], version: s
 }
 
 const createRelease = async (language: typeof languages[number], version: string) => {
+    if (process.env.DRY_RUN === 'true' || process.env.FERN_PREVIEW === 'true') {
+        console.log(`[dry-run] Skipping creation of GitHub release for ${formatTagName(language, version)}`)
+        return
+    }
     const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
 
     await maybeDeleteRelease(language, version)
@@ -166,7 +227,9 @@ const createRelease = async (language: typeof languages[number], version: string
 }
 
 const runFernGenerate = async (language: typeof languages[number], version: string) => {
-    const command = `fern generate --api sdks --group ${language} --version "${version}" --log-level debug`
+    // DRY_RUN preferred; FERN_PREVIEW kept for backward compatibility
+    const preview = process.env.DRY_RUN === 'true' || process.env.FERN_PREVIEW === 'true'
+    const command = `fern generate --api sdks --group ${language} --version "${version}" --log-level debug ${preview ? '--preview' : ''}`.trim()
 
     const { error, stderr, stdout } = await execCmd(command, process.cwd())
 
