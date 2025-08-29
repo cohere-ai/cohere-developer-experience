@@ -57,67 +57,71 @@ const getGoVersions = async () => {
 }
 
 const getJavaVersion = async () => {
-    // Maven Central can occasionally return transient 5xx / empty docs. Use multiple fallback
-    // query patterns described in their REST API docs. We short‑circuit on the first
-    // successfully parsed semantic version.
+    // Adds retry per endpoint and longer timeout (12s) for slower network (e.g. CI)
     type MCResponse = { response?: { docs?: any[] } }
-
-    const candidates: Array<{
-        url: string,
-        extract: (json: MCResponse) => string | undefined
-    }> = [
-            // Existing endpoint: artifact summary containing latestVersion
-            {
-                url: "https://search.maven.org/solrsearch/select?q=g:com.cohere+AND+a:cohere-java&rows=1&wt=json",
-                extract: j => j.response?.docs?.[0]?.latestVersion
-            },
-            // core=gav returns per-version docs; pick first doc's version field 'v'
-            {
-                url: "https://search.maven.org/solrsearch/select?q=g:com.cohere+AND+a:cohere-java&core=gav&rows=1&wt=json",
-                extract: j => j.response?.docs?.[0]?.v
-            },
-            // Group search (multiple artifacts) then filter for our artifact
-            {
-                url: "https://search.maven.org/solrsearch/select?q=g:com.cohere&rows=20&wt=json",
-                extract: j => j.response?.docs?.find(d => d.a === "cohere-java")?.latestVersion
-            },
-            // Artifact search (any group) then filter for our group to be safe
-            {
-                url: "https://search.maven.org/solrsearch/select?q=a:cohere-java&rows=20&wt=json",
-                extract: j => j.response?.docs?.find(d => d.g === "com.cohere")?.latestVersion || j.response?.docs?.[0]?.latestVersion
-            }
-        ]
-
+    const candidates: Array<{ url: string, extract: (json: MCResponse) => string | undefined }> = [
+        { url: "https://search.maven.org/solrsearch/select?q=g:com.cohere+AND+a:cohere-java&rows=1&wt=json", extract: j => j.response?.docs?.[0]?.latestVersion },
+        { url: "https://search.maven.org/solrsearch/select?q=g:com.cohere+AND+a:cohere-java&core=gav&rows=1&wt=json", extract: j => j.response?.docs?.[0]?.v },
+        { url: "https://search.maven.org/solrsearch/select?q=g:com.cohere&rows=20&wt=json", extract: j => j.response?.docs?.find(d => d.a === "cohere-java")?.latestVersion },
+        { url: "https://search.maven.org/solrsearch/select?q=a:cohere-java&rows=20&wt=json", extract: j => j.response?.docs?.find(d => d.g === "com.cohere")?.latestVersion || j.response?.docs?.[0]?.latestVersion }
+    ]
     const versionRegex = /^\d+\.\d+\.\d+(?:[-+].*)?$/
+    const timeoutMs = 12000
+    const attemptsPerEndpoint = 3
 
-    const timeoutMs = 5000
-
-    for (const { url, extract } of candidates) {
-        try {
-            const controller = new AbortController()
-            const timeout = setTimeout(() => controller.abort(), timeoutMs)
-            const res = await fetch(url, { signal: controller.signal })
-            clearTimeout(timeout)
-            if (!res.ok) {
-                console.warn(`[getJavaVersion] Non-OK response ${res.status} for ${url}`)
-                continue
-            }
-            const json = await res.json() as MCResponse
-            const candidate = extract(json)
-            if (candidate && versionRegex.test(candidate)) {
-                if (url !== candidates[0].url) {
-                    console.warn(`[getJavaVersion] Used fallback Maven endpoint: ${url}`)
-                }
-                return candidate
-            }
-            console.warn(`[getJavaVersion] Unable to extract version from ${url}`)
-        } catch (e: any) {
-            console.warn(`[getJavaVersion] Error fetching ${url}: ${e?.message || e}`)
-            continue
-        }
+    const fetchWithTimeout = async (url: string, signal: AbortSignal) => {
+        return fetch(url, { signal })
     }
 
-    throw new Error("Failed to resolve latest Java SDK version from Maven Central after all fallbacks.")
+    for (const { url, extract } of candidates) {
+        for (let attempt = 1; attempt <= attemptsPerEndpoint; attempt++) {
+            try {
+                const controller = new AbortController()
+                const timeout = setTimeout(() => controller.abort(), timeoutMs)
+                const res = await fetchWithTimeout(url, controller.signal)
+                clearTimeout(timeout)
+                if (!res.ok) {
+                    console.warn(`[getJavaVersion] Non-OK ${res.status} attempt ${attempt}/${attemptsPerEndpoint} for ${url}`)
+                    continue
+                }
+                const json = await res.json() as MCResponse
+                const candidate = extract(json)
+                if (candidate && versionRegex.test(candidate)) {
+                    if (attempt > 1 || url !== candidates[0].url) {
+                        console.warn(`[getJavaVersion] Resolved via ${url} (attempt ${attempt})`)
+                    }
+                    return candidate
+                } else {
+                    console.warn(`[getJavaVersion] Invalid/missing version on attempt ${attempt} for ${url}`)
+                }
+            } catch (e: any) {
+                console.warn(`[getJavaVersion] Error attempt ${attempt}/${attemptsPerEndpoint} for ${url}: ${e?.message || e}`)
+            }
+            // backoff
+            await new Promise(r => setTimeout(r, 250 * attempt))
+        }
+    }
+    throw new Error("Failed to resolve latest Java SDK version from Maven Central after all fallbacks & retries.")
+}
+
+const getLatestVersionForLanguage = async (language: typeof languages[number]) => {
+    switch (language) {
+        case 'python': {
+            const versions = await getPythonVersions();
+            return sortVersions(versions).pop()!
+        }
+        case 'typescript': {
+            const versions = await getNpmVersions();
+            return sortVersions(versions).pop()!
+        }
+        case 'go': {
+            const versions = await getGoVersions();
+            return sortVersions(versions).pop()!
+        }
+        case 'java': {
+            return await getJavaVersion();
+        }
+    }
 }
 
 const updateVersion = async (version: string, update: typeof bumpTypes[number]) => {
@@ -130,42 +134,20 @@ const updateVersion = async (version: string, update: typeof bumpTypes[number]) 
     })[update]
 }
 
-const getLatestVersions = async () => {
-    const [pythonVersions, typescriptVersions, goVersions, javaVersion] = await Promise.all([
-        getPythonVersions(),
-        getNpmVersions(),
-        getGoVersions(),
-        getJavaVersion()
-    ])
-    return {
-        python: sortVersions(pythonVersions).pop()!,
-        typescript: sortVersions(typescriptVersions).pop()!,
-        go: sortVersions(goVersions).pop()!,
-        java: javaVersion
+const getNextVersions = async (update: typeof bumpTypes[number], targetLanguage: typeof languages[number] | 'all') => {
+    if (targetLanguage !== 'all') {
+        const latest = await getLatestVersionForLanguage(targetLanguage)
+        return {
+            [targetLanguage]: {
+                previous: latest,
+                next: await updateVersion(latest, update)
+            }
+        } as Record<typeof languages[number], { previous: string, next: string }>
     }
-}
 
-const getNextVersions = async (update: typeof bumpTypes[number]) => {
-    const latest = await getLatestVersions()
-
-    return {
-        python: {
-            previous: latest.python,
-            next: await updateVersion(latest.python, update),
-        },
-        typescript: {
-            previous: latest.typescript,
-            next: await updateVersion(latest.typescript, update),
-        },
-        go: {
-            previous: latest.go,
-            next: await updateVersion(latest.go, update),
-        },
-        java: {
-            previous: latest.java,
-            next: await updateVersion(latest.java, update),
-        }
-    }
+    // all languages
+    const latestAll = await Promise.all(languages.map(async l => [l, await getLatestVersionForLanguage(l)] as const))
+    return Object.fromEntries(await Promise.all(latestAll.map(async ([lang, latest]) => [lang, { previous: latest, next: await updateVersion(latest, update) }]))) as Record<typeof languages[number], { previous: string, next: string }>
 }
 
 const formatTagName = (language: typeof languages[number], version: string) => `${language}@${version}`
@@ -269,7 +251,7 @@ const runFernGenerate = async (language: typeof languages[number], version: stri
         throw new Error("LANGUAGE is not defined.")
     }
 
-    const nextVersions = await getNextVersions(bumpType)
+    const nextVersions = await getNextVersions(bumpType, language)
 
     if (Object.values(nextVersions).map(v => v.next).some(v => !v)) {
         throw new Error("Failed to determine next versions, please try setting them manually", { cause: nextVersions })
