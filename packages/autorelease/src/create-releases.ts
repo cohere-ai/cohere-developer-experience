@@ -57,51 +57,28 @@ const getGoVersions = async () => {
 }
 
 const getJavaVersion = async () => {
-    // Adds retry per endpoint and longer timeout (12s) for slower network (e.g. CI)
-    type MCResponse = { response?: { docs?: any[] } }
-    const candidates: Array<{ url: string, extract: (json: MCResponse) => string | undefined }> = [
-        { url: "https://search.maven.org/solrsearch/select?q=g:com.cohere+AND+a:cohere-java&rows=1&wt=json", extract: j => j.response?.docs?.[0]?.latestVersion },
-        { url: "https://search.maven.org/solrsearch/select?q=g:com.cohere+AND+a:cohere-java&core=gav&rows=1&wt=json", extract: j => j.response?.docs?.[0]?.v },
-        { url: "https://search.maven.org/solrsearch/select?q=g:com.cohere&rows=20&wt=json", extract: j => j.response?.docs?.find(d => d.a === "cohere-java")?.latestVersion },
-        { url: "https://search.maven.org/solrsearch/select?q=a:cohere-java&rows=20&wt=json", extract: j => j.response?.docs?.find(d => d.g === "com.cohere")?.latestVersion || j.response?.docs?.[0]?.latestVersion }
-    ]
-    const versionRegex = /^\d+\.\d+\.\d+(?:[-+].*)?$/
-    const timeoutMs = 12000
-    const attemptsPerEndpoint = 3
-
-    const fetchWithTimeout = async (url: string, signal: AbortSignal) => {
-        return fetch(url, { signal })
-    }
-
-    for (const { url, extract } of candidates) {
-        for (let attempt = 1; attempt <= attemptsPerEndpoint; attempt++) {
-            try {
-                const controller = new AbortController()
-                const timeout = setTimeout(() => controller.abort(), timeoutMs)
-                const res = await fetchWithTimeout(url, controller.signal)
-                clearTimeout(timeout)
-                if (!res.ok) {
-                    console.warn(`[getJavaVersion] Non-OK ${res.status} attempt ${attempt}/${attemptsPerEndpoint} for ${url}`)
-                    continue
-                }
-                const json = await res.json() as MCResponse
-                const candidate = extract(json)
-                if (candidate && versionRegex.test(candidate)) {
-                    if (attempt > 1 || url !== candidates[0].url) {
-                        console.warn(`[getJavaVersion] Resolved via ${url} (attempt ${attempt})`)
-                    }
-                    return candidate
-                } else {
-                    console.warn(`[getJavaVersion] Invalid/missing version on attempt ${attempt} for ${url}`)
-                }
-            } catch (e: any) {
-                console.warn(`[getJavaVersion] Error attempt ${attempt}/${attemptsPerEndpoint} for ${url}: ${e?.message || e}`)
-            }
-            // backoff
-            await new Promise(r => setTimeout(r, 250 * attempt))
+    // Simplified per request: single Sonatype Central endpoint returning docs[0].v
+    // Example response doc: { id: 'com.cohere:cohere-java:1.0.8', g: 'com.cohere', a: 'cohere-java', v: '1.0.8', ... }
+    const url = 'https://central.sonatype.com/solrsearch/select?q=g:com.cohere%20AND%20a:cohere-java&rows=1&wt=json'
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 15000)
+    try {
+        const res = await fetch(url, { signal: controller.signal })
+        if (!res.ok) {
+            throw new Error(`Non-OK status ${res.status}`)
         }
+        const json = await res.json() as { response?: { docs?: Array<{ v?: string }> } }
+        const version = json.response?.docs?.[0]?.v
+        if (!version) {
+            throw new Error('Version not found in response')
+        }
+        return version
+    } catch (e: any) {
+        console.error(`[getJavaVersion] Failed to fetch from Sonatype Central: ${e?.message || e}`)
+        throw e
+    } finally {
+        clearTimeout(timeout)
     }
-    throw new Error("Failed to resolve latest Java SDK version from Maven Central after all fallbacks & retries.")
 }
 
 const getLatestVersionForLanguage = async (language: typeof languages[number]) => {
