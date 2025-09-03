@@ -17184,6 +17184,7 @@ paths:
                     * `"uint8"`: Use this when you want to get back unsigned int8 embeddings. Supported with Embed v3.0 and newer Embed models.
                     * `"binary"`: Use this when you want to get back signed binary embeddings. Supported with Embed v3.0 and newer Embed models.
                     * `"ubinary"`: Use this when you want to get back unsigned binary embeddings. Supported with Embed v3.0 and newer Embed models.
+                    * `"base64"`: Use this when you want to get back base64 embeddings. Supported with Embed v3.0 and newer Embed models.
                   writeOnly: true
                   default:
                     - float
@@ -22432,14 +22433,6 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/FinetunedModel"
-              required:
-                - finetuned_model
-            example:
-              name: api-test
-              settings:
-                base_model:
-                  base_type: BASE_TYPE_CHAT
-                dataset_id: my-dataset-id
         required: true
       parameters:
         - $ref: "#/components/parameters/RequestSource"
@@ -24489,6 +24482,20 @@ components:
               type: string
           x-fern-type-name: ToolCallV2Function
       x-fern-type-name: ToolCallV2
+    ChatThinkingContent:
+      type: object
+      description: Thinking content of the message. This will be present when
+        `thinking` is enabled, and will contain the models internal reasoning.
+      required:
+        - type
+        - thinking
+      properties:
+        type:
+          type: string
+          enum:
+            - thinking
+        thinking:
+          type: string
     ChatToolSource:
       type: object
       title: Tool Output
@@ -24585,6 +24592,7 @@ components:
               items:
                 oneOf:
                   - $ref: "#/components/schemas/ChatTextContent"
+                  - $ref: "#/components/schemas/ChatThinkingContent"
                 discriminator:
                   propertyName: type
                   mapping:
@@ -24842,9 +24850,7 @@ components:
       x-fern-audiences:
         - public
       description: |
-        Thinking gives the model enhanced reasoning capabilities for complex tasks, while also providing transparency into its step-by-step thought process before it delivers its final answer.
-        When thinking is turned on, the model creates thinking content blocks where it outputs its internal reasoning. The model will incorporate insights from this reasoning before crafting a final response.
-        When thinking is used without tools, the API response will include both thinking and text content blocks. Meanwhile, when thinking is used alongside tools and the model makes tool calls, the API response will include the thinking content block and `tool_calls`.
+        Configuration for [reasoning features](https://docs.cohere.com/docs/reasoning).
       type: object
       required:
         - type
@@ -24856,6 +24862,8 @@ components:
           enum:
             - enabled
             - disabled
+          description: |
+            Reasoning is enabled by default for models that support it, but can be turned off by setting `"type": "disabled"`.
         token_budget:
           x-fern-audiences:
             - public
@@ -24905,6 +24913,7 @@ components:
           items:
             oneOf:
               - $ref: "#/components/schemas/ChatTextContent"
+              - $ref: "#/components/schemas/ChatThinkingContent"
             discriminator:
               propertyName: type
               mapping:
@@ -25055,6 +25064,8 @@ components:
                     content:
                       type: object
                       properties:
+                        thinking:
+                          type: string
                         text:
                           type: string
                         type:
@@ -25528,6 +25539,7 @@ components:
         - uint8
         - binary
         - ubinary
+        - base64
       x-fern-type-name: EmbeddingType
     Image:
       type: object
@@ -26750,6 +26762,17 @@ components:
                   type: integer
                   x-fern-audiences:
                     - public
+            base64:
+              type: array
+              x-fern-audiences:
+                - public
+              description: An array of base64 embeddings. Each string is the result of
+                appending the float embedding bytes together and base64 encoding
+                that.
+              items:
+                type: string
+                x-fern-audiences:
+                  - public
           items:
             type: array
             x-fern-audiences:
