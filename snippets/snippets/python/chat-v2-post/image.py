@@ -15,6 +15,7 @@ response = co.chat(
                 {
                     "type": "image_url",
                     "image_url": {
+                        # Can be either a base64 data URI or a web URL.
                         "url": "https://cohere.com/favicon-32x32.png",
                         "detail": "auto"
                     }
