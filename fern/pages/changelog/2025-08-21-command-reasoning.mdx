@@ -1,0 +1,83 @@
+---
+title: "Announcing Cohere's Command A Reasoning Model"
+slug: "changelog/2025-08-21-command-a-reasoning"
+createdAt: "Thu Aug 21 2025 00:00:00 (MST)"
+hidden: false
+description: >-
+ This announcement covers the release of Command A Reasoning, Cohere's first model able to engage in thinking and reasoning.
+---
+
+We’re excited to announce the release of **Command A Reasoning**, a hybrid reasoning model designed to excel at complex agentic tasks, in English and 22 other languages. With 111 billion parameters and a 256K context length, this model brings advanced reasoning capabilities to your applications through the familiar Command API interface.
+
+**Key Features**  
+- **Tool Use**: Provides the strongest tool use performance out of the Command family of models.
+- **Agentic Applications**: Demonstrates proactive problem-solving, autonomously using tools and resources to complete highly complex tasks.
+- **Multilingual**: With 23 languages supported, the model solves reasoning and agentic problems in the language your business operates in.
+
+**Technical Specifications**  
+- **Model Name**: `command-a-reasoning-08-2025`  
+- **Context Length**: 256K tokens  
+- **Maximum Output**: 32K tokens  
+- **API Endpoint**: Chat API  
+
+### Getting Started
+Integrating Command A Reasoning is straightforward using the Chat API. Here’s a non-streaming example:  
+
+<CodeBlocks>
+```python PYTHON 
+from cohere import ClientV2
+
+co = ClientV2("<YOUR_API_KEY>")
+
+prompt = """
+Alice has 3 brothers and she also has 2 sisters. How many sisters does Alice's brother have?
+"""
+
+response = co.chat(
+    model="command-a-reasoning-08-2025",
+    messages=[
+        {
+            "role": "user",
+            "content": prompt,
+        }
+    ],
+)
+
+for content in response.message.content:
+	if content.type == "thinking":
+		print("Thinking:", content.thinking)
+
+	if content.type == "text":
+		print("Response:", content.text)
+```
+
+```python PYTHON (Streaming) 
+from cohere import ClientV2
+
+co = ClientV2(api_key="<YOUR_API_KEY>")        
+
+prompt = """
+Alice has 3 brothers and she also has 2 sisters. How many sisters does Alice's brother have?
+"""
+
+response = co.chat_stream(
+    model="command-a-reasoning-08-2025",
+    messages=[
+        {
+            "role": "user",
+            "content": prompt,
+        }
+    ],
+)
+for event in response:
+    if event.type == "content-delta":
+        if event.delta.message.content.thinking:
+            print(event.delta.message.content.thinking, end="")
+        if event.delta.message.content.text:
+            print(event.delta.message.content.text, end="")
+```
+</CodeBlocks>
+
+**Customization Options**  
+
+You can enable and disable thinking capabilities using the `thinking` parameter, and steer the model's output with a flexible user-controlled thinking budget; for more details on token budgets, advanced configurations, and best practices, refer to our dedicated [Reasoning documentation](/docs/reasoning).  

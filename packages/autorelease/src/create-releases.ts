@@ -1,24 +1,24 @@
 import { Octokit } from "@octokit/rest"
 import * as childProcess from "child_process"
 
-export const execCmd = async (cmd: string, cwd: string): Promise<{error: null | childProcess.ExecException, stderr: string, stdout: string}> => {
+export const execCmd = async (cmd: string, cwd: string): Promise<{ error: null | childProcess.ExecException, stderr: string, stdout: string }> => {
     return new Promise((resolve, reject) => {
         try {
-            childProcess.exec(cmd, {cwd}, (error, stdout, stderr) => {
+            childProcess.exec(cmd, { cwd }, (error, stdout, stderr) => {
                 if (error) {
-                    resolve({error, stderr, stdout})
+                    resolve({ error, stderr, stdout })
                 }
-                resolve({ error, stderr, stdout})
+                resolve({ error, stderr, stdout })
             })
         } catch (error) {
-            resolve({error, stderr: '', stdout: ''})
+            resolve({ error, stderr: '', stdout: '' })
         }
     })
 }
 
 const versionMatchRegex = /v?(\d+\.\d+\.\d+)/g
 
-const languages = ["python", "typescript", "go"] as const
+const languages = ["python", "typescript", "go", "java"] as const
 
 const bumpTypes = ["major", "minor", "patch"] as const
 
@@ -56,6 +56,13 @@ const getGoVersions = async () => {
     return [json.Version.replace("v", "")]
 }
 
+const getJavaVersion = async () => {
+    const response = await fetch("https://search.maven.org/solrsearch/select?q=g:com.cohere+AND+a:cohere-java&rows=1&wt=json")
+    const json = await response.json() as { response: { docs: Array<{ latestVersion: string }> } }
+    const latest = json.response.docs[0]?.latestVersion
+    return latest
+}
+
 const updateVersion = async (version: string, update: typeof bumpTypes[number]) => {
     const [major, minor, patch] = version.split(".").map(Number)
 
@@ -67,16 +74,17 @@ const updateVersion = async (version: string, update: typeof bumpTypes[number]) 
 }
 
 const getLatestVersions = async () => {
-    const [pythonVersions, typescriptVersions, goVersions] = await Promise.all([
+    const [pythonVersions, typescriptVersions, goVersions, javaVersion] = await Promise.all([
         getPythonVersions(),
         getNpmVersions(),
         getGoVersions(),
+        getJavaVersion()
     ])
     return {
         python: sortVersions(pythonVersions).pop()!,
         typescript: sortVersions(typescriptVersions).pop()!,
         go: sortVersions(goVersions).pop()!,
-        java: "0.0.0" // TODO: java
+        java: javaVersion
     }
 }
 
@@ -179,6 +187,16 @@ const runFernGenerate = async (language: typeof languages[number], version: stri
 (async () => {
     const bumpType = process.env.BUMP_TYPE as typeof bumpTypes[number] | undefined
     const language = process.env.LANGUAGE as typeof languages[number] | "all" | undefined
+    const version = process.env.VERSION as string | undefined
+
+    if (version) {
+        if (!language || language === "all") {
+            throw new Error("When VERSION is set, LANGUAGE must be a specific language (not 'all').")
+        }
+        await createRelease(language, version)
+        await runFernGenerate(language, version)
+        return
+    }
 
     if (!bumpType) {
         throw new Error("BUMP_TYPE is not defined.")
@@ -190,6 +208,10 @@ const runFernGenerate = async (language: typeof languages[number], version: stri
 
     const nextVersions = await getNextVersions(bumpType)
 
+    if (Object.values(nextVersions).map(v => v.next).some(v => !v)) {
+        throw new Error("Failed to determine next versions, please try setting them manually", { cause: nextVersions })
+    }
+
     await Promise.all(
         languages
             .filter(l => language === "all" ? true : l === language)
@@ -198,5 +220,5 @@ const runFernGenerate = async (language: typeof languages[number], version: stri
                 runFernGenerate(language, nextVersions[language].next)
             ])
     )
-    
+
 })()

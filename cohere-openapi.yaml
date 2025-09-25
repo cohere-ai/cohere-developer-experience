@@ -50,7 +50,7 @@ paths:
           example: text/event-stream
       x-fern-audiences:
         - public
-      summary: Chat V1 API
+      summary: Chat API (v1)
       operationId: chat
       x-fern-streaming:
         stream-description: |
@@ -5594,6 +5594,7 @@ paths:
                      - AUTO: Cohere Platform Only
                      - AUTO_PRESERVE_ORDER: Azure, AWS Sagemaker/Bedrock, Private Deployments
                 connectors:
+                  deprecated: true
                   type: array
                   x-fern-audiences:
                     - public
@@ -5607,6 +5608,7 @@ paths:
 
                     Compatible Deployments: Cohere Platform
                 search_queries_only:
+                  deprecated: true
                   type: boolean
                   x-fern-audiences:
                     - public
@@ -5765,6 +5767,15 @@ paths:
 
                     Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                   writeOnly: true
+                raw_prompting:
+                  x-fern-audiences:
+                    - sdk-only
+                  type: boolean
+                  description: |
+                    When enabled, the user's prompt will be sent to the model without
+                    any pre-processing.
+
+                    Compatible Deployments: Cohere Platform, Azure, AWS Sagemaker/Bedrock, Private Deployments
                 tools:
                   x-fern-audiences:
                     - public
@@ -5872,7 +5883,7 @@ paths:
           $ref: "#/components/responses/GatewayTimeout"
   /v2/chat:
     post:
-      summary: Chat V2 API
+      summary: Chat API (v2)
       operationId: chatv2
       x-fern-audiences:
         - v2-beta
@@ -5972,8 +5983,6 @@ paths:
                   x-fern-audiences:
                     - public
                   $ref: "#/components/schemas/ChatMessages"
-                reasoning_effort:
-                  $ref: "#/components/schemas/ReasoningEffort"
                 tools:
                   x-fern-audiences:
                     - public
@@ -6032,9 +6041,11 @@ paths:
                     - public
                   type: integer
                   description: |
-                    The maximum number of tokens the model will generate as part of the response.
+                    The maximum number of output tokens the model will generate in the response. If not set, `max_tokens` defaults to the model's maximum output token limit. You can find the maximum output token limits for each model in the [model documentation](https://docs.cohere.com/docs/models).
 
-                    **Note**: Setting a low value may result in incomplete generations.
+                    **Note**: Setting a low value may result in incomplete generations. In such cases, the `finish_reason` field in the response will be set to `"MAX_TOKENS"`.
+
+                    **Note**: If `max_tokens` is set higher than the model's maximum output token limit, the generation will be capped at that model-specific maximum limit.
                 stop_sequences:
                   x-fern-audiences:
                     - public
@@ -6122,8 +6133,10 @@ paths:
                     If tool_choice isn't specified, then the model is free to choose whether to use the specified tools or not.
 
                     **Note**: This parameter is only compatible with models [Command-r7b](https://docs.cohere.com/v2/docs/command-r7b) and newer.
-
-                    **Note**: The same functionality can be achieved in `/v1/chat` using the `force_single_step` parameter. If `force_single_step=true`, this is equivalent to specifying `REQUIRED`. While if `force_single_step=true` and `tool_results` are passed, this is equivalent to specifying `NONE`.
+                thinking:
+                  x-fern-audiences:
+                    - public
+                  $ref: "#/components/schemas/Thinking"
       responses:
         "200":
           description: OK
@@ -6131,7 +6144,7 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - $ref: "#/components/schemas/ChatResponse"
+                  - $ref: "#/components/schemas/ChatResponseV2"
                   - $ref: "#/components/schemas/StreamedChatResponseV2"
         "400":
           $ref: "#/components/responses/BadRequest"
@@ -6240,7 +6253,7 @@ paths:
                 			Messages: cohere.ChatMessages{
                 				{
                 					Role: "user",
-                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
                 						String: "Hello world!",
                 					}},
                 				},
@@ -6408,15 +6421,17 @@ paths:
         - code-samples:
             - sdk: typescript
               name: Documents
-              code: |
+              code: >
                 const { CohereClientV2 } = require('cohere-ai');
 
+
                 const cohere = new CohereClientV2({});
+
 
                 (async () => {
                   const response = await cohere.chat({
                     model: 'command-a-03-2025',
-                    documents: [{ id: '1', data: 'Cohere is the best!' }],
+                    documents: [{ id: '1', data: { text: 'Cohere is the best!' } }],
                     messages: [
                       {
                         role: 'user',
@@ -6639,7 +6654,7 @@ paths:
                 			Messages: cohere.ChatMessages{
                 				{
                 					Role: "user",
-                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
                 						String: "Who's the best?",
                 					}},
                 				},
@@ -7145,7 +7160,7 @@ paths:
                   output_tokens: 434
         - code-samples:
             - sdk: typescript
-              name: Streaming
+              name: Default
               code: |
                 const { CohereClientV2 } = require('cohere-ai');
 
@@ -7169,7 +7184,7 @@ paths:
                   }
                 })();
             - sdk: python
-              name: Streaming
+              name: Default
               code: |
                 import cohere
 
@@ -7184,7 +7199,7 @@ paths:
                     if event.type == "content-delta":
                         print(event.delta.message.content.text, end="")
             - sdk: java
-              name: Streaming
+              name: Default
               code: >
                 /* (C)2024 */
 
@@ -7250,7 +7265,7 @@ paths:
                   }
                 }
             - sdk: go
-              name: Streaming
+              name: Default
               code: >
                 package main
 
@@ -7277,7 +7292,7 @@ paths:
                 			Messages: cohere.ChatMessages{
                 				{
                 					Role: "user",
-                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
                 						String: "Hello world!",
                 					}},
                 				},
@@ -7308,7 +7323,7 @@ paths:
                 	}
                 }
             - sdk: curl
-              name: Streaming
+              name: Default
               code: |
                 curl --request POST \
                   --url https://api.cohere.com/v2/chat \
@@ -7340,10 +7355,6 @@ paths:
                   delta:
                     message:
                       role: 'assistant'
-                      # content: []
-                      # tool_plan: ""
-                      # tool_calls: []
-                      # citations: []
               - event: text-generation
                 data:
                   type: content-start
@@ -7730,7 +7741,7 @@ paths:
                 			Messages: cohere.ChatMessages{
                 				{
                 					Role: "user",
-                					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+                					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
                 						String: "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
                 					}},
                 				},
@@ -7859,8 +7870,1628 @@ paths:
                 tokens:
                   input_tokens: 1032
                   output_tokens: 124
+        - code-samples:
+            - sdk: typescript
+              name: Documents
+              code: |
+                const { CohereClientV2 } = require('cohere-ai');
+
+                const cohere = new CohereClientV2({});
+
+                (async () => {
+                  const stream = await cohere.chatStream({
+                    model: 'command-a-03-2025',
+                    documents: [
+                      {
+                        data: {
+                          text: 'Cohere is the best!',
+                        },
+                      },
+                    ],
+                    messages: [
+                      {
+                        role: 'user',
+                        content: [{ type: 'text', text: "Who's the best?" }],
+                      },
+                    ],
+                  });
+
+                  for await (const chatEvent of stream) {
+                    console.log(chatEvent);
+                  }
+                })();
+            - sdk: python
+              name: Documents
+              code: >+
+                import cohere
+
+
+                co = cohere.ClientV2()
+
+
+                response = co.chat_stream(
+                    model="command-a-03-2025",
+                    documents=[
+                        {"id": "1", "data": {"text": "Cohere is the best!", "title": "The best"}}
+                    ],
+                    messages=[{"role": "user", "content": "Who's the best?"}],
+                )
+
+
+                for event in response:
+                    if event.type == "message-start":
+                        print("\nMessage started.")
+                    elif event.type == "message-end":
+                        print("\nMessage ended.")
+                    elif event.type == "content-delta":
+                        print(event.delta.message.content.text, end="")
+
+            - sdk: java
+              name: Documents
+              code: |
+                /* (C)2024 */
+                package chatv2post;
+
+                import com.cohere.api.Cohere;
+                import com.cohere.api.resources.v2.requests.V2ChatStreamRequest;
+                import com.cohere.api.resources.v2.types.V2ChatStreamRequestDocumentsItem;
+                import com.cohere.api.types.*;
+                import java.util.List;
+
+                public class StreamDocuments {
+                  public static void main(String[] args) {
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
+
+                    Iterable<StreamedChatResponseV2> response =
+                        cohere
+                            .v2()
+                            .chatStream(
+                                V2ChatStreamRequest.builder()
+                                    .model("command-a-03-2025")
+                                    .messages(
+                                        List.of(
+                                            ChatMessageV2.user(
+                                                UserMessage.builder()
+                                                    .content(UserMessageContent.of("Who is the most popular?"))
+                                                    .build())))
+                                    .documents(
+                                        List.of(
+                                            V2ChatStreamRequestDocumentsItem.of(
+                                                "↓ Skip to Main Content\n\n"
+                                                    + "Music industry – One step closer to being accurate\n\n"
+                                                    + "CSPC: Backstreet Boys Popularity Analysis\n\n"
+                                                    + "At one point, Backstreet Boys defined success: massive album"
+                                                    + " sales..."),
+                                            V2ChatStreamRequestDocumentsItem.of(
+                                                "↓ Skip to Main Content\n\n"
+                                                    + "CSPC: NSYNC Popularity Analysis\n\n"
+                                                    + "At the turn of the millennium, three teen acts were huge:"
+                                                    + " Backstreet Boys, Britney Spears, and NSYNC..."),
+                                            V2ChatStreamRequestDocumentsItem.of(
+                                                "Yet the way many music consumers embraced Backstreet Boys deserves"
+                                                    + " its own chapter..."),
+                                            V2ChatStreamRequestDocumentsItem.of(
+                                                "Was NSYNC only successful in the US, or were they a global"
+                                                    + " phenomenon?...")))
+                                    .build());
+
+                    for (StreamedChatResponseV2 chatResponse : response) {
+                      if (chatResponse.isContentDelta()) {
+                        String text =
+                            chatResponse
+                                .getContentDelta()
+                                .flatMap(ChatContentDeltaEvent::getDelta)
+                                .flatMap(ChatContentDeltaEventDelta::getMessage)
+                                .flatMap(ChatContentDeltaEventDeltaMessage::getContent)
+                                .flatMap(ChatContentDeltaEventDeltaMessageContent::getText)
+                                .orElse("");
+                        System.out.println(text);
+                      }
+                    }
+                  }
+                }
+            - sdk: go
+              name: Documents
+              code: >
+                package main
+
+
+                import (
+                	"context"
+                	"errors"
+                	"io"
+                	"log"
+                	"os"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
+
+                	resp, err := co.V2.ChatStream(
+                		context.TODO(),
+                		&cohere.V2ChatStreamRequest{
+                			Model: "command-r-plus",
+                			Documents: []*cohere.V2ChatStreamRequestDocumentsItem{
+                				{
+                					String: "Cohere is the best!",
+                				},
+                			},
+                			Messages: cohere.ChatMessages{
+                				{
+                					Role: "user",
+                					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
+                						String: "Who's the best?",
+                					}},
+                				},
+                			},
+                		},
+                	)
+
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+                	defer resp.Close()
+
+                	for {
+                		message, err := resp.Recv()
+
+                		if errors.Is(err, io.EOF) {
+                			// An io.EOF error means the server is done sending messages
+                			// and should be treated as a success.
+                			break
+                		}
+
+                		// Log the received message
+                		if message.ContentDelta != nil {
+                			log.Printf("%+v", message)
+                		}
+                	}
+                }
+            - sdk: curl
+              name: Documents
+              code: |
+                curl --request POST \
+                  --url https://api.cohere.com/v2/chat \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY" \
+                  --data "{
+                    \"stream\": true,
+                    \"model\": \"command-a-03-2025\",
+                    \"documents\": [
+                      {
+                        \"id\": \"1\",
+                        \"data\": \"Cohere is the best!\"
+                      }
+                    ],
+                    \"messages\": [
+                      {
+                        \"role\": \"user\",
+                        \"content\": \"Who's the best?\"
+                      }
+                    ]
+                  }"
+          request:
+            stream: true
+            model: 'command-a-03-2025'
+            documents:
+              - id: '1'
+                data:
+                  content: 'Cohere is the best!'
+                  snippet: 'Cohere is the best!'
+            messages:
+              - role: 'user'
+                content: "Who's the best?"
+          response:
+            stream:
+              - event: message-start
+                data:
+                  type: message-start
+                  id: 8268c123-8264-4046-afd9-ae3d328f85f3
+                  delta:
+                    message:
+                      role: 'assistant'
+              - event: content-start
+                data:
+                  type: content-start
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        type: 'text'
+                        text: ''
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: 'Coh'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: 'ere'
+              - event: citation-start
+                data:
+                  type: citation-start
+                  index: 0
+                  delta:
+                    message:
+                      citations:
+                        start: 0
+                        end: 6
+                        text: 'Cohere'
+                        sources:
+                          - type: 'document'
+                            id: '1'
+                            document:
+                              id: '1'
+                              text: 'Cohere is the best!'
+                              title: 'The best'
+                        type: 'TEXT_CONTENT'
+              - event: citation-end
+                data:
+                  type: citation-end
+                  index: 0
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' is'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' the'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' best'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: '!'
+              - event: content-end
+                data:
+                  type: content-end
+                  index: 0
+              - event: message-end
+                data:
+                  type: message-end
+                  delta:
+                    finish_reason: COMPLETE
+                    usage:
+                      billed_units:
+                        input_tokens: 18.0
+                        output_tokens: 6.0
+                      tokens:
+                        input_tokens: 1661.0
+                        output_tokens: 19.0
+        - code-samples:
+            - sdk: typescript
+              name: Tools
+              code: >
+                const { CohereClientV2 } = require('cohere-ai');
+
+
+                const cohere = new CohereClientV2({});
+
+
+                (async () => {
+                  const stream = await cohere.chatStream({
+                    model: 'command-a-03-2025',
+                    tools: [
+                      {
+                        type: 'function',
+                        function: {
+                          name: 'query_daily_sales_report',
+                          description:
+                            'Connects to a database to retrieve overall sales volumes and sales information for a given day.',
+                          parameters: {
+                            type: 'object',
+                            properties: {
+                              day: {
+                                description: 'Retrieves sales data for this day, formatted as YYYY-MM-DD.',
+                                type: 'string',
+                              },
+                            },
+                          },
+                        },
+                      },
+                      {
+                        type: 'function',
+                        function: {
+                          name: 'query_product_catalog',
+                          description:
+                            'Connects to a product catalog with information about all the products being sold, including categories, prices, and stock levels.',
+                          parameters: {
+                            type: 'object',
+                            properties: {
+                              category: {
+                                description:
+                                  'Retrieves product information data for all products in this category.',
+                                type: 'string',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    ],
+                    messages: [
+                      {
+                        role: 'user',
+                        content:
+                          "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
+                      },
+                    ],
+                  });
+
+                  for await (const chatEvent of stream) {
+                    if (chatEvent.type === 'tool-call-delta') {
+                      console.log(chatEvent.delta?.message);
+                    }
+                  }
+                })();
+            - sdk: python
+              name: Tools
+              code: >
+                import cohere
+
+
+                co = cohere.ClientV2()
+
+
+                response = co.chat_stream(
+                    model="command-a-03-2025",
+                    tools=[
+                        cohere.ToolV2(
+                            type="function",
+                            function={
+                                "name": "query_daily_sales_report",
+                                "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+                                "parameters": {
+                                    "type": "object",
+                                    "properties": {
+                                        "day": {
+                                            "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
+                                            "type": "string",
+                                        }
+                                    },
+                                    "required": ["day"],
+                                },
+                            },
+                        ),
+                        cohere.ToolV2(
+                            type="function",
+                            function={
+                                "name": "query_product_catalog",
+                                "description": "Connects to a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
+                                "parameters": {
+                                    "type": "object",
+                                    "properties": {
+                                        "category": {
+                                            "description": "Retrieves product information data for all products in this category.",
+                                            "type": "string",
+                                        }
+                                    },
+                                    "required": ["category"],
+                                },
+                            },
+                        ),
+                    ],
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
+                        }
+                    ],
+                )
+
+
+                for event in response:
+                    if event.type in ["tool-call-start", "tool-call-delta"]:
+                        for tool_call in event.delta.message.tool_calls:
+                            print(tool_call)
+            - sdk: java
+              name: Tools
+              code: >
+                /* (C)2024 */
+
+                package chatv2post;
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.resources.v2.requests.V2ChatStreamRequest;
+
+                import com.cohere.api.types.*;
+
+                import java.util.List;
+
+                import java.util.Map;
+
+
+                public class StreamTools {
+                  public static void main(String[] args) {
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
+
+                    Iterable<StreamedChatResponseV2> response =
+                        cohere
+                            .v2()
+                            .chatStream(
+                                V2ChatStreamRequest.builder()
+                                    .model("command-a-03-2025")
+                                    .tools(
+                                        List.of(
+                                            ToolV2.builder()
+                                                .function(
+                                                    ToolV2Function.builder()
+                                                        .name("query_daily_sales_report")
+                                                        .description(
+                                                            "Connects to a database to retrieve overall sales"
+                                                                + " volumes and sales information for a given day.")
+                                                        .parameters(
+                                                            Map.of(
+                                                                "day",
+                                                                ToolParameterDefinitionsValue.builder()
+                                                                    .type("str")
+                                                                    .description(
+                                                                        "Retrieves sales data for this day,"
+                                                                            + " formatted as YYYY-MM-DD.")
+                                                                    .required(true)
+                                                                    .build()))
+                                                        .build())
+                                                .build(),
+                                            ToolV2.builder()
+                                                .function(
+                                                    ToolV2Function.builder()
+                                                        .name("query_product_catalog")
+                                                        .description(
+                                                            "Connects to a product catalog with information about"
+                                                                + " all the products being sold, including"
+                                                                + " categories, prices, and stock levels.")
+                                                        .parameters(
+                                                            Map.of(
+                                                                "category",
+                                                                ToolParameterDefinitionsValue.builder()
+                                                                    .type("str")
+                                                                    .description(
+                                                                        "Retrieves product information data for all"
+                                                                            + " products in this category.")
+                                                                    .required(true)
+                                                                    .build()))
+                                                        .build())
+                                                .build()))
+                                    .messages(
+                                        List.of(
+                                            ChatMessageV2.user(
+                                                UserMessage.builder()
+                                                    .content(
+                                                        UserMessageContent.of(
+                                                            "Can you provide a sales summary for 29th September"
+                                                                + " 2023, and also give me some details about the"
+                                                                + " products in the 'Electronics' category?"))
+                                                    .build())))
+                                    .build());
+
+                    for (StreamedChatResponseV2 chatResponse : response) {
+                      if (chatResponse.isContentDelta()) {
+                        String text =
+                            chatResponse
+                                .getContentDelta()
+                                .flatMap(ChatContentDeltaEvent::getDelta)
+                                .flatMap(ChatContentDeltaEventDelta::getMessage)
+                                .flatMap(ChatContentDeltaEventDeltaMessage::getContent)
+                                .flatMap(ChatContentDeltaEventDeltaMessageContent::getText)
+                                .orElse("");
+                        System.out.println(text);
+                      }
+                    }
+                  }
+                }
+            - sdk: go
+              name: Tools
+              code: >
+                package main
+
+
+                import (
+                	"context"
+                	"errors"
+                	"io"
+                	"log"
+                	"os"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
+
+                	resp, err := co.V2.ChatStream(
+                		context.TODO(),
+                		&cohere.V2ChatStreamRequest{
+                			Model: "command-a-03-2025",
+                			Tools: []*cohere.ToolV2{
+                				{
+                					Type: cohere.String("function"),
+                					Function: &cohere.ToolV2Function{
+                						Name:        "query_daily_sales_report",
+                						Description: cohere.String("Connects to a database to retrieve overall sales volumes and sales information for a given day."),
+                						Parameters: map[string]interface{}{
+                							"type": "object",
+                							"properties": map[string]interface{}{
+                								"date": map[string]interface{}{
+                									"type":        "string",
+                									"description": "Retrieves sales data from this day, formatted as YYYY-MM-DD",
+                								},
+                							},
+                							"required": []string{"date"},
+                						},
+                					},
+                				},
+                				{
+                					Type: cohere.String("function"),
+                					Function: &cohere.ToolV2Function{
+                						Name:        "query_product_catalog",
+                						Description: cohere.String("Connects to a product catalog with information about all the products being sold, including categories, prices, and stock levels."),
+                						Parameters: map[string]interface{}{
+                							"type": "object",
+                							"properties": map[string]interface{}{
+                								"category": map[string]interface{}{
+                									"type":        "string",
+                									"description": "Retrieves product information data for all products in this category.",
+                								},
+                							},
+                							"required": []string{"category"},
+                						},
+                					},
+                				},
+                			},
+                			Messages: cohere.ChatMessages{
+                				{
+                					Role: "user",
+                					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
+                						String: "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
+                					}},
+                				},
+                			},
+                		},
+                	)
+
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	// Make sure to close the stream when you're done reading.
+                	// This is easily handled with defer.
+                	defer resp.Close()
+
+                	for {
+                		message, err := resp.Recv()
+
+                		if errors.Is(err, io.EOF) {
+                			// An io.EOF error means the server is done sending messages
+                			// and should be treated as a success.
+                			break
+                		}
+
+                		// Log the received message
+                		if message.ToolCallDelta != nil {
+                			log.Printf("%+v", message)
+                		}
+                	}
+                }
+            - sdk: curl
+              name: Tools
+              code: >
+                curl --request POST \
+                  --url https://api.cohere.com/v2/chat \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY" \
+                  --data '{
+                        "stream": true,
+                        "model": "command-a-03-2025",
+                        "tools": [
+                            {
+                                "type": "function",
+                                "function": {
+                                    "name": "query_daily_sales_report",
+                                    "description": "Connects to a database to retrieve overall sales volumes and sales information for a given day.",
+                                    "parameters": {
+                                        "type": "object",
+                                        "properties": {
+                                            "day": {
+                                                "description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "type": "function",
+                                "function": {
+                                    "name": "query_product_catalog",
+                                    "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
+                                    "parameters": {
+                                        "type": "object",
+                                        "properties": {
+                                            "category": {
+                                                "description": "Retrieves product information data for all products in this category.",
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
+                            }
+                        ]
+                    }'
+          request:
+            stream: true
+            model: 'command-a-03-2025'
+            tools:
+              - type: 'function'
+                function:
+                  name: 'query_daily_sales_report'
+                  description: 'Connects to a database to retrieve overall sales volumes and sales
+                    information for a given day.'
+                  parameters:
+                    type: 'object'
+                    properties:
+                      day:
+                        description: 'Retrieves sales data for this day, formatted as YYYY-MM-DD.'
+                        type: 'string'
+              - type: 'function'
+                function:
+                  name: 'query_product_catalog'
+                  description: 'Connects to a product catalog with information about all the
+                    products being sold, including categories, prices, and stock
+                    levels.'
+                  parameters:
+                    type: 'object'
+                    properties:
+                      category:
+                        description: 'Retrieves product information data for all products in this
+                          category.'
+                        type: 'string'
+            messages:
+              - role: 'user'
+                content: 'Can you provide a sales summary for 29th September 2023, and also give
+                  me some details about the products in the ''Electronics''
+                  category, for example their prices and stock levels?'
+          response:
+            stream:
+              - event: message-start
+                data:
+                  type: message-start
+                  id: 2edfdf70-019c-4f7a-be20-3cdbfaa3dca6
+                  delta:
+                    message:
+                      role: 'assistant'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: 'I'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' will'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' use'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' the'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' query'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '_'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: 'daily'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '_'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: 'sales'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '_'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: 'report'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' tool'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' to'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' find'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' the'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' sales'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' summary'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' for'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' 2'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '9'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: 'th'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' September'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' 2'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '0'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '2'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '3'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '.'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' I'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' will'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' also'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' use'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' the'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' query'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '_'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: 'product'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '_'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: 'catalog'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' tool'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' to'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' find'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' the'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' details'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' of'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' the'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' products'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' in'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' the'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' Electronics'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: ' category'
+              - event: tool-plan-delta
+                data:
+                  type: tool-plan-delta
+                  delta:
+                    message:
+                      tool_plan: '.'
+              - event: tool-call-start
+                data:
+                  type: tool-call-start
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        id: 'query_daily_sales_report_j3f0adww9pmr'
+                        type: 'function'
+                        function:
+                          name: 'query_daily_sales_report'
+                          arguments: ''
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '{"'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: 'day'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '": '
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '"'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '2'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '0'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '2'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '3'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '-'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '0'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '9'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '-'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '2'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '9'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 0
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '"}'
+              - event: tool-call-end
+                data:
+                  type: tool-call-end
+                  index: 0
+              - event: tool-call-start
+                data:
+                  type: tool-call-start
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        id: 'query_product_catalog_c66nf11r6s8g'
+                        type: 'function'
+                        function:
+                          name: 'query_product_catalog'
+                          arguments: ''
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '{"'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: 'category'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '": '
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '"'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: 'Electron'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: 'ics'
+              - event: tool-call-delta
+                data:
+                  type: tool-call-delta
+                  index: 1
+                  delta:
+                    message:
+                      tool_calls:
+                        function:
+                          arguments: '"}'
+              - event: tool-call-end
+                data:
+                  type: tool-call-end
+                  index: 1
+              - event: message-end
+                data:
+                  type: message-end
+                  delta:
+                    finish_reason: TOOL_CALL
+                    usage:
+                      billed_units:
+                        input_tokens: 126
+                        output_tokens: 84
+                      tokens:
+                        input_tokens: 1589
+                        output_tokens: 135
+        - code-samples:
+            - sdk: python
+              name: Async
+              code: |
+                import cohere
+                import asyncio
+
+                co = cohere.AsyncClientV2()
+
+                async def main():
+                    response = co.chat_stream(
+                        model="command-a-03-2025",
+                        messages=[{"role": "user", "content": "hello world!"}],
+                    )
+
+                    async for event in response:
+                        if event.type == "message-start":
+                            print("\nMessage started.")
+                        elif event.type == "content-delta":
+                            print(event.delta.message.content.text, end="")
+                        elif event.type == "message-end":
+                            print("\nMessage ended.")
+
+                asyncio.run(main())
+          request:
+            model: 'command-r'
+            messages:
+              - role: 'user'
+                content: 'Hello!'
+            stream: true
+          response:
+            stream:
+              - event: message-start
+                data:
+                  type: message-start
+                  id: 9aa9afb8-f90f-4275-b537-85e751e10e56
+                  delta:
+                    message:
+                      role: 'assistant'
+              - event: content-start
+                data:
+                  type: content-start
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        type: 'text'
+                        text: ''
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: 'Hello'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: '!'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' How'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' can'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' I'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' assist'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' you'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: ' today'
+              - event: content-delta
+                data:
+                  type: content-delta
+                  index: 0
+                  delta:
+                    message:
+                      content:
+                        text: '?'
+              - event: content-end
+                data:
+                  type: content-end
+                  index: 0
+              - event: message-end
+                data:
+                  type: message-end
+                  delta:
+                    finish_reason: COMPLETE
+                    usage:
+                      billed_units:
+                        input_tokens: 3.0
+                        output_tokens: 9.0
+                      tokens:
+                        input_tokens: 498.0
+                        output_tokens: 11.0
+        - code-samples:
+            - sdk: typescript
+              name: Images
+              code: |
+                const { CohereClientV2 } = require('cohere-ai');
+
+                const cohere = new CohereClientV2({});
+
+                (async () => {
+                  const response = await cohere.chat({
+                    model: 'command-a-vision-07-2025',
+                    messages: [
+                      {
+                        role: 'user',
+                        content: [
+                          { type: 'text', text: 'Describe the logo!' },
+                          {
+                            type: 'image_url',
+                            imageUrl: {
+                              // Can be either a base64 data URI or a web URL.
+                              url: 'https://cohere.com/favicon-32x32.png',
+                              detail: 'auto',
+                            },
+                          },
+                        ],
+                      },
+                    ],
+                  });
+                  console.log(response.message.content[0].text);
+                })();
+            - sdk: python
+              name: Images
+              code: >-
+                import cohere
+
+
+                co = cohere.ClientV2()
+
+
+                response = co.chat(
+                    model="command-a-vision-07-2025",
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": "Describe the logo!"
+                                },
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        # Can be either a base64 data URI or a web URL.
+                                        "url": "https://cohere.com/favicon-32x32.png",
+                                        "detail": "auto"
+                                    }
+                                }
+                            ]
+                            
+                        }
+                    ]
+                )
+
+
+                print(response)
+            - sdk: java
+              name: Images
+              code: >
+                /* (C)2024 */
+
+                package chatv2post;
+
+
+                import java.util.List;
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.resources.v2.requests.V2ChatRequest;
+
+                import com.cohere.api.types.ChatMessageV2;
+
+                import com.cohere.api.types.ChatResponse;
+
+                import com.cohere.api.types.Content;
+
+                import com.cohere.api.types.ImageContent;
+
+                import com.cohere.api.types.ImageUrl;
+
+                import com.cohere.api.types.TextContent;
+
+                import com.cohere.api.types.UserMessage;
+
+                import com.cohere.api.types.UserMessageContent;
+
+
+                public class Image {
+
+                    public static void main(String[] args) {
+                        Cohere cohere = Cohere.builder().clientName("snippet").build();
+
+                        ChatResponse response
+                                = cohere
+                                        .v2()
+                                        .chat(
+                                                V2ChatRequest.builder()
+                                                        .model("command-a-vision-07-2025")
+                                                        .messages(
+                                                                List.of(
+                                                                        ChatMessageV2.user(
+                                                                                UserMessage.builder()
+                                                                                        .content(
+                                                                                                UserMessageContent.of(
+                                                                                                        List.of(
+                                                                                                                Content.text(
+                                                                                                                        TextContent.builder()
+                                                                                                                                .text("Describe the logo!")
+                                                                                                                                .build()),
+                                                                                                                Content.imageUrl(
+                                                                                                                        ImageContent.builder()
+                                                                                                                                .imageUrl(
+                                                                                                                                        ImageUrl.builder()
+                                                                                                                                                // Can be either a base64 data URI or a web URL.
+                                                                                                                                                .url(
+                                                                                                                                                        "https://cohere.com/favicon-32x32.png")
+                                                                                                                                                .build())
+                                                                                                                                .build()))))
+                                                                                        .build())))
+                                                        .build());
+                        System.out.println(response);
+                    }
+                }
+            - sdk: go
+              name: Images
+              code: >
+                package main
+
+
+                import (
+                	"context"
+                	"log"
+                	"os"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
+
+                	resp, err := co.V2.Chat(
+                		context.TODO(),
+                		&cohere.V2ChatRequest{
+                			Model: "command-a-03-2025",
+                			Messages: cohere.ChatMessages{
+                				{
+                					Role: "user",
+                					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
+                						ContentList: []*cohere.Content{
+                							{Type: "text", Text: &cohere.ChatTextContent{Text: "Describe the logo!"}},
+                							{Type: "image_url", ImageUrl: &cohere.ImageContent{
+                								ImageUrl: &cohere.ImageUrl{
+                									// Can be either a base64 data URI or a web URL.
+                									Url:    "https://cohere.com/favicon-32x32.png",
+                									Detail: cohere.ImageUrlDetailAuto.Ptr(),
+                								},
+                							}},
+                						}}},
+                				},
+                			},
+                		},
+                	)
+
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	log.Printf("%+v", resp)
+                }
+            - sdk: curl
+              name: Images
+              code: |
+                curl --request POST \
+                  --url https://api.cohere.com/v2/chat \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY" \
+                  --data '{
+                    "model": "command-a-vision-07-2025",
+                    "messages": [
+                      {
+                        "role": "user",
+                        "content": [
+                          {
+                            "type": "text",
+                            "text": "Describe the logo!"
+                          },
+                          {
+                            "type": "image_url",
+                            "image_url": {
+                              "url": "https://cohere.com/favicon-32x32.png",
+                              "detail": "auto"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }'
   /v1/generate:
     post:
+      deprecated: true
       x-fern-audiences:
         - public
       summary: Generate
@@ -8355,7 +9986,7 @@ paths:
     post:
       x-fern-audiences:
         - public
-      summary: Embed V1 API
+      summary: Embed API (v1)
       operationId: embed
       parameters:
         - $ref: "#/components/parameters/RequestSource"
@@ -10688,9 +12319,9 @@ paths:
 
                 import com.cohere.api.types.EmbeddingType;
 
-                import java.io.InputStream;
-
                 import java.io.IOException;
+
+                import java.io.InputStream;
 
                 import java.net.HttpURLConnection;
 
@@ -10719,17 +12350,20 @@ paths:
                       byte[] buffer = inputStream.readAllBytes();
                       inputStream.close();
 
-                      String imageBase64 = String.format(
-                          "data:%s;base64,%s",
-                          connection.getHeaderField("Content-Type"), Base64.getEncoder().encodeToString(buffer));
+                      String imageBase64 =
+                          String.format(
+                              "data:%s;base64,%s",
+                              connection.getHeaderField("Content-Type"),
+                              Base64.getEncoder().encodeToString(buffer));
 
-                      EmbedResponse response = cohere.embed(
-                          EmbedRequest.builder()
-                              .images(List.of(imageBase64))
-                              .model("embed-v4.0")
-                              .inputType(EmbedInputType.IMAGE)
-                              .embeddingTypes(List.of(EmbeddingType.FLOAT))
-                              .build());
+                      EmbedResponse response =
+                          cohere.embed(
+                              EmbedRequest.builder()
+                                  .images(List.of(imageBase64))
+                                  .model("embed-v4.0")
+                                  .inputType(EmbedInputType.IMAGE)
+                                  .embeddingTypes(List.of(EmbeddingType.FLOAT))
+                                  .build());
 
                       System.out.println(response);
                     } catch (MalformedURLException e) {
@@ -11879,7 +13513,7 @@ paths:
                   description: |-
                     An array of image data URIs for the model to embed. Maximum number of images per call is `1`.
 
-                    The image must be a valid [data URI](https://developer.mozilla.org/en-US/docs/Web/URI/Schemes/data). The image must be in either `image/jpeg` or `image/png` format and has a maximum size of 5MB.
+                    The image must be a valid [data URI](https://developer.mozilla.org/en-US/docs/Web/URI/Schemes/data). The image must be in either `image/jpeg`, `image/png`, `image/webp`, or `image/gif` format and has a maximum size of 5MB.
 
                     Images are only supported with Embed v3.0 and newer models.
                   items:
@@ -11937,7 +13571,7 @@ paths:
         - v2-beta
       x-fern-sdk-group-name: v2
       x-fern-sdk-method-name: embed
-      summary: Embed V2 API
+      summary: Embed API (v2)
       operationId: embedv2
       parameters:
         - $ref: "#/components/parameters/RequestSource"
@@ -12001,8 +13635,17 @@ paths:
 
                 co = cohere.ClientV2()
 
+                text_inputs = [
+                    {
+                        "content": [
+                            {"type": "text", "text": "hello"},
+                            {"type": "text", "text": "goodbye"}
+                        ]
+                    },
+                ]
+
                 response = co.embed(
-                    texts=["hello", "goodbye"],
+                    inputs=text_inputs,
                     model="embed-v4.0",
                     input_type="classification",
                     embedding_types=["float"],
@@ -12048,14 +13691,15 @@ paths:
                   public static void main(String[] args) {
                     Cohere cohere = Cohere.builder().clientName("snippet").build();
 
-                    EmbedByTypeResponse response = cohere
-                        .v2()
-                        .embed(
-                            V2EmbedRequest.builder()
-                                .model("embed-v4.0")
-                                .inputType(EmbedInputType.CLASSIFICATION)
-                                .texts(List.of("hello", "goodbye"))
-                                .build());
+                    EmbedByTypeResponse response =
+                        cohere
+                            .v2()
+                            .embed(
+                                V2EmbedRequest.builder()
+                                    .model("embed-v4.0")
+                                    .inputType(EmbedInputType.CLASSIFICATION)
+                                    .texts(List.of("hello", "goodbye"))
+                                    .build());
 
                     System.out.println(response);
                   }
@@ -14254,11 +15898,23 @@ paths:
                 f"data:{content_type};base64,{stringified_buffer}"
 
 
+                image_inputs = [
+                    {
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": image_base64}
+                            }
+                        ]
+                    }
+                ]
+
+
                 response = co.embed(
                     model="embed-v4.0",
                     input_type="image",
                     embedding_types=["float"],
-                    images=[image_base64],
+                    inputs=image_inputs
                 )
 
 
@@ -14279,9 +15935,9 @@ paths:
 
                 import com.cohere.api.types.EmbeddingType;
 
-                import java.io.InputStream;
-
                 import java.io.IOException;
+
+                import java.io.InputStream;
 
                 import java.net.HttpURLConnection;
 
@@ -14310,19 +15966,22 @@ paths:
                       byte[] buffer = inputStream.readAllBytes();
                       inputStream.close();
 
-                      String imageBase64 = String.format(
-                          "data:%s;base64,%s",
-                          connection.getHeaderField("Content-Type"), Base64.getEncoder().encodeToString(buffer));
+                      String imageBase64 =
+                          String.format(
+                              "data:%s;base64,%s",
+                              connection.getHeaderField("Content-Type"),
+                              Base64.getEncoder().encodeToString(buffer));
 
-                      EmbedByTypeResponse response = cohere
-                          .v2()
-                          .embed(
-                              V2EmbedRequest.builder()
-                                  .model("embed-v4.0")
-                                  .inputType(EmbedInputType.IMAGE)
-                                  .images(List.of(imageBase64))
-                                  .embeddingTypes(List.of(EmbeddingType.FLOAT))
-                                  .build());
+                      EmbedByTypeResponse response =
+                          cohere
+                              .v2()
+                              .embed(
+                                  V2EmbedRequest.builder()
+                                      .model("embed-v4.0")
+                                      .inputType(EmbedInputType.IMAGE)
+                                      .images(List.of(imageBase64))
+                                      .embeddingTypes(List.of(EmbeddingType.FLOAT))
+                                      .build());
 
                       System.out.println(response);
                     } catch (MalformedURLException e) {
@@ -15467,7 +17126,7 @@ paths:
                   description: |-
                     An array of image data URIs for the model to embed. Maximum number of images per call is `1`.
 
-                    The image must be a valid [data URI](https://developer.mozilla.org/en-US/docs/Web/URI/Schemes/data). The image must be in either `image/jpeg` or `image/png` format and has a maximum size of 5MB.
+                    The image must be a valid [data URI](https://developer.mozilla.org/en-US/docs/Web/URI/Schemes/data). The image must be in either `image/jpeg`, `image/png`, `image/webp`, or `image/gif` format and has a maximum size of 5MB.
 
                     Image embeddings are supported with Embed v3.0 and newer models.
                   items:
@@ -15523,6 +17182,7 @@ paths:
                     * `"uint8"`: Use this when you want to get back unsigned int8 embeddings. Supported with Embed v3.0 and newer Embed models.
                     * `"binary"`: Use this when you want to get back signed binary embeddings. Supported with Embed v3.0 and newer Embed models.
                     * `"ubinary"`: Use this when you want to get back unsigned binary embeddings. Supported with Embed v3.0 and newer Embed models.
+                    * `"base64"`: Use this when you want to get back base64 embeddings. Supported with Embed v3.0 and newer Embed models.
                   writeOnly: true
                   default:
                     - float
@@ -16166,7 +17826,7 @@ paths:
     post:
       x-fern-audiences:
         - public
-      summary: Rerank V1 API
+      summary: Rerank API (v1)
       operationId: rerank
       parameters:
         - $ref: "#/components/parameters/RequestSource"
@@ -16229,7 +17889,6 @@ paths:
                             is not accurate to assume a score of 0.9 means the
                             document is 2x more relevant than a document with a
                             score of 0.45
-                          readOnly: true
                       required:
                         - index
                         - relevance_score
@@ -16583,7 +18242,7 @@ paths:
                   search_units: 1
   /v2/rerank:
     post:
-      summary: Rerank V2 API
+      summary: Rerank API (v2)
       operationId: rerankv2
       x-fern-audiences:
         - v2-beta
@@ -16635,7 +18294,6 @@ paths:
                             is not accurate to assume a score of 0.9 means the
                             document is 2x more relevant than a document with a
                             score of 0.45
-                          readOnly: true
                       required:
                         - index
                         - relevance_score
@@ -16903,6 +18561,7 @@ paths:
                   search_units: 1
   /v1/classify:
     post:
+      deprecated: true
       parameters:
         - $ref: "#/components/parameters/RequestSource"
       x-fern-audiences:
@@ -17239,7 +18898,6 @@ paths:
                     type: string
                     x-fern-audiences:
                       - public
-                    readOnly: true
                   classifications:
                     type: array
                     x-fern-audiences:
@@ -17253,20 +18911,17 @@ paths:
                           type: string
                           x-fern-audiences:
                             - public
-                          readOnly: true
                         input:
                           type: string
                           x-fern-audiences:
                             - public
                           description: The input text that was classified
-                          readOnly: true
                         prediction:
                           type: string
                           x-fern-audiences:
                             - public
                           description: The predicted label for the associated query (only filled for
                             single-label models)
-                          readOnly: true
                           deprecated: true
                         predictions:
                           type: array
@@ -17278,7 +18933,6 @@ paths:
                               - public
                           description: An array containing the predicted labels for the associated query
                             (only filled for single-label classification)
-                          readOnly: true
                         confidence:
                           type: number
                           x-fern-audiences:
@@ -17286,7 +18940,6 @@ paths:
                           format: float
                           description: The confidence score for the top predicted class (only filled for
                             single-label classification)
-                          readOnly: true
                           deprecated: true
                         confidences:
                           type: array
@@ -17299,7 +18952,6 @@ paths:
                             format: float
                           description: An array containing the confidence scores of all the predictions in
                             the same order
-                          readOnly: true
                         labels:
                           type: object
                           x-fern-audiences:
@@ -17314,14 +18966,11 @@ paths:
                                 x-fern-audiences:
                                   - public
                                 format: float
-                                readOnly: true
-                            readOnly: true
                           description: A map containing each label and its confidence score according to
                             the classifier. All the confidence scores add up to
                             1 for single-label classification. For multi-label
                             classification the label confidences are independent
                             of each other, so they don't have to sum up to 1.
-                          readOnly: true
                         classification_type:
                           type: string
                           x-fern-audiences:
@@ -17330,15 +18979,12 @@ paths:
                             - single-label
                             - multi-label
                           description: The type of classification performed
-                          readOnly: true
                       required:
                         - id
                         - predictions
                         - confidences
                         - labels
                         - classification_type
-                      readOnly: true
-                    readOnly: true
                   meta:
                     $ref: "#/components/schemas/ApiMeta"
                     x-fern-audiences:
@@ -17430,9 +19076,9 @@ paths:
                     - public
                   example: my-preset-a58sbd
                   description: The ID of a custom playground preset. You can create presets in the
-                    [playground](https://dashboard.cohere.com/playground/classify?model=large).
-                    If you use a preset, all other parameters become optional,
-                    and any included parameters will override the preset's
+                    [playground](https://dashboard.cohere.com/playground). If
+                    you use a preset, all other parameters become optional, and
+                    any included parameters will override the preset's
                     parameters.
                   writeOnly: true
                   deprecated: true
@@ -17607,11 +19253,11 @@ paths:
 
                 	resp, err := co.Datasets.Create(
                 		context.TODO(),
-                		&MyReader{Reader: strings.NewReader(`{"text": "The quick brown fox jumps over the lazy dog"}`), name: "test.jsonl"},
-                		&MyReader{Reader: strings.NewReader(""), name: "a.jsonl"},
                 		&cohere.DatasetsCreateRequest{
-                			Name: "embed-dataset",
-                			Type: cohere.DatasetTypeEmbedResult,
+                			Name:     "embed-dataset",
+                			Type:     cohere.DatasetTypeEmbedResult,
+                			Data:     &MyReader{Reader: strings.NewReader(`{"text": "The quick brown fox jumps over the lazy dog"}`), name: "test.jsonl"},
+                			EvalData: &MyReader{Reader: strings.NewReader(""), name: "a.jsonl"},
                 		},
                 	)
 
@@ -17873,7 +19519,6 @@ paths:
             - sdk: java
               name: Cohere java SDK
               code: >
-                
                 /* (C)2024 */
 
                 import com.cohere.api.Cohere;
@@ -18382,6 +20027,7 @@ paths:
           $ref: "#/components/responses/GatewayTimeout"
   /v1/summarize:
     post:
+      deprecated: true
       x-fern-audiences:
         - public
       summary: Summarize
@@ -18971,8 +20617,6 @@ paths:
                       type: integer
                       x-fern-audiences:
                         - public
-                      readOnly: true
-                    readOnly: true
                   token_strings:
                     type: array
                     x-fern-audiences:
@@ -19230,7 +20874,6 @@ paths:
                     x-fern-audiences:
                       - public
                     description: A string representing the list of tokens.
-                    readOnly: true
                   meta:
                     $ref: "#/components/schemas/ApiMeta"
                     x-fern-audiences:
@@ -19302,6 +20945,7 @@ paths:
     get:
       x-fern-audiences:
         - public
+      deprecated: true
       summary: List Connectors
       tags:
         - /connectors
@@ -19454,6 +21098,7 @@ paths:
                   --header 'accept: application/json' \
                   --header "Authorization: bearer $CO_API_KEY"
     post:
+      deprecated: true
       x-fern-audiences:
         - public
       summary: Create a Connector
@@ -19628,6 +21273,7 @@ paths:
                   }'
   "/v1/connectors/{id}":
     get:
+      deprecated: true
       x-fern-audiences:
         - public
       summary: Get a Connector
@@ -19770,6 +21416,7 @@ paths:
                   --header 'accept: application/json' \
                   --header "Authorization: bearer $CO_API_KEY"
     patch:
+      deprecated: true
       x-fern-audiences:
         - public
       summary: Update a Connector
@@ -19948,6 +21595,7 @@ paths:
                     "url": "https://example.com/search"
                   }'
     delete:
+      deprecated: true
       x-fern-audiences:
         - public
       summary: Delete a Connector
@@ -20083,6 +21731,7 @@ paths:
                   --header "Authorization: bearer $CO_API_KEY"
   "/v1/connectors/{id}/oauth/authorize":
     post:
+      deprecated: true
       x-fern-audiences:
         - public
       summary: Authorize with oAuth
@@ -20534,7 +22183,9 @@ paths:
           $ref: "#/components/responses/GatewayTimeout"
   /v1/finetuning/finetuned-models:
     get:
+      deprecated: true
       summary: Lists fine-tuned models.
+      description: Returns a list of fine-tuned models that the user has access to.
       operationId: ListFinetunedModels
       responses:
         "200":
@@ -20732,7 +22383,12 @@ paths:
         - public
       x-fern-request-name: FinetuningListFinetunedModelsRequest
     post:
+      deprecated: true
       summary: Trains and deploys a fine-tuned model.
+      description: Creates a new fine-tuned model. The model will be trained on the
+        dataset specified in the request body. The training process may take
+        some time, and the model will be available once the training is
+        complete.
       operationId: CreateFinetunedModel
       responses:
         "200":
@@ -20785,14 +22441,6 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/FinetunedModel"
-              required:
-                - finetuned_model
-            example:
-              name: api-test
-              settings:
-                base_model:
-                  base_type: BASE_TYPE_CHAT
-                dataset_id: my-dataset-id
         required: true
       parameters:
         - $ref: "#/components/parameters/RequestSource"
@@ -20964,7 +22612,10 @@ paths:
         - public
   "/v1/finetuning/finetuned-models/{id}":
     patch:
+      deprecated: true
       summary: Updates a fine-tuned model.
+      description: Updates the fine-tuned model with the given ID. The model will be
+        updated with the new settings and name provided in the request body.
       operationId: UpdateFinetunedModel
       responses:
         "200":
@@ -21198,7 +22849,9 @@ paths:
         - public
       x-fern-request-name: FinetuningUpdateFinetunedModelRequest
     get:
+      deprecated: true
       summary: Returns a fine-tuned model by ID.
+      description: Retrieve a fine-tuned model by its ID.
       operationId: GetFinetunedModel
       responses:
         "200":
@@ -21363,7 +23016,11 @@ paths:
         - public
       x-fern-request-name: FinetuningGetFinetunedModelRequest
     delete:
+      deprecated: true
       summary: Deletes a fine-tuned model.
+      description: |-
+        Deletes a fine-tuned model. The model will be removed from the system and will no longer be available for use.
+        This operation is irreversible.
       operationId: DeleteFinetunedModel
       responses:
         "200":
@@ -21498,8 +23155,12 @@ paths:
         - public
   "/v1/finetuning/finetuned-models/{finetuned_model_id}/events":
     get:
-      summary: Retrieves the chronology of statuses the fine-tuned model has been
-        through.
+      deprecated: true
+      summary: Fetch history of statuses for a fine-tuned model.
+      description: |-
+        Returns a list of events that occurred during the life-cycle of the fine-tuned model.
+        The events are ordered by creation time, with the most recent event first.
+        The list can be paginated using `page_size` and `page_token` parameters.
       operationId: ListEvents
       responses:
         "200":
@@ -21691,7 +23352,12 @@ paths:
       x-fern-request-name: FinetuningListEventsRequest
   "/v1/finetuning/finetuned-models/{finetuned_model_id}/training-step-metrics":
     get:
-      summary: Retrieves metrics measured during the training of a fine-tuned model.
+      deprecated: true
+      summary: Retrieve training metrics for fine-tuned models.
+      description: |-
+        Returns a list of metrics measured during the training of a fine-tuned model.
+        The metrics are ordered by step number, with the most recent step first.
+        The list can be paginated using `page_size` and `page_token` parameters.
       operationId: ListTrainingStepMetrics
       responses:
         "200":
@@ -21968,7 +23634,7 @@ components:
             additionalProperties: true
             x-fern-type-name: ToolResult-68w0tx
       x-fern-type-name: ToolResult
-    ToolMessage:
+    ChatToolMessage:
       description: |
         Represents tool result in the chat history.
       required:
@@ -21980,18 +23646,18 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ToolResult"
-      x-fern-type-name: ToolMessage
+      x-fern-type-name: ChatToolMessage
     Message:
       oneOf:
         - $ref: "#/components/schemas/ChatMessage"
-        - $ref: "#/components/schemas/ToolMessage"
+        - $ref: "#/components/schemas/ChatToolMessage"
       discriminator:
         propertyName: role
         mapping:
           CHATBOT: "#/components/schemas/ChatMessage"
           SYSTEM: "#/components/schemas/ChatMessage"
           USER: "#/components/schemas/ChatMessage"
-          TOOL: "#/components/schemas/ToolMessage"
+          TOOL: "#/components/schemas/ChatToolMessage"
       x-fern-type-name: Message
     ChatConnector:
       description: |
@@ -22110,7 +23776,7 @@ components:
         - text
         - json_object
       x-fern-type-name: ResponseFormatType
-    TextResponseFormat:
+    ChatTextResponseFormat:
       x-fern-audiences:
         - public
       title: Text Response
@@ -22120,7 +23786,7 @@ components:
           $ref: "#/components/schemas/ResponseFormatType"
       required:
         - type
-      x-fern-type-name: TextResponseFormat
+      x-fern-type-name: ChatTextResponseFormat
     JSONResponseFormat:
       x-fern-audiences:
         - public
@@ -22162,12 +23828,12 @@ components:
         **Note**: When using  `{ "type": "json_object" }` your `message` should always explicitly instruct the model to generate a JSON (eg: _"Generate a JSON ..."_) . Otherwise the model may end up getting stuck generating an infinite stream of characters and eventually run out of context length.
         **Limitation**: The parameter is not supported in RAG mode (when any of `connectors`, `documents`, `tools`, `tool_results` are provided).
       oneOf:
-        - $ref: "#/components/schemas/TextResponseFormat"
+        - $ref: "#/components/schemas/ChatTextResponseFormat"
         - $ref: "#/components/schemas/JSONResponseFormat"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextResponseFormat"
+          text: "#/components/schemas/ChatTextResponseFormat"
           json_object: "#/components/schemas/JSONResponseFormat"
       x-fern-type-name: ResponseFormat
     ChatCitation:
@@ -22722,7 +24388,7 @@ components:
           stream-end: "#/components/schemas/ChatStreamEndEvent"
           tool-calls-chunk: "#/components/schemas/ChatToolCallsChunkEvent"
           debug: "#/components/schemas/ChatDebugEvent"
-    TextContent:
+    ChatTextContent:
       type: object
       description: Text content of the message.
       required:
@@ -22735,7 +24401,7 @@ components:
             - text
         text:
           type: string
-      x-fern-type-name: TextContent
+      x-fern-type-name: ChatTextContent
     ContentType:
       x-fern-audiences:
         - public
@@ -22780,15 +24446,15 @@ components:
       description: A Content block which contains information about the content type
         and the content itself.
       oneOf:
-        - $ref: "#/components/schemas/TextContent"
+        - $ref: "#/components/schemas/ChatTextContent"
         - $ref: "#/components/schemas/ImageContent"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextContent"
+          text: "#/components/schemas/ChatTextContent"
           image_url: "#/components/schemas/ImageContent"
       x-fern-type-name: Content
-    UserMessage:
+    UserMessageV2:
       type: object
       title: User Message
       description: A message from the user.
@@ -22809,7 +24475,7 @@ components:
             - type: array
               items:
                 $ref: "#/components/schemas/Content"
-      x-fern-type-name: UserMessage
+      x-fern-type-name: UserMessageV2
     ToolCallV2:
       description: An array of tool calls to be made.
       type: object
@@ -22829,7 +24495,21 @@ components:
               type: string
           x-fern-type-name: ToolCallV2Function
       x-fern-type-name: ToolCallV2
-    ToolSource:
+    ChatThinkingContent:
+      type: object
+      description: Thinking content of the message. This will be present when
+        `thinking` is enabled, and will contain the models internal reasoning.
+      required:
+        - type
+        - thinking
+      properties:
+        type:
+          type: string
+          enum:
+            - thinking
+        thinking:
+          type: string
+    ChatToolSource:
       type: object
       title: Tool Output
       properties:
@@ -22839,9 +24519,9 @@ components:
         tool_output:
           type: object
           additionalProperties: true
-          x-fern-type-name: ToolSource-z53ra6
-      x-fern-type-name: ToolSource
-    DocumentSource:
+          x-fern-type-name: ChatToolSource-z53ra6
+      x-fern-type-name: ChatToolSource
+    ChatDocumentSource:
       type: object
       description: A document source object containing the unique identifier of the
         document and the document itself.
@@ -22852,24 +24532,25 @@ components:
         document:
           type: object
           additionalProperties: true
-          x-fern-type-name: DocumentSource-w70a62
-      x-fern-type-name: DocumentSource
+          x-fern-type-name: ChatDocumentSource-w70a62
+      x-fern-type-name: ChatDocumentSource
     Source:
       description: A source object containing information about the source of the data
         cited.
       oneOf:
-        - $ref: "#/components/schemas/ToolSource"
-        - $ref: "#/components/schemas/DocumentSource"
+        - $ref: "#/components/schemas/ChatToolSource"
+        - $ref: "#/components/schemas/ChatDocumentSource"
       discriminator:
         propertyName: type
         mapping:
-          tool: "#/components/schemas/ToolSource"
-          document: "#/components/schemas/DocumentSource"
+          tool: "#/components/schemas/ChatToolSource"
+          document: "#/components/schemas/ChatDocumentSource"
       x-fern-type-name: Source
     CitationType:
       type: string
       enum:
         - TEXT_CONTENT
+        - THINKING_CONTENT
         - PLAN
       description: |
         The type of citation which indicates what part of the response the citation is for.
@@ -22891,10 +24572,13 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Source"
+        content_index:
+          type: integer
+          description: Index of the content block in which this citation appears.
         type:
           $ref: "#/components/schemas/CitationType"
       x-fern-type-name: Citation
-    AssistantMessage:
+    AssistantMessageV2:
       type: object
       title: Assistant Message
       description: A message from the assistant role can contain text and tool call
@@ -22920,17 +24604,19 @@ components:
             - type: array
               items:
                 oneOf:
-                  - $ref: "#/components/schemas/TextContent"
+                  - $ref: "#/components/schemas/ChatTextContent"
+                  - $ref: "#/components/schemas/ChatThinkingContent"
                 discriminator:
                   propertyName: type
                   mapping:
-                    text: "#/components/schemas/TextContent"
+                    text: "#/components/schemas/ChatTextContent"
+                    thinking: "#/components/schemas/ChatThinkingContent"
         citations:
           type: array
           items:
             $ref: "#/components/schemas/Citation"
       x-fern-type-name: AssistantMessage
-    SystemMessage:
+    SystemMessageV2:
       type: object
       title: System Message
       description: A message from the system.
@@ -22948,12 +24634,12 @@ components:
             - type: array
               items:
                 oneOf:
-                  - $ref: "#/components/schemas/TextContent"
+                  - $ref: "#/components/schemas/ChatTextContent"
                 discriminator:
                   propertyName: type
                   mapping:
-                    text: "#/components/schemas/TextContent"
-      x-fern-type-name: SystemMessage
+                    text: "#/components/schemas/ChatTextContent"
+      x-fern-type-name: SystemMessageV2
     Document:
       type: object
       description: |
@@ -22991,12 +24677,12 @@ components:
       description: A content block which contains information about the content of a
         tool result
       oneOf:
-        - $ref: "#/components/schemas/TextContent"
+        - $ref: "#/components/schemas/ChatTextContent"
         - $ref: "#/components/schemas/DocumentContent"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextContent"
+          text: "#/components/schemas/ChatTextContent"
           document: "#/components/schemas/DocumentContent"
       x-fern-type-name: ToolContent
     ToolMessageV2:
@@ -23028,16 +24714,16 @@ components:
     ChatMessageV2:
       description: Represents a single message in the chat history from a given role.
       oneOf:
-        - $ref: "#/components/schemas/UserMessage"
-        - $ref: "#/components/schemas/AssistantMessage"
-        - $ref: "#/components/schemas/SystemMessage"
+        - $ref: "#/components/schemas/UserMessageV2"
+        - $ref: "#/components/schemas/AssistantMessageV2"
+        - $ref: "#/components/schemas/SystemMessageV2"
         - $ref: "#/components/schemas/ToolMessageV2"
       discriminator:
         propertyName: role
         mapping:
-          user: "#/components/schemas/UserMessage"
-          assistant: "#/components/schemas/AssistantMessage"
-          system: "#/components/schemas/SystemMessage"
+          user: "#/components/schemas/UserMessageV2"
+          assistant: "#/components/schemas/AssistantMessageV2"
+          system: "#/components/schemas/SystemMessageV2"
           tool: "#/components/schemas/ToolMessageV2"
       x-fern-type-name: ChatMessageV2
     ChatMessages:
@@ -23049,15 +24735,6 @@ components:
       items:
         $ref: "#/components/schemas/ChatMessageV2"
       x-fern-type-name: ChatMessages
-    ReasoningEffort:
-      description: |
-        The reasoning effort level of the model. This affects the model's performance and the time it takes to generate a response.
-      type: string
-      enum:
-        - low
-        - medium
-        - high
-      x-fern-type-name: ReasoningEffort
     ToolV2:
       type: object
       properties:
@@ -23122,7 +24799,7 @@ components:
         - text
         - json_object
       x-fern-type-name: ResponseFormatTypeV2
-    TextResponseFormatV2:
+    ChatTextResponseFormatV2:
       x-fern-audiences:
         - public
       type: object
@@ -23131,7 +24808,7 @@ components:
           $ref: "#/components/schemas/ResponseFormatTypeV2"
       required:
         - type
-      x-fern-type-name: TextResponseFormatV2
+      x-fern-type-name: ChatTextResponseFormatV2
     JsonResponseFormatV2:
       x-fern-audiences:
         - public
@@ -23174,14 +24851,40 @@ components:
 
         **Limitation**: The parameter is not supported when used in combinations with the `documents` or `tools` parameters.
       oneOf:
-        - $ref: "#/components/schemas/TextResponseFormatV2"
+        - $ref: "#/components/schemas/ChatTextResponseFormatV2"
         - $ref: "#/components/schemas/JsonResponseFormatV2"
       discriminator:
         propertyName: type
         mapping:
-          text: "#/components/schemas/TextResponseFormatV2"
+          text: "#/components/schemas/ChatTextResponseFormatV2"
           json_object: "#/components/schemas/JsonResponseFormatV2"
       x-fern-type-name: ResponseFormatV2
+    Thinking:
+      x-fern-audiences:
+        - public
+      description: |
+        Configuration for [reasoning features](https://docs.cohere.com/docs/reasoning).
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          x-fern-audiences:
+            - public
+          type: string
+          enum:
+            - enabled
+            - disabled
+          description: |
+            Reasoning is enabled by default for models that support it, but can be turned off by setting `"type": "disabled"`.
+        token_budget:
+          x-fern-audiences:
+            - public
+          type: integer
+          description: |
+            The maximum number of tokens the model can use for thinking, which must be set to a positive integer.
+            The model will stop thinking if it reaches the thinking token budget and will proceed with the response.
+          minimum: 1
     ChatFinishReason:
       description: |
         The reason a chat request has finished.
@@ -23222,11 +24925,13 @@ components:
           type: array
           items:
             oneOf:
-              - $ref: "#/components/schemas/TextContent"
+              - $ref: "#/components/schemas/ChatTextContent"
+              - $ref: "#/components/schemas/ChatThinkingContent"
             discriminator:
               propertyName: type
               mapping:
-                text: "#/components/schemas/TextContent"
+                text: "#/components/schemas/ChatTextContent"
+                thinking: "#/components/schemas/ChatThinkingContent"
         citations:
           type: array
           items:
@@ -23290,7 +24995,7 @@ components:
             type: number
             format: float
       x-fern-type-name: LogprobItem
-    ChatResponse:
+    ChatResponseV2:
       required:
         - id
         - finish_reason
@@ -23372,12 +25077,15 @@ components:
                     content:
                       type: object
                       properties:
+                        thinking:
+                          type: string
                         text:
                           type: string
                         type:
                           type: string
                           enum:
                             - text
+                            - thinking
                       x-fern-type-name: ChatContentStartEventDeltaMessageContent
                   x-fern-type-name: ChatContentStartEventDeltaMessage
               x-fern-type-name: ChatContentStartEventDelta
@@ -23400,6 +25108,8 @@ components:
                     content:
                       type: object
                       properties:
+                        thinking:
+                          type: string
                         text:
                           type: string
                       x-fern-type-name: ChatContentDeltaEventDeltaMessageContent
@@ -23544,8 +25254,12 @@ components:
                   x-fern-audiences:
                     - public
                 finish_reason:
+                  x-fern-audiences:
+                    - public
                   $ref: "#/components/schemas/ChatFinishReason"
                 usage:
+                  x-fern-audiences:
+                    - public
                   $ref: "#/components/schemas/Usage"
               x-fern-type-name: ChatMessageEndEventDelta
           x-fern-type-name: ChatMessageEndEvent-u3fzny
@@ -23838,6 +25552,7 @@ components:
         - uint8
         - binary
         - ubinary
+        - base64
       x-fern-type-name: EmbeddingType
     Image:
       type: object
@@ -23905,8 +25620,6 @@ components:
               type: number
               x-fern-audiences:
                 - public
-            readOnly: true
-          readOnly: true
         texts:
           type: array
           x-fern-audiences:
@@ -25004,8 +26717,6 @@ components:
                   type: number
                   x-fern-audiences:
                     - public
-                readOnly: true
-              readOnly: true
             int8:
               type: array
               x-fern-audiences:
@@ -25020,8 +26731,6 @@ components:
                   type: integer
                   x-fern-audiences:
                     - public
-                readOnly: true
-              readOnly: true
             uint8:
               type: array
               x-fern-audiences:
@@ -25036,8 +26745,6 @@ components:
                   type: integer
                   x-fern-audiences:
                     - public
-                readOnly: true
-              readOnly: true
             binary:
               type: array
               x-fern-audiences:
@@ -25053,8 +26760,6 @@ components:
                   type: integer
                   x-fern-audiences:
                     - public
-                readOnly: true
-              readOnly: true
             ubinary:
               type: array
               x-fern-audiences:
@@ -25070,7 +26775,17 @@ components:
                   type: integer
                   x-fern-audiences:
                     - public
-                readOnly: true
+            base64:
+              type: array
+              x-fern-audiences:
+                - public
+              description: An array of base64 embeddings. Each string is the result of
+                appending the float embedding bytes together and base64 encoding
+                that.
+              items:
+                type: string
+                x-fern-audiences:
+                  - public
           items:
             type: array
             x-fern-audiences:
@@ -25079,8 +26794,6 @@ components:
               type: number
               x-fern-audiences:
                 - public
-            readOnly: true
-          readOnly: true
           x-fern-type-name: EmbedByTypeResponseEmbeddings
         texts:
           type: array
@@ -26991,7 +28704,6 @@ components:
           x-fern-audiences:
             - public
           description: Total number of connectors.
-          readOnly: true
       x-fern-type-name: ListConnectorsResponse
     CreateConnectorOAuth:
       required:
@@ -27254,7 +28966,6 @@ components:
         total:
           type: number
           description: Total number of connector logs
-          readOnly: true
       x-fern-type-name: GetConnectorsLogsResponse
     FeedbackResponse:
       type: object
@@ -27364,40 +29075,34 @@ components:
           description: Time of job creation in RFC3339 format
           format: date-time
           example: 2023-04-28T21:00:56.646257Z
-          readOnly: true
         embeddings_url:
           type: string
           x-fern-audiences:
             - public
           description: The input file URL used for the job
-          readOnly: true
         input_dataset_id:
           type: string
           x-fern-audiences:
             - public
           description: The input dataset ID used for the job
-          readOnly: true
         min_cluster_size:
           type: integer
           x-fern-audiences:
             - public
           description: The parameter used in the job creation. Please refer to the job
             creation endpoint for more details
-          readOnly: true
         n_neighbors:
           type: integer
           x-fern-audiences:
             - public
           description: The parameter used in the job creation. Please refer to the job
             creation endpoint for more details
-          readOnly: true
         is_deterministic:
           type: boolean
           x-fern-audiences:
             - public
           description: The parameter used in the job creation. Please refer to the job
             creation endpoint for more details
-          readOnly: true
         status:
           type: string
           x-fern-audiences:
@@ -27414,25 +29119,21 @@ components:
             - public
           description: A boolean indicating whether the job is in a final state, whether
             completed or failed
-          readOnly: true
         output_clusters_url:
           type: string
           x-fern-audiences:
             - public
           description: The output file URL for the clusters (signed url that expires)
-          readOnly: true
         output_outliers_url:
           type: string
           x-fern-audiences:
             - public
           description: The output file URL for the outliers (signed url that expires)
-          readOnly: true
         clusters:
           type: array
           x-fern-audiences:
             - public
           description: The list of cluster summaries for the job
-          readOnly: true
           items:
             $ref: "#/components/schemas/Cluster"
         error:
@@ -27594,6 +29295,11 @@ components:
             - public
           description: Specify this name in the `model` parameter of API requests to use
             your chosen model.
+        is_deprecated:
+          type: boolean
+          x-fern-audiences:
+            - public
+          description: Whether the model is deprecated or not.
         endpoints:
           type: array
           x-fern-audiences:
@@ -27618,11 +29324,6 @@ components:
           x-fern-audiences:
             - public
           description: Public URL to the tokenizer's configuration file.
-        supports_vision:
-          type: boolean
-          x-fern-audiences:
-            - public
-          description: Whether the model supports image inputs or not.
         default_endpoints:
           type: array
           x-fern-audiences:
@@ -27657,6 +29358,7 @@ components:
             page_token parameter of the next request.
       x-fern-type-name: ListModelsResponse
     BaseType:
+      deprecated: true
       type: string
       enum:
         - BASE_TYPE_UNSPECIFIED
@@ -27677,6 +29379,7 @@ components:
         - finetuning
         - finetuning
     Strategy:
+      deprecated: true
       type: string
       enum:
         - STRATEGY_UNSPECIFIED
@@ -27693,6 +29396,7 @@ components:
         - finetuning
         - finetuning
     BaseModel:
+      deprecated: true
       type: object
       properties:
         name:
@@ -27715,6 +29419,7 @@ components:
         - finetuning
         - finetuning
     LoraTargetModules:
+      deprecated: true
       type: string
       enum:
         - LORA_TARGET_MODULES_UNSPECIFIED
@@ -27733,6 +29438,7 @@ components:
         - finetuning
         - finetuning
     Hyperparameters:
+      deprecated: true
       type: object
       properties:
         early_stopping_patience:
@@ -27779,6 +29485,7 @@ components:
         - finetuning
         - finetuning
     WandbConfig:
+      deprecated: true
       type: object
       properties:
         project:
@@ -27798,6 +29505,7 @@ components:
         - finetuning
         - finetuning
     Settings:
+      deprecated: true
       type: object
       properties:
         base_model:
@@ -27825,6 +29533,7 @@ components:
         - finetuning
         - finetuning
     Status:
+      deprecated: true
       type: string
       enum:
         - STATUS_UNSPECIFIED
@@ -27853,6 +29562,7 @@ components:
         - finetuning
         - finetuning
     FinetunedModel:
+      deprecated: true
       type: object
       properties:
         id:
@@ -27906,6 +29616,7 @@ components:
         - finetuning
         - finetuning
     ListFinetunedModelsResponse:
+      deprecated: true
       type: object
       properties:
         finetuned_models:
@@ -27928,6 +29639,7 @@ components:
         - finetuning
         - finetuning
     Error:
+      deprecated: true
       type: object
       properties:
         message:
@@ -27938,6 +29650,7 @@ components:
         - finetuning
         - finetuning
     CreateFinetunedModelResponse:
+      deprecated: true
       type: object
       properties:
         finetuned_model:
@@ -27948,6 +29661,7 @@ components:
         - finetuning
         - finetuning
     GetFinetunedModelResponse:
+      deprecated: true
       type: object
       properties:
         finetuned_model:
@@ -27958,12 +29672,14 @@ components:
         - finetuning
         - finetuning
     DeleteFinetunedModelResponse:
+      deprecated: true
       type: object
       description: Response to request to delete a fine-tuned model.
       x-fern-sdk-group-name:
         - finetuning
         - finetuning
     UpdateFinetunedModelResponse:
+      deprecated: true
       type: object
       properties:
         finetuned_model:
@@ -27974,6 +29690,7 @@ components:
         - finetuning
         - finetuning
     Event:
+      deprecated: true
       type: object
       properties:
         user_id:
@@ -27992,6 +29709,7 @@ components:
         - finetuning
         - finetuning
     ListEventsResponse:
+      deprecated: true
       type: object
       properties:
         events:
@@ -28014,6 +29732,7 @@ components:
         - finetuning
         - finetuning
     TrainingStepMetrics:
+      deprecated: true
       type: object
       properties:
         created_at:
@@ -28036,6 +29755,7 @@ components:
         - finetuning
         - finetuning
     ListTrainingStepMetricsResponse:
+      deprecated: true
       type: object
       properties:
         step_metrics:

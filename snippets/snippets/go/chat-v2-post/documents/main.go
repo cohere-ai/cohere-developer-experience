@@ -24,7 +24,7 @@ func main() {
 			Messages: cohere.ChatMessages{
 				{
 					Role: "user",
-					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
 						String: "Who's the best?",
 					}},
 				},
