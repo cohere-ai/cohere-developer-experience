@@ -130,22 +130,37 @@ In a basic RAG application, the steps involved are:
 
 Let's now look at the first step—search query generation. The chatbot needs to generate an optimal set of search queries to use for retrieval. 
 
-The Chat endpoint has a feature that handles this for us automatically. This is done by adding the `search_queries_only=True` parameter to the Chat endpoint call.
+The Chat endpoint can handle this for us using Tools. This is done by defining a search query generation tool and calling the Chat endpoint with the `tools` parameter.
 
 It will generate a list of search queries based on a user message. Depending on the message, it can be one or more queries.
 
 In the example below, the resulting queries breaks down the user message into two separate queries.
 
 ```python PYTHON
+# Define the search query generation tool
+query_gen_tool = [
+    {
+        "name": "internet_search",
+        "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+        "parameter_definitions": {
+            "queries": {
+                "description": "a list of queries to search the internet with.",
+                "type": "List[str]",
+                "required": True,
+            }
+        },
+    }
+]
+
 # Add the user query
 query = "How to stay connected with the company and do you organize team events?"
 
 # Generate the search queries
-response = co.chat(message=query, search_queries_only=True)
+response = co.chat(message=query, tools=query_gen_tool, force_single_step=True)
 
 queries = []
-for r in response.search_queries:
-    queries.append(r.text)
+if response.tool_calls:
+    queries = response.tool_calls[0].parameters["queries"]
 
 print(queries)
 ```
@@ -161,11 +176,11 @@ And in the example below, the model decides that one query is sufficient.
 query = "How flexible are the working hours"
 
 # Generate the search queries
-response = co.chat(message=query, search_queries_only=True)
+response = co.chat(message=query, tools=query_gen_tool, force_single_step=True)
 
 queries = []
-for r in response.search_queries:
-    queries.append(r.text)
+if response.tool_calls:
+    queries = response.tool_calls[0].parameters["queries"]
 
 print(queries)
 ```
@@ -240,8 +255,8 @@ We choose `search_query` as the `input_type` to ensure the model treats this as 
 query = "How to get to know my teammates"
 
 # Generate the search query
-response = co.chat(message=query, search_queries_only=True)
-query_optimized = response.search_queries[0].text
+response = co.chat(message=query, tools=query_gen_tool, force_single_step=True)
+query_optimized = response.tool_calls[0].parameters["queries"][0] if response.tool_calls else query
 
 # Embed the search query
 query_emb = co.embed(

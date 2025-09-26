@@ -406,13 +406,28 @@ With our database in place, we can run queries against it. The query process can
 ```python PYTHON
 def process_query(query, retriever):
     """Runs query augmentation, retrieval, rerank and final generation in one call."""
-    augmented_queries=co.chat(message=query,model='command-r-plus',temperature=0.2, search_queries_only=True)
+    query_gen_tool = [
+        {
+            "name": "internet_search",
+            "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+            "parameter_definitions": {
+                "queries": {
+                    "description": "a list of queries to search the internet with.",
+                    "type": "List[str]",
+                    "required": True,
+                }
+            },
+        }
+    ]
+    
+    augmented_queries=co.chat(message=query,model='command-r-plus',temperature=0.2, tools=query_gen_tool, force_single_step=True)
         #augment queries
-    if augmented_queries.search_queries:
+    if augmented_queries.tool_calls:
         reranked_docs=[]
-        for itm in augmented_queries.search_queries:
-            docs=retriever.invoke(itm.text)
-            temp_rerank = rerank_cohere(itm.text,docs)
+        search_queries = augmented_queries.tool_calls[0].parameters["queries"]
+        for itm in search_queries:
+            docs=retriever.invoke(itm)
+            temp_rerank = rerank_cohere(itm,docs)
             reranked_docs.extend(temp_rerank)
         documents = [{"title": f"chunk {i}", "snippet": reranked_docs[i]} for i in range(len(reranked_docs))]
     else:
@@ -480,8 +495,8 @@ In the example below, the `else` statement is invoked based on `query2`. We stil
 
 ```python PYTHON
 query2='divide this by two'
-augmented_queries=co.chat(message=query2,model='command-r-plus',temperature=0.2, search_queries_only=True)
-if augmented_queries.search_queries:
+augmented_queries=co.chat(message=query2,model='command-r-plus',temperature=0.2, tools=query_gen_tool, force_single_step=True)
+if augmented_queries.tool_calls:
     print('RAG is needed')
     final_answer, final_answer_docs = process_query(query, retriever)
     print(final_answer)
@@ -693,13 +708,28 @@ Unless the user asks for a different style of answer, you should answer in full 
         
     def process_query(self,query):
         """Runs query augmentation, retrieval, rerank and generation in one call."""
-        augmented_queries=co.chat(message=query,model=self.generation_model,temperature=self.temperature, search_queries_only=True)
+        query_gen_tool = [
+            {
+                "name": "internet_search",
+                "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+                "parameter_definitions": {
+                    "queries": {
+                        "description": "a list of queries to search the internet with.",
+                        "type": "List[str]",
+                        "required": True,
+                    }
+                },
+            }
+        ]
+        
+        augmented_queries=co.chat(message=query,model=self.generation_model,temperature=self.temperature, tools=query_gen_tool, force_single_step=True)
         #augment queries
-        if augmented_queries.search_queries:
+        if augmented_queries.tool_calls:
             reranked_docs=[]
-            for itm in augmented_queries.search_queries:
-                docs=self.retriever.invoke(itm.text)
-                temp_rerank = self.rerank_cohere(itm.text,docs,model=self.rerank_model,top_n=self.top_k_rerank)
+            search_queries = augmented_queries.tool_calls[0].parameters["queries"]
+            for itm in search_queries:
+                docs=self.retriever.invoke(itm)
+                temp_rerank = self.rerank_cohere(itm,docs,model=self.rerank_model,top_n=self.top_k_rerank)
                 reranked_docs.extend(temp_rerank)
             documents = [{"title": f"chunk {i}", "snippet": reranked_docs[i]} for i in range(len(reranked_docs))]
         else:

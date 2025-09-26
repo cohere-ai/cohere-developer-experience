@@ -84,9 +84,11 @@ In this section, we will use the three step RAG workflow to finally settle the s
 
 #### Step 1: Generating search queries
 
-##### Option 1: Using the `search_queries_only` parameter
+##### Using a tool
 
-Calling the [Chat API](/reference/chat) with the `search_queries_only` parameter set to `True` will return a list of **search queries**. In the example below, we ask the model to suggest some search queries that would be useful when answering the question.
+The [Chat API](/reference/chat) can generate search queries using Tools. In the example below, we ask the model to suggest some search queries that would be useful when answering the question.
+
+Here, we build a tool that takes a user query and returns a list of relevant document snippets for that query. The tool can generate zero, one or multiple search queries depending on the user query.
 
 **Request**
 
@@ -95,34 +97,6 @@ import cohere
 
 co = cohere.Client(api_key="<YOUR API KEY>")
 
-co.chat(
-    model="command-a-03-2025",
-    message="Who is more popular: Nsync or Backstreet Boys?",
-    search_queries_only=True,
-)
-```
-
-**Response**
-
-```json JSON
-{
-  "is_search_required": true,
-  "search_queries": [
-    {"text": "Nsync popularity", "generation_id": "b560dd68-743e-4c32-98a2-a9b7e3e96861"},
-    {"text": "Backstreet Boys popularity", "generation_id": "b560dd68-743e-4c32-98a2-a9b7e3e96861"}
-  ]
-}
-```
-
-Indeed, to generate a factually accurate answer to the question `"Who is more popular: Nsync or Backstreet Boys?"`, looking up `Nsync popularity` and `Backstreet Boys popularity` first would be helpful.
-
-##### Option 2: Using a tool
-
-If you are looking for greater control over how search queries are generated, you can use Cohere's Tools capabilities to generate search queries
-
-Here, we build a tool that takes a user query and returns a list of relevant document snippets for that query. The tool can generate zero, one or multiple search queries depending on the user query.
-
-```python PYTHON
 query_gen_tool = [
     {
         "name": "internet_search",
@@ -154,17 +128,36 @@ if response.tool_calls:
 
 print(search_queries)
 ```
+
+**Response**
+
 ```
 # Sample response
 ['popularity of NSync', 'popularity of Backstreet Boys']
 ```
 
-You can then customize the preamble and/or the tool definition to generate queries that are more relevant to your use case.
+Indeed, to generate a factually accurate answer to the question `"Who is more popular: Nsync or Backstreet Boys?"`, looking up `popularity of NSync` and `popularity of Backstreet Boys` first would be helpful.
+
+You can customize the preamble and/or the tool definition to generate queries that are more relevant to your use case.
 
 For example, you can customize the preamble to encourage a longer list of search queries to be generated.
 
 ```python PYTHON
 instructions_verbose = "Write many search queries that will find helpful information for answering the user's question accurately. Always write a very long list of at least 7 search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
+
+response = co.chat(
+    preamble=instructions_verbose,
+    model="command-a-03-2025",
+    message="Who is more popular: Nsync or Backstreet Boys?",
+    tools=query_gen_tool,
+    force_single_step=True,
+)
+
+search_queries = []
+if response.tool_calls:
+    search_queries = response.tool_calls[0].parameters["queries"]
+
+print(search_queries)
 ```
 ```
 # Sample response

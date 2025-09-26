@@ -422,7 +422,7 @@ Next, we implement a class to handle the interaction between the user and the ch
 
 The `run()` method will be used to run the chatbot application.  It begins with the logic for getting the user message, along with a way for the user to end the conversation.  
 
-Based on the user message, the chatbot needs to decide if it needs to consult external information before responding.  If so, the chatbot determines an optimal set of search queries to use for retrieval.  When we call `co.chat()` with `search_queries_only=True`, the Chat endpoint handles this for us automatically.
+Based on the user message, the chatbot needs to decide if it needs to consult external information before responding.  If so, the chatbot determines an optimal set of search queries to use for retrieval.  When we call `co.chat()` with a search query generation tool, the Chat endpoint handles this for us automatically.
 
 The generated queries can be accessed from the `search_queries` field of the object that is returned.  Then, what happens next depends on how many queries are returned.
 
@@ -463,18 +463,34 @@ class Chatbot:
               # print(f"User: {message}") # Uncomment for Google Colab to avoid printing the same thing twice
 
             # Generate search queries (if any)
+            query_gen_tool = [
+                {
+                    "name": "internet_search",
+                    "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+                    "parameter_definitions": {
+                        "queries": {
+                            "description": "a list of queries to search the internet with.",
+                            "type": "List[str]",
+                            "required": True,
+                        }
+                    },
+                }
+            ]
+            
             response = co.chat(message=message,
                                model="command-r",
-                               search_queries_only=True)
+                               tools=query_gen_tool,
+                               force_single_step=True)
 
             # If there are search queries, retrieve document chunks and respond
-            if response.search_queries:
+            if response.tool_calls:
                 print("Retrieving information...", end="")
 
                 # Retrieve document chunks for each query
                 documents = []
-                for query in response.search_queries:
-                    documents.extend(self.vectorstore.retrieve(query.text))
+                search_queries = response.tool_calls[0].parameters["queries"]
+                for query in search_queries:
+                    documents.extend(self.vectorstore.retrieve(query))
 
                 # Use document chunks to respond
                 response = co.chat_stream(
