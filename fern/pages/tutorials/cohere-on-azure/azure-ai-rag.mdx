@@ -320,7 +320,7 @@ vectorstore.retrieve("Prompting by giving examples")
 We can now run the chatbot. For this, we create a `run_chatbot` function that accepts the user message and the history of the conversation, if any.
 
 Here's what happens inside the function:
-- For each user message, we use the Chat endpoint’s search query generation feature to turn the user message into one or more queries that are optimized for retrieval. The endpoint can even return no query, meaning a user message can be responded to directly without retrieval. This is done by calling the Chat endpoint with the `search_queries_only` parameter and setting it as `True`.
+- For each user message, we use the Chat endpoint with a search query generation tool to turn the user message into one or more queries that are optimized for retrieval. The tool can even return no query, meaning a user message can be responded to directly without retrieval. This is done by calling the Chat endpoint with the `tools` parameter.
 - If no search query is generated, we call the Chat endpoint to generate a response directly. If there is at least one, we call the `retrieve` method from the `Vectorstore` instance to retrieve the most relevant documents to each query.
 - Finally, all the results from all queries are appended to a list and passed to the Chat endpoint for response generation.
 - We print the response, together with the citations and the list of document chunks cited, for easy reference.
@@ -333,16 +333,32 @@ def run_chatbot(message, chat_history=None):
     if chat_history is None:
         chat_history = []
 
+    # Define search query generation tool
+    query_gen_tool = [
+        {
+            "name": "internet_search",
+            "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+            "parameter_definitions": {
+                "queries": {
+                    "description": "a list of queries to search the internet with.",
+                    "type": "List[str]",
+                    "required": True,
+                }
+            },
+        }
+    ]
+
     # Generate search queries, if any
     response = co_chat.chat(
         message=message,
-        search_queries_only=True,
+        tools=query_gen_tool,
+        force_single_step=True,
         chat_history=chat_history,
     )
 
     search_queries = []
-    for query in response.search_queries:
-        search_queries.append(query.text)
+    if response.tool_calls:
+        search_queries = response.tool_calls[0].parameters["queries"]
 
     # If there are search queries, retrieve the documents
     if search_queries:

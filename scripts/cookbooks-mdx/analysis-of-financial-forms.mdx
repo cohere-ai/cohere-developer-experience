@@ -387,10 +387,25 @@ To learn more about document mode and query generation, check out [our documenta
 ```python PYTHON
 PROMPT = "List the overall revenue numbers for 2021, 2022, and 2023 in the 10-K as bullet points, then explain the revenue growth trends."
 
+# Define search query generation tool
+query_gen_tool = [
+    {
+        "name": "internet_search",
+        "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+        "parameter_definitions": {
+            "queries": {
+                "description": "a list of queries to search the internet with.",
+                "type": "List[str]",
+                "required": True,
+            }
+        },
+    }
+]
+
 # Get queries to run against our index from the model
-r = co.chat(PROMPT, model="command-r", search_queries_only=True)
-if r.search_queries:
-    queries = [q["text"] for q in r.search_queries]
+r = co.chat(PROMPT, model="command-r", tools=query_gen_tool, force_single_step=True)
+if r.tool_calls:
+    queries = r.tool_calls[0].parameters["queries"]
 else:
     print("No queries returned by the model")
 ```
@@ -570,9 +585,9 @@ pages = [pytesseract.image_to_string(page) for page in pages]
 def get_response(prompt, rag):
     if rag:
         # Get queries to run against our index from the model
-        r = co.chat(prompt, model="command-r", search_queries_only=True)
-        if r.search_queries:
-            queries = [q["text"] for q in r.search_queries]
+        r = co.chat(prompt, model="command-r", tools=query_gen_tool, force_single_step=True)
+        if r.tool_calls:
+            queries = r.tool_calls[0].parameters["queries"]
         else:
             print("No queries returned by the model")
 
