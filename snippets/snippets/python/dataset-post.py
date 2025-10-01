@@ -4,9 +4,9 @@ co = cohere.Client()
 
 # upload a dataset
 my_dataset = co.datasets.create(
-    name="chat-dataset",
-    data=open("./chat.jsonl", "rb"),
-    type="chat-finetune-input",
+    name="embed-dataset",
+    data=open("./embed.jsonl", "rb"),
+    type="embed-input",
 )
 
 # wait for validation to complete

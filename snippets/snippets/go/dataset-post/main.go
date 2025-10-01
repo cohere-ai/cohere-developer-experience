@@ -27,7 +27,7 @@ func main() {
 		context.TODO(),
 		&cohere.DatasetsCreateRequest{
 			Name:     "embed-dataset",
-			Type:     cohere.DatasetTypeEmbedResult,
+			Type:     cohere.DatasetTypeEmbedInput,
 			Data:     &MyReader{Reader: strings.NewReader(`{"text": "The quick brown fox jumps over the lazy dog"}`), name: "test.jsonl"},
 			EvalData: &MyReader{Reader: strings.NewReader(""), name: "a.jsonl"},
 		},

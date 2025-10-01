@@ -2,12 +2,7 @@ openapi: 3.1.0
 info:
   title: API Reference
   version: "1.0"
-  description: |-
-    The Cohere Platform is centered around models.
-
-    Each model has a different amount of power (i.e. parameters), to be used for different tasks.
-
-    Cohere also supports finetuning of baseline models to improve performance on downstream tasks or to teach the model large quantities of information which cannot be extracted with few-shot learning or prompt engineering.
+  description: The Cohere API for interacting with Chat, Embed and Rerank models.
   summary: Cohere's API
   contact:
     name: Cohere Developers
@@ -5975,10 +5970,7 @@ paths:
                     - public
                   type: string
                   description: The name of a compatible [Cohere
-                    model](https://docs.cohere.com/v2/docs/models) or the ID of
-                    a
-                    [fine-tuned](https://docs.cohere.com/v2/docs/chat-fine-tuning)
-                    model.
+                    model](https://docs.cohere.com/v2/docs/models).
                 messages:
                   x-fern-audiences:
                     - public
@@ -19172,10 +19164,9 @@ paths:
           required: true
           schema:
             $ref: "#/components/schemas/DatasetType"
-          description: The dataset type, which is used to validate the data. Valid types
-            are `embed-input`, `reranker-finetune-input`,
-            `single-label-classification-finetune-input`, `chat-finetune-input`,
-            and `multi-label-classification-finetune-input`.
+          description: The dataset type, which is used to validate the data. The only
+            valid type is `embed-input` used in conjunction with the Embed Jobs
+            API.
         - in: query
           name: keep_original_file
           schema:
@@ -19278,7 +19269,7 @@ paths:
                 		context.TODO(),
                 		&cohere.DatasetsCreateRequest{
                 			Name:     "embed-dataset",
-                			Type:     cohere.DatasetTypeEmbedResult,
+                			Type:     cohere.DatasetTypeEmbedInput,
                 			Data:     &MyReader{Reader: strings.NewReader(`{"text": "The quick brown fox jumps over the lazy dog"}`), name: "test.jsonl"},
                 			EvalData: &MyReader{Reader: strings.NewReader(""), name: "a.jsonl"},
                 		},
@@ -19299,9 +19290,9 @@ paths:
 
                 # upload a dataset
                 my_dataset = co.datasets.create(
-                    name="chat-dataset",
-                    data=open("./chat.jsonl", "rb"),
-                    type="chat-finetune-input",
+                    name="embed-dataset",
+                    data=open("./embed.jsonl", "rb"),
+                    type="embed-input",
                 )
 
                 # wait for validation to complete
@@ -19320,9 +19311,9 @@ paths:
                 async def main():
                     # upload a dataset
                     response = await co.datasets.create(
-                        name="chat-dataset",
-                        data=open("./chat.jsonl", "rb"),
-                        type="chat-finetune-input",
+                        name="embed-dataset",
+                        data=open("./embed.jsonl", "rb"),
+                        type="embed-input",
                     )
 
                     # wait for validation to complete
@@ -19353,8 +19344,8 @@ paths:
                                 null,
                                 Optional.empty(),
                                 DatasetsCreateRequest.builder()
-                                    .name("chat-dataset")
-                                    .type(DatasetType.CHAT_FINETUNE_INPUT)
+                                    .name("embed-dataset")
+                                    .type(DatasetType.EMBED_INPUT)
                                     .build());
 
                     System.out.println(response);
@@ -19383,7 +19374,7 @@ paths:
               name: cURL
               code: >-
                 curl --request POST \
-                  --url "https://api.cohere.com/v1/datasets?name=my-dataset&type=generative-finetune-input" \
+                  --url "https://api.cohere.com/v1/datasets?name=my-dataset&type=embed-input" \
                   --header 'Content-Type: multipart/form-data' \
                   --header "Authorization: Bearer $CO_API_KEY" \
                   --form file=@./path/to/file.jsonl
@@ -21995,8 +21986,7 @@ paths:
       operationId: list-models
       x-fern-sdk-method-name: list
       x-fern-sdk-group-name: models
-      description: Returns a list of models available for use. The list contains
-        models from Cohere as well as your fine-tuned models.
+      description: Returns a list of models available for use.
       parameters:
         - name: page_size
           in: query
