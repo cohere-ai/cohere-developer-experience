@@ -13,6 +13,7 @@ const cohere = new CohereClientV2({});
           {
             type: 'image_url',
             imageUrl: {
+              // Can be either a base64 data URI or a web URL.
               url: 'https://cohere.com/favicon-32x32.png',
               detail: 'auto',
             },

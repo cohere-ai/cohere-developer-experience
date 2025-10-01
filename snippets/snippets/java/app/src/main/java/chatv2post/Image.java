@@ -40,6 +40,7 @@ public class Image {
                                                                                                         ImageContent.builder()
                                                                                                                 .imageUrl(
                                                                                                                         ImageUrl.builder()
+                                                                                                                                // Can be either a base64 data URI or a web URL.
                                                                                                                                 .url(
                                                                                                                                         "https://cohere.com/favicon-32x32.png")
                                                                                                                                 .build())

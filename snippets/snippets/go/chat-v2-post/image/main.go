@@ -24,6 +24,7 @@ func main() {
 							{Type: "text", Text: &cohere.ChatTextContent{Text: "Describe the logo!"}},
 							{Type: "image_url", ImageUrl: &cohere.ImageContent{
 								ImageUrl: &cohere.ImageUrl{
+									// Can be either a base64 data URI or a web URL.
 									Url:    "https://cohere.com/favicon-32x32.png",
 									Detail: cohere.ImageUrlDetailAuto.Ptr(),
 								},
