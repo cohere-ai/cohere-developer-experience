@@ -126,7 +126,7 @@ type Model = {
   description: string;
   longDescription?: string;
   capabilities: Capability[];
-  pricing: { input: number; output: number };
+  pricing?: { input: number; output: number };
   specs: { contextWindow: number; maxOutputTokens: number; knowledgeCutoff: string, customSpecs: { name: string; value: string }[] };
   endpoints: Endpoint[];
 };
@@ -173,16 +173,31 @@ export const ModelShowcase = ({ model }: { model: Model }) => (
 
       {/* Pricing */}
       <Card title="Pricing" icon={IconCoins}>
-        <div className="grid grid-cols-2 gap-4 text-center">
-          <div>
-            <div className="text-sm text-gray-500">Input</div>
-            <p className="text-lg font-medium">${model.pricing.input} / 1M tokens</p>
+        {model.pricing ? (
+          <div className="grid grid-cols-2 gap-4 text-center">
+            <div>
+              <div className="text-sm text-gray-500">Input</div>
+              <p className="text-lg font-medium">${model.pricing.input} / 1M tokens</p>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Output</div>
+              <p className="text-lg font-medium">${model.pricing.output} / 1M tokens</p>
+            </div>
           </div>
-          <div>
-            <div className="text-sm text-gray-500">Output</div>
-            <p className="text-lg font-medium">${model.pricing.output} / 1M tokens</p>
+        ) : (
+          <div className="text-sm text-gray-600">
+            <p className="mb-3">
+              <strong>{model.name}</strong> is available for free trial usage up to rate limits.
+            </p>
+            <p>
+              For production usage, please reach out to sales at{' '}
+              <a href="mailto:sales@cohere.com" className="text-blue-600 hover:text-blue-800 underline">
+                sales@cohere.com
+              </a>
+              .
+            </p>
           </div>
-        </div>
+        )}
       </Card>
 
       {/* Specs */}
