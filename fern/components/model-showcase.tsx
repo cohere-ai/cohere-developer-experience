@@ -187,10 +187,14 @@ export const ModelShowcase = ({ model }: { model: Model }) => (
         ) : (
           <div className="text-sm text-gray-600">
             <p className="mb-3">
-              <strong>{model.name}</strong> is available for free trial usage up to rate limits.
+              For both trial keys and production keys, {model.name} is free until rate limits are reached. Learn more about rate limits for different models and key types{' '}
+              <a href="https://docs.cohere.com/docs/rate-limits" className="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer">
+                here
+              </a>
+              .
             </p>
             <p>
-              For production usage, please reach out to sales at{' '}
+              To use {model.name} in production, please reach out to sales at{' '}
               <a href="mailto:sales@cohere.com" className="text-blue-600 hover:text-blue-800 underline">
                 sales@cohere.com
               </a>
