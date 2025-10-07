@@ -4,6 +4,7 @@ curl --request POST \
   --header 'content-type: application/json' \
   --header "Authorization: bearer $CO_API_KEY" \
   --data '{
+    "stream": true,
     "model": "command-a-vision-07-2025",
     "messages": [
       {

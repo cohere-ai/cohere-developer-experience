@@ -14,6 +14,7 @@ public class Documents {
     NonStreamedChatResponse response =
         cohere.chat(
             ChatRequest.builder()
+                .model("command-a-03-2025")
                 .message("What year was he born?")
                 .documents(
                     List.of(

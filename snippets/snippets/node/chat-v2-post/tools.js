@@ -5,6 +5,13 @@ const cohere = new CohereClientV2({});
 (async () => {
   const response = await cohere.chat({
     model: 'command-a-03-2025',
+    messages: [
+      {
+        role: 'user',
+        content:
+          "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
+      },
+    ],
     tools: [
       {
         type: 'function',
@@ -20,6 +27,7 @@ const cohere = new CohereClientV2({});
                 type: 'string',
               },
             },
+            required: ['day'],
           },
         },
       },
@@ -28,7 +36,7 @@ const cohere = new CohereClientV2({});
         function: {
           name: 'query_product_catalog',
           description:
-            'Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.',
+            'Connects to a product catalog with information about all the products being sold, including categories, prices, and stock levels.',
           parameters: {
             type: 'object',
             properties: {
@@ -38,15 +46,9 @@ const cohere = new CohereClientV2({});
                 type: 'string',
               },
             },
+            required: ['category'],
           },
         },
-      },
-    ],
-    messages: [
-      {
-        role: 'user',
-        content:
-          "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
       },
     ],
   });

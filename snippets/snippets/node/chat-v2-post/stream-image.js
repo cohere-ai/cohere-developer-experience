@@ -3,7 +3,7 @@ const { CohereClientV2 } = require('cohere-ai');
 const cohere = new CohereClientV2({});
 
 (async () => {
-  const response = await cohere.chat({
+  const stream = await cohere.chatStream({
     model: 'command-a-vision-07-2025',
     messages: [
       {
@@ -22,5 +22,10 @@ const cohere = new CohereClientV2({});
       },
     ],
   });
-  console.log(response.message.content[0].text);
+
+  for await (const chatEvent of stream) {
+    if (chatEvent.type === 'content-delta') {
+      console.log(chatEvent.delta?.message);
+    }
+  }
 })();

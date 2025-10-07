@@ -18,6 +18,16 @@ func main() {
 		context.TODO(),
 		&cohere.V2ChatStreamRequest{
 			Model: "command-a-03-2025",
+			Messages: cohere.ChatMessages{
+				{
+					Role: "user",
+					User: &cohere.UserMessageV2{
+						Content: &cohere.UserMessageV2Content{
+							String: "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
+						},
+					},
+				},
+			},
 			Tools: []*cohere.ToolV2{
 				{
 					Type: cohere.String("function"),
@@ -27,12 +37,12 @@ func main() {
 						Parameters: map[string]interface{}{
 							"type": "object",
 							"properties": map[string]interface{}{
-								"date": map[string]interface{}{
+								"day": map[string]interface{}{
 									"type":        "string",
-									"description": "Retrieves sales data from this day, formatted as YYYY-MM-DD",
+									"description": "Retrieves sales data for this day, formatted as YYYY-MM-DD.",
 								},
 							},
-							"required": []string{"date"},
+							"required": []string{"day"},
 						},
 					},
 				},
@@ -52,14 +62,6 @@ func main() {
 							"required": []string{"category"},
 						},
 					},
-				},
-			},
-			Messages: cohere.ChatMessages{
-				{
-					Role: "user",
-					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
-						String: "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
-					}},
 				},
 			},
 		},

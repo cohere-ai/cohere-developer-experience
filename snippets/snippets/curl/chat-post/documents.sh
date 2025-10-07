@@ -4,6 +4,7 @@ curl --request POST \
   --header 'content-type: application/json' \
   --header "Authorization: bearer $CO_API_KEY" \
   --data '{
+    "model": "command-a-03-2025",
     "message": "Who is more popular: Nsync or Backstreet Boys?",
     "documents": [
       {

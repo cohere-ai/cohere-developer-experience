@@ -15,21 +15,24 @@ func main() {
 	resp, err := co.V2.Chat(
 		context.TODO(),
 		&cohere.V2ChatRequest{
-			Model: "command-a-03-2025",
+			Model: "command-a-vision-07-2025",
 			Messages: cohere.ChatMessages{
 				{
 					Role: "user",
-					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
-						ContentList: []*cohere.Content{
-							{Type: "text", Text: &cohere.ChatTextContent{Text: "Describe the logo!"}},
-							{Type: "image_url", ImageUrl: &cohere.ImageContent{
-								ImageUrl: &cohere.ImageUrl{
-									// Can be either a base64 data URI or a web URL.
-									Url:    "https://cohere.com/favicon-32x32.png",
-									Detail: cohere.ImageUrlDetailAuto.Ptr(),
-								},
-							}},
-						}}},
+					User: &cohere.UserMessageV2{
+						Content: &cohere.UserMessageV2Content{
+							ContentList: []*cohere.Content{
+								{Type: "text", Text: &cohere.ChatTextContent{Text: "Describe this image"}},
+								{Type: "image_url", ImageUrl: &cohere.ImageContent{
+									ImageUrl: &cohere.ImageUrl{
+										// Can be either a base64 data URI or a web URL.
+										Url:    "https://cohere.com/favicon-32x32.png",
+										Detail: cohere.ImageUrlDetailAuto.Ptr(),
+									},
+								}},
+							},
+						},
+					},
 				},
 			},
 		},

@@ -8,7 +8,7 @@ const cohere = new CohereClientV2({});
     messages: [
       {
         role: 'user',
-        content: 'hello world!',
+        content: 'Tell me about LLMs',
       },
     ],
   });

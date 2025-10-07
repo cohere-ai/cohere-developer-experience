@@ -2,7 +2,7 @@ import cohere
 
 co = cohere.ClientV2()
 
-response = co.chat(
+response = co.chat_stream(
     model="command-a-vision-07-2025",
     messages=[
         {
@@ -25,4 +25,6 @@ response = co.chat(
     ]
 )
 
-print(response)
+for event in response:
+    if event.type == "content-delta":
+        print(event.delta.message.content.text, end="")

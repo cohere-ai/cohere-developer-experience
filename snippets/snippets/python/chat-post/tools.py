@@ -33,6 +33,7 @@ tools = [
 message = "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?"
 
 response = co.chat(
+    model="command-a-03-2025",
     message=message,
     tools=tools,
 )

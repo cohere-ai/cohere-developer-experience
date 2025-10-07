@@ -6,7 +6,7 @@ co = cohere.AsyncClientV2()
 async def main():
     response = co.chat_stream(
         model="command-a-03-2025",
-        messages=[{"role": "user", "content": "hello world!"}],
+        messages=[{"role": "user", "content": "Tell me about LLMs"}],
     )
 
     async for event in response:

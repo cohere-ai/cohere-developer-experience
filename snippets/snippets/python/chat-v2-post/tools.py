@@ -3,7 +3,13 @@ import cohere
 co = cohere.ClientV2()
 
 response = co.chat(
-    model="command-a-03-2025",
+    model="command-a-reasoning-08-2025",
+    messages=[
+        {
+            "role": "user",
+            "content": "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
+        }
+    ],
     tools=[
         cohere.ToolV2(
             type="function",
@@ -18,6 +24,7 @@ response = co.chat(
                             "type": "string",
                         }
                     },
+                    "required": ["day"],
                 },
             },
         ),
@@ -25,7 +32,7 @@ response = co.chat(
             type="function",
             function={
                 "name": "query_product_catalog",
-                "description": "Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
+                "description": "Connects to a product catalog with information about all the products being sold, including categories, prices, and stock levels.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -34,15 +41,10 @@ response = co.chat(
                             "type": "string",
                         }
                     },
+                    "required": ["category"],
                 },
             },
         ),
-    ],
-    messages=[
-        {
-            "role": "user",
-            "content": "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
-        }
     ],
 )
 

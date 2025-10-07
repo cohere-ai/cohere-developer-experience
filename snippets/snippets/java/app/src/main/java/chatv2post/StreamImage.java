@@ -1,28 +1,20 @@
 /* (C)2024 */
 package chatv2post;
 
+import com.cohere.api.Cohere;
+import com.cohere.api.resources.v2.requests.V2ChatStreamRequest;
+import com.cohere.api.types.*;
 import java.util.List;
 
-import com.cohere.api.Cohere;
-import com.cohere.api.resources.v2.requests.V2ChatRequest;
-import com.cohere.api.types.ChatMessageV2;
-import com.cohere.api.types.ChatResponse;
-import com.cohere.api.types.Content;
-import com.cohere.api.types.ImageContent;
-import com.cohere.api.types.ImageUrl;
-import com.cohere.api.types.TextContent;
-import com.cohere.api.types.UserMessage;
-import com.cohere.api.types.UserMessageContent;
-
-public class Image {
+public class Stream {
   public static void main(String[] args) {
     Cohere cohere = Cohere.builder().clientName("snippet").build();
 
-    ChatResponse response =
+    Iterable<StreamedChatResponseV2> response =
         cohere
             .v2()
-            .chat(
-                V2ChatRequest.builder()
+            .chatStream(
+                V2ChatStreamRequest.builder()
                     .model("command-a-vision-07-2025")
                     .messages(
                         List.of(
@@ -46,6 +38,19 @@ public class Image {
                                                         .build()))))
                                     .build())))
                     .build());
+
+    for (StreamedChatResponseV2 chatResponse : response) {
+      if (chatResponse.isContentDelta()) {
+        System.out.println(
+            chatResponse
+                .getContentDelta()
+                .flatMap(ChatContentDeltaEvent::getDelta)
+                .flatMap(ChatContentDeltaEventDelta::getMessage)
+                .flatMap(ChatContentDeltaEventDeltaMessage::getContent)
+                .flatMap(ChatContentDeltaEventDeltaMessageContent::getText)
+                .orElse(""));
+      }
+    }
 
     System.out.println(response);
   }

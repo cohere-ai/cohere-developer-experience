@@ -19,9 +19,11 @@ func main() {
 			Messages: cohere.ChatMessages{
 				{
 					Role: "user",
-					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
-						String: "Hello world!",
-					}},
+					User: &cohere.UserMessageV2{
+						Content: &cohere.UserMessageV2Content{
+							String: "Tell me about LLMs",
+						},
+					},
 				},
 			},
 		},

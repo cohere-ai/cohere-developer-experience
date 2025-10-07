@@ -4,21 +4,7 @@ curl --request POST \
   --header 'content-type: application/json' \
   --header "Authorization: bearer $CO_API_KEY" \
   --data '{
+    "model": "command-a-03-2025",
     "stream": true,
-    "chatHistory": [
-      {
-        "role": "USER",
-        "message": "Who discovered gravity?"
-      },
-      {
-        "role": "CHATBOT",
-        "message": "The man who is widely credited with discovering gravity is Sir Isaac Newton"
-      }
-    ],
-    "message": "What year was he born?",
-    "connectors": [
-      {
-        "id": "web-search"
-      }
-    ]
+    "message": "Tell me about LLMs"
   }'
