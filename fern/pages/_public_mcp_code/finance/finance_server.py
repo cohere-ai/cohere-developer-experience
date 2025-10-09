@@ -1,3 +1,5 @@
+## NOTE: This code exists to provide a few ideas for creating useful functions as part of a finance-focused MCP server. It does not run on its own, and is not meant to.
+
 import argparse
 import os
 import yaml
