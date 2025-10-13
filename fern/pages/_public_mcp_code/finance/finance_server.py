@@ -1,5 +1,6 @@
 ## NOTE: This code exists to provide a few ideas for creating useful functions as part of a finance-focused MCP server. It does not run on its own, and is not meant to.
-## This code references three API keys: Cohere (for language model access), Alpha Vantage (for financial data), and server secret (to power the MCP server). This information is included to help you read the code below and to understand how to adapt it for your own context.
+## NOTE: This code references three API keys: Cohere (for language model access), Alpha Vantage (for financial data), and server secret (to power the MCP server). This information is included to help you read the code below and to understand how to adapt it for your own context.
+## NOTE: This code is written to use Alpha Vantage; it could be written around a different provider of financial data, but that might require additional refactoring.
 
 import argparse
 import os
