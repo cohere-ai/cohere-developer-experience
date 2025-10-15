@@ -14645,6 +14645,305 @@ paths:
                   writeOnly: true
               x-fern-type-name: V2EmbedRequest
         description: ""
+  /v2/batches:
+    get:
+      summary: List batches
+      description: List the batches for the current user
+      operationId: ListBatches
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListBatchesResponse"
+              example:
+                batches:
+                  - id: 9439e0e3-49a4-4336-93e3-485fc420bc18
+                    name: my-batch
+                    creator_id: b5e1ffb9-49a1-4653-9927-94083316309d
+                    org_id: 62603116-1750-4c04-b1b6-9d5046764bc4
+                    status: BATCH_STATUS_IN_PROGRESS
+                    model: command
+                    input_dataset_id: my-requests-dataset
+                    num_records: 5000
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "503":
+          description: Status Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+      parameters:
+        - name: page_size
+          description: |-
+            The maximum number of batches to return. The service may return fewer than
+            this value.
+            If unspecified, at most 50 batches will be returned.
+            The maximum value is 1000; values above 1000 will be coerced to 1000.
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: page_token
+          description: |-
+            A page token, received from a previous `ListBatches` call.
+            Provide this to retrieve the subsequent page.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: order_by
+          description: |-
+            Batches can be ordered by creation time or last updated time.
+            Use `created_at` for creation time or `updated_at` for last updated time.
+          in: query
+          required: false
+          schema:
+            type: string
+        - $ref: "#/components/parameters/RequestSource"
+      tags:
+        - /batches
+      x-fern-sdk-group-name: batches
+      x-fern-sdk-method-name: list
+      x-fern-audiences:
+        - public
+      x-fern-request-name: batchesListBatchesRequest
+    post:
+      summary: Create a batch
+      description: Creates and executes a batch from an uploaded dataset of requests
+      operationId: CreateBatch
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateBatchResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "503":
+          description: Status Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+      tags:
+        - /batches
+      requestBody:
+        description: |-
+          Information about the batch. Must contain name, input_dataset_id, and
+          model. Output-only fields are ignored.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Batch"
+        required: true
+      parameters:
+        - $ref: "#/components/parameters/RequestSource"
+      x-fern-sdk-group-name: batches
+      x-fern-sdk-method-name: create
+      x-fern-audiences:
+        - public
+  "/v2/batches/{id}":
+    get:
+      summary: Retrieve a batch
+      description: Retrieves a batch
+      operationId: GetBatch
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetBatchResponse"
+              example:
+                batch:
+                  id: 9439e0e3-49a4-4336-93e3-485fc420bc18
+                  name: my-batch
+                  creator_id: b5e1ffb9-49a1-4653-9927-94083316309d
+                  org_id: 62603116-1750-4c04-b1b6-9d5046764bc4
+                  status: BATCH_STATUS_IN_PROGRESS
+                  created_at: 2025-03-05T14:59:25.438936Z
+                  updated_at: 2025-03-05T15:00:26.126572Z
+                  input_dataset_id: my-requests-dataset
+                  output_dataset_id: my-batch-output-c2waz1
+                  input_tokens: "0"
+                  output_tokens: "0"
+                  model: batch-command
+                  num_records: 5000
+                  num_successful_records: 8
+                  num_failed_records: 0
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "503":
+          description: Status Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+      parameters:
+        - name: id
+          description: The batch ID.
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/RequestSource"
+      tags:
+        - /batches
+      x-fern-sdk-group-name: batches
+      x-fern-sdk-method-name: retrieve
+      x-fern-audiences:
+        - public
+  "/v2/batches/{id}:cancel":
+    post:
+      summary: Cancel a batch
+      description: Cancels an in-progress batch
+      operationId: CancelBatch
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancelBatchResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "503":
+          description: Status Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+      parameters:
+        - name: id
+          description: The batch ID.
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/RequestSource"
+      tags:
+        - /batches
+      x-fern-sdk-group-name: batches
+      x-fern-sdk-method-name: cancel
+      x-fern-audiences:
+        - public
   /v1/embed-jobs:
     post:
       x-fern-audiences:
@@ -25500,6 +25799,161 @@ components:
             $ref: "#/components/schemas/EmbedContent"
           description: An array of objects containing the input data for the model to embed.
       x-fern-type-name: EmbedInput
+    BatchStatus:
+      type: string
+      enum:
+        - BATCH_STATUS_UNSPECIFIED
+        - BATCH_STATUS_QUEUED
+        - BATCH_STATUS_IN_PROGRESS
+        - BATCH_STATUS_CANCELING
+        - BATCH_STATUS_COMPLETED
+        - BATCH_STATUS_FAILED
+        - BATCH_STATUS_CANCELED
+      default: BATCH_STATUS_UNSPECIFIED
+      description: |-
+        The possible stages of a batch life-cycle.
+
+         - BATCH_STATUS_UNSPECIFIED: Unspecified status.
+         - BATCH_STATUS_QUEUED: The batch has been queued.
+         - BATCH_STATUS_IN_PROGRESS: The batch is in-progress.
+         - BATCH_STATUS_CANCELING: The batch is being canceled.
+         - BATCH_STATUS_COMPLETED: The batch has been completed.
+         - BATCH_STATUS_FAILED: The batch has failed.
+         - BATCH_STATUS_CANCELED: The batch has been canceled.
+      x-fern-sdk-group-name:
+        - batches
+    Batch:
+      type: object
+      properties:
+        id:
+          type: string
+          description: read-only. Batch ID.
+          readOnly: true
+        name:
+          type: string
+          description: Batch name (e.g. `foobar`).
+        creator_id:
+          type: string
+          description: read-only. User ID of the creator.
+          readOnly: true
+        org_id:
+          type: string
+          description: read-only. Organization ID.
+          readOnly: true
+        status:
+          $ref: "#/components/schemas/BatchStatus"
+          description: read-only. Current stage in the life-cycle of the batch.
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          description: read-only. Creation timestamp.
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          description: read-only. Latest update timestamp.
+          readOnly: true
+        input_dataset_id:
+          type: string
+          description: ID of the dataset the batch reads inputs from.
+        output_dataset_id:
+          type: string
+          title: ID of the dataset the batch writes outputs to
+          readOnly: true
+        input_tokens:
+          type: string
+          format: int64
+          description: read-only. The total number of input tokens in the batch.
+          readOnly: true
+        output_tokens:
+          type: string
+          format: int64
+          description: read-only. The total number of output tokens in the batch.
+          readOnly: true
+        model:
+          type: string
+          description: The name of the model the batch uses.
+        num_records:
+          type: integer
+          format: int32
+          description: read-only. The total number of records in the batch.
+          readOnly: true
+        num_successful_records:
+          type: integer
+          format: int32
+          description: read-only. The current number of successful records in the batch.
+          readOnly: true
+        num_failed_records:
+          type: integer
+          format: int32
+          description: read-only. The current number of failed records in the batch.
+          readOnly: true
+        status_reason:
+          type: string
+          description: read-only. More details about the reason for the status of a batch
+            job.
+          readOnly: true
+      description: This resource represents a batch job.
+      required:
+        - name
+        - input_dataset_id
+        - model
+      x-fern-sdk-group-name:
+        - batches
+    ListBatchesResponse:
+      type: object
+      properties:
+        batches:
+          type: array
+          items:
+            type: object
+            $ref: "#/components/schemas/Batch"
+          description: The batches that belong to the authenticated user.
+        next_page_token:
+          type: string
+          description: |-
+            A token, which can be sent as `page_token` to retrieve the next page.
+            If this field is omitted, there are no subsequent pages.
+      description: Response to a request to list batches.
+      x-fern-sdk-group-name:
+        - batches
+    BatchError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A developer-facing error message.
+      description: Error is the response for any unsuccessful event.
+      x-fern-sdk-group-name:
+        - batches
+    CreateBatchResponse:
+      type: object
+      properties:
+        batch:
+          $ref: "#/components/schemas/Batch"
+          description: Information about the batch.
+      description: Response to request to create a batch.
+      required:
+        - batch
+      x-fern-sdk-group-name:
+        - batches
+    GetBatchResponse:
+      type: object
+      properties:
+        batch:
+          $ref: "#/components/schemas/Batch"
+          description: Information about the batch.
+      description: Response to a request to get a batch.
+      required:
+        - batch
+      x-fern-sdk-group-name:
+        - batches
+    CancelBatchResponse:
+      type: object
+      description: Response to a request to cancel a batch.
+      x-fern-sdk-group-name:
+        - batches
     EmbedJob:
       type: object
       required:
