@@ -44,6 +44,7 @@ Next, we add and embed a query. We choose `search_query` as the `input_type` to 
 ### Step 3: Return the most similar documents
 Next, we calculate and sort similarity scores between a query and document embeddings, then display the top N most similar documents. Here, we are using the numpy library for calculating similarity using a dot product approach. 
 
+<CodeBlocks>
 ```python PYTHON
 ### STEP 1: Embed the documents
 
@@ -99,6 +100,78 @@ for idx, docs_idx in enumerate(top_doc_idxs):
     print(f"Rank: {idx+1}")
     print(f"Document: {documents[docs_idx]}\n")
 ```
+```bash cURL
+# Step 1: Embed the documents
+curl --request POST \
+  --url https://api.cohere.ai/v2/embed \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "embed-v4.0",
+  "input_type": "search_document",
+  "embedding_types": ["float"],
+  "output_dimension": 1024,
+  "inputs": [
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged."
+        }
+      ]
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Finding Coffee Spots: For your caffeine fix, head to the break room'\''s coffee machine or cross the street to the café for artisan coffee."
+        }
+      ]
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!"
+        }
+      ]
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "Working Hours Flexibility: We prioritize work-life balance. While our core hours are 9 AM to 5 PM, we offer flexibility to adjust as needed."
+        }
+      ]
+    }
+  ]
+}'
+
+# Step 2: Embed the query
+curl --request POST \
+  --url https://api.cohere.ai/v2/embed \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "embed-v4.0",
+  "input_type": "search_query",
+  "embedding_types": ["float"],
+  "output_dimension": 1024,
+  "inputs": [
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "How to connect with my teammates?"
+        }
+      ]
+    }
+  ]
+}'
+```
+</CodeBlocks>
 
 Here's an example output:
 ```

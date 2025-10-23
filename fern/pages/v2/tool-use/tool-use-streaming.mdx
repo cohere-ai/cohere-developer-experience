@@ -295,6 +295,7 @@ tools = [
 
 Before streaming the response, first run through the tool calling and execution steps.
 
+<CodeBlocks>
 ```python PYTHON
 messages = [
     {
@@ -342,6 +343,42 @@ if response.message.tool_calls:
             }
         )
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What'\''s the weather in Madrid and Brasilia?"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "gets the weather of a given location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "the location to get the weather, example: San Francisco."
+            }
+          },
+          "required": ["location"]
+        }
+      }
+    }
+  ]
+}'
+```
+</CodeBlocks>
 
 Example response:
 ```mdx wordWrap
@@ -369,6 +406,7 @@ Once the tool results have been received, we can now stream the response using t
 
 The events are streamed as `chunk` objects. In the example below, we pick `content-delta` to display the text response and `citation-start` to display the citations.
 
+<CodeBlocks>
 ```python PYTHON
 response = co.chat_stream(
     model="command-a-03-2025", messages=messages, tools=tools
@@ -387,6 +425,89 @@ for chunk in response:
 for citation in citations:
     print(citation, "\n")
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: text/event-stream' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What'\''s the weather in Madrid and Brasilia?"
+    },
+    {
+      "role": "assistant",
+      "tool_plan": "I will use the get_weather tool to find the weather in Madrid and Brasilia.",
+      "tool_calls": [
+        {
+          "id": "get_weather_15c2p6g19s8f",
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Madrid\"}"
+          }
+        },
+        {
+          "id": "get_weather_n01pkywy0p2w",
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Brasilia\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "get_weather_15c2p6g19s8f",
+      "content": [
+        {
+          "type": "document",
+          "document": {
+            "data": "{\"temperature\": {\"madrid\": \"24°C\"}}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "get_weather_n01pkywy0p2w",
+      "content": [
+        {
+          "type": "document",
+          "document": {
+            "data": "{\"temperature\": {\"brasilia\": \"28°C\"}}"
+          }
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "gets the weather of a given location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "the location to get the weather, example: San Francisco."
+            }
+          },
+          "required": ["location"]
+        }
+      }
+    }
+  ],
+  "stream": true
+}'
+```
+</CodeBlocks>
 
 Example response:
 ```mdx wordWrap

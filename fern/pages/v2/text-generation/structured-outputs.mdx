@@ -48,7 +48,7 @@ There are two ways of specifying the JSON output:
 #### JSON mode
 In JSON mode, when making an API request, you can specify the `response_format` parameter to indicate that you want the response in a JSON object format.
 
-
+<CodeBlocks>
 ```python PYTHON
 import cohere
 
@@ -67,6 +67,26 @@ res = co.chat(
 
 print(res.message.content[0].text)
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "command-a-03-2025",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Generate a JSON describing a person, with the fields '\''name'\'' and '\''age'\''"
+      }
+    ],
+    "response_format": {
+      "type": "json_object"
+    }
+  }'
+```
+</CodeBlocks>
 By setting the `response_format` type to `"json_object"` in the Chat API, the output of the model is guaranteed to be a valid JSON object.
 
 ```
@@ -94,7 +114,7 @@ This forces the LLM to stick to this schema, thus giving you greater control ove
 
 For example, let's say you want the LLM to generate a JSON object with specific keys for a book, such as "title," "author," and "publication_year." Your API request might look like this:
 
-
+<CodeBlocks>
 ```python PYTHON
 import cohere
 
@@ -124,6 +144,35 @@ res = co.chat(
 
 print(res.message.content[0].text)
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "command-a-03-2025",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Generate a JSON describing a book, with the fields '\''title'\'' and '\''author'\'' and '\''publication_year'\''"
+      }
+    ],
+    "response_format": {
+      "type": "json_object",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "title": {"type": "string"},
+          "author": {"type": "string"},
+          "publication_year": {"type": "integer"}
+        },
+        "required": ["title", "author", "publication_year"]
+      }
+    }
+  }'
+```
+</CodeBlocks>
 
 In this schema, we defined three keys ("title," "author," "publication_year") and their expected data types ("string" and "integer"). The LLM will generate a JSON object that adheres to this structure.
 
@@ -142,6 +191,7 @@ In this schema, we defined three keys ("title," "author," "publication_year") an
 
 Here's an example of a nested array. Note that the top level json structure must always be a json object.
 
+<CodeBlocks>
 ```python PYTHON
 cohere_api_key = os.getenv("cohere_api_key")
 co = cohere.ClientV2(cohere_api_key)
@@ -177,6 +227,44 @@ response = co.chat(
 )
 return json.loads(response.message.content[0].text)
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "command-a-03-2025",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Generate a JSON array of objects with the following fields: japanese, romaji, english. These actions should be japanese verbs provided in the dictionary form."
+      }
+    ],
+    "response_format": {
+      "type": "json_object",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "japanese": {"type": "string"},
+                "romaji": {"type": "string"},
+                "english": {"type": "string"}
+              },
+              "required": ["japanese", "romaji", "english"]
+            }
+          }
+        },
+        "required": ["actions"]
+      }
+    }
+  }'
+```
+</CodeBlocks>
 
 The output for this example would be:
 
@@ -213,6 +301,7 @@ In the example below, we create a tool that can retrieve weather data for a give
 
 When the `strict_tools` parameter is set to `True`, you can define a maximum of 200 fields across all tools being passed to an API call.
 
+<CodeBlocks>
 ```python PYTHON {24}
 tools = [
     {
@@ -241,6 +330,43 @@ response = co.chat(model="command-r7b-12-2024",
 
 print(response.message.tool_calls)
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "command-r7b-12-2024",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What'\''s the weather in Toronto?"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_weather",
+          "description": "Gets the weather of a given location",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "string",
+                "description": "The location to get weather."
+              }
+            },
+            "required": ["location"]
+          }
+        }
+      }
+    ],
+    "strict_tools": true
+  }'
+```
+</CodeBlocks>
 
 #### Important notes on using `strict_tools`
 - This parameter is only supported in Chat API V2 via the strict_tools parameter (not API V1).

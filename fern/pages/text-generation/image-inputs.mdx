@@ -25,7 +25,8 @@ These models are designed to work through an interface and API structure that lo
 
 We can have Command A Vision analyze this image for us with the following:
 
-```pyton PYTHON 
+<CodeBlocks>
+```python PYTHON 
 response = co.chat(
     model="command-a-vision-07-2025",
     messages=[
@@ -39,6 +40,34 @@ response = co.chat(
     ],
 )
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "command-a-vision-07-2025",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Please create two markdown tables. One for Revenue. One for CAGR. the company names should be in alphabetical order in both."
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "data:image/png;base64,..."
+            }
+          }
+        ]
+      }
+    ]
+  }'
+```
+</CodeBlocks>
 
 And you should get something like this: 
 
@@ -58,6 +87,7 @@ Lower detail helps reduce the overall token count (and therefore price and laten
 
 The `detail` property is specified for each image, here's what that look like: 
 
+<CodeBlocks>
 ```python PYTHON 
 co.chat(
   model="command-a-vision-07-2025",
@@ -77,6 +107,35 @@ co.chat(
   ]
 )
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "command-a-vision-07-2025",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "what'\''s in this image?"
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "https://cohere.com/favicon-32x32.png",
+              "detail": "high"
+            }
+          }
+        ]
+      }
+    ]
+  }'
+```
+</CodeBlocks>
 
 When detail is set to “low”:
 - If the image area is larger than 512px * 512px, it will be resized to fit into these dimensions while attempting to maintain the aspect ratio.
@@ -100,8 +159,9 @@ Here's an example calculation of how an image is processed into tokens:
 ### Image URL Formats
 Cohere supports images in two formats, base64 _data_ URLs and HTTP _image_ URLs.
 
-A base64 data URL (e.g., `“data:image/png;base64,...”`) has the advantage of being usable in deployments that don't have access to the internet. Here's what that looks like:
+A base64 data URL (e.g., `"data:image/png;base64,..."`) has the advantage of being usable in deployments that don't have access to the internet. Here's what that looks like:
 
+<CodeBlocks>
 ```python PYTHON
 co.chat(
     model="command-a-vision-07-2025",
@@ -119,11 +179,40 @@ co.chat(
     ],
 )
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "command-a-vision-07-2025",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "what'\''s in this image?"
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "data:image/png;base64,..."
+            }
+          }
+        ]
+      }
+    ]
+  }'
+```
+</CodeBlocks>
 
 An HTTP image URL (e.g., "https://cohere.com/favicon-32x32.png") is faster, but requires you to upload your image somewhere and is not available in outside platforms (Azure, Bedrock, etc.) HTTP image URLs make the API easy to try out, as data URLs are long and difficult to deal with. Moreover, including long data URLs in the request increases the request size and the corresponding network latency.
 
 Here's what that looks like:
 
+<CodeBlocks>
 ```python PYTHON
 co.chat(
     model="command-a-vision-07-2025",
@@ -143,6 +232,34 @@ co.chat(
     ],
 )
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "command-a-vision-07-2025",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "what'\''s in this image?"
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "https://cohere.com/favicon-32x32.png"
+            }
+          }
+        ]
+      }
+    ]
+  }'
+```
+</CodeBlocks>
 
 For use cases like chatbots, where the images accumulate in the chat history, we recommend you use HTTP/HTTPs image URLs, since the request size will be smaller, and, with server-side caching, will result in faster response times.
 

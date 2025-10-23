@@ -165,6 +165,7 @@ We can now stream the response using the `chat_stream` endpoint.
 
 The events are streamed as `chunk` objects. In the example below, we pick `content-delta` to display the text response and `citation-start` to display the citations.
 
+<CodeBlocks>
 ```python PYTHON
 messages = [
     {"role": "user", "content": "Where do the tallest penguins live?"}
@@ -189,6 +190,38 @@ for chunk in response:
 for citation in citations:
     print(citation, "\n")
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: text/event-stream' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Where do the tallest penguins live?"
+    }
+  ],
+  "documents": [
+    {
+      "data": {
+        "title": "Tall penguins",
+        "snippet": "Emperor penguins are the tallest."
+      }
+    },
+    {
+      "data": {
+        "title": "Penguin habitats",
+        "snippet": "Emperor penguins only live in Antarctica."
+      }
+    }
+  ],
+  "stream": true
+}'
+```
+</CodeBlocks>
 Example response:
 ```mdx wordWrap
 The tallest penguins are the Emperor penguins, which only live in Antarctica.

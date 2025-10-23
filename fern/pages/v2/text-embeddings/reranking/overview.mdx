@@ -25,6 +25,7 @@ In the example below, we use the [Rerank API endpoint](/reference/rerank-1) to i
 
 In this example, the documents being passed in are a list of strings:
 
+<CodeBlocks>
 ```python PYTHON
 import cohere
 
@@ -43,6 +44,26 @@ results = co.rerank(
     model="rerank-v3.5", query=query, documents=docs, top_n=5
 )
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/rerank \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "rerank-v3.5",
+    "query": "What is the capital of the United States?",
+    "documents": [
+      "Carson City is the capital city of the American state of Nevada. At the 2010 United States Census, Carson City had a population of 55,274.",
+      "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean that are a political division controlled by the United States. Its capital is Saipan.",
+      "Charlotte Amalie is the capital and largest city of the United States Virgin Islands. It has about 20,000 people. The city is on the island of Saint Thomas.",
+      "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district. The President of the USA and many major national government offices are in the territory. This makes it the political center of the United States of America.",
+      "Capital punishment has existed in the United States since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) also uses capital punishment."
+    ],
+    "top_n": 5
+  }'
+```
+</CodeBlocks>
 
 **Response**
 
@@ -88,6 +109,7 @@ If your documents contain structured data, for best performance we recommend for
 
 **Request**
 
+<CodeBlocks>
 ```python PYTHON
 import yaml
 import cohere
@@ -124,6 +146,26 @@ results = co.rerank(
     model="rerank-v3.5", query=query, documents=yaml_docs, top_n=5
 )
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/rerank \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "rerank-v3.5",
+    "query": "What is the capital of the United States?",
+    "documents": [
+      "Title: Facts about Carson City\nContent: Carson City is the capital city of the American state of Nevada. At the 2010 United States Census, Carson City had a population of 55,274.\n",
+      "Title: The Commonwealth of Northern Mariana Islands\nContent: The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean that are a political division controlled by the United States. Its capital is Saipan.\n",
+      "Title: The Capital of United States Virgin Islands\nContent: Charlotte Amalie is the capital and largest city of the United States Virgin Islands. It has about 20,000 people. The city is on the island of Saint Thomas.\n",
+      "Title: Washington D.C.\nContent: Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district. The President of the USA and many major national government offices are in the territory. This makes it the political center of the United States of America.\n",
+      "Title: Capital Punishment in the US\nContent: Capital punishment has existed in the United States since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states. The federal government (including the United States military) also uses capital punishment.\n"
+    ],
+    "top_n": 5
+  }'
+```
+</CodeBlocks>
 
 In the `documents` parameter, we are passing in a list YAML strings, representing the structured data.
 

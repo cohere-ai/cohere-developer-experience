@@ -72,6 +72,7 @@ Each citation object contains:
 - `text`: its corresponding span of text
 - `sources`: the source(s) that it references
 
+<CodeBlocks>
 ```python PYTHON
 messages = [
     {"role": "user", "content": "Where do the tallest penguins live?"}
@@ -88,6 +89,37 @@ print(response.message.content[0].text)
 for citation in response.message.citations:
     print(citation, "\n")
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Where do the tallest penguins live?"
+    }
+  ],
+  "documents": [
+    {
+      "data": {
+        "title": "Tall penguins",
+        "snippet": "Emperor penguins are the tallest."
+      }
+    },
+    {
+      "data": {
+        "title": "Penguin habitats",
+        "snippet": "Emperor penguins only live in Antarctica."
+      }
+    }
+  ]
+}'
+```
+</CodeBlocks>
 
 Example response:
 ```mdx wordWrap
@@ -103,6 +135,7 @@ In a streaming scenario (using `chat_stream` to generate the model response), th
 
 Each citation object contains the same fields as the [non-streaming scenario](#non-streaming).
 
+<CodeBlocks>
 ```python PYTHON
 messages = [
     {"role": "user", "content": "Where do the tallest penguins live?"}
@@ -127,6 +160,38 @@ for chunk in response:
 for citation in citations:
     print(citation, "\n")
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: text/event-stream' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Where do the tallest penguins live?"
+    }
+  ],
+  "documents": [
+    {
+      "data": {
+        "title": "Tall penguins",
+        "snippet": "Emperor penguins are the tallest."
+      }
+    },
+    {
+      "data": {
+        "title": "Penguin habitats",
+        "snippet": "Emperor penguins only live in Antarctica."
+      }
+    }
+  ],
+  "stream": true
+}'
+```
+</CodeBlocks>
 
 Example response:
 ```mdx wordWrap
@@ -173,6 +238,7 @@ documents = [
 
 When document IDs are provided, the citation will refer to the documents using these IDs.
 
+<CodeBlocks>
 ```python PYTHON
 messages = [
     {"role": "user", "content": "Where do the tallest penguins live?"}
@@ -186,6 +252,39 @@ response = co.chat(
 
 print(response.message.content[0].text)
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Where do the tallest penguins live?"
+    }
+  ],
+  "documents": [
+    {
+      "data": {
+        "title": "Tall penguins",
+        "snippet": "Emperor penguins are the tallest."
+      },
+      "id": "100"
+    },
+    {
+      "data": {
+        "title": "Penguin habitats",
+        "snippet": "Emperor penguins only live in Antarctica."
+      },
+      "id": "101"
+    }
+  ]
+}'
+```
+</CodeBlocks>
 
 Note the `id` fields in the citations, which refer to the IDs in the `document` object.
 
@@ -222,6 +321,7 @@ Here is an example using the same list of pre-defined `messages` as the above.
 
 With the `citation_options` mode set to `accurate`, we get the citations after the entire response is generated.
 
+<CodeBlocks>
 ```python PYTHON
 documents = [
     {
@@ -265,6 +365,43 @@ print("\n")
 for citation in citations:
     print(citation, "\n")
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: text/event-stream' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Where do the tallest penguins live?"
+    }
+  ],
+  "documents": [
+    {
+      "data": {
+        "title": "Tall penguins",
+        "snippet": "Emperor penguins are the tallest."
+      },
+      "id": "100"
+    },
+    {
+      "data": {
+        "title": "Penguin habitats",
+        "snippet": "Emperor penguins only live in Antarctica."
+      },
+      "id": "101"
+    }
+  ],
+  "citation_options": {
+    "mode": "accurate"
+  },
+  "stream": true
+}'
+```
+</CodeBlocks>
 Example response:
 ```mdx wordWrap
 The tallest penguins are the Emperor penguins. They live in Antarctica.
@@ -281,6 +418,7 @@ You can specify it by adding the `citation_options={"mode": "fast"}` argument in
 
 With the `citation_options` mode set to `fast`, we get the citations inline as the model generates the response.
 
+<CodeBlocks>
 ```python PYTHON
 documents = [
     {
@@ -322,6 +460,43 @@ for chunk in response:
                 end="",
             )
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: text/event-stream' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Where do the tallest penguins live?"
+    }
+  ],
+  "documents": [
+    {
+      "data": {
+        "title": "Tall penguins",
+        "snippet": "Emperor penguins are the tallest."
+      },
+      "id": "100"
+    },
+    {
+      "data": {
+        "title": "Penguin habitats",
+        "snippet": "Emperor penguins only live in Antarctica."
+      },
+      "id": "101"
+    }
+  ],
+  "citation_options": {
+    "mode": "fast"
+  },
+  "stream": true
+}'
+```
+</CodeBlocks>
 Example response:
 ```mdx wordWrap
 The tallest penguins [100] are the Emperor penguins [100] which only live in Antarctica. [101]
