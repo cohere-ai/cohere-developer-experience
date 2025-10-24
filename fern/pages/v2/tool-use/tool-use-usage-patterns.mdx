@@ -81,6 +81,7 @@ The model can determine that more than one tool call is required, where it will 
 
 In the example below, the user asks for the weather in Toronto and New York. This requires calling the `get_weather` function twice, one for each location. This is reflected in the model's response, where two parallel tool calls are generated.
 
+<CodeBlocks>
 ```python PYTHON
 messages = [
     {
@@ -104,6 +105,42 @@ if response.message.tool_calls:
     print(response.message.tool_plan, "\n")
     print(response.message.tool_calls)
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What'\''s the weather in Toronto and New York?"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "gets the weather of a given location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "the location to get the weather, example: San Francisco."
+            }
+          },
+          "required": ["location"]
+        }
+      }
+    }
+  ]
+}'
+```
+</CodeBlocks>
 Example response:
 ```mdx wordWrap
 I will search for the weather in Toronto and New York.
@@ -183,6 +220,7 @@ A key attribute of tool use systems is the model’s ability to choose the right
 
 In the example below, the user asks for a simple arithmetic question. The model determines that it does not need to use any of the available tools (only one, `get_weather`, in this case), and instead, directly answers the user.
 
+<CodeBlocks>
 ```python PYTHON
 messages = [{"role": "user", "content": "What's 2+2?"}]
 
@@ -197,6 +235,42 @@ if response.message.tool_calls:
 else:
     print(response.message.content[0].text)
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What'\''s 2+2?"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "gets the weather of a given location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "the location to get the weather, example: San Francisco."
+            }
+          },
+          "required": ["location"]
+        }
+      }
+    }
+  ]
+}'
+```
+</CodeBlocks>
 Example response:
 ```mdx wordWrap
 The answer to 2+2 is 4.
@@ -565,6 +639,7 @@ messages = [
 ```
 Then, in the second turn, when provided with a rather vague follow-up user message, the model correctly infers that the context is about the weather.
 
+<CodeBlocks>
 ```python PYTHON
 messages.append({"role": "user", "content": "What about London?"})
 
@@ -583,6 +658,76 @@ if response.message.tool_calls:
     print(response.message.tool_plan, "\n")
     print(response.message.tool_calls)
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What'\''s the weather in Toronto?"
+    },
+    {
+      "role": "assistant",
+      "tool_plan": "I will search for the weather in Toronto.",
+      "tool_calls": [
+        {
+          "id": "get_weather_1byjy32y4hvq",
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Toronto\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "get_weather_1byjy32y4hvq",
+      "content": [
+        {
+          "type": "document",
+          "document": {
+            "data": "{\"temperature\": \"20C\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": "It'\''s 20°C in Toronto."
+    },
+    {
+      "role": "user",
+      "content": "What about London?"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "gets the weather of a given location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "the location to get the weather, example: San Francisco."
+            }
+          },
+          "required": ["location"]
+        }
+      }
+    }
+  ]
+}'
+```
+</CodeBlocks>
 Example response:
 ```mdx wordWrap
 I will search for the weather in London. 

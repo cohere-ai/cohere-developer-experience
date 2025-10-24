@@ -90,6 +90,7 @@ co = cohere.ClientV2(
 </Tabs>
 
 
+<CodeBlocks>
 ```python PYTHON
 response = co.chat(
     # The model name. Example: command-a-03-2025
@@ -112,6 +113,44 @@ response = co.chat(
 for tc in response.message.tool_calls:
     print(f"{tc.function.name} | Parameters: {tc.function.arguments}")
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What'\''s the weather in Toronto?"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "Gets the weather of a given location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "the location to get the weather, example: San Francisco."
+            }
+          },
+          "required": ["location"]
+        }
+      }
+    }
+  ],
+  "strict_tools": true,
+  "temperature": 0
+}'
+```
+</CodeBlocks>
 
 </Accordion>
 

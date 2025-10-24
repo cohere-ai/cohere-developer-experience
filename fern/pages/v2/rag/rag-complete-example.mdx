@@ -54,7 +54,7 @@ co = cohere.ClientV2(
 Next, we create a search query generation tool for generating search queries from user queries.
 
 We pass a user query, which in this example, asks about how to get to know the team.
-
+<CodeBlocks>
 ```python PYTHON
 message = "How to get to know my teammates"
 
@@ -102,6 +102,49 @@ if res.message.tool_calls:
 
 print(search_queries)
 ```
+```bash cURL
+curl --request POST \
+  --url 'https://api.cohere.ai/v2/chat' \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Write a search query that will find helpful information for answering the user'\''s question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
+    },
+    {
+      "role": "user",
+      "content": "I'\''m joining a new team as a Principal Analyst. What are the best ways to quickly get to know my teammates?"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "internet_search",
+        "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "queries": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "a list of queries to search the internet with."
+            }
+          },
+          "required": ["queries"]
+        }
+      }
+    }
+  ]
+}'
+```
+</CodeBlocks>
 Example response:
 ```mdx
 ['how to get to know your teammates']
@@ -126,7 +169,7 @@ First, we need to embed the documents to search from. We call the Embed endpoint
 - `texts`: The list of texts (the FAQs)
 - `embedding_types`: We choose the `float` as the embedding type.
 
-
+<CodeBlocks>
 ```python PYTHON
 # Define the documents
 documents = [
@@ -190,10 +233,37 @@ doc_emb = co.embed(
     embedding_types=["float"],
 ).embeddings.float
 ```
+```bash cURL
+curl --request POST \
+  --url 'https://api.cohere.ai/v2/embed' \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "embed-v4.0",
+  "input_type": "search_document",
+  "embedding_types": ["float"],
+  "texts": [
+    "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.",
+    "Finding Coffee Spots: For your caffeine fix, head to the break room'\''s coffee machine or cross the street to the café for artisan coffee.",
+    "Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!",
+    "Working Hours Flexibility: We prioritize work-life balance. While our core hours are 9 AM to 5 PM, we offer flexibility to adjust as needed.",
+    "Side Projects Policy: We encourage you to pursue your passions. Just be mindful of any potential conflicts of interest with our business.",
+    "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward.",
+    "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours.",
+    "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.",
+    "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year.",
+    "Proposing New Ideas: Innovation is welcomed! Share your brilliant ideas at our weekly team meetings or directly with your team lead."
+  ]
+}'
+```
+</CodeBlocks>
+
 
 We choose `search_query` as the `input_type` in the Embed endpoint call. This ensures the model treats this as the query (instead of the documents) for search.
 
 
+<CodeBlocks>
 ```python PYTHON
 # Embed the search query
 query_emb = co.embed(
@@ -203,6 +273,21 @@ query_emb = co.embed(
     embedding_types=["float"],
 ).embeddings.float
 ```
+```bash cURL
+curl --request POST \
+  --url 'https://api.cohere.ai/v2/embed' \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "embed-v4.0",
+  "input_type": "search_query",
+  "embedding_types": ["float"],
+  "texts": ["how to get to know your teammates"]
+}'
+```
+</CodeBlocks>
+
 
 
 Now, we want to search for the most relevant documents to the query. For this, we make use of the `numpy` library to compute the similarity between each query-document pair using the dot product approach.
@@ -268,6 +353,7 @@ Looking at the results, we see that since the query is about getting to know the
 Here we select `top_n` to be 2, which will be the documents we will pass next for response generation.
 
 
+<CodeBlocks>
 ```python PYTHON
 # Rerank the documents
 results = co.rerank(
@@ -287,6 +373,26 @@ reranked_documents = [
     retrieved_documents[result.index] for result in results.results
 ]
 ```
+```bash cURL
+curl --request POST \
+  --url 'https://api.cohere.ai/v2/rerank' \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "rerank-v3.5",
+  "query": "how to get to know your teammates",
+  "top_n": 2,
+  "documents": [
+    "Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!",
+    "Proposing New Ideas: Innovation is welcomed! Share your brilliant ideas at our weekly team meetings or directly with your team lead.",
+    "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.",
+    "Finding Coffee Spots: For your caffeine fix, head to the break room'\''s coffee machine or cross the street to the café for artisan coffee.",
+    "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
+  ]
+}'
+```
+</CodeBlocks>
 ```mdx
 Rank: 1
 Score: 0.07272241
@@ -304,6 +410,7 @@ Finally, we call the Chat endpoint by passing the retrieved documents. This tell
 The response and citations are then generated based on the the query and the documents retrieved.
 
 
+<CodeBlocks>
 ```python PYTHON
 messages = [{"role": "user", "content": message}]
 
@@ -323,6 +430,35 @@ if response.message.citations:
     for citation in response.message.citations:
         print(citation, "\n")
 ```
+```bash cURL
+curl --request POST \
+  --url 'https://api.cohere.ai/v2/chat' \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "I'\''m joining a new team as a Principal Analyst. What are the best ways to quickly get to know my teammates?"
+    }
+  ],
+  "documents": [
+    {
+      "data": {
+        "text": "Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!"
+      }
+    },
+    {
+      "data": {
+        "text": "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged."
+      }
+    }
+  ]
+}'
+```
+</CodeBlocks>
 ```mdx
 To get to know your teammates, you can join relevant Slack channels to stay informed and engaged. You will receive an invite via email. You can also participate in team-building activities such as monthly outings and weekly game nights.
 

@@ -88,6 +88,22 @@ const cohere = new CohereClientV2({
 })();
 
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "command-a-03-2025",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Write a title for a blog post about API design. Only output the title text."
+      }
+    ]
+  }'
+```
 </CodeBlocks>
 
 ## Response Structure
@@ -135,6 +151,7 @@ The system message contains instructions that the model will respect over any in
 
 It is recommended to send the system message as the first element in the messages list.
 
+<CodeBlocks>
 ```python PYTHON
 import cohere
 
@@ -155,12 +172,34 @@ res = co.chat(
 
 print(res.message.content[0].text)
 ```
+```bash Curl
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "command-a-03-2025",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You respond concisely, in about 5 words or less"
+      },
+      {
+        "role": "user",
+        "content": "Write a title for a blog post about API design. Only output the title text."
+      }
+    ]
+  }'
+```
+</CodeBlocks>
 
 
 ## Multi-Turn Conversations
 
 A single Chat request can encapsulate multiple turns of a conversation, where each message in the `messages` list appears in the order it was sent. Sending multiple messages can give the model context for generating a response.
 
+<CodeBlocks>
 ```python PYTHON
 import cohere
 
@@ -187,4 +226,33 @@ res = co.chat(
 # "AI: The Generative Age"
 print(res.message.content[0].text)
 ```
+```bash Curl
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "command-a-03-2025",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You respond concisely, in about 5 words or less"
+      },
+      {
+        "role": "user",
+        "content": "Write a title for a blog post about API design. Only output the title text."
+      },
+      {
+        "role": "assistant",
+        "content": "Designing Perfect APIs"
+      },
+      {
+        "role": "user",
+        "content": "Another one about generative AI."
+      }
+    ]
+  }'
+```
+</CodeBlocks>
 
