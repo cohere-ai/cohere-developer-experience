@@ -199,6 +199,7 @@ The endpoint will send back a list of tool calls to be made if the model determi
 
 We then append these to the `messages` list with the `role` set to `assistant`.
 
+<CodeBlocks>
 ```python PYTHON
 response = co.chat(
     model="command-a-03-2025", messages=messages, tools=tools
@@ -215,6 +216,42 @@ if response.message.tool_calls:
     print(response.message.tool_plan, "\n")
     print(response.message.tool_calls)
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What'\''s the weather in Toronto?"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "gets the weather of a given location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "the location to get the weather, example: San Francisco."
+            }
+          },
+          "required": ["location"]
+        }
+      }
+    }
+  ]
+}'
+```
+</CodeBlocks>
 
 Example response:
 ```mdx wordWrap
@@ -362,6 +399,7 @@ The model generates a response to the user, grounded on the information provided
 
 We then append the response to the `messages` list with the `role` set to `assistant`.
 
+<CodeBlocks>
 ```python PYTHON
 response = co.chat(
     model="command-a-03-2025", messages=messages, tools=tools
@@ -373,6 +411,68 @@ messages.append(
 
 print(response.message.content[0].text)
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What'\''s the weather in Toronto?"
+    },
+    {
+      "role": "assistant",
+      "tool_plan": "I will search for the weather in Toronto.",
+      "tool_calls": [
+        {
+          "id": "get_weather_1byjy32y4hvq",
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Toronto\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "get_weather_1byjy32y4hvq",
+      "content": [
+        {
+          "type": "document",
+          "document": {
+            "data": "{\"temperature\": \"20°C\"}"
+          }
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "gets the weather of a given location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "the location to get the weather, example: San Francisco."
+            }
+          },
+          "required": ["location"]
+        }
+      }
+    }
+  ]
+}'
+```
+</CodeBlocks>
 Example response:
 ```mdx wordWrap
 It's 20°C in Toronto.

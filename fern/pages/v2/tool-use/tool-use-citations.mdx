@@ -88,6 +88,7 @@ tools = [
 
 Next, run the tool calling and execution steps.
 
+<CodeBlocks>
 ```python PYTHON
 messages = [
     {
@@ -129,6 +130,42 @@ if response.message.tool_calls:
             }
         )
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What'\''s the weather in Madrid and Brasilia?"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "gets the weather of a given location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "the location to get the weather, example: San Francisco."
+            }
+          },
+          "required": ["location"]
+        }
+      }
+    }
+  ]
+}'
+```
+</CodeBlocks>
 
 In the non-streaming mode (using `chat` to generate the model response), the citations are provided in the `message.citations` field of the response object.
 
@@ -137,6 +174,7 @@ Each citation object contains:
 - `text`: its corresponding span of text
 - `sources`: the source(s) that it references
 
+<CodeBlocks>
 ```python PYTHON
 response = co.chat(
     model="command-a-03-2025", messages=messages, tools=tools
@@ -151,6 +189,88 @@ print(response.message.content[0].text)
 for citation in response.message.citations:
     print(citation, "\n")
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What'\''s the weather in Madrid and Brasilia?"
+    },
+    {
+      "role": "assistant",
+      "tool_plan": "I will search for the weather in Madrid and Brasilia.",
+      "tool_calls": [
+        {
+          "id": "get_weather_14brd1n2kfqj",
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Madrid\"}"
+          }
+        },
+        {
+          "id": "get_weather_vdr9cvj619fk",
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Brasilia\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "get_weather_14brd1n2kfqj",
+      "content": [
+        {
+          "type": "document",
+          "document": {
+            "data": "{\"temperature\": {\"madrid\": \"24°C\"}}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "get_weather_vdr9cvj619fk",
+      "content": [
+        {
+          "type": "document",
+          "document": {
+            "data": "{\"temperature\": {\"brasilia\": \"28°C\"}}"
+          }
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "gets the weather of a given location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "the location to get the weather, example: San Francisco."
+            }
+          },
+          "required": ["location"]
+        }
+      }
+    }
+  ]
+}'
+```
+</CodeBlocks>
 
 Example response:
 ```mdx wordWrap
@@ -165,6 +285,7 @@ In a streaming scenario (using `chat_stream` to generate the model response), th
 
 Each citation object contains the same fields as the [non-streaming scenario](#non-streaming).
 
+<CodeBlocks>
 ```python PYTHON
 response = co.chat_stream(
     model="command-a-03-2025", messages=messages, tools=tools
@@ -185,6 +306,89 @@ messages.append({"role": "assistant", "content": response_text})
 for citation in citations:
     print(citation, "\n")
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: text/event-stream' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What'\''s the weather in Madrid and Brasilia?"
+    },
+    {
+      "role": "assistant",
+      "tool_plan": "I will search for the weather in Madrid and Brasilia.",
+      "tool_calls": [
+        {
+          "id": "get_weather_dkf0akqdazjb",
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Madrid\"}"
+          }
+        },
+        {
+          "id": "get_weather_gh65bt2tcdy1",
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Brasilia\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "get_weather_dkf0akqdazjb",
+      "content": [
+        {
+          "type": "document",
+          "document": {
+            "data": "{\"temperature\": {\"madrid\": \"24°C\"}}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "get_weather_gh65bt2tcdy1",
+      "content": [
+        {
+          "type": "document",
+          "document": {
+            "data": "{\"temperature\": {\"brasilia\": \"28°C\"}}"
+          }
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "gets the weather of a given location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "the location to get the weather, example: San Francisco."
+            }
+          },
+          "required": ["location"]
+        }
+      }
+    }
+  ],
+  "stream": true
+}'
+```
+</CodeBlocks>
 
 Example response:
 ```mdx wordWrap
@@ -269,6 +473,7 @@ messages = [
 
 When document IDs are provided, the citation will refer to the documents using these IDs.
 
+<CodeBlocks>
 ```python PYTHON
 response = co.chat(
     model="command-a-03-2025", messages=messages, tools=tools
@@ -279,6 +484,90 @@ print(response.message.content[0].text)
 for citation in response.message.citations:
     print(citation, "\n")
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What'\''s the weather in Madrid and Brasilia?"
+    },
+    {
+      "role": "assistant",
+      "tool_plan": "I will search for the weather in Madrid and Brasilia.",
+      "tool_calls": [
+        {
+          "id": "get_weather_dkf0akqdazjb",
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Madrid\"}"
+          }
+        },
+        {
+          "id": "get_weather_gh65bt2tcdy1",
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Brasilia\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "get_weather_dkf0akqdazjb",
+      "content": [
+        {
+          "type": "document",
+          "document": {
+            "data": "{\"temperature\": {\"madrid\": \"24°C\"}}",
+            "id": "1"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "get_weather_gh65bt2tcdy1",
+      "content": [
+        {
+          "type": "document",
+          "document": {
+            "data": "{\"temperature\": {\"brasilia\": \"28°C\"}}",
+            "id": "2"
+          }
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "gets the weather of a given location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "the location to get the weather, example: San Francisco."
+            }
+          },
+          "required": ["location"]
+        }
+      }
+    }
+  ]
+}'
+```
+</CodeBlocks>
 
 Note the `id` fields in the citations, which refer to the IDs in the `document` object.
 
@@ -314,6 +603,7 @@ Here is an example using the same list of pre-defined `messages` [as the above](
 
 With the `citation_options` mode set to `accurate`, we get the citations after the entire response is generated.
 
+<CodeBlocks>
 ```python PYTHON
 # ! pip install -U cohere
 import cohere
@@ -344,6 +634,94 @@ print("\n")
 for citation in citations:
     print(citation, "\n")
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: text/event-stream' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What'\''s the weather in Madrid and Brasilia?"
+    },
+    {
+      "role": "assistant",
+      "tool_plan": "I will search for the weather in Madrid and Brasilia.",
+      "tool_calls": [
+        {
+          "id": "get_weather_dkf0akqdazjb",
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Madrid\"}"
+          }
+        },
+        {
+          "id": "get_weather_gh65bt2tcdy1",
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Brasilia\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "get_weather_dkf0akqdazjb",
+      "content": [
+        {
+          "type": "document",
+          "document": {
+            "data": "{\"temperature\": {\"madrid\": \"24°C\"}}",
+            "id": "1"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "get_weather_gh65bt2tcdy1",
+      "content": [
+        {
+          "type": "document",
+          "document": {
+            "data": "{\"temperature\": {\"brasilia\": \"28°C\"}}",
+            "id": "2"
+          }
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "gets the weather of a given location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "the location to get the weather, example: San Francisco."
+            }
+          },
+          "required": ["location"]
+        }
+      }
+    }
+  ],
+  "citation_options": {
+    "mode": "accurate"
+  },
+  "stream": true
+}'
+```
+</CodeBlocks>
 Example response:
 ```mdx wordWrap
 It is currently 24°C in Madrid and 28°C in Brasilia.
@@ -360,6 +738,7 @@ You can specify it by adding the `citation_options={"mode": "fast"}` argument in
 
 With the `citation_options` mode set to `fast`, we get the citations inline as the model generates the response.
 
+<CodeBlocks>
 ```python PYTHON
 response = co.chat_stream(
     model="command-a-03-2025",
@@ -380,6 +759,94 @@ for chunk in response:
                 end="",
             )
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: text/event-stream' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What'\''s the weather in Madrid and Brasilia?"
+    },
+    {
+      "role": "assistant",
+      "tool_plan": "I will search for the weather in Madrid and Brasilia.",
+      "tool_calls": [
+        {
+          "id": "get_weather_dkf0akqdazjb",
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Madrid\"}"
+          }
+        },
+        {
+          "id": "get_weather_gh65bt2tcdy1",
+          "type": "function",
+          "function": {
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Brasilia\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "get_weather_dkf0akqdazjb",
+      "content": [
+        {
+          "type": "document",
+          "document": {
+            "data": "{\"temperature\": {\"madrid\": \"24°C\"}}",
+            "id": "1"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "get_weather_gh65bt2tcdy1",
+      "content": [
+        {
+          "type": "document",
+          "document": {
+            "data": "{\"temperature\": {\"brasilia\": \"28°C\"}}",
+            "id": "2"
+          }
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "gets the weather of a given location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "the location to get the weather, example: San Francisco."
+            }
+          },
+          "required": ["location"]
+        }
+      }
+    }
+  ],
+  "citation_options": {
+    "mode": "fast"
+  },
+  "stream": true
+}'
+```
+</CodeBlocks>
 Example response:
 ```mdx wordWrap
 It is currently 24°C [1] in Madrid and 28°C [2] in Brasilia.

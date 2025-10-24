@@ -87,6 +87,43 @@ print(response.message.content[0].text)
 print(response.message.citations)
 ```
 
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "command-a-03-2025",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Where do the tallest penguins live?"
+      }
+    ],
+    "documents": [
+      {
+        "data": {
+          "title": "Tall penguins",
+          "snippet": "Emperor penguins are the tallest."
+        }
+      },
+      {
+        "data": {
+          "title": "Penguin habitats",
+          "snippet": "Emperor penguins only live in Antarctica."
+        }
+      },
+      {
+        "data": {
+          "title": "What are animals?",
+          "snippet": "Animals are different from plants."
+        }
+      }
+    ]
+  }'
+```
+
 The resulting generation is`"The tallest penguins are emperor penguins, which live in Antarctica."`. The model was able to combine partial information from multiple sources and ignore irrelevant documents to arrive at the full answer.
 
 Nice :penguin:❄️!
@@ -188,6 +225,47 @@ if res.message.tool_calls:
         search_queries.extend(queries)
 
 print(search_queries)
+```
+
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "command-a-03-2025",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Write a search query that will find helpful information for answering the user'\''s question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
+      },
+      {
+        "role": "user",
+        "content": "Who is more popular: Nsync or Backstreet Boys?"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "internet_search",
+          "description": "Returns a list of relevant document snippets for a textual query retrieved from the internet",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "queries": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "a list of queries to search the internet with."
+              }
+            },
+            "required": ["queries"]
+          }
+        }
+      }
+    ]
+  }'
 ```
 ```
 # Sample response
@@ -303,6 +381,37 @@ response = co.chat(
 )
 
 print(response.message.content[0].text)
+```
+
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "command-a-03-2025",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Who is more popular: Nsync or Backstreet Boys?"
+      }
+    ],
+    "documents": [
+      {
+        "data": {
+          "title": "CSPC: Backstreet Boys Popularity Analysis - ChartMasters",
+          "snippet": "At one point, Backstreet Boys defined success: massive albums sales across the globe..."
+        }
+      },
+      {
+        "data": {
+          "title": "CSPC: NSYNC Popularity Analysis - ChartMasters",
+          "snippet": "At the turn of the millennium three teen acts were huge in the US..."
+        }
+      }
+    ]
+  }'
 ```
 
 Example response:

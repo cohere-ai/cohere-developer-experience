@@ -42,6 +42,7 @@ The Embed Jobs and Dataset APIs respect metadata through two fields: `keep_field
 
 As seen in the example above, the following would be a valid `create_dataset` call since `langs` is in the first entry but not in the second entry. The fields `wiki_id`, `url`, `views` and `title` are present in both JSONs.
 
+<CodeBlocks>
 ```python PYTHON
 # Upload a dataset for embed jobs
 ds = co.datasets.create(
@@ -56,6 +57,19 @@ ds = co.datasets.create(
 # wait for the dataset to finish validation
 print(co.wait(ds))
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/datasets \
+  --header 'accept: application/json' \
+  --header 'content-type: multipart/form-data' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --form 'name=sample_file' \
+  --form 'type=embed-input' \
+  --form 'keep_fields=["wiki_id","url","views","title"]' \
+  --form 'optional_fields=["langs"]' \
+  --form 'data=@embed_jobs_sample_data.jsonl'
+```
+</CodeBlocks>
 
 Currently the dataset endpoint will accept `.csv` and `.jsonl` files - in both cases, it is imperative to have either a field called `text` or a header called `text`. You can see an example of a valid `jsonl` file [here](https://raw.githubusercontent.com/cohere-ai/cohere-developer-experience/main/notebooks/data/embed_jobs_sample_data.jsonl) and a valid csv file [here](https://raw.githubusercontent.com/cohere-ai/cohere-developer-experience/main/notebooks/data/embed_jobs_sample_data.csv).
 
@@ -63,6 +77,7 @@ Currently the dataset endpoint will accept `.csv` and `.jsonl` files - in both c
 
 The Embed Jobs API takes in `dataset IDs` as an input. Uploading a local file to the Datasets API with `dataset_type="embed-input"` will validate the data for embedding. Dataset needs to contain `text` field. The input file types we currently support are `.csv` and `.jsonl`. Here's a code snippet of what this looks like:
 
+<CodeBlocks>
 ```python PYTHON
 import cohere
 
@@ -77,6 +92,17 @@ input_dataset = co.datasets.create(
 # block on server-side validation
 print(co.wait(input_dataset))
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/datasets \
+  --header 'accept: application/json' \
+  --header 'content-type: multipart/form-data' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --form 'name=your_file_name' \
+  --form 'type=embed-input' \
+  --form 'data=@/content/your_file_path'
+```
+</CodeBlocks>
 
 Upon uploading the dataset you will get a response like this:
 
@@ -96,6 +122,7 @@ If your dataset hits a validation error, please refer to the dataset validation 
 
 Your dataset is now ready to be embedded. Here's a code snippet illustrating what that looks like:
 
+<CodeBlocks>
 ```python PYTHON
 embed_job_response = co.embed_jobs.create(
     dataset_id=input_dataset.id,
@@ -108,6 +135,21 @@ embed_job_response = co.embed_jobs.create(
 # block until the job is complete
 embed_job = co.wait(embed_job_response)
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/embed-jobs \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "dataset_id": "<YOUR_DATASET_ID>",
+    "input_type": "search_document",
+    "model": "embed-english-v3.0",
+    "embedding_types": ["float"],
+    "truncate": "END"
+  }'
+```
+</CodeBlocks>
 
 Since we’d like to search over these embeddings and we can think of them as constituting our knowledge base, we set `input_type='search_document'`.
 
@@ -115,6 +157,7 @@ Since we’d like to search over these embeddings and we can think of them as co
 
 The output of embed jobs is a dataset object which you can download or pipe directly to a database of your choice:
 
+<CodeBlocks>
 ```python PYTHON
 output_dataset_response = co.datasets.get(
     id=embed_job.output_dataset_id
@@ -126,6 +169,13 @@ co.utils.save_dataset(
     format="csv",
 )
 ```
+```bash cURL
+curl --request GET \
+  --url https://api.cohere.ai/v2/datasets/<DATASET_ID> \
+  --header 'accept: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+```
+</CodeBlocks>
 
 Alternatively if you would like to pass the dataset into a downstream function you can do the following:
 

@@ -18,42 +18,6 @@ Embeddings are a way to represent the meaning of texts, images, or information a
 
 In the example below we use the `embed-v4.0` model to generate embeddings for three phrases and compare them using a similarity function. The two similar phrases have a high similarity score, and the embeddings for two unrelated phrases have a low similarity score:
 
-```python PYTHON
-import cohere
-import numpy as np
-
-co = cohere.ClientV2(api_key="YOUR_API_KEY")
-
-# get the embeddings
-phrases = ["i love soup", "soup is my favorite", "london is far away"]
-
-model = "embed-v4.0"
-input_type = "search_query"
-
-res = co.embed(
-    texts=phrases,
-    model=model,
-    input_type=input_type,
-    output_dimension=1024,
-    embedding_types=["float"],
-)
-
-(soup1, soup2, london) = res.embeddings.float
-
-
-# compare them
-def calculate_similarity(a, b):
-    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-
-
-print(
-    f"For the following sentences:\n1: {phrases[0]}\n2: {phrases[1]}\3 The similarity score is: {calculate_similarity(soup1, soup2):.2f}\n"
-)
-print(
-    f"For the following sentences:\n1: {phrases[0]}\n2: {phrases[2]}\3 The similarity score is: {calculate_similarity(soup1, london):.2f}"
-)
-```
-
 ## The `input_type` parameter
 
 Cohere embeddings are optimized for different types of inputs.
@@ -65,8 +29,11 @@ Cohere embeddings are optimized for different types of inputs.
 
 ## Multilingual Support
 
-`embed-v4.0` is a best-in-class best-in-class multilingual model with support for over 100 languages, including Korean, Japanese, Arabic, Chinese, Spanish, and French.
+## Multilingual Support
 
+`embed-v4.0` is a best-in-class best-in-class multilingual model with support for over 100 languages, including Korean, Japanese, Arabic, Chinese, Spanish, and French.
+
+<CodeBlocks>
 ```python PYTHON
 import cohere
 
@@ -94,6 +61,30 @@ response = co.embed(
 embeddings = response.embeddings.float  # All text embeddings
 print(embeddings[0][:5])  # Print embeddings for the first text
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/embed \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "embed-v4.0",
+  "input_type": "classification",
+  "embedding_types": ["float"],
+  "texts": [
+    "Hello from Cohere!",
+    "مرحبًا من كوهير!",
+    "Hallo von Cohere!",
+    "Bonjour de Cohere!",
+    "¡Hola desde Cohere!",
+    "Olá do Cohere!",
+    "Ciao da Cohere!",
+    "您好，来自 Cohere！",
+    "कोहेरे से नमस्ते!"
+  ]
+}'
+```
+</CodeBlocks>
 
 ## Image Embeddings
 

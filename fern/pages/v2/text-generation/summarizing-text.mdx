@@ -18,22 +18,23 @@ The Command R family of models (R and R+) supports 128k context length, so you c
 
 You can perform text summarization with a simple prompt asking the model to summarize a piece of text.
 
+<CodeBlocks>
 ```python PYTHON
 import cohere
 
 co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
-document = """Equipment rental in North America is predicted to “normalize” going into 2024,
+document = """Equipment rental in North America is predicted to "normalize" going into 2024,
 according to Josh Nickell, vice president of equipment rental for the American Rental
 Association (ARA).
-“Rental is going back to ‘normal,’ but normal means that strategy matters again -
-geography matters, fleet mix matters, customer type matters,” Nickell said. “In
+"Rental is going back to 'normal,' but normal means that strategy matters again -
+geography matters, fleet mix matters, customer type matters," Nickell said. "In
 late 2020 to 2022, you just showed up with equipment and you made money.
-“Everybody was breaking records, from the national rental chains to the smallest
+"Everybody was breaking records, from the national rental chains to the smallest
 rental companies; everybody was having record years, and everybody was raising
-prices. The conversation was, ‘How much are you up?’ And now, the conversation
-is changing to ‘What’s my market like?’”
-Nickell stressed this shouldn’t be taken as a pessimistic viewpoint. It’s simply
+prices. The conversation was, 'How much are you up?' And now, the conversation
+is changing to 'What's my market like?'"
+Nickell stressed this shouldn't be taken as a pessimistic viewpoint. It's simply
 coming back down to Earth from unprecedented circumstances during the time of Covid.
 Rental companies are still seeing growth, but at a more moderate level."""
 
@@ -47,6 +48,24 @@ response = co.chat(
 
 print(response.message.content[0].text)
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Generate a concise summary of this text\n\nEquipment rental in North America is predicted to \"normalize\" going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA).\n\"Rental is going back to '\''normal,'\'' but normal means that strategy matters again - geography matters, fleet mix matters, customer type matters,\" Nickell said. \"In late 2020 to 2022, you just showed up with equipment and you made money.\n\"Everybody was breaking records, from the national rental chains to the smallest rental companies; everybody was having record years, and everybody was raising prices. The conversation was, '\''How much are you up?'\'' And now, the conversation is changing to '\''What'\''s my market like?'\''\"\nNickell stressed this shouldn'\''t be taken as a pessimistic viewpoint. It'\''s simply coming back down to Earth from unprecedented circumstances during the time of Covid. Rental companies are still seeing growth, but at a more moderate level."
+    }
+  ]
+}'
+```
+</CodeBlocks>
+
 
 (NOTE: Here, we are passing the document as a variable, but you can also just copy the document directly into the message and ask Chat to summarize it.)
 
@@ -167,6 +186,7 @@ Other than the custom system message, the only change to the Chat endpoint call 
 
 Aside from displaying the actual summary, we can display the citations as as well. The citations are a list of specific passages in the response that cite from the documents that the model receives.
 
+<CodeBlocks>
 ```python PYTHON
 message = f"Summarize this text in one sentence."
 
@@ -192,6 +212,44 @@ if response.message.citations:
             for source in citation.sources:
                 print(f"| {source.id}")
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-03-2025",
+  "messages": [
+    {
+      "role": "system",
+      "content": "## Task and Context\nYou will receive a series of text fragments from a document that are presented in chronological order. As the assistant, you must generate responses to user'\''s requests based on the information given in the fragments. Ensure that your responses are accurate and truthful, and that you reference your sources where appropriate to answer the queries, regardless of their complexity."
+    },
+    {
+      "role": "user",
+      "content": "Summarize this text in one sentence."
+    }
+  ],
+  "documents": [
+    {
+      "data": {
+        "text": "Equipment rental in North America is predicted to \"normalize\" going into 2024, according to Josh Nickell, vice president of equipment rental for the American Rental Association (ARA)."
+      }
+    },
+    {
+      "data": {
+        "text": "\"Rental is going back to '\''normal,'\'' but normal means that strategy matters again - geography matters, fleet mix matters, customer type matters,\" Nickell said. \"In late 2020 to 2022, you just showed up with equipment and you made money.\""
+      }
+    },
+    {
+      "data": {
+        "text": "\"Everybody was breaking records, from the national rental chains to the smallest rental companies; everybody was having record years, and everybody was raising prices. The conversation was, '\''How much are you up?'\'' And now, the conversation is changing to '\''What'\''s my market like?'\''\""
+      }
+    }
+  ]
+}'
+```
+</CodeBlocks>
 
 ```
 Josh Nickell, vice president of the American Rental Association, predicts that equipment rental in North America will "normalize" in 2024, requiring companies to focus on strategy, geography, fleet mix, and customer type.
