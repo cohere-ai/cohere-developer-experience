@@ -14964,6 +14964,84 @@ paths:
       x-fern-sdk-method-name: cancel
       x-fern-audiences:
         - public
+  "/v2/batches/{id}:retry":
+    post:
+      summary: Retries a batch by ID.
+      operationId: RetryBatch
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetryBatchResponse"
+              example:
+                batch:
+                  id: 9439e0e3-49a4-4336-93e3-485fc420bc18
+                  name: my-batch
+                  creator_id: b5e1ffb9-49a1-4653-9927-94083316309d
+                  org_id: 62603116-1750-4c04-b1b6-9d5046764bc4
+                  status: BATCH_STATUS_IN_PROGRESS
+                  created_at: 2025-03-05T14:59:25.438936Z
+                  updated_at: 2025-03-05T15:00:26.126572Z
+                  input_dataset_id: my-requests-dataset
+                  output_dataset_id: my-batch-output-c2waz1
+                  input_tokens: "0"
+                  output_tokens: "0"
+                  model: batch-command
+                  num_records: 5000
+                  num_successful_records: 8
+                  num_failed_records: 0
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+        "503":
+          description: Status Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchError"
+      parameters:
+        - name: id
+          description: The original batch ID to retry.
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/RequestSource"
+      tags:
+        - /batches
+      x-fern-sdk-group-name: batches
+      x-fern-sdk-method-name: retry
+      x-fern-audiences:
+        - public
   /v1/embed-jobs:
     post:
       x-fern-audiences:
@@ -25853,6 +25931,7 @@ components:
          - BATCH_STATUS_CANCELED: The batch has been canceled.
       x-fern-sdk-group-name:
         - batches
+      readOnly: true
     Batch:
       type: object
       properties:
@@ -25983,6 +26062,17 @@ components:
     CancelBatchResponse:
       type: object
       description: Response to a request to cancel a batch.
+      x-fern-sdk-group-name:
+        - batches
+    RetryBatchResponse:
+      type: object
+      properties:
+        batch:
+          $ref: "#/components/schemas/Batch"
+          description: Information about the newly created retry batch.
+      description: Response to a request to retry a batch.
+      required:
+        - batch
       x-fern-sdk-group-name:
         - batches
     EmbedJob:
