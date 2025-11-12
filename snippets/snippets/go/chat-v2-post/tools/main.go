@@ -28,7 +28,6 @@ func main() {
 			},
 			Tools: []*cohere.ToolV2{
 				{
-					Type: cohere.String("function"),
 					Function: &cohere.ToolV2Function{
 						Name:        "query_daily_sales_report",
 						Description: cohere.String("Connects to a database to retrieve overall sales volumes and sales information for a given day."),
@@ -45,7 +44,6 @@ func main() {
 					},
 				},
 				{
-					Type: cohere.String("function"),
 					Function: &cohere.ToolV2Function{
 						Name:        "query_product_catalog",
 						Description: cohere.String("Connects to a product catalog with information about all the products being sold, including categories, prices, and stock levels."),
