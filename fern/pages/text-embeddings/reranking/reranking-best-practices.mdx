@@ -11,9 +11,7 @@ updatedAt: 'Thu May 30 2024 15:16:00 GMT+0000 (Coordinated Universal Time)'
 ---
 ## Optimizing Performance
 
-In the following tables, you'll find recommendations for getting the best Rerank performance.
-
-### Rerank-v3.5 and Rerank-v3.0
+In the following tables, you'll find recommendations for getting the best performance out of Rerank v3.0, v3.5, and v4.0.
 
 | Constraint                    | Minimum | Maximum                                                                                                 | Default Value |
 | ----------------------------- | ------- | ------------------------------------------------------------------------------------------------------- | :------------ |
@@ -23,6 +21,11 @@ In the following tables, you'll find recommendations for getting the best Rerank
 | Number of Tokens per Query    | 1       | 2048                                                                                                    | N/A           |
 
 ## Document Chunking
+Cohere's Rerank models follow a particular procedure to chunk documents, which will look something like this:
+
+- Take the context window;
+- Subtract the reserved tokens (the number of reserved tokens changes per model)
+
 For `rerank-v4.0`, the model breaks documents into 32,764-token chunks (this is the context length of 32,768 minus four special, reserved tokens.) For example, if your query is 100 tokens and your document is 100,000 tokens, your document will be broken into the following chunks:
 
 1. `relevance_score_1 = <padding_tokens, query[0,99], document[0,32663]>`
@@ -42,18 +45,18 @@ If you would like more control over how chunking is done, we recommend that you 
 
 ## Max Number of Documents
 
-When using `rerank-v3.5` and `rerank-v3.0` models, the endpoint will throw an error if the user attempts to pass more than 10,000 documents at a time. The maximum number of documents that can be passed to the endpoint is calculated with the following inequality: `Number of documents * max_chunks_per_doc >10,000`.
+When using `rerank-v4.0`, `rerank-v3.5` and `rerank-v3.0` models, the endpoint will throw an error if the user attempts to pass more than 10,000 documents at a time. The maximum number of documents that can be passed to the endpoint is calculated with the following inequality: `Number of documents * max_chunks_per_doc >10,000`.
 
 If `Number of documents * max_chunks_per_doc` exceeds `10,000`, the endpoint will return an error. By default, the `max_chunks_per_doc` is set to `1` for `rerank` models.
 
 ## Queries
 Our `rerank-v4.0` models (both 'light' and 'super') are trained with a context length of 32768 tokens. The model takes both the _query_ and the _document_ into account when calculating against this limit, and the query can account for up to half of the full context length. If your query is larger than 16,384 tokens, in other words, it will be truncated to the first 16,384 tokens (leaving the other 16,384 for the document(s)).
 
-Our `rerank-v3.5` and `rerank-v3.0` models, on the other hand, are trained with a context length of 4096 tokens, so the math is different. If your query is larger than 2048 token, it will be truncated to the first 2048 tokens (leaving the other 2048 for the document(s)).
+Our `rerank-v3.5` and `rerank-v3.0` models, are trained with a context length of 4096 tokens, so the process is the same while the math is different. If your query is larger than 2048 token, it will be truncated to the first 2048 tokens (leaving the other 2048 for the document(s)).
 
 ## Semi-Structured Data Support
 
-Our `rerank-v3.5` and `rerank-v3.0` models support semi-structured data reranking through a list of JSON objects. The `rank_fields` parameter  will default to a field parameter called `text` unless otherwise specified. If the `rank_fields` parameter is unspecified _and_ none of your JSON objects have a `text` field, the endpoint will return an error.
+Our `rerank-v4.0`, `rerank-v3.5` and `rerank-v3.0` models support semi-structured data reranking through a list of JSON objects. The `rank_fields` parameter  will default to a field parameter called `text` unless otherwise specified. If the `rank_fields` parameter is unspecified _and_ none of your JSON objects have a `text` field, the endpoint will return an error.
 
 ```json JSON
 [
