@@ -11,34 +11,33 @@ updatedAt: 'Mon Nov 25 2024 15:16:00 GMT+0000 (Coordinated Universal Time)'
 ---
 ## Document Chunking
 
-Under the hood, the Rerank API turns user input into text chunks. Every chunk will include the `query` and a portion of the document text. Chunk size depends on the model.
+Cohere's Rerank models follow a particular procedure to chunk documents, which will look something like this:
 
-For example, if
-- the selected model is `rerank-v4.0`, which has context length (aka max chunk size) of 4096 tokens
-- the query is 100 tokens
-- there is one document and it is 10,000 tokens long
-- document truncation is disabled by setting `max_tokens_per_doc` parameter to 10,000 tokens
+- Take the context window;
+- Subtract the reserved tokens (the number of reserved tokens changes per model)
 
-Then the document will be broken into the following three chunks:
+For `rerank-v4.0`, the model breaks documents into 32,764-token chunks (this is the context length of 32,768 minus four special, reserved tokens.) For example, if your query is 100 tokens and your document is 100,000 tokens, your document will be broken into the following chunks:
 
-```
-relevance_score_1 = <padding_tokens, query[0,99], document[0,3992]>
-relevance_score_2 = <padding_tokens, query[0,99], document[3993,7985]>
-relevance_score_3 = <padding_tokens, query[0,99], document[7986,9999]>
-```
+1. `relevance_score_1 = <padding_tokens, query[0,99], document[0,32663]>`
+2. `relevance_score_2 = <padding_tokens, query[0,99], document[32664,65327]>`
+3. `relevance_score_3 = <padding_tokens, query[0,99], document[65328,97990]>`
+4. `relevance_score_4 = <padding_tokens, query[0,99], document[97991,99999]>`
+5. `relevance_score = max(relevance_score_1, relevance_score_2, relevance_score_3, relevance_score_4)`
 
-And the final relevance score for that document will be computed as the highest score among those chunks:
-```python
-relevance_score = max(
-    relevance_score_1, relevance_score_2, relevance_score_3
-)
-```
+For `rerank-v3.5` and `rerank-v3.0`, the process is the same except the models break documents into 4093 token chunks; if your query is 100 tokens and your document is 10,000 tokens, for example, it will be broken into the following chunks:
+
+1. `relevance_score_1 = <padding_tokens, query[0,99], document[0,3992]>`
+2. `relevance_score_2 = <padding_tokens, query[0,99], document[3993,7985]>`
+3. `relevance_score_3 = <padding_tokens, query[0,99], document[7986,9999]>`
+4. `relevance_score = max(relevance_score_1, relevance_score_2, relevance_score_3)`
 
 If you would like more control over how chunking is done, we recommend that you chunk your documents yourself.
 
 ## Queries
 
-Our `rerank-v4.0`, `rerank-v3.5` and `rerank-v3.0` models are trained with a context length of 4096 tokens. The model takes both the _query_ and the _document_ into account when calculating against this limit, and the query can account for up to half of the full context length. If your query is larger than 2048 tokens, in other words, it will be truncated to the first 2048 tokens (leaving the other 2048 for the document(s)).
+Our `rerank-v4.0` models (both 'light' and 'super') are trained with a context length of 32768 tokens. The model takes both the _query_ and the _document_ into account when calculating against this limit, and the query can account for up to half of the full context length. If your query is larger than 16,384 tokens, in other words, it will be truncated to the first 16,384 tokens (leaving the other 16,384 for the document(s)).
+
+Our `rerank-v3.5` and `rerank-v3.0` models, are trained with a context length of 4096 tokens, so the process is the same while the math is different. If your query is larger than 2048 token, it will be truncated to the first 2048 tokens (leaving the other 2048 for the document(s)).
 
 ## Structured Data Support
 
