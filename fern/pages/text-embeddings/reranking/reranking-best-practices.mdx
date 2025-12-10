@@ -11,7 +11,7 @@ updatedAt: 'Thu May 30 2024 15:16:00 GMT+0000 (Coordinated Universal Time)'
 ---
 ## Optimizing Performance
 
-In the following tables, you'll find recommendations for getting the best performance out of Rerank v3.0, v3.5, and v4.0.
+In the following tables, you'll find recommendations for getting the best performance out of Rerank v4.0, v3.5, and v3.0.
 
 | Constraint                    | Minimum | Maximum                                                                                                 | Default Value |
 | ----------------------------- | ------- | ------------------------------------------------------------------------------------------------------- | :------------ |
@@ -34,6 +34,10 @@ For `rerank-v4.0`, the model breaks documents into 32,764-token chunks (this is 
 4. `relevance_score_4 = <padding_tokens, query[0,99], document[97991,99999]>`
 5. `relevance_score = max(relevance_score_1, relevance_score_2, relevance_score_3, relevance_score_4)`
 
+<Note>
+A context length of 32,768 corresponds to about ~48-50 pages, so it is longer than most documents you'll upload. This means that the `rerank-v4.0` models will be looking at entire documents as it chooses its rankings.
+</Note>
+
 For `rerank-v3.5` and `rerank-v3.0`, the process is the same except the models break documents into 4093 token chunks; if your query is 100 tokens and your document is 10,000 tokens, for example, it will be broken into the following chunks:
 
 1. `relevance_score_1 = <padding_tokens, query[0,99], document[0,3992]>`
@@ -50,7 +54,7 @@ When using `rerank-v4.0`, `rerank-v3.5` and `rerank-v3.0` models, the endpoint w
 If `Number of documents * max_chunks_per_doc` exceeds `10,000`, the endpoint will return an error. By default, the `max_chunks_per_doc` is set to `1` for `rerank` models.
 
 ## Queries
-Our `rerank-v4.0` models (both 'light' and 'super') are trained with a context length of 32768 tokens. The model takes both the _query_ and the _document_ into account when calculating against this limit, and the query can account for up to half of the full context length. If your query is larger than 16,384 tokens, in other words, it will be truncated to the first 16,384 tokens (leaving the other 16,384 for the document(s)).
+Our `rerank-v4.0` models (both 'pro' and 'fast') are trained with a context length of 32768 tokens. The model takes both the _query_ and the _document_ into account when calculating against this limit, and the query can account for up to half of the full context length. If your query is larger than 16,384 tokens, in other words, it will be truncated to the first 16,384 tokens (leaving the other 16,384 for the document(s)).
 
 Our `rerank-v3.5` and `rerank-v3.0` models, are trained with a context length of 4096 tokens, so the process is the same while the math is different. If your query is larger than 2048 token, it will be truncated to the first 2048 tokens (leaving the other 2048 for the document(s)).
 
