@@ -10,9 +10,7 @@ createdAt: 'Thu Feb 01 2024 18:08:37 GMT+0000 (Coordinated Universal Time)'
 updatedAt: 'Thu May 30 2024 16:00:53 GMT+0000 (Coordinated Universal Time)'
 ---
 
-In an effort to make our language-model capabilities more widely available, we’ve partnered with a few major platforms to create hosted versions of our offerings.
-
-Here, you’ll learn how to use Amazon Bedrock to deploy both the Cohere Command and the Cohere Embed models on the AWS cloud computing platform. The following models are available on Bedrock:
+In this guide, you’ll learn how to use Amazon Bedrock to deploy the Cohere Command, Embed, and Rerank models on the AWS cloud computing platform. The following models are available on Bedrock:
 
 - Command R
 - Command R+
@@ -20,12 +18,13 @@ Here, you’ll learn how to use Amazon Bedrock to deploy both the Cohere Command
 - Command
 - Embed - English
 - Embed - Multilingual
+- Rerank v3.5
 
 Note that the code snippets below are in Python, but you can find the equivalent code for other languages (if they’re supported) [here](https://docs.cohere.com/docs/cohere-works-everywhere).
 
 ## Prerequisites
 
-Here are the steps you'll need to get set up in advance of running Cohere models on Amazon Bedrock.
+THese are the steps you'll need to get set up in advance of running Cohere models on Amazon Bedrock.
 
 - Subscribe to Cohere's models on Amazon Bedrock. For more details, [see here](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html).
 - You'll also have to configure your authentication credentials for AWS. This [document](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html#configuration) has more information.
@@ -90,6 +89,38 @@ co = cohere.BedrockClient(
 result = co.chat(
     message="Write a LinkedIn post about starting a career in tech:",
     model="cohere.command-r-plus-v1:0",  # or 'cohere.command-r-v1:0'
+)
+
+print(result)
+```
+
+## Rerank
+You can use this code to invoke Rerank v3.5 on Amazon Bedrock:
+
+```python PYTHON
+import cohere
+
+co = cohere.BedrockClient(
+    aws_region="us-east-1",
+    aws_access_key="...",
+    aws_secret_key="...",
+    aws_session_token="...",
+)
+
+# Set up your documents and query
+
+query = "YOUR QUERY"
+docs = [
+    "String 1",
+    "String 2"
+]
+
+# Invoke the model and print the response
+results = co.rerank(
+    model="cohere.rerank-v3-5:0",
+    query=query,
+    documents=docs,
+    top_n=2,
 )
 
 print(result)
