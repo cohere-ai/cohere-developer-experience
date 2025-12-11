@@ -38,7 +38,7 @@ Next, explore the tools on the **Product Detail** page to evaluate how you want 
 
 <Warning>For any Cohere _software_ version after 1.0.5 (or _model_ version after 3.0.5), the parameter `InferenceAmiVersion=al2-ami-sagemaker-inference-gpu-2` must be specified during endpoint configuration (as a variant option) to avoid deployment errors.</Warning>
 
-## Embeddings
+### Embeddings
 
 You can use this code to invoke Cohere's embed model on Amazon SageMaker:
 
@@ -81,7 +81,7 @@ print(result)
 
 Note that we've released multimodal embeddings models that are able to handle images in addition to text. Find [more information here](https://docs.cohere.com/docs/multimodal-embeddings).
 
-## Text Generation
+### Text Generation
 
 You can use this code to invoke Cohere's Command models on Amazon SageMaker:
 
@@ -98,6 +98,40 @@ co = cohere.SagemakerClient(
 # Invoke the model and print the response
 result = co.chat(message="Write a LinkedIn post about starting a career in tech:",
                  model="<YOUR ENDPOINT NAME>") # On SageMaker, you create a model name that you'll pass here. 
+
+print(result)
+```
+
+## Reranking 
+
+You can use this code to invoke Cohere's Rerank models on Amazon SageMaker:
+
+```python PYTHON 
+import cohere
+
+co = cohere.SagemakerClient(
+    aws_region="us-east-1",
+    aws_access_key="...",
+    aws_secret_key="...",
+    aws_session_token="...",
+)
+
+# Set up your documents and query
+co = cohere.ClientV2()
+
+query = "YOUR QUERY"
+docs = [
+    "String 1",
+    "String 2"
+]
+
+# Invoke the model and print the response
+results = co.rerank(
+    model="<YOUR RERANK-V4.0 ENDPOINT NAME>",
+    query=query,
+    documents=docs,
+    top_n=2,
+)
 
 print(result)
 ```
