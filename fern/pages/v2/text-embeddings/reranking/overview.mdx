@@ -23,7 +23,7 @@ In the example below, we use the [Rerank API endpoint](/reference/rerank-1) to i
 
 **Request**
 
-In this example, the documents being passed in are a list of strings:
+In this example, the documents are being passed in as a list of strings:
 
 <CodeBlocks>
 ```python PYTHON
@@ -41,7 +41,7 @@ docs = [
 ]
 
 results = co.rerank(
-    model="rerank-v3.5", query=query, documents=docs, top_n=5
+    model="rerank-v4.0-pro", query=query, documents=docs, top_n=5
 )
 ```
 ```bash cURL
@@ -51,7 +51,7 @@ curl --request POST \
   --header 'content-type: application/json' \
   --header "Authorization: bearer $CO_API_KEY" \
   --data '{
-    "model": "rerank-v3.5",
+    "model": "rerank-v4.0-pro",
     "query": "What is the capital of the United States?",
     "documents": [
       "Carson City is the capital city of the American state of Nevada. At the 2010 United States Census, Carson City had a population of 55,274.",
@@ -65,43 +65,47 @@ curl --request POST \
 ```
 </CodeBlocks>
 
-**Response**
+We'll get back a `V2RerankResponse` object that will look like this: 
 
-```jsx
-{
-  "id": "97813271-fe74-465d-b9d5-577e77079253",
-  "results": [
-    {
-      "index": 3, // "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) ..."
-      "relevance_score": 0.9990564
-    },
-    {
-      "index": 4, // "Capital punishment has existed in the United States since before the United States was a country. As of 2017 ..."
-      "relevance_score": 0.7516481
-    },
-    {
-      "index": 1, // "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean that are a political division ..."
-      "relevance_score": 0.08882029
-    },
-    {
-      "index": 0, // "Carson City is the capital city of the American state of Nevada. At the 2010 United States Census, Carson City had a ..."
-      "relevance_score": 0.058238626
-    },
-    {
-      "index": 2, // ""Charlotte Amalie is the capital and largest city of the United States Virgin Islands. It has about 20,000 people ..."
-      "relevance_score": 0.019946935
-    }
-  ],
-  "meta": {
-    "api_version": {
-      "version": "2"
-    },
-    "billed_units": {
-      "search_units": 1
-    }
-  }
-}
+```python
+V2RerankResponse(
+    id="2104ccd0-74b5-4951-9bb1-cc543b26720f",
+    results=[
+        V2RerankResponseResultsItem(
+            index=3, relevance_score=0.943264
+        ),
+        V2RerankResponseResultsItem(
+            index=2, relevance_score=0.62209207
+        ),
+        V2RerankResponseResultsItem(
+            index=1, relevance_score=0.6054258
+        ),
+        V2RerankResponseResultsItem(
+            index=0, relevance_score=0.59040135
+        ),
+        V2RerankResponseResultsItem(
+            index=4, relevance_score=0.4664567
+        ),
+    ],
+    meta=ApiMeta(
+        api_version=ApiMetaApiVersion(
+            version="2", is_deprecated=None, is_experimental=None
+        ),
+        billed_units=ApiMetaBilledUnits(
+            images=None,
+            input_tokens=None,
+            output_tokens=None,
+            search_units=1.0,
+            classifications=None,
+        ),
+        tokens=None,
+        cached_tokens=None,
+        warnings=None,
+    ),
+)
 ```
+
+Note that the `index` works as it does in Python, with `index=0` being the first document. Also, the `V2RerankResponse` object will be more compact, the example above was reformatted to make reading easier.
 
 ### Example with Structured Data:
 
@@ -143,7 +147,10 @@ docs = [
 yaml_docs = [yaml.dump(doc, sort_keys=False) for doc in docs]
 
 results = co.rerank(
-    model="rerank-v3.5", query=query, documents=yaml_docs, top_n=5
+    model="rerank-v4.0-pro",
+    query=query,
+    documents=yaml_docs,
+    top_n=5,
 )
 ```
 ```bash cURL
@@ -153,7 +160,7 @@ curl --request POST \
   --header 'content-type: application/json' \
   --header "Authorization: bearer $CO_API_KEY" \
   --data '{
-    "model": "rerank-v3.5",
+    "model": "rerank-v4.0-pro",
     "query": "What is the capital of the United States?",
     "documents": [
       "Title: Facts about Carson City\nContent: Carson City is the capital city of the American state of Nevada. At the 2010 United States Census, Carson City had a population of 55,274.\n",
@@ -169,43 +176,44 @@ curl --request POST \
 
 In the `documents` parameter, we are passing in a list YAML strings, representing the structured data.
 
-**Response**
+As before, we get back a `V2RerankResponse` object that will look like this:
 
-```jsx
-{
-	"id": "75a94aa7-6761-4a64-a2ae-4bc0a62bc601",
-	"results": [
-		{
-			"index": 3,
-			"relevance_score": 0.9987405
-		},
-		{
-			"index": 4,
-			"relevance_score": 0.5011778
-		},
-		{
-			"index": 2,
-			"relevance_score": 0.10070161
-		},
-		{
-			"index": 1,
-			"relevance_score": 0.03197956
-		},
-		{
-			"index": 0,
-			"relevance_score": 0.019456575
-		}
-	],
-	"meta": {
-		"api_version": {
-			"version": "2022-12-06"
-		},
-		"billed_units": {
-			"search_units": 1
-		}
-	}
-}
-
+```python
+V2RerankResponse(
+    id="df4d8720-8265-4868-a8f5-0bcee7a35bd0",
+    results=[
+        V2RerankResponseResultsItem(
+            index=3, relevance_score=0.9497813
+        ),
+        V2RerankResponseResultsItem(
+            index=2, relevance_score=0.69064254
+        ),
+        V2RerankResponseResultsItem(
+            index=0, relevance_score=0.57901955
+        ),
+        V2RerankResponseResultsItem(
+            index=1, relevance_score=0.5482865
+        ),
+        V2RerankResponseResultsItem(
+            index=4, relevance_score=0.49375027
+        ),
+    ],
+    meta=ApiMeta(
+        api_version=ApiMetaApiVersion(
+            version="2", is_deprecated=None, is_experimental=None
+        ),
+        billed_units=ApiMetaBilledUnits(
+            images=None,
+            input_tokens=None,
+            output_tokens=None,
+            search_units=1.0,
+            classifications=None,
+        ),
+        tokens=None,
+        cached_tokens=None,
+        warnings=None,
+    ),
+)
 ```
 
 ## Multilingual Reranking
@@ -213,8 +221,9 @@ In the `documents` parameter, we are passing in a list YAML strings, representin
 Cohere's Rerank models have been trained for performance across 100+ languages.
 
 When choosing the model, please note the following language support:
-- **Rerank 3.0**: Separate English-only and multilingual models (`rerank-english-v3.0` and `rerank-multilingual-v3.0`)
+- **Rerank 4.0** (both 'fast' and 'pro'): A single multilingual model (`rerank-v4.0-pro` and `rerank-v4.0-fast`)
 - **Rerank 3.5**: A single multilingual model (`rerank-v3.5`)
+- **Rerank 3.0**: Separate English-only and multilingual models (`rerank-english-v3.0` and `rerank-multilingual-v3.0`)
 
 The following table provides the list of languages supported by the Rerank models. Please note that performance may vary across languages.
 

@@ -10,8 +10,6 @@ keywords: "Amazon SageMaker, Generative AI on AWS"
 createdAt: "Wed Jun 28 2023 14:29:11 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Thu May 30 2024 16:01:40 GMT+0000 (Coordinated Universal Time)"
 ---
-In an effort to make our language-model capabilities more widely available, we've partnered with a few major platforms to create hosted versions of our offerings.
-
 This document will guide you through enabling development teams to access [Cohere’s offerings on Amazon SageMaker](https://aws.amazon.com/marketplace/seller-profile?id=87af0c85-6cf9-4ed8-bee0-b40ce65167e0). 
 
 ## Prerequisites
@@ -36,9 +34,11 @@ Next, explore the tools on the **Product Detail** page to evaluate how you want 
 - Subscribing: This section will once again present you with both the pricing details and the EULA for final review before you accept the offer. This information is identical to the information on Product Detail page.
 - Configuration: The primary goal of this section is to retrieve the [Amazon Resource Name (ARN)](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html) for the product you have subscribed to.
 
-<Warning>For any Cohere _software_ version after 1.0.5 (or _model_ version after 3.0.5), the parameter `InferenceAmiVersion=al2-ami-sagemaker-inference-gpu-2` must be specified during endpoint configuration (as a variant option) to avoid deployment errors.</Warning>
+<Warning>
+For any Cohere _software_ version after 1.0.5 (or _model_ version after 3.0.5), the parameter `InferenceAmiVersion=al2-ami-sagemaker-inference-gpu-2` must be specified during endpoint configuration (as a variant option) to avoid deployment errors.
+</Warning>
 
-## Embeddings
+### Embeddings
 
 You can use this code to invoke Cohere's embed model on Amazon SageMaker:
 
@@ -77,11 +77,13 @@ result = co.embed(
 
 print(result)
 ```
-<Warning>Cohere's embed models don't support batch transform operations.</Warning>
+<Warning>
+Cohere's embed models don't support batch transform operations.
+</Warning>
 
 Note that we've released multimodal embeddings models that are able to handle images in addition to text. Find [more information here](https://docs.cohere.com/docs/multimodal-embeddings).
 
-## Text Generation
+### Text Generation
 
 You can use this code to invoke Cohere's Command models on Amazon SageMaker:
 
@@ -98,6 +100,37 @@ co = cohere.SagemakerClient(
 # Invoke the model and print the response
 result = co.chat(message="Write a LinkedIn post about starting a career in tech:",
                  model="<YOUR ENDPOINT NAME>") # On SageMaker, you create a model name that you'll pass here. 
+
+print(result)
+```
+
+### Reranking 
+You can use this code to invoke Cohere's Rerank v4.0 model on Amazon SageMaker:
+
+```python PYTHON 
+import cohere
+
+co = cohere.SagemakerClient(
+    aws_region="us-east-1",
+    aws_access_key="...",
+    aws_secret_key="...",
+    aws_session_token="...",
+)
+
+# Set up your documents and query
+query = "YOUR QUERY"
+docs = [
+    "String 1",
+    "String 2"
+]
+
+# Invoke the model and print the response
+results = co.rerank(
+    model="<YOUR RERANK-V4.0 ENDPOINT NAME>", # On SageMaker, you create a model name that you'll pass here.
+    query=query,
+    documents=docs,
+    top_n=2,
+)
 
 print(result)
 ```
