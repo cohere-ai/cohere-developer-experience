@@ -2150,9 +2150,10 @@ paths:
                   default: 0
                   minimum: 0
                   maximum: 999
-                  description: |-
-                    The priority of the request (lower means earlier handling; default 0 highest priority).
-                    Higher priority requests are handled first, and dropped last when the system is under load.
+                  description: "Controls how early the request is handled. Lower numbers indicate
+                    higher priority (default: 0, the highest). When the system
+                    is under load, higher-priority requests are processed first
+                    and are the least likely to be dropped."
       responses:
         "200":
           description: OK
@@ -3911,7 +3912,6 @@ paths:
                 			},
                 			Tools: []*cohere.ToolV2{
                 				{
-                					Type: cohere.String("function"),
                 					Function: &cohere.ToolV2Function{
                 						Name:        "query_daily_sales_report",
                 						Description: cohere.String("Connects to a database to retrieve overall sales volumes and sales information for a given day."),
@@ -3928,7 +3928,6 @@ paths:
                 					},
                 				},
                 				{
-                					Type: cohere.String("function"),
                 					Function: &cohere.ToolV2Function{
                 						Name:        "query_product_catalog",
                 						Description: cohere.String("Connects to a product catalog with information about all the products being sold, including categories, prices, and stock levels."),
@@ -5121,7 +5120,6 @@ paths:
                 			},
                 			Tools: []*cohere.ToolV2{
                 				{
-                					Type: cohere.String("function"),
                 					Function: &cohere.ToolV2Function{
                 						Name:        "query_daily_sales_report",
                 						Description: cohere.String("Connects to a database to retrieve overall sales volumes and sales information for a given day."),
@@ -5138,7 +5136,6 @@ paths:
                 					},
                 				},
                 				{
-                					Type: cohere.String("function"),
                 					Function: &cohere.ToolV2Function{
                 						Name:        "query_product_catalog",
                 						Description: cohere.String("Connects to a product catalog with information about all the products being sold, including categories, prices, and stock levels."),
@@ -13239,7 +13236,7 @@ paths:
                   is_experimental: true
                 warnings:
                   - You are using an experimental version, for more information
-                    please refer to https://docs.cohere.com/versioning-reference
+                    please refer to https://docs.cohere.com/reference/about
                 billed_units:
                   input_tokens: 2
         - code-samples:
@@ -14660,9 +14657,10 @@ paths:
                   default: 0
                   minimum: 0
                   maximum: 999
-                  description: |-
-                    The priority of the request (lower means earlier handling; default 0 highest priority).
-                    Higher priority requests are handled first, and dropped last when the system is under load.
+                  description: "Controls how early the request is handled. Lower numbers indicate
+                    higher priority (default: 0, the highest). When the system
+                    is under load, higher-priority requests are processed first
+                    and are the least likely to be dropped."
               x-fern-type-name: V2EmbedRequest
         description: ""
   /v2/batches:
@@ -14759,6 +14757,81 @@ paths:
       x-fern-audiences:
         - public
       x-fern-request-name: batchesListBatchesRequest
+      x-fern-examples:
+        - code-samples:
+            - sdk: python
+              name: Default
+              code: |-
+                import cohere
+
+                co = cohere.ClientV2()
+
+                batches = co.batches.list()
+            - sdk: typescript
+              name: Default
+              code: |
+                import { CohereClient } from 'cohere-ai';
+
+                const cohere = new CohereClient({});
+
+                (async () => {
+                  const batches = await cohere.batches.list();
+                  console.log(batches);
+                })();
+            - sdk: go
+              name: Default
+              code: >
+                package main
+
+
+                import (
+                	"context"
+                	"log"
+                	"os"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
+
+                	resp, err := co.Batches.List(
+                		context.TODO(),
+                		&cohere.BatchesListBatchesRequest{})
+
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	log.Printf("%+v", resp)
+                }
+            - sdk: java
+              name: Default
+              code: >-
+                import com.cohere.api.Cohere;
+
+                import
+                com.cohere.api.resources.batches.types.ListBatchesResponse;
+
+
+                public class BatchGet {
+                  public static void main(String[] args) {
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
+
+                    ListBatchesResponse response = cohere.batches().list();
+
+                    System.out.println(response);
+                  }
+                }
+            - sdk: curl
+              name: Default
+              code: |-
+                curl --request GET \
+                  --url https://api.cohere.com/v2/batches \
+                  --header 'accept: application/json' \
+                  --header "Authorization: Bearer $CO_API_KEY"
     post:
       summary: Create a batch
       description: Creates and executes a batch from an uploaded dataset of requests
@@ -14823,6 +14896,113 @@ paths:
       x-fern-sdk-method-name: create
       x-fern-audiences:
         - public
+      x-fern-examples:
+        - code-samples:
+            - sdk: python
+              name: Default
+              code: |
+                import cohere
+
+                co = cohere.ClientV2()
+
+                batch_job = co.batches.create(
+                    name="<batch_job_name>",
+                    input_dataset_id="<input_dataset_id>",
+                    model="<model_name>",
+                )
+            - sdk: typescript
+              name: Default
+              code: |
+                import { CohereClient } from 'cohere-ai';
+
+                const cohere = new CohereClient({});
+
+                (async () => {
+                  const batchJob = await cohere.batches.create({
+                    name: '<my_job_name>',
+                    inputDatasetId: '<input_dataset_id>',
+                    model: '<model_name>',
+                  });
+
+                  console.log(batchJob);
+                })();
+            - sdk: go
+              name: Default
+              code: >
+                package main
+
+
+                import (
+                	"context"
+                	"log"
+                	"os"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
+
+                	resp, err := co.Batches.Create(
+                		context.TODO(),
+                		&cohere.Batch{
+                			Name:           "<batch_job_name>",
+                			InputDatasetId: "<input_dataset_id>",
+                			Model:          "<model_name>",
+                		},
+                	)
+
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	log.Printf("%+v", resp)
+                }
+            - sdk: java
+              name: Default
+              code: >
+                /* (C)2024 */
+
+                import com.cohere.api.Cohere;
+
+                import
+                com.cohere.api.resources.batches.types.CreateBatchResponse;
+
+                import com.cohere.api.resources.batches.types.Batch;
+
+
+                public class BatchPost {
+                  public static void main(String[] args) {
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
+
+                    CreateBatchResponse response =
+                        cohere
+                            .batches()
+                            .create(
+                                Batch.builder()
+                                    .name("<batch_job_name>")
+                                    .inputDatasetId("<input_dataset_id>")
+                                    .model("<model_name>")
+                                    .build());
+
+                    System.out.println(response);
+                  }
+                }
+            - sdk: curl
+              name: Default
+              code: |-
+                curl --request POST \
+                  --url https://api.cohere.com/v2/batches/v2/batches \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: Bearer $CO_API_KEY" \
+                  --data '{
+                          "name": "<batch_job_name>",
+                          "input_dataset_id": "<dataset_id>",
+                          "model": "<model_name>"
+                  }'
   "/v2/batches/{id}":
     get:
       summary: Retrieve a batch
@@ -14902,6 +15082,79 @@ paths:
       x-fern-sdk-method-name: retrieve
       x-fern-audiences:
         - public
+      x-fern-examples:
+        - code-samples:
+            - sdk: python
+              name: Default
+              code: |-
+                import cohere
+
+                co = cohere.ClientV2()
+
+                batch_job = co.batches.retrieve("<batch_job_id>")
+            - sdk: typescript
+              name: Default
+              code: >
+                import { CohereClient } from 'cohere-ai';
+
+
+                const cohere = new CohereClient({});
+
+
+                (async () => {
+                  const batchJob = await cohere.batches.retrieve('<batch_job_id>');
+                  console.log(batchJob);
+                })();
+            - sdk: go
+              name: Default
+              code: >
+                package main
+
+
+                import (
+                	"context"
+                	"log"
+                	"os"
+
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
+
+                	resp, err := co.Batches.Retrieve(context.TODO(), "<batch_job_id>")
+
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	log.Printf("%+v", resp)
+                }
+            - sdk: java
+              name: Default
+              code: >-
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.resources.batches.types.GetBatchResponse;
+
+
+                public class BatchGetId {
+                  public static void main(String[] args) {
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
+
+                    GetBatchResponse response = cohere.batches().retrieve("<batch_job_id>");
+
+                    System.out.println(response);
+                  }
+                }
+            - sdk: curl
+              name: Default
+              code: |-
+                curl --request GET \
+                  --url https://api.cohere.com/v2/batches/<batch_job_id> \
+                  --header 'accept: application/json' \
+                  --header "Authorization: Bearer $CO_API_KEY"
   "/v2/batches/{id}:cancel":
     post:
       summary: Cancel a batch
@@ -14964,6 +15217,74 @@ paths:
       x-fern-sdk-method-name: cancel
       x-fern-audiences:
         - public
+      x-fern-examples:
+        - code-samples:
+            - sdk: python
+              name: Default
+              code: |-
+                import cohere
+
+                co = cohere.ClientV2()
+
+                batch_job = co.batches.cancel("<batch_job_id>")
+            - sdk: typescript
+              name: Default
+              code: >
+                import { CohereClient } from 'cohere-ai';
+
+
+                const cohere = new CohereClient({});
+
+
+                (async () => {
+                  const batchJob = await cohere.batches.cancel('<batch_job_id>');
+                  console.log(batchJob);
+                })();
+            - sdk: go
+              name: Default
+              code: >
+                package main
+
+
+                import (
+                	"context"
+                	"log"
+                	"os"
+
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
+
+                	_, err := co.Batches.Cancel(context.TODO(), "<batch_job_id>")
+
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+                }
+            - sdk: java
+              name: Default
+              code: >-
+                /* (C)2024 */
+
+                import com.cohere.api.Cohere;
+
+
+                public class BatchPostCancel {
+                  public static void main(String[] args) {
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
+
+                    cohere.batches().cancel("<batch_job_id>");
+                  }
+                }
+            - sdk: curl
+              name: Default
+              code: >-
+                curl --request POST \
+                  --url https://api.cohere.com/v2/batches/<batch_job_id>:cancel \
+                  --header "Authorization: Bearer $CO_API_KEY"
   /v1/embed-jobs:
     post:
       x-fern-audiences:
@@ -16141,9 +16462,10 @@ paths:
                   default: 0
                   minimum: 0
                   maximum: 999
-                  description: |-
-                    The priority of the request (lower means earlier handling; default 0 highest priority).
-                    Higher priority requests are handled first, and dropped last when the system is under load.
+                  description: "Controls how early the request is handled. Lower numbers indicate
+                    higher priority (default: 0, the highest). When the system
+                    is under load, higher-priority requests are processed first
+                    and are the least likely to be dropped."
               required:
                 - query
                 - documents
@@ -19731,6 +20053,96 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
+      x-fern-examples:
+        - code-samples:
+            - sdk: python
+              name: Sync
+              code: |
+                from cohere import Client
+
+                client = Client()
+
+                response = client.models.get(
+                    model="command-a-03-2025",
+                )
+                print(response)
+            - sdk: python
+              name: Async
+              code: |
+                import cohere
+                import asyncio
+
+                co = cohere.AsyncClient()
+
+
+                async def main():
+                    response = await co.models.get(
+                    model="command-a-03-2025",
+                )
+                    print(response)
+
+
+                asyncio.run(main())
+            - sdk: java
+              name: Cohere java SDK
+              code: >
+                /* (C)2024 */
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.types.GetModelResponse;
+
+
+                public class ModelsGet {
+                  public static void main(String[] args) {
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
+
+                    GetModelResponse response = cohere.models().get("command-a-03-2025");
+                    System.out.println(response);
+                  }
+                }
+            - sdk: curl
+              name: cURL
+              code: |-
+                curl --request GET \
+                  --url https://api.cohere.com/v1/models/command-a-03-2025 \
+                  --header 'accept: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY"
+            - sdk: typescript
+              name: Cohere TypeScript SDK
+              code: |
+                import { CohereClient } from 'cohere-ai';
+
+                const cohere = new CohereClient({});
+
+                (async () => {
+                  const model = await cohere.models.get('command-a-03-2025');
+
+                  console.log(model);
+                })();
+            - sdk: go
+              name: Cohere Go SDK
+              code: |
+                package main
+
+                import (
+                	"context"
+                	"log"
+
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+                func main() {
+                	co := client.NewClient(client.WithToken("<<apiKey>>"))
+
+                	resp, err := co.Models.Get(context.TODO(), "command-a-03-2025")
+
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	log.Printf("%+v", resp)
+                }
   /v1/models:
     get:
       x-fern-audiences:
@@ -22254,6 +22666,9 @@ components:
     ToolCallV2:
       description: An array of tool calls to be made.
       type: object
+      required:
+        - id
+        - type
       properties:
         id:
           type: string
@@ -22512,6 +22927,8 @@ components:
       x-fern-type-name: ChatMessages
     ToolV2:
       type: object
+      required:
+        - type
       properties:
         type:
           type: string
@@ -27917,5 +28334,5 @@ components:
         type: string
       required: false
       example: Parameter xyz is deprecated, for more information please refer to
-        https://docs.cohere.com/versioning-reference
+        https://docs.cohere.com/reference/about
       x-fern-type-name: ApiWarning
