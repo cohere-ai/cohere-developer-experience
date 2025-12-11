@@ -9,6 +9,17 @@ keywords: 'rerank, natural language processing'
 createdAt: 'Mon Nov 25 2024 16:58:46 GMT+0000 (Coordinated Universal Time)'
 updatedAt: 'Mon Nov 25 2024 15:16:00 GMT+0000 (Coordinated Universal Time)'
 ---
+## Optimizing Performance
+
+In the following tables, you'll find recommendations for getting the best performance out of Rerank v4.0, v3.5, and v3.0.
+
+| Constraint                    | Minimum | Maximum                                                                                                 | Default Value |
+| ----------------------------- | ------- | ------------------------------------------------------------------------------------------------------- | :------------ |
+| Number of Documents           | 1       | 10,000                                                                                                  | N/A           |
+| Max Number of Chunks          | 1       | N/A                                                                                                     | 1             |
+| Number of Tokens per Document | 1       | N/A (see [below ](/docs/reranking-best-practices#document-chunking)for more info)                       | N/A           |
+| Number of Tokens per Query    | 1       | 2048  
+
 ## Document Chunking
 
 Cohere's Rerank models follow a particular procedure to chunk documents, which will look something like this:
@@ -24,6 +35,10 @@ For `rerank-v4.0` (both 'pro' and 'fast'), the model breaks documents into 32,76
 4. `relevance_score_4 = <padding_tokens, query[0,99], document[97991,99999]>`
 5. `relevance_score = max(relevance_score_1, relevance_score_2, relevance_score_3, relevance_score_4)`
 
+<Note>
+A context length of 32,768 corresponds to about ~48-50 pages, so it is longer than most documents you'll upload. This means that the `rerank-v4.0` models will be looking at entire documents as it chooses its rankings.
+</Note>
+
 For `rerank-v3.5` and `rerank-v3.0`, the process is the same except the models break documents into 4093 token chunks; if your query is 100 tokens and your document is 10,000 tokens, for example, it will be broken into the following chunks:
 
 1. `relevance_score_1 = <padding_tokens, query[0,99], document[0,3992]>`
@@ -33,6 +48,11 @@ For `rerank-v3.5` and `rerank-v3.0`, the process is the same except the models b
 
 If you would like more control over how chunking is done, we recommend that you chunk your documents yourself.
 
+## Max Number of Documents
+When using rerank-v4.0-pro, rerank-v4.0-fast, rerank-v3.5 and rerank-v3.0 models, the endpoint will throw an error if the user attempts to pass more than 10,000 documents at a time. The maximum number of documents that can be passed to the endpoint is calculated with the following inequality: Number of documents * max_chunks_per_doc >10,000.
+
+If Number of documents * max_chunks_per_doc exceeds 10,000, the endpoint will return an error. By default, the max_chunks_per_doc is set to 1 for rerank models.
+
 ## Queries
 
 Our `rerank-v4.0` models (both 'pro' and 'fast') are trained with a context length of 32,768 tokens. The model takes both the _query_ and the _document_ into account when calculating against this limit, and the query can account for up to half of the full context length. If your query is larger than 16,384 tokens, in other words, it will be truncated to the first 16,384 tokens (leaving the other 16,384 for the document(s)).
@@ -41,7 +61,7 @@ Our `rerank-v3.5` and `rerank-v3.0` models, are trained with a context length of
 
 ## Structured Data Support
 
-Our Rerank models support reranking structured data formatted as a list of YAML strings. Note that since long document strings get truncated, the order of the keys is especially important. When constructing the YAML string from a dictionary, make sure to maintain the order. In Python that is done by setting `sort_keys=False` when using `yaml.dump`.
+Our `rerank-v4.0-pro`, `rerank-v4.0-fast`, `rerank-v3.5` and `rerank-v3.0` models support reranking structured data formatted as a list of YAML strings. Note that since long document strings get truncated, the order of the keys is especially important. When constructing the YAML string from a dictionary, make sure to maintain the order. In Python that is done by setting `sort_keys=False` when using `yaml.dump`.
 
 Example:
 ```python
