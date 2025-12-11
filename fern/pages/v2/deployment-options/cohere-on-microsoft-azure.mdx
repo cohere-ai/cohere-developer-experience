@@ -11,9 +11,8 @@ keywords: "generative AI, large language models, Microsoft Azure"
 createdAt: "Mon Apr 08 2024 14:53:59 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Tue Feb 25 2025 13:15:36 Mountain Standard Time (MST)"
 ---
-In an effort to make our language-model capabilities more widely available, we've partnered with a few major platforms to create hosted versions of our offerings. 
 
-In this article, you learn how to use [Azure AI Foundry](https://ai.azure.com/) to deploy both the Cohere Command models and the Cohere Embed models on Microsoft's Azure cloud computing platform. You can read more about Azure AI Foundry in its documentation[here](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-azure-ai-foundry).
+In this document, you learn how to use [Azure AI Foundry](https://ai.azure.com/) to deploy both the Cohere Command models and the Cohere Embed models on Microsoft's Azure cloud computing platform. You can read more about Azure AI Foundry in its documentation[here](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-azure-ai-foundry).
 
 The following models are available through Azure AI Foundry with pay-as-you-go, token-based billing:
 
@@ -21,13 +20,15 @@ The following models are available through Azure AI Foundry with pay-as-you-go, 
 - Embed v4
 - Embed v3 - English
 - Embed v3 - Multilingual
+- Cohere Rerank V4.0 Pro
+- Cohere Rerank V4.0 Fast
 - Cohere Rerank V3.5
 - Cohere Rerank V3 (English)
 - Cohere Rerank V3 (multilingual)
 
 ## Prerequisites
 
-Whether you're using Command or Embed, the initial set up is the same. You'll need:
+Whether you're using Command, Embed, or Rerank, the initial set up is the same. You'll need:
 
 - An Azure subscription with a valid payment method. Free or trial Azure subscriptions won't work. If you don't have an Azure subscription, create a [paid Azure account](https://azure.microsoft.com/pricing/purchase-options/pay-as-you-go) to begin.
 - An [Azure AI hub resource](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-azure-ai-resource). Note: for Cohere models, the pay-as-you-go deployment offering is only available with AI hubs created in the `East US`, `East US 2`, `North Central US`, `South Central US`, `Sweden Central`, `West US` or `West US 3` regions.
@@ -148,7 +149,7 @@ except urllib.error.HTTPError as error:
 
 ## Rerank
 
-We currently exposes the `v1/rerank` endpoint for inference with both Rerank 3 - English and Rerank 3 - Multilingual. For more information on using the APIs, see the [reference](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-rerank#rerank-api-reference-for-cohere-rerank-models-deployed-as-a-service) section. 
+We currently exposes the `v1/rerank` endpoint for inference with Rerank v4.0 Pro, Rerank v4.0 Fast, Rerank v3.5, Rerank v3 English, and Rerank 3 Multilingual. For more information on using the APIs, see the [reference](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-rerank#rerank-api-reference-for-cohere-rerank-models-deployed-as-a-service) section. 
 
 ```python PYTHON
 import cohere
@@ -232,7 +233,7 @@ co_embed = cohere.Client(
 # For Rerank models
 co_rerank = cohere.Client(
     api_key="AZURE_INFERENCE_CREDENTIAL",
-    base_url="AZURE_MODEL_ENDPOINT",  # Example - https://cohere-rerank-v3-multilingual-xyz.eastus.models.ai.azure.com/
+    base_url="AZURE_MODEL_ENDPOINT",  # Example - https://cohere-rerank-v4-pro-xyz.eastus.models.ai.azure.com/
 )
 ```
 
@@ -244,6 +245,7 @@ response = co_chat.chat(message=message)
 
 print(response)
 ```
+
 ### RAG
 ```python PYTHON
 faqs_short = [
@@ -295,7 +297,7 @@ results = co_rerank.rerank(
     query=query,
     documents=faqs_short,
     top_n=2,
-    model="rerank-english-v3.0",
+    model="rerank-v4.0-pro",
 )
 ```
 
