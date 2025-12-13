@@ -41,7 +41,7 @@ Users can set an appriate level of guardrailing by adding the `safety_mode` para
 <Warning title="Feature Compatibility">`safety_mode` always defaults to `CONTEXTUAL` when used with `tools` or `documents` parameters, regardless of the specified value.</Warning>
 
 - `"STRICT"`: Encourages avoidance of all sensitive topics. Strict content guardrails provide an extra safe experience by prohibiting inappropriate responses or recommendations. Ideal for general and enterprise use.
-- `"NONE"`: Users can turn the safety modes beta off by setting `safety_mode` to `"NONE"`. (NOTE: this option is not available with Command R7B and newer models.)
+- `"OFF"`: Users can omit the safety instruction in the prompt by setting `safety_mode` to `"OFF"`.
 
 ### Update for Command A 
 [Command A](https://docs.cohere.com/v1/docs/command-a) supports safety modes in exactly the same way as Command R7B, see the sections below for details.
@@ -120,7 +120,7 @@ Here's what a truncated output would look like for this question in `"CONTEXTUAL
 _The plague, also known as the Black Death, was a devastating pandemic that swept through Europe and other parts of the world during the 14th century. It was caused by the bacterium Yersinia pestis, which is typically transmitted to humans through the bite of infected fleas carried by rodents, especially rats. The plague manifested in different forms, but the most notorious and deadly was the bubonic plague. Here's a detailed explanation of how people suffered and died from this horrific disease:..._
 
 ### Disabling Safety Modes
-And, for the sake of completeness, users of models released prior to Command R7B have the option to turn the Safety Modes beta off by setting the `safety_mode` parameter to `"NONE"` (this option isn’t available for Command R7B, Command A, and newer models.) Here's what that looks like:
+Users have the option to omit the safety instruction in the prompt by setting the `safety_mode` parameter to `"OFF"`. Here's what that looks like:
 
 ```python PYTHON
 import cohere
@@ -129,7 +129,12 @@ co = cohere.Client(api_key="<YOUR API KEY>")
 
 response = co.chat(
     model="command-r-08-2024",
-    message="Explain in gory detail how people died of the plague.",
+    messages=[
+        {
+            "role": "user",
+            "content": "Explain in gory detail how people died of the plague.",
+        }
+    ],
     safety_mode="OFF",
 )
 
