@@ -57,10 +57,48 @@ const getGoVersions = async () => {
 }
 
 const getJavaVersion = async () => {
-    const response = await fetch("https://search.maven.org/solrsearch/select?q=g:com.cohere+AND+a:cohere-java&rows=1&wt=json")
-    const json = await response.json() as { response: { docs: Array<{ latestVersion: string }> } }
-    const latest = json.response.docs[0]?.latestVersion
-    return latest
+    // Simplified per request: single Sonatype Central endpoint returning docs[0].v
+    // Example response doc: { id: 'com.cohere:cohere-java:1.0.8', g: 'com.cohere', a: 'cohere-java', v: '1.0.8', ... }
+    const url = 'https://central.sonatype.com/solrsearch/select?q=g:com.cohere%20AND%20a:cohere-java&rows=1&wt=json'
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 15000)
+    try {
+        const res = await fetch(url, { signal: controller.signal })
+        if (!res.ok) {
+            throw new Error(`Non-OK status ${res.status}`)
+        }
+        const json = await res.json() as { response?: { docs?: Array<{ v?: string }> } }
+        const version = json.response?.docs?.[0]?.v
+        if (!version) {
+            throw new Error('Version not found in response')
+        }
+        return version
+    } catch (e: any) {
+        console.error(`[getJavaVersion] Failed to fetch from Sonatype Central: ${e?.message || e}`)
+        throw e
+    } finally {
+        clearTimeout(timeout)
+    }
+}
+
+const getLatestVersionForLanguage = async (language: typeof languages[number]) => {
+    switch (language) {
+        case 'python': {
+            const versions = await getPythonVersions();
+            return sortVersions(versions).pop()!
+        }
+        case 'typescript': {
+            const versions = await getNpmVersions();
+            return sortVersions(versions).pop()!
+        }
+        case 'go': {
+            const versions = await getGoVersions();
+            return sortVersions(versions).pop()!
+        }
+        case 'java': {
+            return await getJavaVersion();
+        }
+    }
 }
 
 const updateVersion = async (version: string, update: typeof bumpTypes[number]) => {
@@ -73,42 +111,20 @@ const updateVersion = async (version: string, update: typeof bumpTypes[number]) 
     })[update]
 }
 
-const getLatestVersions = async () => {
-    const [pythonVersions, typescriptVersions, goVersions, javaVersion] = await Promise.all([
-        getPythonVersions(),
-        getNpmVersions(),
-        getGoVersions(),
-        getJavaVersion()
-    ])
-    return {
-        python: sortVersions(pythonVersions).pop()!,
-        typescript: sortVersions(typescriptVersions).pop()!,
-        go: sortVersions(goVersions).pop()!,
-        java: javaVersion
+const getNextVersions = async (update: typeof bumpTypes[number], targetLanguage: typeof languages[number] | 'all') => {
+    if (targetLanguage !== 'all') {
+        const latest = await getLatestVersionForLanguage(targetLanguage)
+        return {
+            [targetLanguage]: {
+                previous: latest,
+                next: await updateVersion(latest, update)
+            }
+        } as Record<typeof languages[number], { previous: string, next: string }>
     }
-}
 
-const getNextVersions = async (update: typeof bumpTypes[number]) => {
-    const latest = await getLatestVersions()
-
-    return {
-        python: {
-            previous: latest.python,
-            next: await updateVersion(latest.python, update),
-        },
-        typescript: {
-            previous: latest.typescript,
-            next: await updateVersion(latest.typescript, update),
-        },
-        go: {
-            previous: latest.go,
-            next: await updateVersion(latest.go, update),
-        },
-        java: {
-            previous: latest.java,
-            next: await updateVersion(latest.java, update),
-        }
-    }
+    // all languages
+    const latestAll = await Promise.all(languages.map(async l => [l, await getLatestVersionForLanguage(l)] as const))
+    return Object.fromEntries(await Promise.all(latestAll.map(async ([lang, latest]) => [lang, { previous: latest, next: await updateVersion(latest, update) }]))) as Record<typeof languages[number], { previous: string, next: string }>
 }
 
 const formatTagName = (language: typeof languages[number], version: string) => `${language}@${version}`
@@ -143,6 +159,10 @@ const maybeDeleteRelease = async (language: typeof languages[number], version: s
 }
 
 const createRelease = async (language: typeof languages[number], version: string) => {
+    if (process.env.DRY_RUN === 'true' || process.env.FERN_PREVIEW === 'true') {
+        console.log(`[dry-run] Skipping creation of GitHub release for ${formatTagName(language, version)}`)
+        return
+    }
     const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
 
     await maybeDeleteRelease(language, version)
@@ -166,7 +186,9 @@ const createRelease = async (language: typeof languages[number], version: string
 }
 
 const runFernGenerate = async (language: typeof languages[number], version: string) => {
-    const command = `fern generate --api sdks --group ${language} --version "${version}" --log-level debug`
+    // DRY_RUN preferred; FERN_PREVIEW kept for backward compatibility
+    const preview = process.env.DRY_RUN === 'true' || process.env.FERN_PREVIEW === 'true'
+    const command = `fern generate --api sdks --group ${language} --version "${version}" --log-level debug ${preview ? '--preview' : ''}`.trim()
 
     const { error, stderr, stdout } = await execCmd(command, process.cwd())
 
@@ -206,7 +228,7 @@ const runFernGenerate = async (language: typeof languages[number], version: stri
         throw new Error("LANGUAGE is not defined.")
     }
 
-    const nextVersions = await getNextVersions(bumpType)
+    const nextVersions = await getNextVersions(bumpType, language)
 
     if (Object.values(nextVersions).map(v => v.next).some(v => !v)) {
         throw new Error("Failed to determine next versions, please try setting them manually", { cause: nextVersions })
