@@ -31,7 +31,7 @@ In this example, we'll use a recent piece of text, that wasn't in the training d
 In practice, you would typically do RAG on much longer text, that doesn't fit in the context window of the model.
 
 ```python PYTHON
-%pip install "cohere<5" --quiet
+%pip install cohere --quiet
 ```
 
 ```txt title="Output"
@@ -42,12 +42,14 @@ In practice, you would typically do RAG on much longer text, that doesn't fit in
 
 ```python PYTHON
 import cohere
-API_KEY = "..." # fill in your Cohere API key here
-co = cohere.Client(API_KEY)
+
+co = cohere.ClientV2(api_key="YOUR_COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
 ```
 
 ```python PYTHON
-!pip install wikipedia --quiet
+# we'll get some wikipedia data
+# ! pip install wikipedia -qq
+
 import wikipedia
 ```
 
@@ -57,13 +59,14 @@ Building wheel for wikipedia (setup.py) ... [?25l[?25hdone
 ```
 
 ```python PYTHON
+# let's get the wikipedia article about Dune Part Two
 article = wikipedia.page('Dune Part Two')
 text = article.content
 print(f"The text has roughly {len(text.split())} words.")
 ```
 
 ```txt title="Output"
-The text has roughly 5323 words.
+The text has roughly 6265 words.
 ```
 
 ## Step 1 - Indexing and given a user query, retrieve the relevant chunks from the index
@@ -73,7 +76,9 @@ We index the document in a vector database. This requires getting the documents,
 ### We split the document into chunks of roughly 512 words
 
 ```python PYTHON
-%pip install -qU langchain-text-splitters --quiet
+# For chunking let's use langchain to help us split the text
+! pip install -qU langchain-text-splitters -qq
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 ```
 
@@ -98,7 +103,7 @@ print(f"The text has been broken down in {len(chunks)} chunks.")
 ```
 
 ```txt title="Output"
-The text has been broken down in 91 chunks.
+The text has been broken down in 115 chunks.
 ```
 
 ### Embed every text chunk
@@ -106,19 +111,28 @@ The text has been broken down in 91 chunks.
 Cohere embeddings are state-of-the-art.
 
 ```python PYTHON
-model="embed-v4.0"
-response = co.embed(
-    texts= chunks,
-    model=model,
-    input_type="search_document",
-    embedding_types=['float']
-)
-embeddings = response.embeddings.float
+# Because the texts being embedded are the chunks we are searching over, we set the input type as search_doc
+model = "embed-v4.0"
+
+def batch_embed(texts, batch_size=96):
+    all_embeddings = []
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i:i+batch_size]
+        response = co.embed(
+            texts=batch,
+            model=model,
+            input_type="search_document",
+            embedding_types=['float']
+        )
+        all_embeddings.extend(response.embeddings.float)
+    return all_embeddings
+
+embeddings = batch_embed(chunks)
 print(f"We just computed {len(embeddings)} embeddings.")
 ```
 
 ```txt title="Output"
-We just computed 91 embeddings.
+We just computed 115 embeddings.
 ```
 
 ### Store the embeddings in a vector database
@@ -132,6 +146,7 @@ We use the simplest vector database ever: a python dictionary using `np.array()`
 ```python PYTHON
 import numpy as np
 vector_database = {i: np.array(embedding) for i, embedding in enumerate(embeddings)}
+# { 0: array([...]), 1: array([...]), 2: array([...]), ..., 10: array([...]) }
 ```
 
 ## Given a user query, retrieve the relevant chunks from the vector database
@@ -141,6 +156,8 @@ vector_database = {i: np.array(embedding) for i, embedding in enumerate(embeddin
 ```python PYTHON
 query = "Name everyone involved in writing the script, directing, and producing 'Dune: Part Two'?"
 
+# Note: the relevant passage in the wikipedia page we're looking for is:
+# "[...] Dune: Part Two was originally scheduled to be released on October 20, 2023, but was delayed to November 17, 2023, before moving forward two weeks to November 3, 2023, to adjust to changes in release schedules from other studios. It was later postponed by over four months to March 15, 2024, due to the 2023 Hollywood labor disputes. After the strikes were resolved, the film moved once more up two weeks to March 1, 2024. [...]"
 ```
 
 ### Embed the user question
@@ -148,6 +165,7 @@ query = "Name everyone involved in writing the script, directing, and producing 
 Cohere embeddings are state-of-the-art.
 
 ```python PYTHON
+# Because the text being embedded is the search query, we set the input type as search_query
 response = co.embed(
     texts=[query],
     model=model,
@@ -155,7 +173,7 @@ response = co.embed(
     embedding_types=['float']
 )
 query_embedding = response.embeddings.float[0]
-print("query_embedding: ", query_embedding)
+print("query_embedding: ", query_embedding[:10] + ["..."])
 ```
 
 ```txt title="Output"
@@ -170,14 +188,18 @@ We use cosine similarity to find the most similar chunks
 def cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
+# Calculate similarity between the user question & each chunk
 similarities = [cosine_similarity(query_embedding, chunk) for chunk in embeddings]
 print("similarity scores: ", similarities)
 
+# Get indices of the top 10 most similar chunks
 sorted_indices = np.argsort(similarities)[::-1]
 
+# Keep only the top 10 indices
 top_indices = sorted_indices[:10]
 print("Here are the indices of the top 10 chunks after retrieval: ", top_indices)
 
+# Retrieve the top 10 most similar chunks
 top_chunks_after_retrieval = [chunks[i] for i in top_indices]
 print("Here are the top 10 chunks after retrieval: ")
 for t in top_chunks_after_retrieval:
@@ -211,10 +233,13 @@ response = co.rerank(
     query=query,
     documents=top_chunks_after_retrieval,
     top_n=3,
-    model="rerank-english-v2.0",
+    model="rerank-english-v3.0",
 )
 
-top_chunks_after_rerank = [result.document['text'] for result in response]
+# top_chunks_after_rerank = [result.document['text'] for result in response]
+
+top_chunks_after_rerank = [top_chunks_after_retrieval[result.index] for result in response.results]
+
 print("Here are the top 3 chunks after rerank: ")
 for t in top_chunks_after_rerank:
     print("== " + t)
@@ -230,8 +255,9 @@ Here are the top 3 chunks after rerank:
 ## Step 3 - Generate the model final answer, given the retrieved and reranked chunks
 
 ```python PYTHON
+# preamble containing instructions about the task and the desired style for the output.
 preamble = """
-## Task &amp; Context
+## Task & Context
 You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.
 
 ## Style Guide
@@ -240,40 +266,31 @@ Unless the user asks for a different style of answer, you should answer in full 
 ```
 
 ```python PYTHON
+# retrieved documents
 documents = [
-    {"title": "chunk 0", "snippet": top_chunks_after_rerank[0]},
-    {"title": "chunk 1", "snippet": top_chunks_after_rerank[1]},
-    {"title": "chunk 2", "snippet": top_chunks_after_rerank[2]},
+    {"data": {"title": "chunk 0", "snippet": top_chunks_after_rerank[0]}},
+    {"data": {"title": "chunk 1", "snippet": top_chunks_after_rerank[1]}},
+    {"data": {"title": "chunk 2", "snippet": top_chunks_after_rerank[2]}},
   ]
 
+# get model response
 response = co.chat(
-  message=query,
-  documents=documents,
-  preamble=preamble,
-  model="command-r",
+  model="command-r-08-2024",
+  messages=[{"role" : "system", "content" : preamble},
+            {"role" : "user", "content" : query}],
+  documents=documents,  
   temperature=0.3
 )
 
 print("Final answer:")
-print(response.text)
+print(response.message.content[0].text)
 ```
 
 ```txt title="Output"
 Final answer:
-Here are the key crew members involved in 'Dune: Part Two':
+The script for *Dune: Part Two* was co-written by Denis Villeneuve and Jon Spaihts. The film is directed by Denis Villeneuve and produced by Villeneuve, Mary Parent, and Cale Boyter.
 
-- Denis Villeneuve: director and producer
-- Jon Spaihts: co-writer of the screenplay
-- Mary Parent and Cale Boyter: producers
-- Tanya Lapointe, Brian Herbert, Byron Merritt, Kim Herbert, Thomas Tull, Richard P. Rubinstein, John Harrison, Herbert W. Gain and Kevin J. Anderson: executive producers
-- Joe Walker: editor
-- Brad Riker: supervising art director
-- Patrice Vermette: production designer
-- Paul Lambert: visual effects supervisor
-- Gerd Nefzer: special effects supervisor
-- Thomas Struthers: stunt coordinator.
-
-A number of crew members from the first film returned for the sequel, which is set to be released in 2024.
+Tanya Lapointe, Brian Herbert, Byron Merritt, Kim Herbert, Thomas Tull, Richard P. Rubinstein, John Harrison, Herbert W. Gain, and Kevin J. Anderson also served as executive producers.
 ```
 
 Note: this is indeed the answer you'd expect, and here was the passage of text in wikipedia explaining it!
@@ -290,8 +307,8 @@ These citations are optional — you can decide to ignore them.
 
 ```python PYTHON
 print("Citations that support the final answer:")
-for cite in response.citations:
-  print(cite)
+for cite in response.message.citations:
+    print(cite)
 ```
 
 ```txt title="Output"
@@ -329,63 +346,49 @@ Citations that support the final answer:
 ```
 
 ```python PYTHON
-def insert_citations_in_order(text, citations):
-    """
-    A helper function to pretty print citations.
-    """
-    offset = 0
-    document_id_to_number = {}
-    citation_number = 0
-    modified_citations = []
+def insert_inline_citations(text, citations, field='text'):
+    sorted_citations = sorted(citations, key=lambda c: c.start, reverse=True)
+    
+    for citation in sorted_citations:
+        source_ids = [source.id.split(':')[-1] for source in citation.sources]
+        citation_text = f"[{','.join(source_ids)}]"
+        text = text[:citation.end] + citation_text + text[citation.end:]
+    
+    return text
 
-    # Process citations, assigning numbers based on unique document_ids
+def list_sources(citations, fields=['text']):
+    unique_sources = set()
     for citation in citations:
-        citation_numbers = []
-        for document_id in sorted(citation["document_ids"]):
-            if document_id not in document_id_to_number:
-                citation_number += 1  # Increment for a new document_id
-                document_id_to_number[document_id] = citation_number
-            citation_numbers.append(document_id_to_number[document_id])
+        for source in citation.sources:
+            source_data = tuple((field, source.document[field]) for field in fields if field in source.document)
+            unique_sources.add((source.id.split(':')[-1], source_data))
+    
+    footnotes = []
+    for source_id, source_data in sorted(unique_sources):
+        footnote = f"[{source_id}] " + ", ".join(f"{key}: {value}" for key, value in source_data)
+        footnotes.append(footnote)
+    
+    return "\n".join(footnotes)
 
-        # Adjust start/end with offset
-        start, end = citation['start'] + offset, citation['end'] + offset
-        placeholder = ''.join([f'[{number}]' for number in citation_numbers])
-        # Bold the cited text and append the placeholder
-        modification = f'**{text[start:end]}**{placeholder}'
-        # Replace the cited text with its bolded version + placeholder
-        text = text[:start] + modification + text[end:]
-        # Update the offset for subsequent replacements
-        offset += len(modification) - (end - start)
+# Use the functions
+cited_text = insert_inline_citations(response.message.content[0].text, response.message.citations)
 
-    # Prepare citations for listing at the bottom, ensuring unique document_ids are listed once
-    unique_citations = {number: doc_id for doc_id, number in document_id_to_number.items()}
-    citation_list = '\n'.join([f'[{doc_id}] source: "{documents[doc_id - 1]["snippet"]}"' for doc_id, number in sorted(unique_citations.items(), key=lambda item: item[1])])
-    text_with_citations = f'{text}\n\n{citation_list}'
+# Print the result with inline citations
+print(cited_text)
 
-    return text_with_citations
-
-
-print(insert_citations_in_order(response.text, response.citations))
-
+# Print footnotes
+if response.message.citations:
+    print("\nSource documents:")
+    print(list_sources(response.message.citations, fields=['title','snippet']))
 ```
 
-```markdown title="Output"
-Here are the key crew members involved in 'Dune: Part Two':
+```txt title="Output"
+The script for *Dune: Part Two* was co-written by Denis Villeneuve and Jon Spaihts.[1] The film is directed by Denis Villeneuve[1,2] and produced by Villeneuve, Mary Parent, and Cale Boyter.[0]
 
-- **Denis Villeneuve**[1]: **director and producer**[1]
-- **Jon Spaihts**[1]: **co-writer of the screenplay**[1]
-- **Mary Parent**[2] and **Cale Boyter**[2]: **producers**[2]
-- **Tanya Lapointe**[2], **Brian Herbert**[2], **Byron Merritt**[2], **Kim Herbert**[2], **Thomas Tull**[2], **Richard P. Rubinstein**[2], **John Harrison**[2], **Herbert W. Gain**[2] and **Kevin J. Anderson**[2]: **executive producers**[2]
-- **Joe Walker**[3]: **editor**[3]
-- **Brad Riker**[3]: **supervising art director**[3]
-- **Patrice Vermette**[3]: **production designer**[3]
-- **Paul Lambert**[3]: **visual effects supervisor**[3]
-- **Gerd Nefzer**[3]: **special effects supervisor**[3]
-- **Thomas Struthers**[3]: **stunt coordinator.**[3]
+Tanya Lapointe[0], Brian Herbert[0], Byron Merritt[0], Kim Herbert[0], Thomas Tull[0], Richard P. Rubinstein[0], John Harrison[0], Herbert W. Gain[0], and Kevin J. Anderson[0] also served as executive producers.[0]
 
-A number of crew members from the first film returned for the sequel, which is set to be released in **2024.**[1]
-
-[1] source: "Dune: Part Two is a 2024 American epic science fiction film directed and produced by Denis Villeneuve, who co-wrote the screenplay with Jon Spaihts. The sequel to Dune (2021) adapts the 1965 novel Dune by Frank Herbert and follows Paul Atreides as he unites with the Fremen people of the desert planet Arrakis to wage war against House Harkonnen. Timothée Chalamet, Rebecca Ferguson, Josh Brolin, Stellan Skarsgård, Dave Bautista, Zendaya, Charlotte Rampling, and Javier Bardem reprise their roles from the first"
-[2] source: "stunt coordinator. Dune: Part Two was produced by Villeneuve, Mary Parent, and Cale Boyter, with Tanya Lapointe, Brian Herbert, Byron Merritt, Kim Herbert, Thomas Tull, Jon Spaihts, Richard P. Rubinstein, John Harrison, and Herbert W. Gain serving as executive producers and Kevin J. Anderson as creative consultant. Legendary CEO Joshua Grode confirmed in April 2019 that they plan to make a sequel, adding that "there's a logical place to stop the [first] movie before the book is over".In December 2020,"
-[3] source: "series. Villeneuve ultimately secured a two-film deal with Warner Bros. Pictures, in the same style as the two-part adaption of Stephen King's It in 2017 and 2019. In January 2019, Joe Walker was confirmed to be serving as the film's editor. Other crew included Brad Riker as supervising art director, Patrice Vermette as production designer, Paul Lambert as visual effects supervisor, Gerd Nefzer as special effects supervisor, and Thomas Struthers as stunt coordinator. Dune: Part Two was produced by"
+Source documents:
+[0] title: chunk 0, snippet: Dune: Part Two was produced by Villeneuve, Mary Parent, and Cale Boyter, with Tanya Lapointe, Brian Herbert, Byron Merritt, Kim Herbert, Thomas Tull, Jon Spaihts, Richard P. Rubinstein, John Harrison, and Herbert W. Gain serving as executive producers and Kevin J. Anderson as creative consultant. Legendary CEO Joshua Grode confirmed in April 2019 that they plan to make a sequel, adding that "there's a logical place to stop the [first] movie before the book is over".
+[1] title: chunk 1, snippet: Dune: Part Two is a 2024 American epic space opera film directed by Denis Villeneuve, who co-wrote the screenplay with Jon Spaihts. The sequel to Dune (2021), it is the second of a two-part adaptation of the 1965 novel Dune by Frank Herbert, and the second installment of Villeneuve's Dune film trilogy. It follows Paul Atreides as he unites with the Fremen people of the desert planet Arrakis to wage war against House Harkonnen. Timothée Chalamet, Zendaya, Rebecca Ferguson, Josh Brolin, Stellan Skarsgård,
+[2] title: chunk 2, snippet: On October 26, 2021, Legendary officially greenlit Dune: Part Two, with a spokesperson for the company stating, "We would not have gotten to this point without the extraordinary vision of Denis and the amazing work of his talented crew, the writers, our stellar cast, our partners at Warner Bros., and of course the fans! Here's to more Dune". Production work had occurred back-to-back with the first film, as Villeneuve and his wife Lapointe immediately took a flight to Budapest in order to begin
 ```
