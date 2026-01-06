@@ -21,7 +21,7 @@ import { CookbookHeader } from "../../components/cookbook-header";
 
 <CookbookHeader href="https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/Long_form_General_Strategies.ipynb" />
 
-Large Language Models (LLMs) are becoming increasingly capable of comprehending text, among others excelling in document analysis. The new Cohere model, [Command-R](https://huggingface.co/CohereForAI/c4ai-command-r-v01), boasts a context length of 128k, which makes it particularly effective for such tasks. Nevertheless, even with the extended context window, some documents might be too lengthy to accommodate in full.
+Large Language Models (LLMs) are becoming increasingly capable of comprehending text, among others excelling in document analysis. The new Cohere model, [Command A](https://huggingface.co/CohereLabs/c4ai-command-a-03-2025), boasts a context length of 256k, which makes it particularly effective for such tasks. Nevertheless, even with the extended context window, some documents might be too lengthy to accommodate in full.
 
 In this cookbook, we'll explore techniques to address cases when relevant information doesn't fit in the model context window.
 
@@ -69,7 +69,6 @@ from nltk.tokenize import sent_tokenize
 
 import networkx as nx
 from getpass import getpass
-from IPython.display import HTML, display
 ```
 
 ```txt title="Output"
@@ -80,7 +79,7 @@ from IPython.display import HTML, display
 
 ```python PYTHON
 # Set up Cohere client
-co_model = 'command-r'
+co_model = 'command-a-03-2025'
 co_api_key = getpass("Enter your Cohere API key: ")
 co = cohere.Client(api_key=co_api_key)
 ```
@@ -164,8 +163,7 @@ def generate_response(message, max_tokens=300, temperature=0.2, k=0):
     model = co_model,
     message=message,
     max_tokens=max_tokens,
-    temperature=temperature,
-    return_prompt=True
+    temperature=temperature
     )
   return response.text
 ```
@@ -292,9 +290,9 @@ print('Example passage:', np.random.choice(np.asarray(passages), size=1, replace
 ```
 
 ```txt title="Output"
-Example sentence: ['4.']
+Example sentence: ['The European Data Protection Supervisor may also establish an AI regulatory sandbox for  the EU institutions, bodies and agencies and exercise the roles and the tasks of national  competent authorities in accordance with this chapter.']
 
-Example passage: ['T echnical robustness and safety means that AI systems are developed  and used in a way that allows robustness in case of problems and resilience against  attempts to alter the use or performance of the AI system so as to allow unlawful use by  third parties, a nd minimise unintended harm. Privacy and data governance means that AI  systems are developed and used in compliance with existing privacy and data protection  rules, while processing data that meets high standards in terms of quality and integrity. Transpar ency means that AI systems are developed and used in a way that allows  appropriate traceability and explainability, while making humans aware that they  communicate or interact with an AI system, as well as duly informing deployers of the  capabilities and l imitations of that AI system and affected persons about their rights. Diversity, non - discrimination and fairness means that AI systems are developed and used  in a way that includes diverse actors and promotes equal access, gender equality and  cultural dive rsity, while avoiding discriminatory impacts and unfair biases that are  prohibited by Union or national law. Social and environmental well - being means that AI  systems are developed and used in a sustainable and environmentally friendly manner as  well as in   a way to benefit all human beings, while monitoring and assessing the long - term  impacts on the individual, society and democracy. ']
+Example passage: ['This flexibility could mean, for example a decision  by the provider to integrate a part of the necessary testing and reporting processes,  information and documentation required under this Regulation into already existing  documentation and procedu res required under the existing Union harmonisation legislation  listed in Annex II, Section A. This however should not in any way undermine the  obligation of the provider to comply with all the applicable requirements. (42a)   The risk management system shou ld consist of a continuous, iterative process that is  planned and run throughout the entire lifecycle of a high - risk AI system. This process  should be aimed at identifying and mitigating the relevant risks of artificial intelligence  systems on health, safe ty and fundamental rights. The risk management system should be  regularly reviewed and updated to ensure its continuing effectiveness, as well as  justification and documentation of any significant decisions and actions taken subject to  this Regulation. ']
 ```
 
 ```python PYTHON
@@ -373,9 +371,22 @@ print(generate_response(message=prompt, max_tokens=300))
 ```
 
 ```txt title="Output"
-The report discusses the restrictions on the use of biometric identification by law enforcement in publicly accessible spaces. According to the document, real-time biometric identification is prohibited unless in exceptional cases where its use is strictly necessary and proportionate to achieving a substantial public interest. The use of post-remote biometric identification systems is also mentioned, noting the requirements for authorization and limitations on its use.
+The report outlines several key points regarding biometric identification within the context of the proposed Artificial Intelligence Act:
 
-The report also highlights the classification of certain AI systems as high-risk, including biometric identification systems, emotion recognition systems, and biometric categorisation systems, with the exception of systems used for biometric verification. High-risk AI systems are subject to specific requirements and obligations.
+1. **Prohibition of Real-Time Biometric Identification in Public Spaces**: The report proposes a ban on real-time biometric identification by law enforcement authorities in publicly accessible spaces, with specific exceptions. These exceptions are detailed in Article 5(1)(d) and are subject to safeguards, including monitoring, oversight, and limited reporting obligations at the EU level.
+
+2. **Exceptions to the Prohibition**: The exceptions to the ban on real-time biometric identification include:
+   - Search for victims of specific crimes (e.g., abduction, trafficking, sexual exploitation).
+   - Prevention of imminent threats to life or physical safety, including terrorist attacks.
+   - Localization or identification of suspects for serious criminal offenses (as defined in Annex IIa) punishable by a custodial sentence of at least four years.
+
+3. **Safeguards and Conditions**: The use of real-time biometric identification systems in these exceptional cases must comply with specific safeguards and conditions, including:
+   - A fundamental rights impact assessment.
+   - Registration of the system in a database.
+   - Prior authorization by a judicial or independent administrative authority, except in urgent situations where authorization can be sought within 24 hours.
+   - Limitation to what is strictly necessary in terms of time, geography, and personal scope.
+
+4. **Post-Remote Biometric Identification**: The use of post-remote biometric identification
 ```
 
 ## Approach 3: Text rank [#approach-3]
@@ -462,7 +473,7 @@ print(generate_response(message=prompt, max_tokens=600))
 ```
 
 ```txt title="Output"
-The document outlines the requirements and obligations for developing and deploying AI systems in the European Union. It aims to establish a regulatory framework to foster innovation while ensuring the protection of fundamental rights and public interests. The regulation applies to providers and deployers of AI systems, including those established outside the EU. High-risk AI systems are subject to specific requirements, such as risk management, data governance, and transparency. Providers must ensure compliance and keep records, and deployers must use AI systems responsibly. The regulation also establishes an AI Office, advisory bodies, and a database for high-risk AI systems. Additionally, it addresses issues like testing, codes of conduct, and cooperation with third countries. Fines and penalties are proposed for non-compliance.
+The document outlines the European Union's regulatory framework for artificial intelligence (AI) systems, focusing on high-risk AI applications. It establishes rules for placing AI systems on the market, including prohibitions on certain practices, requirements for high-risk systems, and transparency obligations. The regulation defines high-risk AI systems based on their intended use and potential risks to health, safety, and fundamental rights. Providers of high-risk AI systems must comply with specific requirements, such as risk management, data governance, and human oversight. The regulation also mandates conformity assessments, registration in an EU database, and post-market monitoring. It emphasizes the importance of AI literacy, prohibits manipulative or exploitative AI practices, and ensures compliance through market surveillance and enforcement mechanisms. Additionally, the regulation addresses general-purpose AI models, requiring providers to meet specific obligations, especially for models with systemic risks. The framework aims to promote trustworthy AI while safeguarding public interests and supporting innovation.
 ```
 
 ## Summary
