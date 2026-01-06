@@ -1,5 +1,5 @@
 ---
-title: Migrating Monolithic Prompts to Command-R with RAG
+title: Migrating Monolithic Prompts to Command A with RAG
 slug: /page/migrating-prompts
 
 description: "This page contains a discussion of how to automatically migrating monolothic prompts."
@@ -12,11 +12,11 @@ import { CookbookHeader } from "../../components/cookbook-header";
 
 <CookbookHeader href="https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/Migrating_Monolithic_Prompts_to_Command_R_with_RAG.ipynb" />
 
-Command-R is a powerful LLM optimized for long context tasks such as retrieval augmented generation (RAG). Migrating a monolithic task such as question-answering or query-focused summarization to RAG can improve the quality of responses due to reduced hallucination and improved conciseness through grounding.
+Command A is a powerful LLM optimized for long context tasks such as retrieval augmented generation (RAG). Migrating a monolithic task such as question-answering or query-focused summarization to RAG can improve the quality of responses due to reduced hallucination and improved conciseness through grounding.
 
 Previously, migrating an existing use case to RAG involved a lot of manual work around indexing documents, implementing at least a basic search strategy, extensive post-processing to introduce proper grounding through citations, and of course fine-tuning an LLM to work well in the RAG paradigm.
 
-This cookbook demonstrates automatic migration of monolithic prompts through two diverse use cases where an original prompt is broken down into two parts: (1) context; and (2) instructions. The former can be done automatically or through simple chunking, while the latter is done automatically by Command-R through single shot prompt optimization.
+This cookbook demonstrates automatic migration of monolithic prompts through two diverse use cases where an original prompt is broken down into two parts: (1) context; and (2) instructions. The former can be done automatically or through simple chunking, while the latter is done automatically by Command A through single shot prompt optimization.
 
 The two use cases demonstrated here are:
 
@@ -71,7 +71,7 @@ Write the summary in first person.'''
 ```python PYTHON
 response = co.chat(
     message=original_prompt,
-    model='command-r',
+    model='command-a-03-2025',
 )
 ```
 
@@ -83,7 +83,7 @@ print(response.text)
     I'm a Senior Software Engineer at GlobalSolTech, with over 15 years of experience in AI and machine learning. My expertise lies in developing innovative algorithms for natural language processing, computer vision, and recommendation systems. I hold a B.Sc. in Physics and a Ph.D. in Statistics and enjoy hiking, free diving, and collecting vintage watches in my spare time. I'm passionate about using my skills to contribute to cutting-edge AI research and development. At GlobalSolTech, I'm proud to be part of a dynamic team driving technological advancement.
 ```
 
-Using Command-R, we can automatically upgrade the original prompt to a RAG-style prompt to get more faithful adherence to the instructions, a clearer and more concise prompt, and in-line citations for free. Consider the following meta-prompt:
+Using Command A, we can automatically upgrade the original prompt to a RAG-style prompt to get more faithful adherence to the instructions, a clearer and more concise prompt, and in-line citations for free. Consider the following meta-prompt:
 
 ```python PYTHON
 meta_prompt = f'''Below is a task for an LLM delimited with ## Original Task. Your task is to split that task into two parts: (1) the context; and (2) the instructions.
@@ -134,12 +134,12 @@ The length of the text should be no more than 100 words.
 Write the summary in first person.
 ```
 
-Command-R returns with the following:
+Command A returns with the following:
 
 ```python PYTHON
 upgraded_prompt = co.chat(
     message=meta_prompt,
-    model='command-r',
+    model='command-a-03-2025',
 )
 ```
 
@@ -214,12 +214,12 @@ new_prompt, docs
     'snippet': 'I work at GlobalSolTech in the AI Research and Development department as a senior software engineer.'}])
 ```
 
-As we can see above, the new prompt is much more concise and gets right to the point. The context has been split into 4 "documents" that Command-R can ground the information to. Now let's run the same task with the new prompt while leveraging the `documents=` parameter. Note that the `docs` variable is a list of dict objects with `title` describing the contents of a text and `snippet` containing the text itself:
+As we can see above, the new prompt is much more concise and gets right to the point. The context has been split into 4 "documents" that Command A can ground the information to. Now let's run the same task with the new prompt while leveraging the `documents=` parameter. Note that the `docs` variable is a list of dict objects with `title` describing the contents of a text and `snippet` containing the text itself:
 
 ```python PYTHON
 response = co.chat(
     message=new_prompt,
-    model='command-r',
+    model='command-a-03-2025',
     documents=docs,
 )
 ```
@@ -275,14 +275,14 @@ Now let's move on to an arguably more difficult problem.
 
 ## Legal Question Answering
 
-On March 21st, the DOJ announced that it is [suing Apple](https://www.theverge.com/2024/3/21/24107659/apple-doj-lawsuit-antitrust-documents-suing) for anti-competitive practices. The [complaint](https://www.justice.gov/opa/media/1344546/dl) is 88 pages long and consists of about 230 paragraphs of text. To understand what the suit alleges, a common use case would be to ask for a summary. Because Command-R has a context window of 128K, even an 88-page legal complaint fits comfortably within the window.
+On March 21st, the DOJ announced that it is [suing Apple](https://www.theverge.com/2024/3/21/24107659/apple-doj-lawsuit-antitrust-documents-suing) for anti-competitive practices. The [complaint](https://www.justice.gov/opa/media/1344546/dl) is 88 pages long and consists of about 230 paragraphs of text. To understand what the suit alleges, a common use case would be to ask for a summary. Because Command A has a context window of 256K, even an 88-page legal complaint fits comfortably within the window.
 
 ```python PYTHON
 apple = open('data/apple_mod.txt').read()
 ```
 
 ```python PYTHON
-tokens = co.tokenize(text=apple, model='command-r')
+tokens = co.tokenize(text=apple, model='command-a-03-2025')
 len(tokens.tokens)
 ```
 
@@ -308,7 +308,7 @@ rendered_prompt = prompt_template.format(legal_text=apple, question=question)
 ```python PYTHON
 response = co.chat(
     message=rendered_prompt,
-    model='command-r',
+    model='command-a-03-2025',
     temperature=0.3,
 )
 ```
@@ -331,7 +331,7 @@ rendered_prompt = prompt_template.format(legal_text=apple, question=question)
 ```python PYTHON
 response = co.chat(
     message=rendered_prompt,
-    model='command-r',
+    model='command-a-03-2025',
 )
 ```
 
@@ -345,7 +345,7 @@ Yes, the DOJ alleges that Apple could allow iPhone users to send encrypted messa
 
 This is a very interesting allegation that at first glance suggests that the model could be hallucinating. Because RAG has been shown to help reduce hallucinations and grounds its responses in the input text, we should convert this prompt to the RAG style paradigm to gain confidence in its response.
 
-While previously we asked Command-R to chunk the text for us, the legal complaint is highly structured with numbered paragraphs so we can use the following function to break the complaint into input docs ready for RAG:
+While previously we asked Command A to chunk the text for us, the legal complaint is highly structured with numbered paragraphs so we can use the following function to break the complaint into input docs ready for RAG:
 
 ```python PYTHON
 def chunk_doc(input_doc: str) -> list:
@@ -382,12 +382,12 @@ print(chunks[18])
     {'title': '18', 'snippet': '\nProtecting competition and the innovation that competition inevitably ushers in\nfor consumers, developers, publishers, content creators, and device manufacturers is why\nPlaintiffs bring this lawsuit under Section 2 of the Sherman Act to challenge Apple’s\nmaintenance of its monopoly over smartphone markets, which affect hundreds of millions of\nAmericans every day. Plaintiffs bring this case to rid smartphone markets of Apple’s\nmonopolization and exclusionary conduct and to ensure that the next generation of innovators\ncan upend the technological world as we know it with new and transformative technologies.\n\n\nII.\n\nDefendant Apple\n\n'}
 ```
 
-We can now try the same question but ask it directly to Command-R with the chunks as grounding information.
+We can now try the same question but ask it directly to Command A with the chunks as grounding information.
 
 ```python PYTHON
 response = co.chat(
     message='''Does the DOJ allege that Apple could encrypt text messages sent to Android phones?''',
-    model='command-r',
+    model='command-a-03-2025',
     documents=chunks,
 )
 ```
@@ -440,4 +440,4 @@ ii.
 
 Paragraph 144 indeed contains the important allegation: **If Apple wanted to, Apple could allow iPhone users to send encrypted messages to Android users**.
 
-In this cookbook we have shown how one can easily take an existing monolithic prompt and migrate it to the RAG paradigm to get less hallucination, grounded information, and in-line citations. We also demonstrated Command-R's ability to re-write an instruction prompt in a single shot to make it more concise and potentially lead to higher quality completions.
+In this cookbook we have shown how one can easily take an existing monolithic prompt and migrate it to the RAG paradigm to get less hallucination, grounded information, and in-line citations. We also demonstrated Command A's ability to re-write an instruction prompt in a single shot to make it more concise and potentially lead to higher quality completions.
