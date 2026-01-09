@@ -165,7 +165,7 @@ response = co.chat(
     message=message,
     tools=tools,
     preamble=preamble,
-    model="command-r"
+    model="command-a-03-2025",
 )
 
 
@@ -175,16 +175,8 @@ print("\n".join(str(tool_call) for tool_call in response.tool_calls))
 
 ```
 The model recommends doing the following tool calls:
-cohere.ToolCall {
-	name: query_daily_sales_report
-	parameters: {'day': '2023-09-29'}
-	generation_id: eaf955e3-623d-4796-bf51-23b07c66ed2c
-}
-cohere.ToolCall {
-	name: query_product_catalog
-	parameters: {'category': 'Electronics'}
-	generation_id: eaf955e3-623d-4796-bf51-23b07c66ed2c
-}
+name='query_daily_sales_report' parameters={'day': '2023-09-29'}
+name='query_product_catalog' parameters={'category': 'Electronics'}
 ```
 
 ## Step 3 – The tool calls are executed
@@ -208,7 +200,9 @@ for tool_call in response.tool_calls:
     })
 
 print("Tool results that will be fed back to the model in step 4:")
-print(json.dumps(tool_results, indent=4))
+
+serializable_results = [{"call": {"name": r["call"].name, "parameters": r["call"].parameters}, "outputs": r["outputs"]} for r in tool_results]
+print(json.dumps(serializable_results, indent=4))
 ```
 
 ```
@@ -223,8 +217,7 @@ Tool results that will be fed back to the model in step 4:
             "name": "query_daily_sales_report",
             "parameters": {
                 "day": "2023-09-29"
-            },
-            "generation_id": "eaf955e3-623d-4796-bf51-23b07c66ed2c"
+            }
         },
         "outputs": [
             {
@@ -238,8 +231,7 @@ Tool results that will be fed back to the model in step 4:
             "name": "query_product_catalog",
             "parameters": {
                 "category": "Electronics"
-            },
-            "generation_id": "eaf955e3-623d-4796-bf51-23b07c66ed2c"
+            }
         },
         "outputs": [
             {
@@ -280,8 +272,9 @@ response = co.chat(
     tools=tools,
     tool_results=tool_results,
     preamble=preamble,
-    model="command-r",
-    temperature=0.3
+    model="command-a-03-2025",
+    temperature=0.3,
+    force_single_step=True
 )
 ```
 
@@ -292,17 +285,15 @@ print(response.text)
 
 ```
 Final answer:
-On the 29th of September 2023, there were 10,000 sales with 250 units sold.
+On the 29th September 2023, the total sales amount was 10,000 and the total units sold was 250.
 
-The Electronics category contains three products. There are details below:
+Here are the details of the products in the 'Electronics' category:
 
-| Product Name | Price | Stock Level |
-| ------------ | ----- | ----------- |
-| Smartphone | 500 | 20 |
-| Laptop | 1000 | 15 |
-| Tablet | 300 | 25 |
-
-The total stock level for Electronics items is 50.
+| Product Name | Price | Product ID | Stock Level |
+|---|---|---|---|
+| Smartphone | 500 | E1001 | 20 |
+| Laptop | 1000 | E1002 | 15 |
+| Tablet | 300 | E1003 | 25 |
 ```
 
 ## Bonus: Citations come for free with Cohere! 🎉
@@ -321,18 +312,25 @@ for cite in response.citations:
 
 ```
 Citations that support the final answer:
-{'start': 7, 'end': 29, 'text': '29th of September 2023', 'document_ids': ['query_daily_sales_report:0:0']}
-{'start': 42, 'end': 75, 'text': '10,000 sales with 250 units sold.', 'document_ids': ['query_daily_sales_report:0:0']}
-{'start': 112, 'end': 127, 'text': 'three products.', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 234, 'end': 244, 'text': 'Smartphone', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 247, 'end': 250, 'text': '500', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 253, 'end': 255, 'text': '20', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 260, 'end': 266, 'text': 'Laptop', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 269, 'end': 273, 'text': '1000', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 276, 'end': 278, 'text': '15', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 283, 'end': 289, 'text': 'Tablet', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 292, 'end': 295, 'text': '300', 'document_ids': ['query_product_catalog:1:0']}
-{'start': 298, 'end': 300, 'text': '25', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 7, 'end': 26, 'text': '29th September 2023', 'document_ids': ['query_daily_sales_report:0:0']}
+{'start': 32, 'end': 61, 'text': 'total sales amount was 10,000', 'document_ids': ['query_daily_sales_report:0:0']}
+{'start': 70, 'end': 95, 'text': 'total units sold was 250.', 'document_ids': ['query_daily_sales_report:0:0']}
+{'start': 168, 'end': 180, 'text': 'Product Name', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 183, 'end': 188, 'text': 'Price', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 191, 'end': 201, 'text': 'Product ID', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 204, 'end': 215, 'text': 'Stock Level', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 238, 'end': 248, 'text': 'Smartphone', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 251, 'end': 254, 'text': '500', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 257, 'end': 262, 'text': 'E1001', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 265, 'end': 267, 'text': '20', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 272, 'end': 278, 'text': 'Laptop', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 281, 'end': 285, 'text': '1000', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 288, 'end': 293, 'text': 'E1002', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 296, 'end': 298, 'text': '15', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 303, 'end': 309, 'text': 'Tablet', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 312, 'end': 315, 'text': '300', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 318, 'end': 323, 'text': 'E1003', 'document_ids': ['query_product_catalog:1:0']}
+{'start': 326, 'end': 328, 'text': '25', 'document_ids': ['query_product_catalog:1:0']}
 ```
 
 ```python PYTHON
@@ -377,22 +375,20 @@ print(insert_citations_in_order(response.text, response.citations))
 ```
 
 ```
-On the **29th of September 2023**[1], there were **10,000 sales with 250 units sold.**[1]
+On the **29th September 2023**[1], the **total sales amount was 10,000**[1] and the **total units sold was 250.**[1]
 
-The Electronics category contains **three products.**[2] There are details below:
+Here are the details of the products in the 'Electronics' category:
 
-| Product Name | Price | Stock Level |
-| ------------ | ----- | ----------- |
-| **Smartphone**[2] | **500**[2] | **20**[2] |
-| **Laptop**[2] | **1000**[2] | **15**[2] |
-| **Tablet**[2] | **300**[2] | **25**[2] |
-
-The total stock level for Electronics items is 50.
+| **Product Name**[2] | **Price**[2] | **Product ID**[2] | **Stock Level**[2] |
+|---|---|---|---|
+| **Smartphone**[2] | **500**[2] | **E1001**[2] | **20**[2] |
+| **Laptop**[2] | **1000**[2] | **E1002**[2] | **15**[2] |
+| **Tablet**[2] | **300**[2] | **E1003**[2] | **25**[2] |
 
 [1] source: [{'date': '2023-09-29', 'summary': 'Total Sales Amount: 10000, Total Units Sold: 250'}]
-    based on tool call: {'name': 'query_daily_sales_report', 'parameters': {'day': '2023-09-29'}, 'generation_id': 'eaf955e3-623d-4796-bf51-23b07c66ed2c'}
+    based on tool call: {'name': 'query_daily_sales_report', 'parameters': {'day': '2023-09-29'}}
 [2] source: [{'category': 'Electronics', 'products': [{'product_id': 'E1001', 'name': 'Smartphone', 'price': 500, 'stock_level': 20}, {'product_id': 'E1002', 'name': 'Laptop', 'price': 1000, 'stock_level': 15}, {'product_id': 'E1003', 'name': 'Tablet', 'price': 300, 'stock_level': 25}]}]
-    based on tool call: {'name': 'query_product_catalog', 'parameters': {'category': 'Electronics'}, 'generation_id': 'eaf955e3-623d-4796-bf51-23b07c66ed2c'}
+    based on tool call: {'name': 'query_product_catalog', 'parameters': {'category': 'Electronics'}}
 ```
 
 Now, you've used Cohere for Tool Use. Tool use opens up a wide range of new use cases. Here are a few examples:
