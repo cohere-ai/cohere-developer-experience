@@ -49,7 +49,7 @@ from llama_index.core import VectorStoreIndex, ServiceContext
 ```
 
 ```python PYTHON
-co_model = 'command-r'
+co_model = 'command-a-03-2025'
 co_api_key = getpass("Enter Cohere API key: ")
 co = cohere.Client(api_key=co_api_key)
 ```
@@ -99,9 +99,13 @@ Designing a robust chunking strategy is as much a science as an art. There are n
 ## Utils
 
 ```python PYTHON
-def set_css():
+def set_css(*args, **kwargs):
   display(HTML('''
-
+  <style>
+    pre {
+        white-space: pre-wrap;
+    }
+  </style>
   '''))
 get_ipython().events.register('pre_run_cell', set_css)
 
@@ -117,8 +121,8 @@ def insert_citations(text: str, citations: List[dict]):
     # Process citations in the order they were provided
     for citation in citations:
         # Adjust start/end with offset
-        start, end = citation['start'] + offset, citation['end'] + offset
-        placeholder = "[" + ", ".join(doc[4:] for doc in citation["document_ids"]) + "]"
+        start, end = citation.start + offset, citation.end + offset
+        placeholder = "[" + ", ".join(doc[4:] for doc in citation.document_ids) + "]"
         # ^ doc[4:] removes the 'doc_' prefix, and leaves the quoted document
         modification = f'{text[start:end]} {placeholder}'
         # Replace the cited text with its bolded version + placeholder
@@ -128,7 +132,7 @@ def insert_citations(text: str, citations: List[dict]):
 
     return text
 
-def build_retriever(documents, top_n=5):
+def build_retreiver(documents, top_n=5):
   # Create the embedding model
   embed_model = CohereEmbedding(
       cohere_api_key=co_api_key,
@@ -225,7 +229,7 @@ Subsequently, we implement the standard RAG pipeline. We feed the chunks into a 
 chunk_size = 500
 chunk_overlap = 0
 documents = get_chunks(text, chunk_size, chunk_overlap)
-retriever = build_retriever(documents)
+retriever = build_retreiver(documents)
 
 source_nodes = retriever.retrieve(question)
 print('Number of docuemnts: ',len(source_nodes))
@@ -243,7 +247,7 @@ print(response.text)
 
 ```txt title="Output"
 Number of docuemnts:  5
-An unknown speaker mentions Jonathan Nolan in a conversation about the creators of Westworld. They mention that Jonathan Nolan and Lisa Joy Nolan are friends of theirs, and that they have invited them to visit the lab.
+Elon Musk mentions Jonathan Nolan.
 ```
 
 A notable feature of [`co.chat`](https://docs.cohere.com/reference/chat) is its ability to ground the model's answer within the context. This means we can identify which chunks were used to generate the answer. Below, we show the previous output of the model together with the citation reference, where `[num]` represents the index of the chunk.
@@ -253,7 +257,7 @@ print(insert_citations(response.text, response.citations))
 ```
 
 ```txt title="Output"
-An unknown speaker [0] mentions Jonathan Nolan in a conversation about the creators of Westworld. [0] They mention that Jonathan Nolan and Lisa Joy Nolan [0] are friends [0] of theirs, and that they have invited them to visit the lab. [0]
+Elon Musk [0] mentions Jonathan Nolan.
 ```
 
 Indeed, by printing the cited chunk, we can validate that the text was divided so that the generation model could not provide the correct response. Notably, the speaker's name is not included in the context, which is why the model refes to an `unknown speaker`.
@@ -276,7 +280,7 @@ Therefore, this time to mitigate this issue, we **allow for overlap between cons
 chunk_size = 500
 chunk_overlap = 100
 documents = get_chunks(text,chunk_size, chunk_overlap)
-retriever = build_retriever(documents)
+retriever = build_retreiver(documents)
 
 source_nodes = retriever.retrieve(question)
 print('Number of docuemnts: ',len(source_nodes))
@@ -294,7 +298,7 @@ print(response.text)
 
 ```txt title="Output"
 Number of docuemnts:  5
-Elon Musk mentions Jonathan Nolan. Musk is the CEO and Product Architect of the lab that resembles the set of Westworld, a show created by Jonathan Nolan and Lisa Joy Nolan.
+Elon Musk mentions Jonathan Nolan.
 ```
 
 Again, we can print the text along with the citations.
@@ -304,7 +308,7 @@ print(insert_citations(response.text, response.citations))
 ```
 
 ```txt title="Output"
-Elon Musk [0] mentions Jonathan Nolan. Musk is the CEO and Product Architect [0] of the lab [0] that resembles the set of Westworld [0], a show created by Jonathan Nolan [0] and Lisa Joy Nolan. [0]
+Elon Musk [0] mentions Jonathan Nolan.
 ```
 
 And investigate the chunks which were used as context to answer the query.
@@ -379,7 +383,7 @@ text_splitter = CharacterTextSplitter(
 documents = text_splitter.create_documents([text_custom])
 documents = [Document(text=doc.page_content) for doc in documents]
 
-retriever = build_retriever(documents)
+retriever = build_retreiver(documents)
 
 source_nodes = retriever.retrieve(question)
 print('Number of docuemnts: ',len(source_nodes))
@@ -395,20 +399,18 @@ print(response.text)
 ```
 
 ```txt title="Output"
-WARNING:langchain_text_splitters.base:Created a chunk of size 5946, which is longer than the specified 1000
-WARNING:langchain_text_splitters.base:Created a chunk of size 4092, which is longer than the specified 1000
-WARNING:langchain_text_splitters.base:Created a chunk of size 1782, which is longer than the specified 1000
-WARNING:langchain_text_splitters.base:Created a chunk of size 1392, which is longer than the specified 1000
-WARNING:langchain_text_splitters.base:Created a chunk of size 2046, which is longer than the specified 1000
-WARNING:langchain_text_splitters.base:Created a chunk of size 1152, which is longer than the specified 1000
-WARNING:langchain_text_splitters.base:Created a chunk of size 1304, which is longer than the specified 1000
-WARNING:langchain_text_splitters.base:Created a chunk of size 1295, which is longer than the specified 1000
-WARNING:langchain_text_splitters.base:Created a chunk of size 2090, which is longer than the specified 1000
-WARNING:langchain_text_splitters.base:Created a chunk of size 1251, which is longer than the specified 1000
-
-
+Created a chunk of size 5946, which is longer than the specified 1000
+Created a chunk of size 4092, which is longer than the specified 1000
+Created a chunk of size 1782, which is longer than the specified 1000
+Created a chunk of size 1392, which is longer than the specified 1000
+Created a chunk of size 2046, which is longer than the specified 1000
+Created a chunk of size 1152, which is longer than the specified 1000
+Created a chunk of size 1304, which is longer than the specified 1000
+Created a chunk of size 1295, which is longer than the specified 1000
+Created a chunk of size 2090, which is longer than the specified 1000
+Created a chunk of size 1251, which is longer than the specified 1000
 Number of docuemnts:  5
-Elon Musk mentions Jonathan Nolan. Musk is friends with the creators of Westworld, Jonathan Nolan and Lisa Joy Nolan.
+Elon Musk mentions Jonathan Nolan.
 ```
 
 Below we validate the answer using citations.
@@ -418,7 +420,7 @@ print(insert_citations(response.text, response.citations))
 ```
 
 ```txt title="Output"
-Elon Musk [0] mentions Jonathan Nolan. [0] Musk is friends [0] with the creators of Westworld [0], Jonathan Nolan [0] and Lisa Joy Nolan. [0]
+Elon Musk [0] mentions Jonathan Nolan.
 ```
 
 ```python PYTHON
