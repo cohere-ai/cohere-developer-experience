@@ -128,6 +128,7 @@ type Model = {
   capabilities: Capability[];
   pricing?: { input: number; output: number };
   specs: { contextWindow: number; maxOutputTokens: number; knowledgeCutoff: string, customSpecs: { name: string; value: string }[] };
+  usageMessage?: React.ReactNode;
   endpoints: Endpoint[];
 };
 
@@ -163,7 +164,9 @@ const getEndpoints = (enabledEndpoints: Endpoint[]) => {
   return endpoints;
 }
 
-export const ModelShowcase = ({ model }: { model: Model }) => (
+type ModelShowcaseProps = { model: Model };
+
+export const ModelShowcase = ({ model }: ModelShowcaseProps) => (
   <div className="max-w-5xl mx-auto space-y-6 font-sans">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Capabilities */}
@@ -193,13 +196,17 @@ export const ModelShowcase = ({ model }: { model: Model }) => (
               </a>
               .
             </p>
-            <p>
-              To use {model.name} in production, please reach out to sales at{' '}
-              <a href="mailto:sales@cohere.com" className="text-blue-600 hover:text-blue-800 underline">
-                sales@cohere.com
-              </a>
-              .
-            </p>
+            {model.usageMessage ? (
+              model.usageMessage
+            ) : (
+              <p>
+                To use {model.name} in production, please reach out to sales at{' '}
+                <a href="mailto:sales@cohere.com" className="text-blue-600 hover:text-blue-800 underline">
+                  sales@cohere.com
+                </a>
+                .
+              </p>
+            )}
           </div>
         )}
       </Card>
