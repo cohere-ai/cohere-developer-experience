@@ -79,12 +79,17 @@ messages = [
 ]
 
 response = co.chat(
-    model="command-r-08-2024",
+    model="command-a-03-2025",
     messages=messages,
     documents=documents,
 )
 
-print(response.message.content[0].text)
+for content in response.message.content:
+    if content.type == "thinking":
+        print("Thinking:", content.thinking)
+
+    if content.type == "text":
+        print("Response:", content.text)
 
 for citation in response.message.citations:
     print(citation, "\n")
@@ -96,7 +101,7 @@ curl --request POST \
   --header 'content-type: application/json' \
   --header "Authorization: bearer $CO_API_KEY" \
   --data '{
-  "model": "command-r-08-2024",
+  "model": "command-a-03-2025",
   "messages": [
     {
       "role": "user",
@@ -250,7 +255,12 @@ response = co.chat(
     documents=documents,
 )
 
-print(response.message.content[0].text)
+for content in response.message.content:
+    if content.type == "thinking":
+        print("Thinking:", content.thinking)
+
+    if content.type == "text":
+        print("Response:", content.text)
 ```
 ```bash cURL
 curl --request POST \
