@@ -92,14 +92,18 @@ messages = [
 ]
 
 # Step 2: model generates tool calls
-response = co.chat(model="command-a-03-2025", messages=messages, tools=tools)
+response = co.chat(
+    model="command-a-03-2025", messages=messages, tools=tools
+)
 
 if response.message.tool_calls:
     messages.append(response.message)
 
     # Step 3: application executes tools and sends tool results back
     for tc in response.message.tool_calls:
-        tool_result = functions_map[tc.function.name](**json.loads(tc.function.arguments))
+        tool_result = functions_map[tc.function.name](
+            **json.loads(tc.function.arguments)
+        )
 
         tool_content = []
         for data in tool_result:
@@ -119,7 +123,9 @@ if response.message.tool_calls:
         )
 
 # Step 4: model generates a response grounded in tool results (with citations)
-response = co.chat(model="command-a-03-2025", messages=messages, tools=tools)
+response = co.chat(
+    model="command-a-03-2025", messages=messages, tools=tools
+)
 
 print(response.message.content[0].text)
 print(response.message.citations)
@@ -264,7 +270,7 @@ tools = [
                     "top_k": {
                         "type": "integer",
                         "description": "How many documents to return.",
-                    }
+                    },
                 },
                 "required": ["query"],
             },

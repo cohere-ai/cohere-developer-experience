@@ -87,7 +87,7 @@ tools = [
                     "top_k": {
                         "type": "integer",
                         "description": "How many documents to return.",
-                    }
+                    },
                 },
                 "required": ["query"],
             },
@@ -333,11 +333,20 @@ def search_docs(query, top_k=3):
     # Implement any retrieval logic here (vector DB, keyword search, etc.)
     return [
         {
-            "title": "Tool use (function calling) overview",            "url": "https://docs.cohere.com/v2/docs/tool-use-overview",            "text": "Tool use connects models to external tools like search engines and APIs.",        },
+            "title": "Tool use (function calling) overview",
+            "url": "https://docs.cohere.com/v2/docs/tool-use-overview",
+            "text": "Tool use connects models to external tools like search engines and APIs.",
+        },
         {
-            "title": "Usage patterns for tool use",            "url": "https://docs.cohere.com/v2/docs/tool-use-usage-patterns",            "text": "Common patterns include parallel tool calling, multi-step tool use, and more.",        },
+            "title": "Usage patterns for tool use",
+            "url": "https://docs.cohere.com/v2/docs/tool-use-usage-patterns",
+            "text": "Common patterns include parallel tool calling, multi-step tool use, and more.",
+        },
         {
-            "title": "Structured outputs",            "url": "https://docs.cohere.com/docs/structured-outputs",            "text": "Use JSON schema to define structured inputs/outputs for tools and responses.",        },
+            "title": "Structured outputs",
+            "url": "https://docs.cohere.com/docs/structured-outputs",
+            "text": "Use JSON schema to define structured inputs/outputs for tools and responses.",
+        },
     ][:top_k]
 
 
@@ -348,13 +357,21 @@ And here is the corresponding tool schema:
 ```python PYTHON
 tools = [
     {
-        "type": "function",        "function": {
-            "name": "search_docs",            "description": "Search documentation and return relevant snippets as documents.",            "parameters": {
-                "type": "object",                "properties": {
+        "type": "function",
+        "function": {
+            "name": "search_docs",
+            "description": "Search documentation and return relevant snippets as documents.",
+            "parameters": {
+                "type": "object",
+                "properties": {
                     "query": {
-                        "type": "string",                        "description": "The search query to look up in the docs.",                    },
+                        "type": "string",
+                        "description": "The search query to look up in the docs.",
+                    },
                     "top_k": {
-                        "type": "integer",                        "description": "How many documents to return.",                    },
+                        "type": "integer",
+                        "description": "How many documents to return.",
+                    },
                 },
                 "required": ["query"],
             },
@@ -375,7 +392,9 @@ import json
 # Step 1: Get the user message
 messages = [
     {
-        "role": "user",        "content": "Explain how tool use works and how to force tool usage. Please cite your sources.",    }
+        "role": "user",
+        "content": "Explain how tool use works and how to force tool usage. Please cite your sources.",
+    }
 ]
 
 # Step 2: Generate tool calls (if any)
@@ -408,12 +427,14 @@ while response.message.tool_calls:
             # Optional: the "document" object can take an "id" field for use in citations, otherwise auto-generated
             tool_content.append(
                 {
-                    "type": "document",                    "document": {"data": json.dumps(data)},
+                    "type": "document",
+                    "document": {"data": json.dumps(data)},
                 }
             )
         messages.append(
             {
-                "role": "tool",                "tool_call_id": tc.id,
+                "role": "tool",
+                "tool_call_id": tc.id,
                 "content": tool_content,
             }
         )
@@ -428,7 +449,8 @@ while response.message.tool_calls:
 
 messages.append(
     {
-        "role": "assistant",        "content": response.message.content[0].text,
+        "role": "assistant",
+        "content": response.message.content[0].text,
     }
 )
 
