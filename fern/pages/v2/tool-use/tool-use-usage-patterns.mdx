@@ -44,32 +44,52 @@ co = cohere.ClientV2(
 </Tab>
 </Tabs>
 
-We'll use the same `get_weather` tool as in the [previous example](https://docs.cohere.com/v2/docs/tool-use-overview#creating-the-tool).
+We'll use the same `search_docs` tool as in the [previous example](https://docs.cohere.com/v2/docs/tool-use-overview#creating-the-tool).
 
 ```python PYTHON
-def get_weather(location):
-    # Implement any logic here
-    return [{"temperature": "20C"}]
-    # Return a list of objects e.g. [{"url": "abc.com", "text": "..."}, {"url": "xyz.com", "text": "..."}]
+def search_docs(query, top_k=3):
+    # Implement any retrieval logic here (vector DB, keyword search, etc.)
+    return [
+        {
+            "title": "Tool use (function calling) overview",
+            "url": "https://docs.cohere.com/v2/docs/tool-use-overview",
+            "text": "Tool use connects models to external tools like search engines and APIs.",
+        },
+        {
+            "title": "Structured outputs",
+            "url": "https://docs.cohere.com/docs/structured-outputs",
+            "text": "Use JSON schema to define structured inputs/outputs for tools and responses.",
+        },
+        {
+            "title": "Chat API reference (v2)",
+            "url": "https://docs.cohere.com/reference/chat",
+            "text": "Use the Chat endpoint to generate responses and optionally call tools.",
+        },
+    ][:top_k]
+    # Return a string or a list of objects. In Step 3, we'll wrap each object into a `document` content block.
 
 
-functions_map = {"get_weather": get_weather}
+functions_map = {"search_docs": search_docs}
 
 tools = [
     {
         "type": "function",
         "function": {
-            "name": "get_weather",
-            "description": "gets the weather of a given location",
+            "name": "search_docs",
+            "description": "Search documentation and return relevant snippets as documents.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "location": {
+                    "query": {
                         "type": "string",
-                        "description": "the location to get the weather, example: San Francisco.",
-                    }
+                        "description": "The search query to look up in the docs.",
+                    },
+                    "top_k": {
+                        "type": "integer",
+                        "description": "How many documents to return.",
+                    },
                 },
-                "required": ["location"],
+                "required": ["query"],
             },
         },
     },
@@ -79,14 +99,14 @@ tools = [
 ## Parallel tool calling
 The model can determine that more than one tool call is required, where it will call multiple tools in parallel. This can be calling the same tool multiple times or different tools for any number of calls.
 
-In the example below, the user asks for the weather in Toronto and New York. This requires calling the `get_weather` function twice, one for each location. This is reflected in the model's response, where two parallel tool calls are generated.
+In the example below, the user asks for documentation about tool use and structured outputs. This requires calling the `search_docs` tool twice, once per topic. This is reflected in the model's response, where two parallel tool calls are generated.
 
 <CodeBlocks>
 ```python PYTHON
 messages = [
     {
         "role": "user",
-        "content": "What's the weather in Toronto and New York?",
+        "content": "Find docs about tool use and structured outputs.",
     }
 ]
 
@@ -110,24 +130,28 @@ curl --request POST \
   "messages": [
     {
       "role": "user",
-      "content": "What'\''s the weather in Toronto and New York?"
+      "content": "Find docs about tool use and structured outputs."
     }
   ],
   "tools": [
     {
       "type": "function",
       "function": {
-        "name": "get_weather",
-        "description": "gets the weather of a given location",
+        "name": "search_docs",
+        "description": "Search documentation and return relevant snippets as documents.",
         "parameters": {
           "type": "object",
           "properties": {
-            "location": {
+            "query": {
               "type": "string",
-              "description": "the location to get the weather, example: San Francisco."
+              "description": "The search query to look up in the docs."
+            },
+            "top_k": {
+              "type": "integer",
+              "description": "How many documents to return."
             }
           },
-          "required": ["location"]
+          "required": ["query"]
         }
       }
     }
@@ -137,21 +161,21 @@ curl --request POST \
 </CodeBlocks>
 Example response:
 ```mdx wordWrap
-I will search for the weather in Toronto and New York.
+I will search the docs for tool use and structured outputs.
 
 [
     ToolCallV2(
-        id="get_weather_9b0nr4kg58a8",
+        id="search_docs_9b0nr4kg58a8",
         type="function",
         function=ToolCallV2Function(
-            name="get_weather", arguments='{"location":"Toronto"}'
+            name="search_docs", arguments='{"query":"tool use","top_k":3}'
         ),
     ),
     ToolCallV2(
-        id="get_weather_0qq0mz9gwnqr",
+        id="search_docs_0qq0mz9gwnqr",
         type="function",
         function=ToolCallV2Function(
-            name="get_weather", arguments='{"location":"New York"}'
+            name="search_docs", arguments='{"query":"structured outputs","top_k":3}'
         ),
     ),
 ]
@@ -212,7 +236,7 @@ flowchart TD
 ## Directly answering
 A key attribute of tool use systems is the model’s ability to choose the right tools for a task. This includes the model's ability to decide to *not* use any tool, and instead, respond to a user message directly.
 
-In the example below, the user asks for a simple arithmetic question. The model determines that it does not need to use any of the available tools (only one, `get_weather`, in this case), and instead, directly answers the user.
+In the example below, the user asks a simple arithmetic question. The model determines that it does not need to use any of the available tools (only one, `search_docs`, in this case), and instead, directly answers the user.
 
 <CodeBlocks>
 ```python PYTHON
@@ -247,17 +271,21 @@ curl --request POST \
     {
       "type": "function",
       "function": {
-        "name": "get_weather",
-        "description": "gets the weather of a given location",
+        "name": "search_docs",
+        "description": "Search documentation and return relevant snippets as documents.",
         "parameters": {
           "type": "object",
           "properties": {
-            "location": {
+            "query": {
               "type": "string",
-              "description": "the location to get the weather, example: San Francisco."
+              "description": "The search query to look up in the docs."
+            },
+            "top_k": {
+              "type": "integer",
+              "description": "How many documents to return."
             }
           },
-          "required": ["location"]
+          "required": ["query"]
         }
       }
     }
@@ -297,74 +325,55 @@ As an example, suppose a tool use application has access to a web search tool. G
 - Identify the most valuable company in the US in 2023
 - Then only get the revenue figure now that the company has been identified
 
-To illustrate this, let's start with the same weather example and add another tool called `get_capital_city`, which returns the capital city of a given country.
+To illustrate this, we'll use our `search_docs` tool and ask a question that usually requires multiple searches (first for tool use basics, then for `tool_choice`).
 
-Here's the function definitions for the tools:
+Here's the function definition for the tool:
 ```python PYTHON
-def get_weather(location):
-    temperature = {
-        "bern": "22°C",
-        "madrid": "24°C",
-        "brasilia": "28°C",
-    }
-    loc = location.lower()
-    if loc in temperature:
-        return [{"temperature": {loc: temperature[loc]}}]
-    return [{"temperature": {loc: "Unknown"}}]
+def search_docs(query, top_k=3):
+    # Implement any retrieval logic here (vector DB, keyword search, etc.)
+    return [
+        {
+            "title": "Tool use (function calling) overview",
+            "url": "https://docs.cohere.com/v2/docs/tool-use-overview",
+            "text": "Tool use connects models to external tools like search engines and APIs.",
+        },
+        {
+            "title": "Usage patterns for tool use",
+            "url": "https://docs.cohere.com/v2/docs/tool-use-usage-patterns",
+            "text": "Common patterns include parallel tool calling, multi-step tool use, and more.",
+        },
+        {
+            "title": "Structured outputs",
+            "url": "https://docs.cohere.com/docs/structured-outputs",
+            "text": "Use JSON schema to define structured inputs/outputs for tools and responses.",
+        },
+    ][:top_k]
 
 
-def get_capital_city(country):
-    capital_city = {
-        "switzerland": "bern",
-        "spain": "madrid",
-        "brazil": "brasilia",
-    }
-    country = country.lower()
-    if country in capital_city:
-        return [{"capital_city": {country: capital_city[country]}}]
-    return [{"capital_city": {country: "Unknown"}}]
-
-
-functions_map = {
-    "get_capital_city": get_capital_city,
-    "get_weather": get_weather,
-}
+functions_map = {"search_docs": search_docs}
 ```
 
-And here are the corresponding tool schemas:
+And here is the corresponding tool schema:
 ```python PYTHON
 tools = [
     {
         "type": "function",
         "function": {
-            "name": "get_weather",
-            "description": "gets the weather of a given location",
+            "name": "search_docs",
+            "description": "Search documentation and return relevant snippets as documents.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "location": {
+                    "query": {
                         "type": "string",
-                        "description": "the location to get the weather, example: San Francisco.",
-                    }
+                        "description": "The search query to look up in the docs.",
+                    },
+                    "top_k": {
+                        "type": "integer",
+                        "description": "How many documents to return.",
+                    },
                 },
-                "required": ["location"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_capital_city",
-            "description": "gets the capital city of a given country",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "country": {
-                        "type": "string",
-                        "description": "the country to get the capital city for",
-                    }
-                },
-                "required": ["country"],
+                "required": ["query"],
             },
         },
     },
@@ -375,14 +384,16 @@ Next, we implement the four-step tool use workflow as described in the [previous
 
 The key difference here is the second (tool calling) and third (tool execution) steps are put in a `while` loop, which means that a sequence of this pair can happen for a number of times. This stops when the model decides in the tool calling step that no more tool calls are needed, which then triggers the fourth step (response generation).
 
-In this example, the user asks for the temperature in Brazil's capital city.
+In this example, the user asks for an explanation of tool use and how to force tool usage, with citations.
 
 ```python PYTHON
+import json
+
 # Step 1: Get the user message
 messages = [
     {
         "role": "user",
-        "content": "What's the temperature in Brazil's capital city?",
+        "content": "Explain how tool use works and how to force tool usage. Please cite your sources.",
     }
 ]
 
@@ -465,37 +476,38 @@ if response.message.citations:
                 print(f"{source.tool_output}")
         print("\n")
 ```
-The model first determines that it needs to find out the capital city of Brazil. Once it has this information, it proceeds with the next step in the sequence, which is to look up the temperature of that city.
 
-This is reflected in the model's response, where two tool calling-result pairs are generated in a sequence.
+The model may decide it needs to look up documentation about tool use first, then do a second search for specifics about forcing tool usage via `tool_choice`.
+
+This is reflected in the model's response, where multiple tool calling-result pairs can be generated in a sequence.
 
 Example response:
 ```mdx wordWrap
 TOOL PLAN:
-First, I will search for the capital city of Brazil. Then, I will search for the temperature in that city. 
+First, I will search the docs for how tool use works. Then, I will search for how to force tool usage (tool_choice).
 
 TOOL CALLS:
-Tool name: get_capital_city | Parameters: {"country":"Brazil"}
+Tool name: search_docs | Parameters: {"query":"tool use","top_k":3}
 ==================================================
 TOOL RESULT:
-[{'capital_city': {'brazil': 'brasilia'}}]
+[{'title': 'Tool use (function calling) overview', 'url': 'https://docs.cohere.com/v2/docs/tool-use-overview', 'text': 'Tool use connects models to external tools like search engines and APIs.'}]
 TOOL PLAN:
-I have found that the capital city of Brazil is Brasilia. Now, I will search for the temperature in Brasilia. 
+Now I'll search for how to force tool usage via the tool_choice parameter.
 
 TOOL CALLS:
-Tool name: get_weather | Parameters: {"location":"Brasilia"}
+Tool name: search_docs | Parameters: {"query":"tool_choice REQUIRED NONE","top_k":3}
 ==================================================
 TOOL RESULT:
-[{'temperature': {'brasilia': '28°C'}}]
+[{'title': 'Usage patterns for tool use', 'url': 'https://docs.cohere.com/v2/docs/tool-use-usage-patterns', 'text': 'Common patterns include parallel tool calling, multi-step tool use, and more.'}]
 RESPONSE:
-The temperature in Brasilia, the capital city of Brazil, is 28°C.
+Tool use lets models call external tools (like doc search) and then answer using tool results with citations. You can force tool usage with tool_choice="REQUIRED" or force a direct response with tool_choice="NONE".
 ==================================================
 CITATIONS:
 
-Start: 60| End:65| Text:'28°C.' 
+Start: 126| End:135| Text:'tool_choice'
 Sources:
-1. get_weather_p0dage9q1nv4:0
-{'temperature': '{"brasilia":"28°C"}'}
+1. search_docs_p0dage9q1nv4:0
+{'title': 'Usage patterns for tool use', 'url': 'https://docs.cohere.com/v2/docs/tool-use-usage-patterns', 'text': 'Common patterns include parallel tool calling, multi-step tool use, and more.'}
 ```
 
 **State management**
@@ -529,7 +541,9 @@ flowchart TD
 
 ## Forcing tool usage
 
-<Note>This feature is only compatible with the [Command R7B](https://docs.cohere.com/v2/docs/command-r7b) and newer models.</Note>
+<Note>
+This feature is only compatible with the [Command R7B](https://docs.cohere.com/v2/docs/command-r7b) and newer models.
+</Note>
 
 As shown in the previous examples, during the tool calling step, the model may decide to either:
 - make tool call(s)
@@ -586,7 +600,6 @@ flowchart TD
     class A,B defaultStyle;
 ```
 
-
 ## Chatbots (multi-turn)
 
 Building chatbots requires maintaining the memory or state of a conversation over multiple turns. To do this, we can keep appending each turn of a conversation to the `messages` list.
@@ -597,39 +610,50 @@ As an example, here's the messages list from the first turn of a conversation.
 from cohere import ToolCallV2, ToolCallV2Function
 
 messages = [
-    {"role": "user", "content": "What's the weather in Toronto?"},
+    {
+        "role": "user",
+        "content": "How does tool use work in Cohere? Please cite your sources.",
+    },
     {
         "role": "assistant",
-        "tool_plan": "I will search for the weather in Toronto.",
+        "tool_plan": "I will search the docs for how tool use works in Cohere.",
         "tool_calls": [
             ToolCallV2(
-                id="get_weather_1byjy32y4hvq",
+                id="search_docs_1byjy32y4hvq",
                 type="function",
                 function=ToolCallV2Function(
-                    name="get_weather",
-                    arguments='{"location":"Toronto"}',
+                    name="search_docs",
+                    arguments='{"query":"tool use Cohere","top_k":3}',
                 ),
             )
         ],
     },
     {
         "role": "tool",
-        "tool_call_id": "get_weather_1byjy32y4hvq",
+        "tool_call_id": "search_docs_1byjy32y4hvq",
         "content": [
             {
                 "type": "document",
-                "document": {"data": '{"temperature": "20C"}'},
+                "document": {
+                    "data": '{"title":"Tool use (function calling) overview","url":"https://docs.cohere.com/v2/docs/tool-use-overview","text":"Tool use connects models to external tools like search engines and APIs."}'
+                },
             }
         ],
     },
-    {"role": "assistant", "content": "It's 20°C in Toronto."},
+    {
+        "role": "assistant",
+        "content": "Tool use lets models call external tools (like doc search) and then answer using tool results with citations.",
+    },
 ]
 ```
-Then, in the second turn, when provided with a rather vague follow-up user message, the model correctly infers that the context is about the weather.
+
+Then, in the second turn, when provided with a rather vague follow-up user message, the model correctly infers that the context is still about tool use, and searches for information about `tool_choice`.
 
 <CodeBlocks>
 ```python PYTHON
-messages.append({"role": "user", "content": "What about London?"})
+messages.append(
+    {"role": "user", "content": "How do I force tool usage?"}
+)
 
 response = co.chat(
     model="command-a-03-2025", messages=messages, tools=tools
@@ -641,68 +665,67 @@ if response.message.tool_calls:
     print(response.message.tool_calls)
 ```
 ```bash cURL
-curl --request POST \
-  --url https://api.cohere.ai/v2/chat \
-  --header 'accept: application/json' \
-  --header 'content-type: application/json' \
-  --header "Authorization: bearer $CO_API_KEY" \
-  --data '{
+curl --request POST   --url https://api.cohere.ai/v2/chat   --header 'accept: application/json'   --header 'content-type: application/json'   --header "Authorization: bearer $CO_API_KEY"   --data '{
   "model": "command-a-03-2025",
   "messages": [
     {
       "role": "user",
-      "content": "What'\''s the weather in Toronto?"
+      "content": "How does tool use work in Cohere? Please cite your sources."
     },
     {
       "role": "assistant",
-      "tool_plan": "I will search for the weather in Toronto.",
+      "tool_plan": "I will search the docs for how tool use works in Cohere.",
       "tool_calls": [
         {
-          "id": "get_weather_1byjy32y4hvq",
+          "id": "search_docs_1byjy32y4hvq",
           "type": "function",
           "function": {
-            "name": "get_weather",
-            "arguments": "{\"location\":\"Toronto\"}"
+            "name": "search_docs",
+            "arguments": "{"query":"tool use Cohere","top_k":3}"
           }
         }
       ]
     },
     {
       "role": "tool",
-      "tool_call_id": "get_weather_1byjy32y4hvq",
+      "tool_call_id": "search_docs_1byjy32y4hvq",
       "content": [
         {
           "type": "document",
           "document": {
-            "data": "{\"temperature\": \"20C\"}"
+            "data": "{"title":"Tool use (function calling) overview","url":"https://docs.cohere.com/v2/docs/tool-use-overview","text":"Tool use connects models to external tools like search engines and APIs."}"
           }
         }
       ]
     },
     {
       "role": "assistant",
-      "content": "It'\''s 20°C in Toronto."
+      "content": "Tool use lets models call external tools (like doc search) and then answer using tool results with citations."
     },
     {
       "role": "user",
-      "content": "What about London?"
+      "content": "How do I force tool usage?"
     }
   ],
   "tools": [
     {
       "type": "function",
       "function": {
-        "name": "get_weather",
-        "description": "gets the weather of a given location",
+        "name": "search_docs",
+        "description": "Search documentation and return relevant snippets as documents.",
         "parameters": {
           "type": "object",
           "properties": {
-            "location": {
+            "query": {
               "type": "string",
-              "description": "the location to get the weather, example: San Francisco."
+              "description": "The search query to look up in the docs."
+            },
+            "top_k": {
+              "type": "integer",
+              "description": "How many documents to return."
             }
           },
-          "required": ["location"]
+          "required": ["query"]
         }
       }
     }
@@ -712,9 +735,9 @@ curl --request POST \
 </CodeBlocks>
 Example response:
 ```mdx wordWrap
-I will search for the weather in London. 
+I will search the docs for how to force tool usage using tool_choice.
 
-[ToolCallV2(id='get_weather_8hwpm7d4wr14', type='function', function=ToolCallV2Function(name='get_weather', arguments='{"location":"London"}'))]
+[ToolCallV2(id='search_docs_8hwpm7d4wr14', type='function', function=ToolCallV2Function(name='search_docs', arguments='{"query":"tool_choice REQUIRED NONE","top_k":3}'))]
 ```
 
 **State management**
@@ -747,4 +770,3 @@ flowchart TD
 
     class A,B,C,D,E,F,G,H,I defaultStyle;
 ```
-
