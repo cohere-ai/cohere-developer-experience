@@ -921,10 +921,17 @@ main[data-theme="default"] > *:not(#fern-sidebar):not(#fern-sidebar-spacer):not(
   max-height: 100% !important;
 }
 
+/* --- Hide empty TOC (e.g. changelog entry pages) ---
+   When the TOC has no children, hide it so it doesn't show as an empty card,
+   and restore the content card's right border-radius. */
+main[data-theme="default"] > #fern-toc:empty {
+  display: none !important;
+}
+
 /* --- TOC: visually merge with the content card ---
    The TOC (#fern-toc) is a sibling of the content in main. Give it the same
    card background and merge borders so TOC + content look like one card. */
-main[data-theme="default"] > #fern-toc {
+main[data-theme="default"] > #fern-toc:not(:empty) {
   background: var(--card-background) !important;
   border: 1px solid var(--border) !important;
   border-left: none !important;
@@ -935,13 +942,29 @@ main[data-theme="default"] > #fern-toc {
   overflow-y: auto !important;
 }
 
-/* When TOC is visible (xl+), remove right border-radius from content so they merge */
+/* When TOC is visible and non-empty (xl+), remove right border-radius from content so they merge */
 @media only screen and (min-width: 1280px) {
-  main[data-theme="default"]:has(> #fern-toc) > *:not(#fern-sidebar):not(#fern-sidebar-spacer):not(#fern-toc) {
+  main[data-theme="default"]:has(> #fern-toc:not(:empty)) > *:not(#fern-sidebar):not(#fern-sidebar-spacer):not(#fern-toc) {
     border-right: none !important;
     border-top-right-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
   }
+}
+
+/* --- Content fills full height ---
+   Make the content card and its inner layout stretch to fill the available space. */
+main[data-theme="default"] .fern-layout-page {
+  min-height: 100% !important;
+  flex: 1 !important;
+}
+
+main[data-theme="default"] .fern-layout-changelog {
+  min-height: 100% !important;
+  flex: 1 !important;
+}
+
+main[data-theme="default"] > #fern-toc:not(:empty) {
+  min-height: 100% !important;
 }
 
 /* --- Sidebar desktop: card-like with rounded corners and border --- */
