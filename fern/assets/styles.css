@@ -900,6 +900,7 @@ html, body {
 /* Main fills remaining viewport below the fixed header, with padding for card gaps */
 main[data-theme="default"] {
   padding: 12px !important;
+  gap: 12px !important;
   height: calc(100vh - var(--header-height) - 12px) !important;
   min-height: 0 !important;
   overflow: visible !important;
@@ -942,8 +943,13 @@ main[data-theme="default"] > #fern-toc:not(:empty) {
   overflow-y: auto !important;
 }
 
-/* When TOC is visible and non-empty (xl+), remove right border-radius from content so they merge */
+/* When TOC is visible and non-empty (xl+), close the gap and merge cards */
 @media only screen and (min-width: 1280px) {
+  /* Negative margin on TOC to eat the flex gap so it merges flush with content */
+  main[data-theme="default"]:has(> #fern-toc:not(:empty)) > #fern-toc:not(:empty) {
+    margin-left: -12px !important;
+  }
+
   main[data-theme="default"]:has(> #fern-toc:not(:empty)) > *:not(#fern-sidebar):not(#fern-sidebar-spacer):not(#fern-toc) {
     border-right: none !important;
     border-top-right-radius: 0 !important;
@@ -993,30 +999,43 @@ main[data-theme="default"] > #fern-toc:not(:empty) {
 }
 
 /* --- Sidebar mobile: floating card in bottom-right --- */
-[data-theme="default"]#fern-sidebar[data-viewport="mobile"] {
+#fern-sidebar[data-viewport="mobile"] {
+  background: var(--card-background) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   border-radius: 8px !important;
   border: 1px solid var(--border) !important;
-  overflow: clip !important;
-  top: calc(var(--header-height) + 12px) !important;
+  overflow: hidden !important;
+  overflow-y: auto !important;
+  top: calc(var(--header-height) + 24px) !important;
   bottom: 12px !important;
   right: 12px !important;
 }
 
-[data-theme="default"]#fern-sidebar[data-viewport="mobile"] #fern-sidebar-scroll-area {
+#fern-sidebar[data-viewport="mobile"] #fern-sidebar-scroll-area {
   padding: 24px 16px 48px 16px !important;
 }
 
+/* Hide the background image inside the mobile sidebar */
+#fern-sidebar[data-viewport="mobile"].fern-background-image {
+  background-image: none !important;
+}
+
+#fern-sidebar[data-viewport="mobile"] .fern-selection-item {
+  height: 3rem !important;
+  padding: 0.5rem 0.5rem .5rem .5rem !important;
+}
+
+
 /* Sidebar overlay */
-[data-theme="default"]#fern-sidebar-overlay {
+#fern-sidebar-overlay {
   top: calc(var(--header-height) + 12px) !important;
 }
 
 /* --- Canvas wrapper: match cohere border radius (8px instead of default 16px) --- */
 .canvas-wrapper {
   border-radius: 8px !important;
-  margin-right: 0px !important;
-  margin-bottom: 12px !important;
-  margin-left: 12px !important;
+  margin: 0 !important;
 }
 
 /* --- TOC position adjustments for canvas layout --- */
