@@ -1,6 +1,6 @@
 import React from 'react';
 
-type IconComponent = React.ComponentType<{ className?: string, size?: number, stroke?: number, disabled?: boolean }>;
+type IconComponent = React.ComponentType<{ style?: React.CSSProperties, size?: number, stroke?: number, disabled?: boolean }>;
 
 const getSvg = ({size=16, stroke=1.5, disabled, children}: {size?: number, stroke?: number, disabled?: boolean, children: React.ReactNode}) => {
   return (
@@ -84,35 +84,50 @@ type CardProps = {
 };
 
 const Card = ({ title, icon: Icon, children }: CardProps) => (
-  <div className="p-5 border rounded-2xl shadow-md fern-card">
-    <div className="flex items-center space-x-2 mb-5">
-      {Icon && <Icon className="text-gray-700" size={22} stroke={1} />}
-      <div className="text-lg font-semibold">{title}</div>
+  <div className="fern-card" style={{ padding: 20, border: '1px solid var(--border)', borderRadius: 16, boxShadow: '0 4px 6px -1px rgba(0,0,0,.1)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+      {Icon && <Icon style={{ color: '#374151' }} size={22} stroke={1} />}
+      <div style={{ fontSize: '1.125rem', fontWeight: 600 }}>{title}</div>
     </div>
     {children}
   </div>
 );
 
 type TagProps = {
-  icon?: React.ComponentType<{ className?: string, disabled?: boolean }>;
+  icon?: React.ComponentType<{ style?: React.CSSProperties, disabled?: boolean }>;
   label: React.ReactNode;
   disabled?: boolean;
 } & React.HTMLAttributes<HTMLSpanElement>;
 
-const Tag = ({ icon: Icon, label, disabled, className, ...rest }: TagProps) => (
+const Tag = ({ icon: Icon, label, disabled, style: styleProp, ...rest }: TagProps) => (
   <span
-    className={`inline-flex items-center gap-2 px-3 py-1 bg-(color:--grayscale-a3) rounded-full text-sm font-medium ${disabled ? 'opacity-50 text-gray-400' : ''}} ${className ?? ''}`}
+    style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 8,
+      paddingLeft: 12,
+      paddingRight: 12,
+      paddingTop: 4,
+      paddingBottom: 4,
+      backgroundColor: 'var(--grayscale-a3)',
+      borderRadius: 9999,
+      fontSize: '0.875rem',
+      fontWeight: 500,
+      opacity: disabled ? 0.5 : undefined,
+      color: disabled ? '#9ca3af' : undefined,
+      ...styleProp,
+    }}
     {...rest}
   >
-    {Icon ? <Icon className="w-4 h-4 text-gray-600" disabled={disabled} /> : null}
+    {Icon ? <Icon style={{ width: 16, height: 16, color: '#4b5563' }} disabled={disabled} /> : null}
     {label}
   </span>
 );
 
-type TagListProps = {className?: string, items: { id: Capability, label: string, disabled?: boolean }[] };
+type TagListProps = { style?: React.CSSProperties, items: { id: Capability, label: string, disabled?: boolean }[] };
 
-const TagList = ({ items, className }: TagListProps) => (
-  <div className={`flex flex-wrap gap-2 ${className ?? ''}`}>
+const TagList = ({ items, style: styleProp }: TagListProps) => (
+  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, ...styleProp }}>
     {items.map((item, idx) => {
       const Icon = capabilityIconMap[item.id]
       return <Tag key={idx} icon={Icon} label={item.label} disabled={item.disabled} />;
@@ -167,8 +182,8 @@ const getEndpoints = (enabledEndpoints: Endpoint[]) => {
 type ModelShowcaseProps = { model: Model };
 
 export const ModelShowcase = ({ model }: ModelShowcaseProps) => (
-  <div className="max-w-5xl mx-auto space-y-6 font-sans">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div style={{ maxWidth: '64rem', marginLeft: 'auto', marginRight: 'auto', display: 'flex', flexDirection: 'column', gap: 24, fontFamily: 'sans-serif' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, minmax(0, 1fr))', gap: 24 }} className="model-showcase-grid">
       {/* Capabilities */}
       <Card title="Capabilities" icon={IconStar}>
         <TagList items={getCapabilities(model.capabilities)} />
@@ -177,21 +192,21 @@ export const ModelShowcase = ({ model }: ModelShowcaseProps) => (
       {/* Pricing */}
       <Card title="Pricing" icon={IconCoins}>
         {model.pricing ? (
-          <div className="grid grid-cols-2 gap-4 text-center">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16, textAlign: 'center' }}>
             <div>
-              <div className="text-sm text-gray-500">Input</div>
-              <p className="text-lg font-medium">${model.pricing.input} / 1M tokens</p>
+              <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>Input</div>
+              <p style={{ fontSize: '1.125rem', fontWeight: 500 }}>${model.pricing.input} / 1M tokens</p>
             </div>
             <div>
-              <div className="text-sm text-gray-500">Output</div>
-              <p className="text-lg font-medium">${model.pricing.output} / 1M tokens</p>
+              <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>Output</div>
+              <p style={{ fontSize: '1.125rem', fontWeight: 500 }}>${model.pricing.output} / 1M tokens</p>
             </div>
           </div>
         ) : (
-          <div className="text-sm text-gray-600">
-            <p className="mb-3">
+          <div style={{ fontSize: '0.875rem', color: '#4b5563' }}>
+            <p style={{ marginBottom: 12 }}>
               For both trial keys and production keys, {model.name} is free until rate limits are reached. Learn more about rate limits for different models and key types{' '}
-              <a href="https://docs.cohere.com/docs/rate-limits" className="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer">
+              <a href="https://docs.cohere.com/docs/rate-limits" style={{ color: '#2563eb', textDecoration: 'underline' }} target="_blank" rel="noopener noreferrer">
                 here
               </a>
               .
@@ -201,7 +216,7 @@ export const ModelShowcase = ({ model }: ModelShowcaseProps) => (
             ) : (
               <p>
                 To use {model.name} in production, please reach out to sales at{' '}
-                <a href="mailto:sales@cohere.com" className="text-blue-600 hover:text-blue-800 underline">
+                <a href="mailto:sales@cohere.com" style={{ color: '#2563eb', textDecoration: 'underline' }}>
                   sales@cohere.com
                 </a>
                 .
@@ -213,7 +228,7 @@ export const ModelShowcase = ({ model }: ModelShowcaseProps) => (
 
       {/* Specs */}
       <Card title="Specifications" icon={IconWrench}>
-        <ul className="space-y-2 text-sm">
+        <ul style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.875rem' }}>
           <div><strong>Context Window:</strong> {model.specs.contextWindow} tokens</div>
           <div><strong>Max Output Tokens:</strong> {model.specs.maxOutputTokens} tokens</div>
           <div><strong>Knowledge Cutoff:</strong> {model.specs.knowledgeCutoff}</div>
@@ -225,28 +240,40 @@ export const ModelShowcase = ({ model }: ModelShowcaseProps) => (
 
       {/* Endpoints */}
       <Card title="API Endpoints" icon={IconZap}>
-        <p className='text-sm mb-3'>
+        <p style={{ fontSize: '0.875rem', marginBottom: 12 }}>
           <strong>Model ID</strong>
-          <div className="text-sm text-gray-500">{model.id}</div>
+          <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{model.id}</div>
         </p>
-        <div className="flex flex-wrap gap-2">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {getEndpoints(model.endpoints).map((ep, i) => (
             <Tag key={i} label={ep.label} disabled={ep.disabled} />
           ))}
         </div>
       </Card>
     </div>
-    <div className="flex justify-end mt-6">
+    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24 }}>
       <a
         href={"https://dashboard.cohere.com/playground?model=" + model.id}
-        className="group relative overflow-hidden inline-flex items-center justify-center px-8 py-3 text-white font-semibold rounded-full shadow transition-all duration-200 no-underline"
         style={{
-          borderRadius: '999px',
-          backgroundColor: '#2563eb',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingLeft: 32,
+          paddingRight: 32,
+          paddingTop: 12,
+          paddingBottom: 12,
+          color: '#fff',
+          fontWeight: 600,
+          borderRadius: 9999,
+          boxShadow: '0 1px 3px rgba(0,0,0,.1)',
+          transition: 'all 200ms',
           textDecoration: 'none',
+          backgroundColor: '#2563eb',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <span className="relative z-10">Try in Playground</span>
+        <span style={{ position: 'relative', zIndex: 10 }}>Try in Playground</span>
       </a>
     </div>
   </div>
