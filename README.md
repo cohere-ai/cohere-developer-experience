@@ -36,6 +36,10 @@ We welcome contributions to this repository! Feel free to pull request any of th
 
 We encourage our contributors to build the site locally to validate rendering and links.
 
+### Prerequisites
+
+- [NPM](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+
 ### Installing the local build components
 
 To install the components necessary to make local builds, run the following command from
