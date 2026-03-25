@@ -14664,6 +14664,240 @@ paths:
                     and are the least likely to be dropped."
               x-fern-type-name: V2EmbedRequest
         description: ""
+  /v2/audio/transcriptions:
+    post:
+      x-fern-audiences:
+        - public
+      summary: Create a transcription
+      operationId: create-transcription
+      description: Transcribe an audio file.
+      tags:
+        - /audio/transcriptions
+      x-fern-sdk-group-name:
+        - audio
+        - transcriptions
+      x-fern-sdk-method-name: create
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              x-fern-audiences:
+                - public
+              properties:
+                model:
+                  type: string
+                  x-fern-audiences:
+                    - public
+                  description: ID of the model to use.
+                language:
+                  type: string
+                  x-fern-audiences:
+                    - public
+                  description: The language of the input audio, supplied in
+                    [ISO-639-1](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes)
+                    format.
+                temperature:
+                  type: number
+                  x-fern-audiences:
+                    - public
+                  description: The sampling temperature, between 0 and 1. Higher values like 0.8
+                    make the output more random, while lower values like 0.2
+                    make it more focused and deterministic.
+                file:
+                  type: string
+                  x-fern-audiences:
+                    - public
+                  format: binary
+                  description: The audio file object to transcribe. Supported file extensions are
+                    flac, mp3, mpeg, mpga, ogg, and wav.
+              required:
+                - model
+                - language
+                - file
+              x-fern-type-name: AudioTranscriptionsCreateRequest
+      x-fern-examples:
+        - code-samples:
+            - sdk: go
+              name: Cohere Go SDK
+              code: >
+                //go:build ignore
+
+                // +build ignore
+
+
+                package main
+
+
+                import (
+                	"context"
+                	"log"
+                	"os"
+
+                	audio "github.com/cohere-ai/cohere-go/v2/audio"
+                	client "github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
+
+                	file, err := os.Open("./sample.wav")
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+                	defer file.Close()
+
+                	transcription, err := co.Audio.Transcriptions.Create(
+                		context.TODO(),
+                		file,
+                		&audio.TranscriptionsCreateRequest{
+                			Model:    "cohere-transcribe-03-2026",
+                			Language: "en",
+                		},
+                	)
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	log.Printf("%+v", transcription)
+                }
+            - sdk: python
+              name: Sync
+              code: |
+                import cohere
+
+                co = cohere.ClientV2()
+
+                transcription = co.audio.transcriptions.create(
+                    model="cohere-transcribe-03-2026",
+                    language="en",
+                    file=open("./sample.wav", "rb"),
+                )
+
+                print(transcription)
+            - sdk: python
+              name: Async
+              code: |
+                import asyncio
+                import cohere
+
+                co = cohere.AsyncClientV2()
+
+
+                async def main():
+                    transcription = await co.audio.transcriptions.create(
+                        model="cohere-transcribe-03-2026",
+                        language="en",
+                        file=open("./sample.wav", "rb"),
+                    )
+
+                    print(transcription)
+
+
+                asyncio.run(main())
+            - sdk: java
+              name: Cohere java SDK
+              code: |
+                /* (C)2024 */
+                import com.cohere.api.Cohere;
+                import com.cohere.api.resources.audio.transcriptions.requests.TranscriptionsCreateRequest;
+                import com.cohere.api.resources.audio.transcriptions.types.AudioTranscriptionsCreateResponse;
+                import java.io.File;
+
+                public class TranscriptionsPost {
+                  public static void main(String[] args) {
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
+
+                    AudioTranscriptionsCreateResponse response =
+                        cohere
+                            .audio()
+                            .transcriptions()
+                            .create(
+                                new File("./sample.wav"),
+                                TranscriptionsCreateRequest.builder()
+                                    .model("cohere-transcribe-03-2026")
+                                    .language("en")
+                                    .build());
+
+                    System.out.println(response);
+                  }
+                }
+            - sdk: typescript
+              name: Cohere TypeScript SDK
+              code: >
+                import { CohereClient } from 'cohere-ai';
+
+
+                const fs = require('fs');
+
+
+                const cohere = new CohereClient({});
+
+
+                (async () => {
+                  const transcription = await cohere.audio.transcriptions.create(
+                    fs.createReadStream('./sample.wav'),
+                    {
+                      model: 'cohere-transcribe-03-2026',
+                      language: 'en',
+                    }
+                  );
+
+                  console.log(transcription);
+                })();
+            - sdk: curl
+              name: cURL
+              code: |
+                curl --request POST \
+                  --url https://api.cohere.com/v2/audio/transcriptions \
+                  --header "Authorization: Bearer $CO_API_KEY" \
+                  --form model=cohere-transcribe-03-2026 \
+                  --form language=en \
+                  --form file=@./sample.wav
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                x-fern-audiences:
+                  - public
+                properties:
+                  text:
+                    type: string
+                    x-fern-audiences:
+                      - public
+                    description: The transcribed text.
+                required:
+                  - text
+                x-fern-type-name: AudioTranscriptionsCreateResponse
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "429":
+          $ref: "#/components/responses/RateLimit"
+        "498":
+          $ref: "#/components/responses/InvalidToken"
+        "499":
+          $ref: "#/components/responses/RequestCancelled"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
   /v2/batches:
     get:
       summary: List batches
