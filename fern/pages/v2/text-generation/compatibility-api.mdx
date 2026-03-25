@@ -790,9 +790,52 @@ Example response (via the Python SDK):
 [0.0045051575, 0.046905518, 0.025543213, 0.009651184, -0.024993896]
 ```
 
+## Audio transcriptions
+
+You can pass an audio file to the Audio Transcriptions API to to create a transcription of the audio for files
+up to 25MB in size.
+
+<Tabs>
+<Tab title="Python">
+    
+```python PYTHON
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.cohere.ai/compatibility/v1",
+    api_key=COHERE_API_KEY,
+)
+
+response = client.audio.transcriptions.create(
+    model="cohere-transcribe-03-2026",
+    language="en",
+    file=open("./sample.wav", "rb"),
+)
+
+print(response)
+```
+
+</Tab>
+
+<Tab title="cURL">
+
+```bash
+curl --request POST \
+  --url https://api.cohere.com/compatibility/v1/audio/transcriptions \
+  --header "Authorization: Bearer $CO_API_KEY" \
+  --form model=cohere-transcribe-03-2026 \
+  --form language=en \
+  --form file=@./sample.wav
+
+```
+
+</Tab>
+
+</Tabs>
+
 ## Supported parameters
 
-The following is the list supported parameters in the Compatibility API, including those that are not explicitly demonstrated in the examples above:
+The following is the list of supported parameters in the Compatibility API, including those that are not explicitly demonstrated in the examples above:
 
 ### Chat completions
 
@@ -822,6 +865,23 @@ Passing **`medium`** or **`low`** is **not supported** at this time.
 - `model`
 - `encoding_format`
 
+### Audio transcriptions
+
+- `model`
+- `language`
+- `file`
+- `response_format`
+- `temperature`
+
+<Warning title="Note">  
+Please take note the following:
+- `language` is required in the Cohere Audio Transcriptions API but optional in the OpenAI Audio
+Transcriptions API.
+- `file` must be the last parameter in the cURL call.
+- The Cohere Audio Transcriptions API supports FLAC, MP3, MPEG, MPGA, OGG, and WAV files but does not support
+the following file types that the OpenAI Audio Transcriptions API does support: MP4, M4A, and WEBM.
+</Warning>
+
 ## Unsupported parameters
 
 The following parameters are not supported in the Compatibility API:
@@ -843,6 +903,16 @@ The following parameters are not supported in the Compatibility API:
 
 - `dimensions`
 - `user`
+
+### Audio transcriptions
+
+- `stream`
+- `prompt`
+- `timestamp_granularities`
+- `chunking_strategy`
+- `include`
+- `known_speaker_names`
+- `known_speaker_references`
 
 ### Cohere-specific parameters
 
