@@ -31,7 +31,10 @@ If you don't have an audio file already, download the example to follow along.
 
 ### Passing the audio file
 
-Use the following command to pass the audio file to the Audio Transcription endpoint.
+Use the following code to pass the audio file to the Audio Transcription endpoint.
+
+<Tabs>
+<Tab title="curl">
 
 ```curl
 curl -X POST "https://api.cohere.com/v2/audio/transcriptions" \
@@ -40,16 +43,51 @@ curl -X POST "https://api.cohere.com/v2/audio/transcriptions" \
   -F "language=en" \
   -F "file=@./transcribe-model-sample-derrida-mashup.wav" \
 ```
+</Tab>
+<Tab title="Python">
 
+Install the latest Cohere SDK.
+
+```bash
+pip -U install cohere
+```
+
+Import the `ClientV2` class, instantiate it, and then use its `create` method to pass the audio file.
+
+```python
+from cohere import ClientV2
+import os
+
+api_key = os.environ["TRIAL_KEY"]
+client = ClientV2(api_key)
+
+with open("transcribe-model-sample-derrida-mashup.wav", "rb") as f:
+    response = client.audio.transcriptions.create(
+        model="cohere-transcribe-03-2026", language="en", file=f
+    )
+
+print(response)
+```
+
+</Tab>
+</Tabs>
 
 ### Receiving the response
 
 It should return a response similar to the following.
 
+<Tabs>
+<Tab title="curl">
 ```bash
 {"text":"I speak only one language, and it's not my own, but the poet is a man of metaphor."} 
 ```
-
+</Tab>
+<Tab title="Python">
+```bash
+text="I speak only one language, and it's not my own, but the poet is a man of metaphor."
+```
+</Tab>
+</Tabs>
 </Steps>
 
 
