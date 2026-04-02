@@ -127,7 +127,10 @@ with search_expander:
     "language_name"]
 ```
 
-Use the `embed-multilingual-v2.0` model to embed the movie description. If the text is longer than 4096 tokens, the co.embed function (truncate parameter) will truncate it for you. The co.embed function will convert the `query_text` into an embedding, which is a 768-dimensional vector of floats that uniquely represents a movie description.
+Use the `embed-multilingual-v3.0` model to embed the movie description. If the text is longer than 512 tokens,
+the co.embed function (truncate parameter) will truncate it for you. The co.embed function will convert the
+`query_text` into an embedding, which is a 1024-dimensional vector of floats that uniquely represents a movie
+description.
 
 Text that means the same thing in different languages will be close together in the embedding space. To achieve this, Cohere’s embed endpoint uses a multilingual model to represent text in a language-agnostic way.
 
@@ -136,7 +139,7 @@ load_dotenv(".env")
 COHERE_API_KEY = os.environ.get("COHERE_API_KEY")  
 co = cohere.Client(COHERE_API_KEY)
 
-model_name: str = 'embed-multilingual-v2.0'
+model_name: str = 'embed-multilingual-v3.0'
 
 vectors_to_search = np.array(co.embed(model=model_name, texts=[query_text],  
   truncate="RIGHT").embeddings, dtype = np.float32)
