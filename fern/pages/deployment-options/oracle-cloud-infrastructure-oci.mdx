@@ -44,7 +44,10 @@ response = client.chat(
     model="command-a-03-2025",
     messages=[
         {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "Explain RAG in three sentences."},
+        {
+            "role": "user",
+            "content": "Explain RAG in three sentences.",
+        },
     ],
 )
 
@@ -101,7 +104,9 @@ client = cohere.OciClientV2(
 
 for event in client.chat_stream(
     model="command-a-03-2025",
-    messages=[{"role": "user", "content": "Explain RAG in three sentences."}],
+    messages=[
+        {"role": "user", "content": "Explain RAG in three sentences."}
+    ],
 ):
     if event.type == "content-delta":
         print(event.delta.message.content.text, end="")
@@ -232,22 +237,29 @@ client = cohere.OciClientV2(
 
 response = client.chat(
     model="command-a-03-2025",
-    messages=[{"role": "user", "content": "What's the weather in Toronto?"}],
+    messages=[
+        {"role": "user", "content": "What's the weather in Toronto?"}
+    ],
     max_tokens=200,
-    tools=[{
-        "type": "function",
-        "function": {
-            "name": "get_weather",
-            "description": "Get current weather for a location",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "location": {"type": "string", "description": "City name"}
+    tools=[
+        {
+            "type": "function",
+            "function": {
+                "name": "get_weather",
+                "description": "Get current weather for a location",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "location": {
+                            "type": "string",
+                            "description": "City name",
+                        }
+                    },
+                    "required": ["location"],
                 },
-                "required": ["location"],
             },
-        },
-    }],
+        }
+    ],
 )
 
 if response.message.tool_calls:
@@ -275,13 +287,23 @@ with open("document.png", "rb") as f:
 
 response = client.chat(
     model="command-a-vision",
-    messages=[{
-        "role": "user",
-        "content": [
-            {"type": "text", "text": "Describe what you see in this image."},
-            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
-        ],
-    }],
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Describe what you see in this image.",
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{img_b64}"
+                    },
+                },
+            ],
+        }
+    ],
 )
 
 print(response.message.content[0].text)
@@ -361,7 +383,9 @@ query_embedding = client.embed(
 # Find the most relevant document (cosine similarity)
 best_idx = max(
     range(len(documents)),
-    key=lambda i: sum(a * b for a, b in zip(query_embedding, doc_embeddings[i])),
+    key=lambda i: sum(
+        a * b for a, b in zip(query_embedding, doc_embeddings[i])
+    ),
 )
 print(f"Best match: {documents[best_idx]}")
 
@@ -370,8 +394,14 @@ print(f"Best match: {documents[best_idx]}")
 response = client.chat(
     model="command-a-03-2025",
     messages=[
-        {"role": "system", "content": "Answer based on the provided context only."},
-        {"role": "user", "content": f"Context: {documents[best_idx]}\n\nWhat certifications does OCI have?"},
+        {
+            "role": "system",
+            "content": "Answer based on the provided context only.",
+        },
+        {
+            "role": "user",
+            "content": f"Context: {documents[best_idx]}\n\nWhat certifications does OCI have?",
+        },
     ],
     temperature=0.3,
 )
@@ -381,55 +411,86 @@ print(f"Answer: {response.message.content[0].text}")
 
 response = client.chat(
     model="command-a-03-2025",
-    messages=[{"role": "user", "content": "What's the current stock price of ORCL?"}],
-    tools=[{
-        "type": "function",
-        "function": {
-            "name": "get_stock_price",
-            "description": "Get the current stock price for a ticker symbol",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "ticker": {"type": "string", "description": "Stock ticker symbol"}
+    messages=[
+        {
+            "role": "user",
+            "content": "What's the current stock price of ORCL?",
+        }
+    ],
+    tools=[
+        {
+            "type": "function",
+            "function": {
+                "name": "get_stock_price",
+                "description": "Get the current stock price for a ticker symbol",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "ticker": {
+                            "type": "string",
+                            "description": "Stock ticker symbol",
+                        }
+                    },
+                    "required": ["ticker"],
                 },
-                "required": ["ticker"],
             },
-        },
-    }],
+        }
+    ],
 )
 
 # Model returns a tool call
 tool_call = response.message.tool_calls[0]
-print(f"Tool call: {tool_call.function.name}({tool_call.function.arguments})")
+print(
+    f"Tool call: {tool_call.function.name}({tool_call.function.arguments})"
+)
 
 # Send the tool result back
 final = client.chat(
     model="command-a-03-2025",
     messages=[
-        {"role": "user", "content": "What's the current stock price of ORCL?"},
+        {
+            "role": "user",
+            "content": "What's the current stock price of ORCL?",
+        },
         {
             "role": "assistant",
-            "tool_calls": [{"id": tool_call.id, "type": "function", "function": {"name": tool_call.function.name, "arguments": tool_call.function.arguments}}],
+            "tool_calls": [
+                {
+                    "id": tool_call.id,
+                    "type": "function",
+                    "function": {
+                        "name": tool_call.function.name,
+                        "arguments": tool_call.function.arguments,
+                    },
+                }
+            ],
             "tool_plan": response.message.tool_plan,
         },
         {
             "role": "tool",
             "tool_call_id": tool_call.id,
-            "content": [{"type": "text", "text": '{"ticker": "ORCL", "price": 187.42, "currency": "USD"}'}],
+            "content": [
+                {
+                    "type": "text",
+                    "text": '{"ticker": "ORCL", "price": 187.42, "currency": "USD"}',
+                }
+            ],
         },
     ],
-    tools=[{
-        "type": "function",
-        "function": {
-            "name": "get_stock_price",
-            "description": "Get the current stock price for a ticker symbol",
-            "parameters": {
-                "type": "object",
-                "properties": {"ticker": {"type": "string"}},
-                "required": ["ticker"],
+    tools=[
+        {
+            "type": "function",
+            "function": {
+                "name": "get_stock_price",
+                "description": "Get the current stock price for a ticker symbol",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"ticker": {"type": "string"}},
+                    "required": ["ticker"],
+                },
             },
-        },
-    }],
+        }
+    ],
 )
 print(f"Final answer: {final.message.content[0].text}")
 
@@ -440,13 +501,23 @@ with open("chart.png", "rb") as f:
 
 response = client.chat(
     model="command-a-vision",
-    messages=[{
-        "role": "user",
-        "content": [
-            {"type": "text", "text": "Describe the trend shown in this chart."},
-            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
-        ],
-    }],
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Describe the trend shown in this chart.",
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{img_b64}"
+                    },
+                },
+            ],
+        }
+    ],
 )
 print(f"Vision: {response.message.content[0].text}")
 
@@ -455,7 +526,12 @@ print(f"Vision: {response.message.content[0].text}")
 print("Streaming: ", end="")
 for event in client.chat_stream(
     model="command-a-03-2025",
-    messages=[{"role": "user", "content": "Summarize why enterprises choose OCI for AI."}],
+    messages=[
+        {
+            "role": "user",
+            "content": "Summarize why enterprises choose OCI for AI.",
+        }
+    ],
 ):
     if event.type == "content-delta":
         print(event.delta.message.content.text, end="")
