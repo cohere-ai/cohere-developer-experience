@@ -4,80 +4,544 @@ slug: "docs/oracle-cloud-infrastructure-oci"
 
 hidden: false
  
-description: "This page describes how to work with Cohere models on Oracle Cloud Infrastructure (OCI)"
+description: "Use Cohere models on OCI Generative AI with the native Cohere Python SDK"
 image: "../../assets/images/f1cc130-cohere_meta_image.jpg"  
-keywords: "generative AI, large language models, Oracle Cloud Infrastructure, OCI"
+keywords: "generative AI, large language models, Oracle Cloud Infrastructure, OCI, Cohere SDK"
 
 createdAt: "Mon Feb 22 2024 14:53:59 GMT+0000 (Coordinated Universal Time)"
-updatedAt: "Wed May 31 2024 16:11:36 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Fri Apr 11 2026 00:00:00 GMT+0000 (Coordinated Universal Time)"
 ---
-In an effort to make our language-model capabilities more widely available, we've partnered with a few major platforms to create hosted versions of our offerings.
 
-Here, you'll learn how to use Oracle Cloud Infrastructure (OCI) to deploy both the Cohere Command and the Cohere Embed models on the AWS cloud computing platform. The following models are available on OCI:
+The Cohere Python SDK natively supports Oracle Cloud Infrastructure (OCI) Generative AI service. With `pip install cohere[oci]`, you get `OciClient` and `OciClientV2` classes that behave identically to the Cohere-hosted `Client` and `ClientV2` -- same methods, same response types, same streaming format. Switching from Cohere's hosted API to OCI Generative AI means changing one constructor.
 
-- Command A Reasoning 
-- Command A Vision
-- Command A 
-- Command R+ 08-2024
-- Command R 08-2024
-- Command R+ (retired)
-- Command R (retired)
-- Command (deprecated)
-- Command light (deprecated)
-- Embed v4
-- Embed English v3
-- Embed English v3 light 
-- Embed Multilingual v3
-- Embed Multilingual v3 light
-- Rerank v3.5
+Under the hood, the SDK handles URL rewriting, request and response format translation, OCI cryptographic request signing, and streaming event transformation. Your application code never sees the OCI-specific details.
 
-We also support fine-tuning for Command R (`command-r-04-2024` and `command-r-08-2024`) on OCI. 
+## Available Models
 
-For the most updated list of available models, see the [OCI documentation](https://docs.oracle.com/en-us/iaas/Content/generative-ai/pretrained-models.htm).
+The SDK supports all Cohere models available on OCI Generative AI, including the Command A family (via `OciClientV2`), the Command R family (via `OciClient`), Embed models, and Rerank models. For the current list of available models and their IDs, see the [OCI Generative AI pretrained models documentation](https://docs.oracle.com/en-us/iaas/Content/generative-ai/pretrained-models.htm).
 
-## Working With Cohere Models on OCI
+## Installation
 
-- [Embeddings generation](https://docs.oracle.com/en-us/iaas/Content/generative-ai/use-playground-embed.htm#playground-embed)
+```bash
+pip install cohere[oci]
+```
 
-And OCI offers three ways to perform these workloads:
+This installs the Cohere SDK along with the OCI SDK dependency required for authentication and request signing.
 
-- The console
-- The CLI
-- The API
+## Quick Start
 
-In the sections that follow, we'll briefly outline how to use each, and link out to other documentation to fill in any remaining gaps. 
+### Chat with Command A (V2 API)
 
-### The Console
+```python
+import cohere
 
-OCI offers a console through which you can perform many generative AI tasks. It allows you to select your region and the model you wish to use, then pass a prompt to the underlying model, configuring parameters as you wish.
+client = cohere.OciClientV2(
+    oci_region="us-chicago-1",
+    oci_compartment_id="ocid1.compartment.oc1...",
+)
 
-![](../../assets/images/oracle-cloud-infrastructure-oci-1.png)
+response = client.chat(
+    model="command-a-03-2025",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {
+            "role": "user",
+            "content": "Explain RAG in three sentences.",
+        },
+    ],
+)
 
+print(response.message.content[0].text)
+```
 
-If you want to use the console for [chat](https://docs.oracle.com/en-us/iaas/Content/generative-ai/use-playground-chat.htm), [text generation](https://docs.oracle.com/en-us/iaas/Content/generative-ai/use-playground-generate.htm#playground-generate), [summarization](https://docs.oracle.com/en-us/iaas/Content/generative-ai/use-playground-summarize.htm#playground-summarize), and [embeddings](https://docs.oracle.com/en-us/iaas/Content/generative-ai/use-playground-embed.htm#playground-embed), visit those links and select "console."
+### Chat with Command R (V1 API)
 
-![](../../assets/images/oracle-cloud-infrastructure-oci-2.png)
+```python
+import cohere
 
+client = cohere.OciClient(
+    oci_region="us-chicago-1",
+    oci_compartment_id="ocid1.compartment.oc1...",
+)
 
-### The CLI
+response = client.chat(
+    model="command-r-plus-08-2024",
+    message="Explain RAG in three sentences.",
+)
 
-With OCI's command line interface (CLI), it's possible to use Cohere models to generate text, get embeddings, or extract information. 
+print(response.text)
+```
 
-![](../../assets/images/oracle-cloud-infrastructure-oci-3.png)
+### Embeddings
 
+```python
+import cohere
 
-If you want to use the console for [text generation](https://docs.oracle.com/en-us/iaas/Content/generative-ai/use-playground-generate.htm#playground-generate), [summarization](https://docs.oracle.com/en-us/iaas/Content/generative-ai/use-playground-summarize.htm#playground-summarize), and [embeddings](https://docs.oracle.com/en-us/iaas/Content/generative-ai/use-playground-embed.htm#playground-embed), visit those links and select "CLI."
+client = cohere.OciClientV2(
+    oci_region="us-chicago-1",
+    oci_compartment_id="ocid1.compartment.oc1...",
+)
 
-![](../../assets/images/oracle-cloud-infrastructure-oci-4.png)
+response = client.embed(
+    model="embed-english-v3.0",
+    texts=["Oracle Cloud Infrastructure", "Generative AI service"],
+    input_type="search_document",
+)
 
+for i, embedding in enumerate(response.embeddings.float_):
+    print(f"Text {i}: {len(embedding)} dimensions")
+```
 
-### The API
+### Streaming (V2)
 
-If you're trying to use Cohere models on OCI programmatically -- i.e. as part of software development, or while building an application -- you'll likely want to use the API.
+```python
+import cohere
 
-![](../../assets/images/oracle-cloud-infrastructure-oci-5.png)
+client = cohere.OciClientV2(
+    oci_region="us-chicago-1",
+    oci_compartment_id="ocid1.compartment.oc1...",
+)
 
+for event in client.chat_stream(
+    model="command-a-03-2025",
+    messages=[
+        {"role": "user", "content": "Explain RAG in three sentences."}
+    ],
+):
+    if event.type == "content-delta":
+        print(event.delta.message.content.text, end="")
+```
 
-If you want to use the console for [text generation](https://docs.oracle.com/en-us/iaas/Content/generative-ai/use-playground-generate.htm#playground-generate), [summarization](https://docs.oracle.com/en-us/iaas/Content/generative-ai/use-playground-summarize.htm#playground-summarize), and [embeddings](https://docs.oracle.com/en-us/iaas/Content/generative-ai/use-playground-embed.htm#playground-embed), visit those links and select "API."
+### Streaming (V1)
 
-![](../../assets/images/oracle-cloud-infrastructure-oci-6.png)
+```python
+import cohere
+
+client = cohere.OciClient(
+    oci_region="us-chicago-1",
+    oci_compartment_id="ocid1.compartment.oc1...",
+)
+
+for event in client.chat_stream(
+    model="command-r-plus-08-2024",
+    message="Explain RAG in three sentences.",
+):
+    if hasattr(event, "text") and event.text:
+        print(event.text, end="")
+```
+
+The SDK transforms OCI's streaming format to match Cohere's standard streaming events. V2 uses `message-start`, `content-delta`, `content-end`, `message-end`; V1 uses `stream-start`, `text-generation`, `stream-end`.
+
+## Authentication
+
+The SDK supports five authentication methods, covering every deployment scenario from local development to serverless production.
+
+### 1. Config File (Default)
+
+Uses `~/.oci/config` with the `DEFAULT` profile. No additional parameters needed beyond region and compartment.
+
+```python
+client = cohere.OciClientV2(
+    oci_region="us-chicago-1",
+    oci_compartment_id="ocid1.compartment.oc1...",
+)
+```
+
+### 2. Custom Profile
+
+Use a specific profile from your OCI config file.
+
+```python
+client = cohere.OciClientV2(
+    oci_profile="MY_PROFILE",
+    oci_region="us-chicago-1",
+    oci_compartment_id="ocid1.compartment.oc1...",
+)
+```
+
+### 3. Session-based Authentication
+
+Works with OCI CLI session tokens. The SDK automatically re-reads the token file on each request, so `oci session refresh` is picked up without restarting the client.
+
+```python
+client = cohere.OciClientV2(
+    oci_profile="MY_SESSION_PROFILE",  # Profile with security_token_file
+    oci_region="us-chicago-1",
+    oci_compartment_id="ocid1.compartment.oc1...",
+)
+```
+
+### 4. Direct Credentials
+
+Pass OCI credentials directly without a config file. Useful for CI/CD pipelines or containerized deployments.
+
+```python
+client = cohere.OciClientV2(
+    oci_user_id="ocid1.user.oc1...",
+    oci_fingerprint="xx:xx:xx:...",
+    oci_tenancy_id="ocid1.tenancy.oc1...",
+    oci_private_key_path="~/.oci/key.pem",
+    oci_region="us-chicago-1",
+    oci_compartment_id="ocid1.compartment.oc1...",
+)
+```
+
+### 5. Instance Principal
+
+For applications running on OCI Compute instances. No credentials needed -- the instance's identity is used automatically.
+
+```python
+client = cohere.OciClientV2(
+    auth_type="instance_principal",
+    oci_region="us-chicago-1",
+    oci_compartment_id="ocid1.compartment.oc1...",
+)
+```
+
+### 6. Resource Principal
+
+For OCI Functions (serverless). Zero credentials in the deployment -- the function inherits the compartment's security posture.
+
+```python
+client = cohere.OciClientV2(
+    auth_type="resource_principal",
+    oci_region="us-chicago-1",
+    oci_compartment_id="ocid1.compartment.oc1...",
+)
+```
+
+## V1 vs V2 API
+
+The SDK provides two client classes that map to the two OCI Generative AI API formats:
+
+| | `OciClient` (V1) | `OciClientV2` (V2) |
+|---|---|---|
+| **Chat models** | Command R family | Command A family |
+| **Chat format** | Single `message` string | `messages` array |
+| **Streaming events** | `text-generation`, `stream-end` | `message-start`, `content-delta`, `message-end` |
+| **Embed response** | `response.embeddings` (list of floats) | `response.embeddings.float_` (dict by type) |
+| **Tool use** | `tools` + `tool_results` | `tools` + `tool_calls` + `tool_choice` |
+| **Thinking** | Not supported | Supported via `thinking` parameter |
+
+## Tool Use (V2)
+
+Command A supports native tool use on OCI Generative AI. Define tools and the model will return `tool_calls` with structured arguments.
+
+```python
+import cohere
+
+client = cohere.OciClientV2(
+    oci_region="us-chicago-1",
+    oci_compartment_id="ocid1.compartment.oc1...",
+)
+
+response = client.chat(
+    model="command-a-03-2025",
+    messages=[
+        {"role": "user", "content": "What's the weather in Toronto?"}
+    ],
+    max_tokens=200,
+    tools=[
+        {
+            "type": "function",
+            "function": {
+                "name": "get_weather",
+                "description": "Get current weather for a location",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "location": {
+                            "type": "string",
+                            "description": "City name",
+                        }
+                    },
+                    "required": ["location"],
+                },
+            },
+        }
+    ],
+)
+
+if response.message.tool_calls:
+    for tc in response.message.tool_calls:
+        print(f"{tc.function.name}({tc.function.arguments})")
+# Output: get_weather({"location":"Toronto"})
+```
+
+## Vision (V2)
+
+Command A Vision can reason over images alongside text. Pass images as base64 data URIs or URLs in the message content.
+
+```python
+import cohere
+import base64
+
+client = cohere.OciClientV2(
+    oci_region="us-chicago-1",
+    oci_compartment_id="ocid1.compartment.oc1...",
+)
+
+# Read and encode an image
+with open("document.png", "rb") as f:
+    img_b64 = base64.b64encode(f.read()).decode()
+
+response = client.chat(
+    model="command-a-vision",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Describe what you see in this image.",
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{img_b64}"
+                    },
+                },
+            ],
+        }
+    ],
+)
+
+print(response.message.content[0].text)
+```
+
+## Embed v4
+
+Embed v4 is Cohere's latest embedding model with 1536 dimensions, available alongside the Embed v3 family.
+
+```python
+import cohere
+
+client = cohere.OciClientV2(
+    oci_region="us-chicago-1",
+    oci_compartment_id="ocid1.compartment.oc1...",
+)
+
+response = client.embed(
+    model="embed-v4.0",
+    texts=["Oracle Cloud Infrastructure", "Generative AI service"],
+    input_type="search_document",
+)
+
+for i, embedding in enumerate(response.embeddings.float_):
+    print(f"Text {i}: {len(embedding)} dimensions")
+# Output: 1536 dimensions per text
+```
+
+## Supported Features
+
+| Feature | OCI Support |
+|---|---|
+| `chat` | Supported |
+| `chat_stream` | Supported |
+| `embed` | Supported |
+| `rerank` | Dedicated endpoints only |
+| `generate` | Not supported (OCI base models require fine-tuning) |
+| `classify` | Not supported |
+| `summarize` | Not supported |
+| `tokenize` | Offline only |
+| `detokenize` | Offline only |
+
+## End-to-End Example
+
+The following example demonstrates a complete application flow on OCI Generative AI: embedding documents for a knowledge base, retrieving relevant context, using tool calling for live data, processing images with vision, and streaming a final response.
+
+```python
+import cohere
+import base64
+
+# Initialize V2 client for Command A models
+client = cohere.OciClientV2(
+    oci_region="us-chicago-1",
+    oci_compartment_id="ocid1.compartment.oc1...",
+)
+
+# --- Step 1: Build a knowledge base with embeddings ---
+
+documents = [
+    "Oracle Cloud Infrastructure provides enterprise-grade AI services.",
+    "Cohere Command A is a 111B parameter model with 256K context window.",
+    "OCI Generative AI is FedRAMP High and DISA IL5 authorized.",
+]
+
+doc_embeddings = client.embed(
+    model="embed-english-v3.0",
+    texts=documents,
+    input_type="search_document",
+).embeddings.float_
+
+query_embedding = client.embed(
+    model="embed-english-v3.0",
+    texts=["What security certifications does OCI have?"],
+    input_type="search_query",
+).embeddings.float_[0]
+
+# Find the most relevant document (cosine similarity)
+best_idx = max(
+    range(len(documents)),
+    key=lambda i: sum(
+        a * b for a, b in zip(query_embedding, doc_embeddings[i])
+    ),
+)
+print(f"Best match: {documents[best_idx]}")
+
+# --- Step 2: Grounded chat with retrieved context ---
+
+response = client.chat(
+    model="command-a-03-2025",
+    messages=[
+        {
+            "role": "system",
+            "content": "Answer based on the provided context only.",
+        },
+        {
+            "role": "user",
+            "content": f"Context: {documents[best_idx]}\n\nWhat certifications does OCI have?",
+        },
+    ],
+    temperature=0.3,
+)
+print(f"Answer: {response.message.content[0].text}")
+
+# --- Step 3: Tool use — call an external API ---
+
+response = client.chat(
+    model="command-a-03-2025",
+    messages=[
+        {
+            "role": "user",
+            "content": "What's the current stock price of ORCL?",
+        }
+    ],
+    tools=[
+        {
+            "type": "function",
+            "function": {
+                "name": "get_stock_price",
+                "description": "Get the current stock price for a ticker symbol",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "ticker": {
+                            "type": "string",
+                            "description": "Stock ticker symbol",
+                        }
+                    },
+                    "required": ["ticker"],
+                },
+            },
+        }
+    ],
+)
+
+# Model returns a tool call
+tool_call = response.message.tool_calls[0]
+print(
+    f"Tool call: {tool_call.function.name}({tool_call.function.arguments})"
+)
+
+# Send the tool result back
+final = client.chat(
+    model="command-a-03-2025",
+    messages=[
+        {
+            "role": "user",
+            "content": "What's the current stock price of ORCL?",
+        },
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": tool_call.id,
+                    "type": "function",
+                    "function": {
+                        "name": tool_call.function.name,
+                        "arguments": tool_call.function.arguments,
+                    },
+                }
+            ],
+            "tool_plan": response.message.tool_plan,
+        },
+        {
+            "role": "tool",
+            "tool_call_id": tool_call.id,
+            "content": [
+                {
+                    "type": "text",
+                    "text": '{"ticker": "ORCL", "price": 187.42, "currency": "USD"}',
+                }
+            ],
+        },
+    ],
+    tools=[
+        {
+            "type": "function",
+            "function": {
+                "name": "get_stock_price",
+                "description": "Get the current stock price for a ticker symbol",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"ticker": {"type": "string"}},
+                    "required": ["ticker"],
+                },
+            },
+        }
+    ],
+)
+print(f"Final answer: {final.message.content[0].text}")
+
+# --- Step 4: Vision — analyze an image ---
+
+with open("chart.png", "rb") as f:
+    img_b64 = base64.b64encode(f.read()).decode()
+
+response = client.chat(
+    model="command-a-vision",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Describe the trend shown in this chart.",
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{img_b64}"
+                    },
+                },
+            ],
+        }
+    ],
+)
+print(f"Vision: {response.message.content[0].text}")
+
+# --- Step 5: Stream a response in real time ---
+
+print("Streaming: ", end="")
+for event in client.chat_stream(
+    model="command-a-03-2025",
+    messages=[
+        {
+            "role": "user",
+            "content": "Summarize why enterprises choose OCI for AI.",
+        }
+    ],
+):
+    if event.type == "content-delta":
+        print(event.delta.message.content.text, end="")
+print()
+```
+
+## Additional Resources
+
+- [Cohere Python SDK on GitHub](https://github.com/cohere-ai/cohere-python)
+- [OCI Generative AI Documentation](https://docs.oracle.com/en-us/iaas/Content/generative-ai/home.htm)
+- [OCI Generative AI Pretrained Models](https://docs.oracle.com/en-us/iaas/Content/generative-ai/pretrained-models.htm)
+
+You can also work with Cohere models on OCI through the [OCI Console](https://docs.oracle.com/en-us/iaas/Content/generative-ai/overview.htm), the [OCI CLI](https://docs.oracle.com/en-us/iaas/tools/oci-cli/latest/oci_cli_docs/cmdref/generative-ai-inference.html), or the [OCI API](https://docs.oracle.com/en-us/iaas/api/#/en/generative-ai-inference/) directly.
