@@ -1,0 +1,589 @@
+paths:
+  /v2/batches:
+    post:
+      x-fern-examples:
+        - headers:
+            X-Client-Name: my-cool-project
+          request:
+            name: Customer Support Batch Q2
+            input_dataset_id: ds_8f7a6b3c9d2e4f1a
+            model: command-xlarge-nightly
+          response:
+            body:
+              batch:
+                id: batch_123e4567-e89b-12d3-a456-426614174000
+                name: Customer Support Batch Q2
+                creator_id: user_987f6543-a21b-34c5-d678-123456789abc
+                org_id: org_456a789b-c12d-34e5-f678-abcdef123456
+                status: BATCH_STATUS_IN_PROGRESS
+                created_at: '2024-01-15T09:30:00Z'
+                updated_at: '2024-01-15T09:30:00Z'
+                input_dataset_id: ds_8f7a6b3c9d2e4f1a
+                output_dataset_id: ds_9a8b7c6d5e4f3a2b
+                input_tokens: '125000'
+                output_tokens: '98000'
+                model: command-xlarge-nightly
+                num_records: 1500
+                num_successful_records: 1490
+                num_failed_records: 10
+                status_reason: Batch processing is ongoing with minor failures.
+  /v2/batches/id:cancel:
+    post:
+      x-fern-examples:
+        - path-parameters:
+            id: id
+          headers:
+            X-Client-Name: my-cool-project
+  /v1/datasets:
+    get:
+      x-fern-examples:
+        - headers:
+            X-Client-Name: my-cool-project
+          response:
+            body:
+              datasets:
+                - id: dset-9f8b7c6a5e4d3f21
+                  name: Customer Support Chat Logs
+                  created_at: '2024-01-15T09:30:00Z'
+                  updated_at: '2024-04-10T12:45:00Z'
+                  dataset_type: chat-finetune-input
+                  validation_status: validated
+                  validation_error: ''
+                  schema: '{"type":"record","name":"ChatExample","fields":[{"name":"prompt","type":"string"},{"name":"response","type":"string"}]}'
+                  required_fields:
+                    - prompt
+                    - response
+                  preserve_fields:
+                    - metadata
+                    - timestamp
+                  dataset_parts:
+                    - id: part-001
+                      name: chat_logs_part1.csv
+                      url: https://storage.cohere.com/datasets/dset-9f8b7c6a5e4d3f21/part1.csv
+                      index: 0
+                      size_bytes: 2048576
+                      num_rows: 50000
+                      original_url: https://originalsource.com/chat_logs_part1.csv
+                      samples:
+                        - How can I reset my password?,To reset your password, click on 'Forgot Password' at login.
+                        - What are your support hours?,Our support team is available 24/7.
+                  validation_warnings:
+                    - Some entries missing optional metadata fields
+                  parse_info: {}
+                  metrics:
+                    finetune_dataset_metrics:
+                      trainable_token_count: 1250000
+                      total_examples: 50000
+                      train_examples: 40000
+                      train_size_bytes: 1638400
+                      eval_examples: 10000
+                      eval_size_bytes: 409600
+                      reranker_data_metrics:
+                        num_train_queries: 0
+                        num_train_relevant_passages: 0
+                        num_train_hard_negatives: 0
+                        num_eval_queries: 0
+                        num_eval_relevant_passages: 0
+                        num_eval_hard_negatives: 0
+                      chat_data_metrics:
+                        num_train_turns: 120000
+                        num_eval_turns: 30000
+                        preamble: Customer support chat logs for fine-tuning conversational AI.
+                      classify_data_metrics:
+                        label_metrics:
+                          - total_examples: 25000
+                            label: billing
+                            samples:
+                              - I was charged twice for my subscription.
+                              - How do I update my billing information?
+                          - total_examples: 25000
+                            label: technical_support
+                            samples:
+                              - My app crashes when I open it.
+                              - How do I reset my device?
+    post:
+      x-fern-examples:
+        - query-parameters:
+            name: name
+            type: embed-input
+          headers:
+            X-Client-Name: my-cool-project
+          request:
+            data: embed_dataset.jsonl
+            eval_data: eval_dataset.jsonl
+          response:
+            body:
+              id: d7f8a9c2-3b4e-4f1a-9c2d-8e7f6a5b4c3d
+  /v2/audio/transcriptions:
+    post:
+      x-fern-examples:
+        - request:
+            model: cohere-transcribe-03-2026
+            language: en
+            file: sample.wav
+          response:
+            body:
+              text: Hello, this is a sample transcription of the audio file.
+  /v1/connectors/id:
+    delete:
+      x-fern-examples:
+        - path-parameters:
+            id: id
+          headers:
+            X-Client-Name: my-cool-project
+    patch:
+      x-fern-examples:
+        - path-parameters:
+            id: id
+          headers:
+            X-Client-Name: my-cool-project
+          response:
+            body:
+              connector:
+                id: salesforce-integration-01
+                organization_id: org_9f8e7d6c5b4a3
+                name: Salesforce CRM Connector
+                description: Connector to integrate Salesforce CRM data for enhanced chat responses.
+                url: https://api.salesforce.com/v1/search
+                created_at: '2024-01-15T09:30:00Z'
+                updated_at: '2024-01-15T09:30:00Z'
+                excludes:
+                  - internal_notes
+                auth_type: oauth
+                oauth:
+                  client_id: sf-client-1234567890
+                  client_secret: encrypted-secret-value
+                  authorize_url: https://login.salesforce.com/services/oauth2/authorize
+                  token_url: https://login.salesforce.com/services/oauth2/token
+                  scope: api refresh_token
+                auth_status: valid
+                active: true
+                continue_on_failure: true
+    get:
+      x-fern-examples:
+        - path-parameters:
+            id: id
+          headers:
+            X-Client-Name: my-cool-project
+          response:
+            body:
+              connector:
+                id: salesforce-crm-connector
+                organization_id: org_9f8e7d6c5b4a3
+                name: Salesforce CRM Integration
+                description: Connector to integrate Salesforce CRM data for customer insights and support.
+                url: https://login.salesforce.com
+                created_at: '2024-01-15T09:30:00Z'
+                updated_at: '2024-04-10T14:45:00Z'
+                excludes:
+                  - password
+                  - social_security_number
+                auth_type: oauth
+                oauth:
+                  client_id: 3MVG9d9xX0Pz7a1q2b3c4d5e6f7g8h9i0jklmnopqrstu
+                  client_secret: encrypted_client_secret_value
+                  authorize_url: https://login.salesforce.com/services/oauth2/authorize
+                  token_url: https://login.salesforce.com/services/oauth2/token
+                  scope: api refresh_token
+                auth_status: valid
+                active: true
+                continue_on_failure: true
+  /v1/models:
+    get:
+      x-fern-examples:
+        - response:
+            body:
+              models:
+                - name: command-xlarge-nightly
+                  is_deprecated: false
+                  endpoints:
+                    - generate
+                    - chat
+                  finetuned: false
+                  context_length: 2048
+                  tokenizer_url: https://cohere.com/tokenizer/command-xlarge-nightly.json
+                  default_endpoints:
+                    - generate
+                  features:
+                    - text-generation
+                    - chat-completions
+              next_page_token: eyJwYWdlIjoxfQ==
+  /v1/models/command-a-03-2025:
+    get:
+      x-fern-examples:
+        - path-parameters:
+            model: command-a-03-2025
+          headers:
+            X-Client-Name: my-cool-project
+          response:
+            body:
+              name: command-a-03-2025
+              is_deprecated: false
+              endpoints:
+                - generate
+                - classify
+                - summarize
+              finetuned: true
+              context_length: 2048
+              tokenizer_url: https://models.cohere.com/tokenizers/command-a-03-2025.json
+              default_endpoints:
+                - generate
+              features:
+                - few-shot-learning
+                - multi-turn-dialogue
+                - code-generation
+  /v1/embed-jobs:
+    post:
+      x-fern-examples:
+        - headers:
+            X-Client-Name: my-cool-project
+          request:
+            model: embed-english-v3.0
+            dataset_id: dataset-12345
+            input_type: search_document
+          response:
+            body:
+              job_id: job-67890abcdef
+              meta:
+                api_version:
+                  version: 1.0.0
+                  is_deprecated: false
+                  is_experimental: false
+                billed_units:
+                  images: 0
+                  input_tokens: 1500
+                  image_tokens: 0
+                  output_tokens: 1024
+                  search_units: 0
+                  classifications: 0
+                tokens:
+                  input_tokens: 1500
+                  output_tokens: 1024
+                cached_tokens: 0
+                warnings: []
+    get:
+      x-fern-examples:
+        - headers:
+            X-Client-Name: my-cool-project
+          response:
+            body:
+              embed_jobs:
+                - job_id: e3f1c2a4-9b7d-4f3a-8c2e-1a2b3c4d5e6f
+                  name: User Document Embedding Job April 2024
+                  status: complete
+                  created_at: '2024-04-10T14:22:00Z'
+                  input_dataset_id: dataset-7890abc123
+                  output_dataset_id: dataset-4567def890
+                  model: embed-multilingual-v2.0
+                  truncate: END
+                  meta:
+                    api_version:
+                      version: 1.0.0
+                      is_deprecated: false
+                      is_experimental: false
+                    billed_units:
+                      images: 0
+                      input_tokens: 1520
+                      image_tokens: 0
+                      output_tokens: 5120
+                      search_units: 0
+                      classifications: 0
+                    tokens:
+                      input_tokens: 1520
+                      output_tokens: 5120
+                    cached_tokens: 300
+                    warnings: []
+  /v1/check-api-key:
+    post:
+      x-fern-examples:
+        - headers:
+            X-Client-Name: my-cool-project
+          response:
+            body:
+              valid: true
+              organization_id: org_9f8b7c6d5e4a3b2c1d0e
+              owner_id: user_1234567890abcdef
+  /v1/connectors:
+    post:
+      x-fern-examples:
+        - headers:
+            X-Client-Name: my-cool-project
+          request:
+            name: Salesforce CRM Connector
+            url: https://api.salesforce.com/v1/search
+          response:
+            body:
+              connector:
+                id: salesforce-crm-connector-01
+                organization_id: org-7890
+                name: Salesforce CRM Connector
+                description: Connector to integrate Salesforce CRM data for document search and retrieval.
+                url: https://api.salesforce.com/v1/search
+                created_at: '2024-01-15T09:30:00Z'
+                updated_at: '2024-01-15T09:30:00Z'
+                excludes:
+                  - password
+                  - ssn
+                auth_type: service_auth
+                oauth:
+                  client_id: sf-client-12345
+                  client_secret: encrypted-secret-67890
+                  authorize_url: https://login.salesforce.com/services/oauth2/authorize
+                  token_url: https://login.salesforce.com/services/oauth2/token
+                  scope: api refresh_token
+                auth_status: valid
+                active: true
+                continue_on_failure: true
+    get:
+      x-fern-examples:
+        - headers:
+            X-Client-Name: my-cool-project
+          response:
+            body:
+              connectors:
+                - id: salesforce-integration-01
+                  organization_id: org_9f8e7d6c5b4a3210
+                  name: Salesforce CRM Connector
+                  description: Connector to integrate Salesforce CRM data for customer insights.
+                  url: https://api.salesforce.com/v1/documents/search
+                  created_at: '2024-04-10T14:22:00Z'
+                  updated_at: '2024-04-12T08:15:00Z'
+                  excludes:
+                    - internal_notes
+                  auth_type: oauth
+                  oauth:
+                    client_id: sf-client-1234567890
+                    client_secret: encrypted-secret-value
+                    authorize_url: https://login.salesforce.com/services/oauth2/authorize
+                    token_url: https://login.salesforce.com/services/oauth2/token
+                    scope: api refresh_token
+                  auth_status: valid
+                  active: true
+                  continue_on_failure: true
+              total_count: 1
+  /v1/datasets/id:
+    delete:
+      x-fern-examples:
+        - path-parameters:
+            id: dataset_9f8b7c6d5a4e3f2b1c0d
+          headers:
+            X-Client-Name: my-cool-project
+    get:
+      x-fern-examples:
+        - path-parameters:
+            id: id
+          headers:
+            X-Client-Name: my-cool-project
+          response:
+            body:
+              dataset:
+                id: dset-9f8b7c6a5e4d3f21
+                name: Customer Support Chat Logs
+                created_at: '2024-01-15T09:30:00Z'
+                updated_at: '2024-04-10T12:45:00Z'
+                dataset_type: chat-finetune-input
+                validation_status: validated
+                validation_error: ''
+                schema: '{"type":"record","name":"ChatExample","fields":[{"name":"context","type":"string"},{"name":"response","type":"string"}]}'
+                required_fields:
+                  - context
+                  - response
+                preserve_fields:
+                  - metadata
+                  - timestamp
+                dataset_parts:
+                  - id: part-001
+                    name: chat_logs_jan.csv
+                    url: https://storage.cohere.com/datasets/dset-9f8b7c6a5e4d3f21/part-001.csv
+                    index: 0
+                    size_bytes: 2048576
+                    num_rows: 15000
+                    original_url: https://originalsource.com/chat_logs_jan.csv
+                    samples:
+                      - '{"context":"Hello, I need help with my order.","response":"Sure, can you provide your order ID?"}'
+                      - '{"context":"My internet is not working.","response":"Have you tried restarting your router?"}'
+                validation_warnings:
+                  - Some rows contain missing timestamps
+                  - Detected inconsistent newline characters
+                parse_info: {}
+                metrics:
+                  finetune_dataset_metrics:
+                    trainable_token_count: 1250000
+                    total_examples: 15000
+                    train_examples: 12000
+                    train_size_bytes: 1800000
+                    eval_examples: 3000
+                    eval_size_bytes: 450000
+                    reranker_data_metrics:
+                      num_train_queries: 0
+                      num_train_relevant_passages: 0
+                      num_train_hard_negatives: 0
+                      num_eval_queries: 0
+                      num_eval_relevant_passages: 0
+                      num_eval_hard_negatives: 0
+                    chat_data_metrics:
+                      num_train_turns: 48000
+                      num_eval_turns: 12000
+                      preamble: Customer support chat logs for fine-tuning chat models.
+                    classify_data_metrics:
+                      label_metrics:
+                        - total_examples: 15000
+                          label: support
+                          samples:
+                            - How do I reset my password?
+                            - My shipment is delayed.
+  /v1/connectors/id/oauth/authorize:
+    post:
+      x-fern-examples:
+        - path-parameters:
+            id: id
+          headers:
+            X-Client-Name: my-cool-project
+          response:
+            body:
+              redirect_url: https://auth.cohere.com/oauth2/authorize?client_id=abc123&response_type=code&redirect_uri=https%3A%2F%2Fapp.example.com%2Fcallback&scope=read_write
+  /v1/finetuning/finetuned-models/id:
+    patch:
+      x-fern-examples:
+        - path-parameters:
+            id: id
+          headers:
+            X-Client-Name: my-cool-project
+          request:
+            name: Customer Support Chatbot
+            settings:
+              base_model:
+                base_type: BASE_TYPE_CHAT
+              dataset_id: customer-support-dataset-2024
+          response:
+            body:
+              finetuned_model:
+                id: ftm-1234567890abcdef
+                name: Customer Support Chatbot
+                creator_id: user-9876543210fedcba
+                organization_id: org-1122334455aabbcc
+                settings:
+                  base_model:
+                    name: cohere-chat-1
+                    version: v1.2.3
+                    base_type: BASE_TYPE_CHAT
+                    strategy: STRATEGY_VANILLA
+                  dataset_id: customer-support-dataset-2024
+                  hyperparameters:
+                    early_stopping_patience: 3
+                    early_stopping_threshold: 0.01
+                    train_batch_size: 16
+                    train_epochs: 5
+                    learning_rate: 0.0005
+                    lora_alpha: 32
+                    lora_rank: 8
+                    lora_target_modules: LORA_TARGET_MODULES_QKVO
+                  multi_label: false
+                  wandb:
+                    project: customer-support-finetuning
+                    api_key: wandb_api_key_1234567890abcdef
+                    entity: cohere-team
+                status: STATUS_READY
+                created_at: '2024-01-15T09:30:00Z'
+                updated_at: '2024-02-20T14:45:00Z'
+                completed_at: '2024-02-15T12:00:00Z'
+                last_used: '2024-04-10T08:15:00Z'
+    delete:
+      x-fern-examples:
+        - path-parameters:
+            id: id
+          headers:
+            X-Client-Name: my-cool-project
+  /v1/finetuning/finetuned-models:
+    post:
+      x-fern-examples:
+        - headers:
+            X-Client-Name: my-cool-project
+          request:
+            name: customer-support-chatbot-v1
+            settings:
+              base_model:
+                base_type: BASE_TYPE_CHAT
+              dataset_id: customer-support-dataset-2024
+          response:
+            body:
+              finetuned_model:
+                id: ftm_123e4567-e89b-12d3-a456-426614174000
+                name: customer-support-chatbot-v1
+                creator_id: user_789a1234-b56c-78d9-e012-3456789abcde
+                organization_id: org_456b7890-c12d-34e5-f678-901234567890
+                settings:
+                  base_model:
+                    name: cohere-chat-2024
+                    version: v2.1.0
+                    base_type: BASE_TYPE_CHAT
+                    strategy: STRATEGY_VANILLA
+                  dataset_id: customer-support-dataset-2024
+                  hyperparameters:
+                    early_stopping_patience: 5
+                    early_stopping_threshold: 0.0005
+                    train_batch_size: 32
+                    train_epochs: 3
+                    learning_rate: 0.005
+                    lora_alpha: 16
+                    lora_rank: 4
+                    lora_target_modules: LORA_TARGET_MODULES_QKVO
+                  multi_label: false
+                  wandb:
+                    project: customer-support-finetuning
+                    api_key: wandb_api_key_1234567890abcdef
+                    entity: cohere-team
+                status: STATUS_FINETUNING
+                created_at: '2024-01-15T09:30:00Z'
+                updated_at: '2024-01-20T14:45:00Z'
+                completed_at: '2024-01-25T18:00:00Z'
+                last_used: '2024-02-01T12:00:00Z'
+  /v1/embed-jobs/id:
+    get:
+      x-fern-examples:
+        - path-parameters:
+            id: id
+          headers:
+            X-Client-Name: my-cool-project
+          response:
+            body:
+              job_id: ebd-9f8a7c6d5b4e3a21
+              name: Customer Reviews Embedding Job
+              status: complete
+              created_at: '2024-04-10T14:22:35Z'
+              input_dataset_id: ds-1234abcd5678efgh
+              output_dataset_id: ds-8765hgfedcba4321
+              model: embed-multilingual-v2.0
+              truncate: END
+              meta:
+                api_version:
+                  version: 1.0.0
+                  is_deprecated: false
+                  is_experimental: false
+                billed_units:
+                  images: 0
+                  input_tokens: 1520
+                  image_tokens: 0
+                  output_tokens: 1520
+                  search_units: 0
+                  classifications: 0
+                tokens:
+                  input_tokens: 1520
+                  output_tokens: 1520
+                cached_tokens: 0
+                warnings: []
+  /v1/datasets/usage:
+    get:
+      x-fern-examples:
+        - headers:
+            X-Client-Name: my-cool-project
+          response:
+            body:
+              organization_usage: 2350000000
+  /v1/embed-jobs/id/cancel:
+    post:
+      x-fern-examples:
+        - path-parameters:
+            id: id
+          headers:
+            X-Client-Name: my-cool-project
