@@ -56,3 +56,19 @@ To make a local build of the site, run the following command from the root of th
 ```bash
 make dev
 ```
+
+## Python code changes
+
+If you change any Python code samples, you must complete the following steps.
+
+1. Install the required version of the [black](https://pypi.org/project/black/) package.
+   
+   ```bash
+   pip3 install "black==24.10.0"
+   ```
+
+1. Automatically format your Python code using the following command from the root of the repo.
+
+   ```bash
+   python3 .github/scripts/check_python_code_snippets.py fern/pages
+   ```

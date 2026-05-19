@@ -3,7 +3,7 @@ import cohere
 co = cohere.Client()
 
 response = co.chat(
-    model="command-a-03-2025",
+    model="command-a-plus-05-2026",
     message="Tell me about LLMs",
 )
 
