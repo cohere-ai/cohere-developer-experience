@@ -5,6 +5,7 @@ on:
 
 jobs:
   run:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write  # Only for commenting
@@ -17,8 +18,7 @@ jobs:
 
       - name: Checkout PR
         if: |
-          github.event_name == 'pull_request_target' &&
-          github.event.pull_request.head.repo.full_name == github.repository
+          github.event_name == 'pull_request_target'
         run: |
           git fetch origin pull/${{ github.event.pull_request.number }}/head:pr-${{ github.event.pull_request.number }}
           git checkout pr-${{ github.event.pull_request.number }}
