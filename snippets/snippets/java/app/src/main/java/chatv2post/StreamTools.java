@@ -16,7 +16,7 @@ public class StreamTools {
             .v2()
             .chatStream(
                 V2ChatStreamRequest.builder()
-                    .model("command-a-03-2025")
+                    .model("command-a-plus-05-2026")
                     .tools(
                         List.of(
                             ToolV2.builder()

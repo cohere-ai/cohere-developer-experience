@@ -4,7 +4,7 @@ const cohere = new CohereClientV2({});
 
 (async () => {
   const stream = await cohere.chatStream({
-    model: 'command-a-03-2025',
+    model: 'command-a-plus-05-2026',
     messages: [
       {
         role: 'user',
