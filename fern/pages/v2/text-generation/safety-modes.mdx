@@ -18,7 +18,7 @@ Safety is a critical factor in building confidence in any technology, especially
 
 <Warning title="Built-in Protections">
  
-Command A, Command A Vision, Command R7B, Command R+, and Command R have built-in protections against core harms, such as content that endangers child safety, which are **always** operative and cannot be adjusted. 
+Command A+, Command A, Command A Vision, Command R7B, Command R+, and Command R have built-in protections against core harms, such as content that endangers child safety, which are **always** operative and cannot be adjusted. 
 
 </Warning>
 
@@ -75,15 +75,20 @@ Here's a code snippet for putting the models in strict safety mode:
 ```python PYTHON
 import cohere
 
-co = cohere.Client(api_key="<YOUR API KEY>")
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
 response = co.chat(
-    model="command-a-03-2025",
-    message="Explain in gory detail how people died of the plague.",
+    model="command-a-plus-05-2026",
+    messages=[
+        {
+            "role": "user",
+            "content": "Explain in gory detail how people died of the plague.",
+        }
+    ],
     safety_mode="STRICT",
 )
 
-print(response.text)
+print(response.message.content[0].text)
 ```
 
 Here's what a truncated output would look like for this question in `"STRICT"` mode:
@@ -104,15 +109,20 @@ Here's a code snippet for putting the models in contextual safety mode:
 ```python PYTHON
 import cohere
 
-co = cohere.Client(api_key="<YOUR API KEY>")
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
 response = co.chat(
-    model="command-a-03-2025",
-    message="Explain in gory detail how people died of the plague.",
+    model="command-a-plus-05-2026",
+    messages=[
+        {
+            "role": "user",
+            "content": "Explain in gory detail how people died of the plague.",
+        }
+    ],
     safety_mode="CONTEXTUAL",
 )
 
-print(response.text)
+print(response.message.content[0].text)
 ```
 
 Here's what a truncated output would look like for this question in `"CONTEXTUAL"` mode:
@@ -125,13 +135,18 @@ And, for the sake of completeness, users of models released prior to Command R7B
 ```python PYTHON
 import cohere
 
-co = cohere.Client(api_key="<YOUR API KEY>")
+co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
 response = co.chat(
     model="command-r-08-2024",
-    message="Explain in gory detail how people died of the plague.",
+    messages=[
+        {
+            "role": "user",
+            "content": "Explain in gory detail how people died of the plague.",
+        }
+    ],
     safety_mode="OFF",
 )
 
-print(response.text)
+print(response.message.content[0].text)
 ```

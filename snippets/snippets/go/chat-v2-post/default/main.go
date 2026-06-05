@@ -15,7 +15,7 @@ func main() {
 	resp, err := co.V2.Chat(
 		context.TODO(),
 		&cohere.V2ChatRequest{
-			Model: "command-a-03-2025",
+			Model: "command-a-plus-05-2026",
 			Messages: cohere.ChatMessages{
 				{
 					Role: "user",

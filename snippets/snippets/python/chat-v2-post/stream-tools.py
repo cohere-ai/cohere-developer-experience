@@ -3,7 +3,7 @@ import cohere
 co = cohere.ClientV2()
 
 response = co.chat_stream(
-    model="command-a-03-2025",
+    model="command-a-plus-05-2026",
     messages=[
         {
             "role": "user",

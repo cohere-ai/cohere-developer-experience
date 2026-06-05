@@ -57,10 +57,10 @@ const getGoVersions = async () => {
 }
 
 const getJavaVersion = async () => {
-    const response = await fetch("https://search.maven.org/solrsearch/select?q=g:com.cohere+AND+a:cohere-java&rows=1&wt=json")
-    const json = await response.json() as { response: { docs: Array<{ latestVersion: string }> } }
-    const latest = json.response.docs[0]?.latestVersion
-    return latest
+    const response = await fetch("https://repo1.maven.org/maven2/com/cohere/cohere-java/maven-metadata.xml")
+    const text = await response.text()
+    const match = text.match(/<release>([\d.]+)<\/release>/)
+    return match?.[1]
 }
 
 const updateVersion = async (version: string, update: typeof bumpTypes[number]) => {

@@ -23,8 +23,8 @@ func main() {
 
 	transcription, err := co.Audio.Transcriptions.Create(
 		context.TODO(),
-		file,
-		&audio.TranscriptionsCreateRequest{
+		&audio.CreateTranscriptionsRequest{
+			File:     file,
 			Model:    "cohere-transcribe-03-2026",
 			Language: "en",
 		},

@@ -5,7 +5,7 @@ curl --request POST \
   --header "Authorization: bearer $CO_API_KEY" \
   --data '{
         "stream": true,
-        "model": "command-a-03-2025",
+        "model": "command-a-plus-05-2026",
         "tools": [
             {
                 "type": "function",
