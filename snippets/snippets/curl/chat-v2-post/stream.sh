@@ -5,11 +5,11 @@ curl --request POST \
   --header "Authorization: bearer $CO_API_KEY" \
   --data '{
     "stream": true,
-    "model": "command-r-plus-08-2024",
+    "model": "command-a-plus-05-2026",
     "messages": [
       {
         "role": "user",
-        "content": "Hello world!"
+        "content": "Tell me about LLMs"
       }
     ]
   }'

@@ -16,6 +16,7 @@ public class Tools {
     NonStreamedChatResponse response =
         cohere.chat(
             ChatRequest.builder()
+                .model("command-a-03-2025")
                 .message(
                     "Can you provide a sales summary for 29th September 2023,"
                         + " and also give me some details about the products in"

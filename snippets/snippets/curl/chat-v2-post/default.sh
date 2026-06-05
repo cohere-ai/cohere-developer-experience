@@ -4,11 +4,11 @@ curl --request POST \
   --header 'content-type: application/json' \
   --header "Authorization: bearer $CO_API_KEY" \
   --data '{
-    "model": "command-r-plus-08-2024",
+    "model": "command-a-plus-05-2026",
     "messages": [
       {
         "role": "user",
-        "content": "Hello world!"
+        "content": "Tell me about LLMs"
       }
     ]
   }'

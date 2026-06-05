@@ -13,7 +13,7 @@ public class RerankV2Post {
             .v2()
             .rerank(
                 V2RerankRequest.builder()
-                    .model("rerank-v3.5")
+                    .model("rerank-v4.0-pro")
                     .query("What is the capital of the United States?")
                     .documents(
                         List.of(

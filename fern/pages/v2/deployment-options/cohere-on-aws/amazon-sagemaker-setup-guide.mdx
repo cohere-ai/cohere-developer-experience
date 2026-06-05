@@ -13,7 +13,6 @@ updatedAt: "Thu May 30 2024 16:01:40 GMT+0000 (Coordinated Universal Time)"
 <Note title="Note"> 
 The code examples in this section use the Cohere v1 API. The v2 API is not yet supported for cloud deployments and will be coming soon.
 </Note>
-In an effort to make our language-model capabilities more widely available, we've partnered with a few major platforms to create hosted versions of our offerings.
 
 This document will guide you through enabling development teams to access [Cohere’s offerings on Amazon SageMaker](https://aws.amazon.com/marketplace/seller-profile?id=87af0c85-6cf9-4ed8-bee0-b40ce65167e0). 
 
@@ -28,10 +27,6 @@ In order to successfully subscribe to Cohere’s offerings on Amazon SageMaker, 
 
 These permissions allow a user to manage your organization’s Amazon SageMaker subscriptions. Learn more about [managing Amazon’s IAM Permissions here](https://aws.amazon.com/iam/?trk=cf28fddb-12ed-4ffd-981b-b89c14793bf1&sc_channel=ps&ef_id=CjwKCAjwsvujBhAXEiwA_UXnAJ4JEQ3KgW0eFBzr5nuwt9L5S7w3A0f3wqensQJgUQ7Mf_ZEdArZRxoCjKQQAvD_BwE:G:s&s_kwcid=AL!4422!3!652240143562!e!!g!!amazon%20iam!19878797467!148973348604). Contact your AWS administrator if you have questions about account permissions.
 
-You'll also need to install the AWS Python SDK and some related tooling. Run:
-
-- `pip install cohere-aws` (or `pip install --upgrade cohere-aws` if you want to upgrade to the most recent version of the SDK).
-
 ## Cohere with Amazon SageMaker Setup
 
 First, navigate to [Cohere’s SageMaker Marketplace](https://aws.amazon.com/marketplace/seller-profile?id=87af0c85-6cf9-4ed8-bee0-b40ce65167e0) to view the available product offerings. Select the product offering to which you are interested in subscribing.
@@ -43,14 +38,18 @@ Next, explore the tools on the **Product Detail** page to evaluate how you want 
 - Subscribing: This section will once again present you with both the pricing details and the EULA for final review before you accept the offer. This information is identical to the information on Product Detail page.
 - Configuration: The primary goal of this section is to retrieve the [Amazon Resource Name (ARN)](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html) for the product you have subscribed to.
 
-## Embeddings
+<Warning>
+For any Cohere _software_ version after 1.0.5 (or _model_ version after 3.0.5), the parameter `InferenceAmiVersion=al2-ami-sagemaker-inference-gpu-2` must be specified during endpoint configuration (as a variant option) to avoid deployment errors.
+</Warning>
+
+### Embeddings
 
 You can use this code to invoke Cohere's embed model on Amazon SageMaker:
 
 ```python PYTHON
 import cohere
 
-co = cohere.SageMakerClient(
+co = cohere.SagemakerClient(
     aws_region="us-east-1",
     aws_access_key="...",
     aws_secret_key="...",
@@ -83,14 +82,18 @@ result = co.embed(
 print(result)
 ```
 
-## Text Generation
+<Warning>Cohere's embed models don't support batch transform operations.</Warning>
+
+Note that we've released multimodal embeddings models that are able to handle images in addition to text. Find [more information here](https://docs.cohere.com/docs/multimodal-embeddings).
+
+### Text Generation
 
 You can use this code to invoke Cohere's Command models on Amazon SageMaker:
 
 ```python PYTHON 
 import cohere
 
-co = cohere.SageMakerClient(
+co = cohere.SagemakerClient(
     aws_region="us-east-1",
     aws_access_key="...",
     aws_secret_key="...",
@@ -100,6 +103,37 @@ co = cohere.SageMakerClient(
 # Invoke the model and print the response
 result = co.chat(message="Write a LinkedIn post about starting a career in tech:",
                  model="<YOUR ENDPOINT NAME>") # On SageMaker, you create a model name that you'll pass here. 
+
+print(result)
+```
+
+### Reranking 
+You can use this code to invoke Cohere's Rerank v4.0 model on Amazon SageMaker:
+
+```python PYTHON 
+import cohere
+
+co = cohere.SagemakerClient(
+    aws_region="us-east-1",
+    aws_access_key="...",
+    aws_secret_key="...",
+    aws_session_token="...",
+)
+
+# Set up your documents and query
+query = "YOUR QUERY"
+docs = [
+    "String 1",
+    "String 2"
+]
+
+# Invoke the model and print the response
+results = co.rerank(
+    model="<YOUR RERANK-V4.0 ENDPOINT NAME>", # On SageMaker, you create a model name that you'll pass here.
+    query=query,
+    documents=docs,
+    top_n=2,
+)
 
 print(result)
 ```

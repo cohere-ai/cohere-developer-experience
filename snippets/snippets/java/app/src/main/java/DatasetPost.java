@@ -16,8 +16,8 @@ public class DatasetPost {
                 null,
                 Optional.empty(),
                 DatasetsCreateRequest.builder()
-                    .name("chat-dataset")
-                    .type(DatasetType.CHAT_FINETUNE_INPUT)
+                    .name("embed-dataset")
+                    .type(DatasetType.EMBED_INPUT)
                     .build());
 
     System.out.println(response);

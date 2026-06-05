@@ -25,6 +25,7 @@ inputs = [
 
 async def main():
     response = await co.classify(
+        model="<YOUR-FINE-TUNED-MODEL-ID>",
         inputs=inputs,
         examples=examples,
     )

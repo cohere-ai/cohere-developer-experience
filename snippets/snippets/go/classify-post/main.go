@@ -3,17 +3,20 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
 	client "github.com/cohere-ai/cohere-go/v2/client"
 )
 
 func main() {
-	co := client.NewClient()
+	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
+	model := "<YOUR-FINE-TUNED-MODEL-ID>"
 
 	resp, err := co.Classify(
 		context.TODO(),
 		&cohere.ClassifyRequest{
+			Model: &model,
 			Examples: []*cohere.ClassifyExample{
 				{
 					Text:  cohere.String("orange"),

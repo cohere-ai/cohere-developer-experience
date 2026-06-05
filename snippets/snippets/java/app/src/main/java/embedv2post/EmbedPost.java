@@ -15,9 +15,9 @@ public class EmbedPost {
             .v2()
             .embed(
                 V2EmbedRequest.builder()
-                    .model("embed-english-v3.0")
-                    .texts(List.of("hello", "goodbye"))
+                    .model("embed-v4.0")
                     .inputType(EmbedInputType.CLASSIFICATION)
+                    .texts(List.of("hello", "goodbye"))
                     .build());
 
     System.out.println(response);

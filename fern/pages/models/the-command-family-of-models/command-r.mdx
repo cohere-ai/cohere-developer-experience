@@ -1,5 +1,6 @@
 ---
-title: The Command R Model (Details and Application)
+title: Cohere's Command R Model
+subtitle: Command R model details and specifications
 slug: docs/command-r
 hidden: false
 description: >-
@@ -10,7 +11,39 @@ keywords: >-
   conversational AI
 createdAt: 'Tue Mar 05 2024 18:50:03 GMT+0000 (Coordinated Universal Time)'
 updatedAt: 'Wed Dec 18 2024 14:16:00 GMT+0000 (Coordinated Universal Time)'
+layout: overview
 ---
+
+import { ModelShowcase, Capability, Endpoint} from "../../../components/model-showcase"
+
+<ModelShowcase model={{
+  name: 'Command R',
+  id: 'command-r-08-2024',
+  capabilities: [
+    Capability.SafetyModes,
+    Capability.Citations,
+    Capability.ToolUse,
+    Capability.StructuredOutputs,
+    Capability.Multilingual,
+  ],
+  pricing: { input: 0.15, output: 0.60 },
+  specs: {
+    contextWindow: '128,000',
+    maxOutputTokens: '4,000',
+    knowledgeCutoff: 'June 1, 2024',
+  },
+  endpoints: [
+    Endpoint.ChatV2,
+    Endpoint.ChatV1,
+    Endpoint.ChatCompletions,
+  ],
+}}/>
+
+## Description
+
+<Info title="Note">
+ For most use cases we recommend our latest model [Command A](/docs/command-a) instead.
+</Info>
 
 Command R is a large language model optimized for conversational interaction and long context tasks. It targets the “scalable” category of models that balance high performance with strong accuracy, enabling companies to move beyond proof of concept and into production. 
 
@@ -18,19 +51,12 @@ Command R boasts high precision on [retrieval augmented generation](/docs/retrie
 
 For information on toxicity, safety, and using this model responsibly check out our [Command model card](https://docs.cohere.com/docs/responsible-use).
 
-### Model Details
-| Model Name               | Description                                                                                                                                                                                                                                                                                                                                                | Modality                | Context Length | Maximum Output Tokens | Endpoints|
-|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------|----------------|-----------------------|----------|
-| `command-r-08-2024`      | `command-r-08-2024` is an update of the Command R model, delivered in August 2024.                                                                                                                                                                                                                                                                         | Text                    | 128k           | 4k                    | [Chat](/reference/chat)         |                                                                          |
-| `command-r-03-2024`      | Command R is an instruction-following conversational model that performs language tasks at a higher quality, more reliably, and with a longer context than previous models. It can be used for complex workflows like code generation, retrieval augmented generation (RAG), tool use, and agents.                                                         | Text                    | 128k           | 4k                    | [Chat](/reference/chat)         |                                                                         |
-| `command-r`              | `command-r` is an alias for `command-r-03-2024`, so if you use `command-r` in the API, that's the model you're pointing to.                                                                                                                                                                                                                                | Text                    | 128k           | 4k                    | [Chat](/reference/chat)         |                                                                        |
-
 ## Command R August 2024 Release
 Cohere's flagship text-generation models, Command R and Command R+, received a substantial update in August 2024. We chose to designate these models with time stamps, so in the API Command R 08-2024 is accesible with `command-r-08-2024`.
 
 With the release, both models include the following feature improvements:
 - For tool use, Command R and Command R+ have demonstrated improved decision-making around whether or not to use a tool.
-- The updated models are better able to follow instructions included by the user in the preamble.
+- The updated models are better able to follow instructions included in the request's system message.
 - Better structured data analysis for structured data manipulation. 
 - Improved robustness to non-semantic prompt changes like white space or new lines.
 - Models will decline unanswerable questions and are now able to execute RAG workflows without citations
@@ -54,14 +80,12 @@ Additionally, pre-training data has been included for the following 13 languages
 
 The model has been trained to respond in the language of the user. Here's an example:
 
-```python PYTHON
-co.chat(
-    message="Écris une description de produit pour une voiture électrique en 50 à 75 mots"
-)
+*Prompt*
+```Text
+Écris une description de produit pour une voiture électrique en 50 à 75 mots
 ```
 
-And here's what the response might look like:
-
+*Generation*
 ```text TEXT
 Découvrez la voiture électrique qui va révolutionner votre façon de conduire.
 Avec son design élégant, cette voiture offre une expérience de conduite unique

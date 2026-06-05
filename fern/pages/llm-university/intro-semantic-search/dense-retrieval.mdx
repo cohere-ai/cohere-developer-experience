@@ -35,28 +35,33 @@ In short, dense retrieval consists of the following:
 To use dense retrieval, we’ll first define the following function. Just like with keyword search, we’ll tell the vector database what properties we want from each retrieved document, and filter them to the English language (using results_lang).
 
 ```python PYTHON
-def dense_retrieval(query, results_lang='en', num_results=10):
+def dense_retrieval(query, results_lang="en", num_results=10):
 
     nearText = {"concepts": [query]}
-    properties = ["text", "title", "url", "views", "lang", "_additional
-    {distance}"]
+    properties = [
+        "text",
+        "title",
+        "url",
+        "views",
+        "lang",
+        "_additional {distance}",
+    ]
 
     # To filter by language
     where_filter = {
         "path": ["lang"],
         "operator": "Equal",
-        "valueString": results_lang
-        }
+        "valueString": results_lang,
+    }
     response = (
-        Client.query
-        .get("Articles", properties)
+        Client.query.get("Articles", properties)
         .with_near_text(nearText)
         .with_where(where_filter)
         .with_limit(num_results)
         .do()
     )
 
-    result = response['data']['Get']['Articles']
+    result = response["data"]["Get"]["Articles"]
     return result
 ```
 

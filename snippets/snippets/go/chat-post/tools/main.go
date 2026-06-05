@@ -3,17 +3,19 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
 	client "github.com/cohere-ai/cohere-go/v2/client"
 )
 
 func main() {
-	co := client.NewClient()
+	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
 
 	resp, err := co.Chat(
 		context.TODO(),
 		&cohere.ChatRequest{
+			Model:   cohere.String("command-a-03-2025"),
 			Message: "Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?",
 			Tools: []*cohere.Tool{
 				{

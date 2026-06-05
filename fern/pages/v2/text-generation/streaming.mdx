@@ -13,7 +13,7 @@ updatedAt: "Tue Jun 18 2024 07:41:22 GMT+0000 (Coordinated Universal Time)"
 ---
 The [Chat API](/reference/chat) is capable of streaming events (such as text generation) as they come. This means that partial results from the model can be displayed within moments, even if the full generation takes longer.
 
-You're likely already familiar with streaming. When you ask the model a question using the [Coral](https://coral.cohere.com/) UI, the interface doesn't output a single block of text, instead it _streams_ the text out a few words at a time. In many user interfaces enabling streaming improves the user experience by lowering the perceived latency.
+You're likely already familiar with streaming. When you ask the model a question using [the Cohere playground](https://dashboard.cohere.com/playground), the interface doesn't output a single block of text, instead it _streams_ the text out a few words at a time. In many user interfaces enabling streaming improves the user experience by lowering the perceived latency.
 
 ## Stream Events
 
@@ -21,13 +21,14 @@ When streaming is enabled, the API sends events down one by one. Each event has 
 
 The following is an example of printing the `content-delta` event type from a streamed response, which contains the text contents of an LLM's response.
 
+<CodeBlocks>
 ```python PYTHON
 import cohere
 
 co = cohere.ClientV2(api_key="<YOUR API KEY>")
 
 res = co.chat_stream(
-    model="command-r-plus-08-2024",
+    model="command-a-plus-05-2026",
     messages=[{"role": "user", "content": "What is an LLM?"}],
 )
 
@@ -36,6 +37,24 @@ for event in res:
         if event.type == "content-delta":
             print(event.delta.message.content.text, end="")
 ```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: text/event-stream' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "command-a-plus-05-2026",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is an LLM?"
+      }
+    ],
+    "stream": true
+  }'
+```
+</CodeBlocks>
 
 ```
 # Sample output (streamed)

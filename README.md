@@ -30,3 +30,45 @@ We support the following SDKs which can be used to interact with the Cohere plat
 
 We welcome contributions to this repository! Feel free to pull request any of the content you see and we will work with you to merge it. The OpenAPI sepcs and snippets are one-way synced from our internal repositories so we will need to take your changes and merge them behind the scenes.
 
+## Making local builds
+
+### About local builds
+
+We encourage our contributors to build the site locally to validate rendering and links.
+
+### Prerequisites
+
+- [NPM](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+
+### Installing the local build components
+
+To install the components necessary to make local builds, run the following command from
+the root of the repo.
+
+```bash
+make install
+```
+
+### Making a local build
+
+To make a local build of the site, run the following command from the root of the repo.
+
+```bash
+make dev
+```
+
+## Python code changes
+
+If you change any Python code samples, you must complete the following steps.
+
+1. Install the required version of the [black](https://pypi.org/project/black/) package.
+   
+   ```bash
+   pip3 install "black==24.10.0"
+   ```
+
+1. Automatically format your Python code using the following command from the root of the repo.
+
+   ```bash
+   python3 .github/scripts/check_python_code_snippets.py fern/pages
+   ```

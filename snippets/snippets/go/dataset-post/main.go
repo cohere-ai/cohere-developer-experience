@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log"
+	"os"
 	"strings"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
@@ -20,15 +21,15 @@ func (m *MyReader) Name() string {
 }
 
 func main() {
-	co := client.NewClient()
+	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
 
 	resp, err := co.Datasets.Create(
 		context.TODO(),
-		&MyReader{Reader: strings.NewReader(`{"text": "The quick brown fox jumps over the lazy dog"}`), name: "test.jsonl"},
-		&MyReader{Reader: strings.NewReader(""), name: "a.jsonl"},
 		&cohere.DatasetsCreateRequest{
-			Name: "embed-dataset",
-			Type: cohere.DatasetTypeEmbedResult,
+			Name:     "embed-dataset",
+			Type:     cohere.DatasetTypeEmbedInput,
+			Data:     &MyReader{Reader: strings.NewReader(`{"text": "The quick brown fox jumps over the lazy dog"}`), name: "test.jsonl"},
+			EvalData: &MyReader{Reader: strings.NewReader(""), name: "a.jsonl"},
 		},
 	)
 

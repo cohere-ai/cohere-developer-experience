@@ -5,7 +5,7 @@ co = cohere.AsyncClientV2()
 
 async def main():
     response = await co.rerank(
-        model="rerank-v3.5",
+        model="rerank-v4.0-pro",
         query="What is the capital of the United States?",
         documents=[
             "Carson City is the capital city of the American state of Nevada.",

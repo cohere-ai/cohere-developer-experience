@@ -7,9 +7,10 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
-	client "github.com/cohere-ai/cohere-go/v2/client"
+	"github.com/cohere-ai/cohere-go/v2/client"
 )
 
 func main() {
@@ -32,13 +33,13 @@ func main() {
 	contentType := resp.Header.Get("Content-Type")
 	imageBase64 := fmt.Sprintf("data:%s;base64,%s", contentType, stringifiedBuffer)
 
-	co := client.NewClient()
+	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
 
 	embed, err := co.V2.Embed(
 		context.TODO(),
 		&cohere.V2EmbedRequest{
 			Images:         []string{imageBase64},
-			Model:          "embed-english-v3.0",
+			Model:          "embed-v4.0",
 			InputType:      cohere.EmbedInputTypeImage,
 			EmbeddingTypes: []cohere.EmbeddingType{cohere.EmbeddingTypeFloat},
 		},

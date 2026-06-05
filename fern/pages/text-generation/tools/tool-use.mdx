@@ -64,7 +64,7 @@ With the list of tool(s), the developer can then execute the appropriate calls (
 
 As things stand, the developer is responsible for executing these tool calls, as the tool call executes on the developer’s side.
 
-### Step 4 - Command R Generates an Answer Based on the Tool Results
+### Step 4 - The Model Generates an Answer Based on the Tool Results
 
 Finally, the developer calls the Cohere model, providing the tool results, in order to generate the model's final answer. Cohere makes it easy to provide tool results back to the model through the `tool_results` parameter (demonstrated in code snippets below).
 
@@ -128,7 +128,7 @@ response = co.chat(
     force_single_step=True,
     tools=tools,
     preamble=preamble,
-    model="command-r-08-2024",
+    model="command-a-03-2025",
 )
 ```
 
@@ -235,7 +235,7 @@ response = co.chat(
     tools=tools,
     tool_results=tool_results,
     preamble=preamble,
-    model="command-r-08-2024",
+    model="command-a-03-2025",
     temperature=0.3,
 )
 
@@ -301,6 +301,18 @@ if not response.tool_calls:
     co.chat(message=message, tools=tools, tool_results=[])
 ```
 
+## Forcing Tool Use
+
+During the tool calling step, the model may decide to either:
+- make tool call(s)
+- or, respond to a user message directly.
+
+You can force the model to make tool call(s), i.e. to not respond directly, by setting the `force_single_step=True` and providing some tool definitions through the `tools` parameter.
+
+This is equivalent to setting the `tool_choice` as `REQUIRED` in the v2 API. 
+
+Besides, you can force the model to respond directly, by setting `force_single_step=True` and by providing some tool results through the `tool_results` parameter. This is equivalent to specifying `tool_choice` as `NONE` in the v2 API.
+
 ## Single-Step Tool Use and Chat History
 
 Single-step tool use functions as part of a two-part conversational process. Here’s how that works:
@@ -322,18 +334,6 @@ When you pass the tool results back to the model make sure that they are structu
 outputs = [{"number": 2343}] # Not Great
 outputs = [{"sum": 2343}] # Better
 ```
-
-## What's Next?
-
-Here, we'll preview some of the functionality we plan on adding in the coming months.
-
-### Cohere-hosted Tools
-
-The model can currently handle any tool provided by the developer. That having been said, Cohere has implemented some pre-defined tools that users can leverage out-of-the-box.
-
-Specifically we're going to roll out a **Python interpreter** tool and a **Web search** tool. 
-
-Please [reach out](mailto:MAXIMEVOISIN@COHERE.COM) to join the beta.
 
 ## Getting started
 

@@ -29,7 +29,7 @@ To create a client, you need to provide the API key and the model's base URL for
 # ! pip install cohere
 
 api_key_chat = "AZURE_API_KEY_CHAT"
-endpoint_chat = "AZURE_ENDPOINT_CHAT" # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
+endpoint_chat = "AZURE_ENDPOINT_CHAT"  # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
 ```
 
 
@@ -56,29 +56,58 @@ Here, we are defining a Python function for each tool, but more broadly, the too
 ```python PYTHON
 def search_faqs(query):
     faqs = [
-    {"text" : "Submitting Travel Expenses:\nSubmit your expenses through our user-friendly finance tool."},
-    {"text" : "Side Projects Policy:\nWe encourage you to explore your passions! Just ensure there's no conflict of interest with our business."},
-    {"text" : "Wellness Benefits:\nTo promote a healthy lifestyle, we provide gym memberships, on-site yoga classes, and health insurance."}
+        {
+            "text": "Submitting Travel Expenses:\nSubmit your expenses through our user-friendly finance tool."
+        },
+        {
+            "text": "Side Projects Policy:\nWe encourage you to explore your passions! Just ensure there's no conflict of interest with our business."
+        },
+        {
+            "text": "Wellness Benefits:\nTo promote a healthy lifestyle, we provide gym memberships, on-site yoga classes, and health insurance."
+        },
     ]
-    return  {"faqs" : faqs}
+    return {"faqs": faqs}
+
 
 def search_emails(query):
     emails = [
-    {"from": "hr@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "A Warm Welcome to Co1t, David!", "text": "We are delighted to have you on board. Please find attached your first week's agenda."},
-    {"from": "it@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "Instructions for IT Setup", "text": "Welcome, David! To get you started, please follow the attached guide to set up your work accounts."},
-    {"from": "john@co1t.com", "to": "david@co1t.com", "date": "2024-06-24", "subject": "First Week Check-In", "text": "Hi David, let's chat briefly tomorrow to discuss your first week. Also, come join us for lunch this Thursday at noon to meet everyone!"},
+        {
+            "from": "hr@co1t.com",
+            "to": "david@co1t.com",
+            "date": "2024-06-24",
+            "subject": "A Warm Welcome to Co1t, David!",
+            "text": "We are delighted to have you on board. Please find attached your first week's agenda.",
+        },
+        {
+            "from": "it@co1t.com",
+            "to": "david@co1t.com",
+            "date": "2024-06-24",
+            "subject": "Instructions for IT Setup",
+            "text": "Welcome, David! To get you started, please follow the attached guide to set up your work accounts.",
+        },
+        {
+            "from": "john@co1t.com",
+            "to": "david@co1t.com",
+            "date": "2024-06-24",
+            "subject": "First Week Check-In",
+            "text": "Hi David, let's chat briefly tomorrow to discuss your first week. Also, come join us for lunch this Thursday at noon to meet everyone!",
+        },
     ]
-    return  {"emails" : emails}
-    
+    return {"emails": emails}
+
+
 def create_calendar_event(date: str, time: str, duration: int):
     # You can implement any logic here
-    return {"is_success": True,
-            "message": f"Created a {duration} hour long event at {time} on {date}"}
-    
+    return {
+        "is_success": True,
+        "message": f"Created a {duration} hour long event at {time} on {date}",
+    }
+
+
 functions_map = {
     "search_faqs": search_faqs,
     "search_emails": search_emails,
-    "create_calendar_event": create_calendar_event
+    "create_calendar_event": create_calendar_event,
 }
 ```
 
@@ -92,48 +121,48 @@ This schema informs the LLM about what the tool does, and the LLM decides whethe
 ```python PYTHON
 tools = [
     {
-      "name": "search_faqs",
-      "description": "Given a user query, searches a company's frequently asked questions (FAQs) list and returns the most relevant matches to the query.",
-      "parameter_definitions": {
-        "query": {
-          "description": "The query from the user",
-          "type": "str",
-          "required": True
-        }
-      }
-    }, 
-    {
-      "name": "search_emails",
-      "description": "Given a user query, searches a person's emails and returns the most relevant matches to the query.",
-      "parameter_definitions": {
-        "query": {
-          "description": "The query from the user",
-          "type": "str",
-          "required": True
-        }
-      }
-    }, 
-    {
-      "name": "create_calendar_event",
-      "description": "Creates a new calendar event of the specified duration at the specified time and date. A new event cannot be created on the same time as an existing event.",
-      "parameter_definitions": {
-        "date": {
-          "description": "the date on which the event starts, formatted as mm/dd/yy",
-          "type": "str",
-          "required": True
+        "name": "search_faqs",
+        "description": "Given a user query, searches a company's frequently asked questions (FAQs) list and returns the most relevant matches to the query.",
+        "parameter_definitions": {
+            "query": {
+                "description": "The query from the user",
+                "type": "str",
+                "required": True,
+            }
         },
-        "time": {
-          "description": "the time of the event, formatted using 24h military time formatting",
-          "type": "str",
-          "required": True
+    },
+    {
+        "name": "search_emails",
+        "description": "Given a user query, searches a person's emails and returns the most relevant matches to the query.",
+        "parameter_definitions": {
+            "query": {
+                "description": "The query from the user",
+                "type": "str",
+                "required": True,
+            }
         },
-        "duration": {
-          "description": "the number of hours the event lasts for",
-          "type": "float",
-          "required": True
-        }
-      }
-    }
+    },
+    {
+        "name": "create_calendar_event",
+        "description": "Creates a new calendar event of the specified duration at the specified time and date. A new event cannot be created on the same time as an existing event.",
+        "parameter_definitions": {
+            "date": {
+                "description": "the date on which the event starts, formatted as mm/dd/yy",
+                "type": "str",
+                "required": True,
+            },
+            "time": {
+                "description": "the time of the event, formatted using 24h military time formatting",
+                "type": "str",
+                "required": True,
+            },
+            "duration": {
+                "description": "the number of hours the event lasts for",
+                "type": "float",
+                "required": True,
+            },
+        },
+    },
 ]
 ```
 
@@ -157,45 +186,50 @@ Let's create a function called `run_assistant` to implement these steps and prin
 
 
 ```python PYTHON
-preamble="""## Task and Context
+preamble = """## Task and Context
 You are an assistant who assist new employees of Co1t with their first week. You respond to their questions and assist them with their needs. Today is Monday, June 24, 2024"""
 
+
 def run_assistant(message, chat_history=None):
-    
+
     if chat_history is None:
         chat_history = []
-    
+
     # Step 1: get user message
     print(f"Question:\n{message}")
-    print("="*50)
+    print("=" * 50)
 
-    # Step 2: Generate tool calls (if any)    
+    # Step 2: Generate tool calls (if any)
     response = co.chat(
         message=message,
         preamble=preamble,
         tools=tools,
         chat_history=chat_history,
-        force_single_step=False
+        force_single_step=False,
     )
 
     while response.tool_calls:
         tool_calls = response.tool_calls
-        
+
         if response.text:
             print("Tool plan:")
-            print(response.text,"\n")
+            print(response.text, "\n")
         print("Tool calls:")
         for call in tool_calls:
-            print(f"Tool name: {call.name} | Parameters: {call.parameters}")
-        print("="*50)
-        
+            print(
+                f"Tool name: {call.name} | Parameters: {call.parameters}"
+            )
+        print("=" * 50)
+
         # Step 3: Get tool results
         tool_results = []
         for tc in tool_calls:
             tool_call = {"name": tc.name, "parameters": tc.parameters}
             tool_output = functions_map[tc.name](**tc.parameters)
-            tool_results.append({"call": tool_call, "outputs": [tool_output]})
-        
+            tool_results.append(
+                {"call": tool_call, "outputs": [tool_output]}
+            )
+
         # Step 4: Generate response and citations
         response = co.chat(
             message="",
@@ -203,16 +237,16 @@ def run_assistant(message, chat_history=None):
             tools=tools,
             tool_results=tool_results,
             chat_history=response.chat_history,
-            force_single_step=False
+            force_single_step=False,
         )
 
         chat_history = response.chat_history
-        
+
     # Print final response
     print("RESPONSE:\n")
     print(response.text)
-    print("="*50)
-    
+    print("=" * 50)
+
     # Print citations (if any)
     if response.citations:
         print("\nCITATIONS:\n")
@@ -222,7 +256,7 @@ def run_assistant(message, chat_history=None):
         print("\nCITED REFERENCES:\n")
         for document in response.documents:
             print(document)
-                
+
     return chat_history
 ```
 
@@ -236,7 +270,9 @@ Additionally, the model also generates fine-grained citations in tool use mode b
 
 
 ```python PYTHON
-chat_history = run_assistant("Any doc on how do I submit travel expenses? Also, any emails about setting up IT access?")
+chat_history = run_assistant(
+    "Any doc on how do I submit travel expenses? Also, any emails about setting up IT access?"
+)
 ```
 ```mdx
 Question:

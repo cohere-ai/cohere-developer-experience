@@ -4,6 +4,7 @@ const cohere = new CohereClient({});
 
 (async () => {
   const classify = await cohere.classify({
+    model: '<YOUR-FINE-TUNED-MODEL-ID>',
     examples: [
       { text: "Dermatologists don't like her!", label: 'Spam' },
       { text: "'Hello, open to this?'", label: 'Spam' },

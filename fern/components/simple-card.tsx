@@ -24,15 +24,15 @@ export function SimpleCard({
       <a
         href={href}
         target="_blank"
-        className="flex flex-1 flex-col justify-stretch"
+        style={{ display: 'flex', flex: 1, flexDirection: 'column', justifyContent: 'stretch' }}
       >
-        <img className="image-desktop w-full" src={imageSrc} />
-        <img className="image-mobile w-full" src={imageSrc} />
+        <img className="image-desktop" style={{ width: '100%' }} src={imageSrc} />
+        <img className="image-mobile" style={{ width: '100%' }} src={imageSrc} />
         <div className="simple-card-text-and-link-container">
           <div className="simple-card-text-container">
             <div className="small-tag-container">
               {tags.map((tag, idx) => (
-                <span key={idx} className="small-tag-light dark:small-tag-dark">
+                <span key={idx} className="small-tag-light">
                   {tag}
                 </span>
               ))}
@@ -44,10 +44,10 @@ export function SimpleCard({
             )}
           </div>
           <div className="simple-card-link-container">
-            <div className="flex items-center">
-              <span className="group inline-block cursor-pointer font-medium text-[#39594D] dark:text-[#517B6A] hover:text-black dark:hover:text-white">
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span style={{ display: 'inline-block', cursor: 'pointer', fontWeight: 500, color: '#39594D' }}>
                 Build this
-                <span className="ml-2 inline-block group-hover:no-underline">
+                <span style={{ marginLeft: 8, display: 'inline-block' }}>
                   <ArrowRightIcon />
                 </span>
               </span>

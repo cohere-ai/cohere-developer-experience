@@ -1,0 +1,227 @@
+---
+title: Reranking - Cohere on Azure AI Foundry
+slug: /v2/docs/cohere-on-azure/azure-ai-reranking
+
+description: "A guide for performing reranking with Cohere's Reranking models on Azure AI Foundry (API v2)."
+image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, reranking, semantic search, Rerank models, Azure AI Foundry"
+---
+[Open in GitHub](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/cohere-on-azure/v2/azure-ai-reranking.ipynb)
+
+In this tutorial, we'll explore reranking using Cohere's Rerank model on Azure AI Foundry.
+
+Reranking is a crucial technique used in information retrieval systems, particularly for large-scale search applications. The process involves taking an initial set of retrieved documents and reordering them based on how relevant they are to the user's search query.
+
+One of the most compelling aspects of reranking is its ease of implementation - despite providing substantial improvements to search results, Cohere's Rerank models can be integrated into any existing search system with just a single line of code, regardless of whether it uses semantic or traditional keyword-based search approaches.
+
+In this tutorial, we'll cover:
+- Setting up the Cohere client
+- Retrieving documents
+- Reranking documents
+- Reranking semi structured data
+
+We'll use Cohere's Embed model deployed on Azure to demonstrate these capabilities and help you understand how to effectively implement semantic search in your applications.
+
+## Setup
+
+First, you will need to deploy the Rerank model on Azure via Azure AI Foundry. The deployment will create a serverless API with pay-as-you-go token based billing. You can find more information on how to deploy models in the [Azure documentation](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-serverless?tabs=azure-ai-studio).
+
+In the example below, we are deploying the Rerank Multilingual v3 model.
+
+Once the model is deployed, you can access it via Cohere's Python SDK. Let's now install the Cohere SDK and set up our client.
+
+To create a client, you need to provide the API key and the model's base URL for the Azure endpoint. You can get these information from the Azure AI Foundry platform where you deployed the model.
+
+
+```python PYTHON
+# %pip install cohere
+
+import cohere
+
+co = cohere.ClientV2(
+    api_key="AZURE_API_KEY_RERANK",
+    base_url="AZURE_ENDPOINT_RERANK",  # example: "https://cohere-rerank-v3-multilingual-xyz.eastus.models.ai.azure.com/"
+)
+```
+
+## Retrieve documents
+
+For this example, we'll work with documents that have already been retrieved through an initial search stage (which could be semantic search, keyword matching, or another retrieval method).
+
+Below is a list of nine documents representing the initial search results. Each document contains email data structured as a dictionary with two fields - Title and Content. This semi-structured format allows the Rerank endpoint to effectively process and reorder the results based on relevance.
+
+
+```python PYTHON
+documents = [
+    {
+        "Title": "Incorrect Password",
+        "Content": "Hello, I have been trying to access my account for the past hour and it keeps saying my password is incorrect. Can you please help me?",
+    },
+    {
+        "Title": "Confirmation Email Missed",
+        "Content": "Hi, I recently purchased a product from your website but I never received a confirmation email. Can you please look into this for me?",
+    },
+    {
+        "Title": "Questions about Return Policy",
+        "Content": "Hello, I have a question about the return policy for this product. I purchased it a few weeks ago and it is defective.",
+    },
+    {
+        "Title": "Customer Support is Busy",
+        "Content": "Good morning, I have been trying to reach your customer support team for the past week but I keep getting a busy signal. Can you please help me?",
+    },
+    {
+        "Title": "Received Wrong Item",
+        "Content": "Hi, I have a question about my recent order. I received the wrong item and I need to return it.",
+    },
+    {
+        "Title": "Customer Service is Unavailable",
+        "Content": "Hello, I have been trying to reach your customer support team for the past hour but I keep getting a busy signal. Can you please help me?",
+    },
+    {
+        "Title": "Return Policy for Defective Product",
+        "Content": "Hi, I have a question about the return policy for this product. I purchased it a few weeks ago and it is defective.",
+    },
+    {
+        "Title": "Wrong Item Received",
+        "Content": "Good morning, I have a question about my recent order. I received the wrong item and I need to return it.",
+    },
+    {
+        "Title": "Return Defective Product",
+        "Content": "Hello, I have a question about the return policy for this product. I purchased it a few weeks ago and it is defective.",
+    },
+]
+```
+
+## Rerank documents
+
+Adding a reranking component is simple with Cohere Rerank. It takes just one line of code to implement.
+
+Calling the Rerank endpoint requires the following arguments:
+
+- `documents`: The list of documents, which we defined in the previous section
+- `query`: The user query; we’ll use 'What emails have been about refunds?' as an example
+- `top_n`:  The number of documents we want to be returned, sorted from the most to the least relevant document
+
+When passing documents that contain multiple fields like in this case, for best performance we recommend formatting them as YAML strings.
+
+
+```python PYTHON
+import yaml
+
+yaml_docs = [yaml.dump(doc, sort_keys=False) for doc in documents]
+
+query = "What emails have been about refunds?"
+
+results = co.rerank(
+    model="model",  # Pass a dummy string
+    documents=yaml_docs,
+    query=query,
+    top_n=3,
+)
+```
+
+Since we set `top_n=3`, the response will return the three documents most relevant to our query. Each result includes both the document's original position (index) in our input list and a score indicating how well it matches the query.
+
+Let's examine the reranked results below.
+
+```python PYTHON
+def return_results(results, documents):
+    for idx, result in enumerate(results.results):
+        print(f"Rank: {idx+1}")
+        print(f"Score: {result.relevance_score}")
+        print(f"Document: {documents[result.index]}\n")
+
+
+return_results(results, documents)
+```
+```mdx
+Rank: 1
+Score: 8.547617e-05
+Document: {'Title': 'Return Defective Product', 'Content': 'Hello, I have a question about the return policy for this product. I purchased it a few weeks ago and it is defective.'}
+
+Rank: 2
+Score: 5.1442214e-05
+Document: {'Title': 'Questions about Return Policy', 'Content': 'Hello, I have a question about the return policy for this product. I purchased it a few weeks ago and it is defective.'}
+
+Rank: 3
+Score: 3.591301e-05
+Document: {'Title': 'Return Policy for Defective Product', 'Content': 'Hi, I have a question about the return policy for this product. I purchased it a few weeks ago and it is defective.'}
+```  
+
+
+The search query was looking for emails about refunds. But none of the documents mention the word “refunds” specifically.
+
+However, the Rerank model was able to retrieve the right documents. Some of the documents mentioned the word “return”, which has a very similar meaning to "refunds."
+
+## Rerank semi structured data
+
+The Rerank 3 model supports multi-aspect and semi-structured data like emails, invoices, JSON documents, code, and tables. By setting the rank fields, you can select which fields the model should consider for reranking.
+
+In the following example, we’ll use an email data example. It is a semi-stuctured data that contains a number of fields – from, to, date, subject, and text.
+
+The model will rerank based on order of the fields passed.
+
+```python PYTHON
+# Define the documents
+emails = [
+    {
+        "from": "hr@co1t.com",
+        "to": "david@co1t.com",
+        "date": "2024-06-24",
+        "subject": "A Warm Welcome to Co1t!",
+        "text": "We are delighted to welcome you to the team! As you embark on your journey with us, you'll find attached an agenda to guide you through your first week.",
+    },
+    {
+        "from": "it@co1t.com",
+        "to": "david@co1t.com",
+        "date": "2024-06-24",
+        "subject": "Setting Up Your IT Needs",
+        "text": "Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.",
+    },
+    {
+        "from": "john@co1t.com",
+        "to": "david@co1t.com",
+        "date": "2024-06-24",
+        "subject": "First Week Check-In",
+        "text": "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!",
+    },
+]
+
+yaml_emails = [yaml.dump(doc, sort_keys=False) for doc in emails]
+```
+
+
+```python PYTHON
+# Add the user query
+query = "Any email about check ins?"
+
+# Rerank the documents
+results = co.rerank(
+    model="model",  # Pass a dummy string
+    query=query,
+    documents=yaml_emails,
+    top_n=2,
+)
+
+return_results(results, emails)
+```
+```mdx
+Rank: 1
+Score: 0.13477592
+Document: {'from': 'john@co1t.com', 'to': 'david@co1t.com', 'date': '2024-06-24', 'subject': 'First Week Check-In', 'text': "Hello! I hope you're settling in well. Let's connect briefly tomorrow to discuss how your first week has been going. Also, make sure to join us for a welcoming lunch this Thursday at noon—it's a great opportunity to get to know your colleagues!"}
+
+Rank: 2
+Score: 0.0010083435
+Document: {'from': 'it@co1t.com', 'to': 'david@co1t.com', 'date': '2024-06-24', 'subject': 'Setting Up Your IT Needs', 'text': 'Greetings! To ensure a seamless start, please refer to the attached comprehensive guide, which will assist you in setting up all your work accounts.'}
+```
+
+
+## Summary
+
+In this tutorial, we learned about:
+- How to set up the Cohere client to use the Rerank model deployed on Azure AI Foundry
+- How to retrieve documents
+- How to rerank documents
+- How to rerank semi structured data
+
+In the next tutorial, we'll learn how to build RAG applications by leveraging the models that we've looked at in the previous tutorials - Command, Embed, and Rerank.

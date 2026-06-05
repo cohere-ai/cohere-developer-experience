@@ -15,20 +15,8 @@ public class Default {
     NonStreamedChatResponse response =
         cohere.chat(
             ChatRequest.builder()
-                .message("What year was he born?")
-                .chatHistory(
-                    List.of(
-                        Message.user(
-                            ChatMessage.builder().message("Who discovered gravity?").build()),
-                        Message.chatbot(
-                            ChatMessage.builder()
-                                .message(
-                                    "The man who is widely"
-                                        + " credited with"
-                                        + " discovering gravity"
-                                        + " is Sir Isaac"
-                                        + " Newton")
-                                .build())))
+                .model("command-a-03-2025")
+                .message("Tell me about LLMs")
                 .build());
 
     System.out.println(response);

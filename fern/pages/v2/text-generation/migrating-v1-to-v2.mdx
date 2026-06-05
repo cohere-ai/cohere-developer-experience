@@ -35,7 +35,7 @@ co_v2 = cohere.ClientV2(api_key="<YOUR API KEY>")
 
 # Chat
 
-## Messages and preamble
+## Messages
 
 - Message structure: 
    - v1: uses separate `preamble` and `message` parameters.
@@ -49,7 +49,7 @@ co_v2 = cohere.ClientV2(api_key="<YOUR API KEY>")
 
 ```python PYTHON
 res = co_v1.chat(
-    model="command-r-plus-08-2024",
+    model="command-a-03-2025",
     preamble="You respond in concise sentences.",
     chat_history=[
         {"role": "user", "message": "Hello"},
@@ -72,7 +72,7 @@ Excited to join the team at Co1t, where I look forward to contributing my skills
 
 ```python PYTHON
 res = co_v2.chat(
-    model="command-r-plus-08-2024",
+    model="command-a-plus-05-2026",
     messages=[
         {
             "role": "system",
@@ -104,9 +104,7 @@ Excited to join the team at Co1t, bringing my passion for innovation and a backg
 **v1**
 
 ```python PYTHON
-res = co_v1.chat(
-    model="command-r-plus-08-2024", message="What is 2 + 2"
-)
+res = co_v1.chat(model="command-a-03-2025", message="What is 2 + 2")
 
 print(res.text)
 ```
@@ -118,7 +116,7 @@ The answer is 4.
 
 ```python PYTHON
 res = co_v2.chat(
-    model="command-r-plus-08-2024",
+    model="command-a-plus-05-2026",
     messages=[{"role": "user", "content": "What is 2 + 2"}],
 )
 
@@ -143,9 +141,7 @@ The answer is 4.
 ```python PYTHON
 message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
 
-res = co_v1.chat_stream(
-    model="command-r-plus-08-2024", message=message
-)
+res = co_v1.chat_stream(model="command-a-03-2025", message=message)
 
 for chunk in res:
     if chunk.event_type == "text-generation":
@@ -161,7 +157,7 @@ for chunk in res:
 message = "I'm joining a new startup called Co1t today. Could you help me write a one-sentence introduction message to my teammates."
 
 res = co_v2.chat_stream(
-    model="command-r-plus-08-2024",
+    model="command-a-plus-05-2026",
     messages=[{"role": "user", "content": message}],
 )
 
@@ -202,7 +198,7 @@ message = "Are there fitness-related benefits?"
 
 # Generate the response
 res_v1 = co_v1.chat(
-    model="command-r-plus-08-2024",
+    model="command-a-03-2025",
     message=message,
     documents=documents_v1,
 )
@@ -235,7 +231,7 @@ message = "Are there fitness-related benefits?"
 
 # Generate the response
 res_v2 = co_v2.chat(
-    model="command-r-plus-08-2024",
+    model="command-a-plus-05-2026",
     messages=[{"role": "user", "content": message}],
     documents=documents_v2,
 )
@@ -393,7 +389,7 @@ web_search_tool = [
 # The user query
 query = "who won euro 2024"
 
-# Define a preamble to optimize search query generation
+# Define a system message to optimize search query generation
 instructions = "Write a search query that will find helpful information for answering the user's question accurately. If you need more than one search query, write a list of search queries. If you decide that a search is very unlikely to find information that would be useful in constructing a response to the user, you should instead directly answer."
 
 messages = [
@@ -401,7 +397,7 @@ messages = [
     {"role": "user", "content": query},
 ]
 
-model = "command-r-plus-08-2024"
+model = "command-a-plus-05-2026"
 
 # Generate search queries (if any)
 response = co_v2.chat(
@@ -421,13 +417,7 @@ while response.message.tool_calls:
         )
     print("=" * 50)
 
-    messages.append(
-        {
-            "role": "assistant",
-            "tool_calls": response.message.tool_calls,
-            "tool_plan": response.message.tool_plan,
-        }
-    )
+    messages.append(response.message)
 
     # Step 3: Get tool results
     for idx, tc in enumerate(response.message.tool_calls):
@@ -490,7 +480,7 @@ Spain won the 2024 European Championship. They beat England in the final, with s
 message = "Are there fitness-related benefits?"
 
 res_v1 = co_v1.chat_stream(
-    model="command-r-plus-08-2024",
+    model="command-a-03-2025",
     message=message,
     documents=documents_v1,
 )
@@ -517,7 +507,7 @@ message = "Are there fitness-related benefits?"
 messages = [{"role": "user", "content": message}]
 
 res_v2 = co_v2.chat_stream(
-    model="command-r-plus-08-2024",
+    model="command-a-plus-05-2026",
     messages=messages,
     documents=documents_v2,
 )
@@ -614,7 +604,7 @@ tools_v2 = [
 message = "What's the weather in Toronto?"
 
 res_v1 = co_v1.chat(
-    model="command-r-plus-08-2024", message=message, tools=tools_v1
+    model="command-a-03-2025", message=message, tools=tools_v1
 )
 
 print(res_v1.tool_calls)
@@ -631,17 +621,11 @@ messages = [
 ]
 
 res_v2 = co_v2.chat(
-    model="command-r-plus-08-2024", messages=messages, tools=tools_v2
+    model="command-a-plus-05-2026", messages=messages, tools=tools_v2
 )
 
 if res_v2.message.tool_calls:
-    messages.append(
-        {
-            "role": "assistant",
-            "tool_calls": res_v2.message.tool_calls,
-            "tool_plan": res_v2.message.tool_plan,
-        }
-    )
+    messages.append(res_v2.message)
 
     print(res_v2.message.tool_calls)
 ```
@@ -713,7 +697,7 @@ if res_v1.tool_calls:
         )
 
 res_v1 = co_v1.chat(
-    model="command-r-plus-08-2024",
+    model="command-a-03-2025",
     message="",
     tools=tools_v1,
     tool_results=tool_content_v1,
@@ -752,7 +736,7 @@ if res_v2.message.tool_calls:
         )
 
 res_v2 = co_v2.chat(
-    model="command-r-plus-08-2024", messages=messages, tools=tools_v2
+    model="command-a-plus-05-2026", messages=messages, tools=tools_v2
 )
 
 print(res_v2.message.content[0].text)
@@ -866,7 +850,7 @@ if res_v2.message.tool_calls:
         )
 
 res_v2 = co_v2.chat_stream(
-    model="command-r-plus-08-2024", messages=messages, tools=tools_v2
+    model="command-a-plus-05-2026", messages=messages, tools=tools_v2
 )
 
 for chunk in res_v2:

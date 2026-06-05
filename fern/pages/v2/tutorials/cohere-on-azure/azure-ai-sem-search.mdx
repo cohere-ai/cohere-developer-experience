@@ -1,0 +1,232 @@
+---
+title: Semantic search - Cohere on Azure AI Foundry
+slug: /v2/docs/cohere-on-azure/azure-ai-sem-search
+
+description: "A guide for performing text semantic search with Cohere's Embed models on Azure AI Foundry (API v2)."
+image: "../../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, semantic search, text embeddings, Embed models, Azure AI Foundry"
+---
+[Open in GitHub](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/guides/cohere-on-azure/v2/azure-ai-sem-search.ipynb)
+
+In this tutorial, we'll explore semantic search using Cohere's Embed modelon Azure AI Foundry.
+
+Semantic search enables search systems to capture the meaning and context of search queries, going beyond simple keyword matching to find relevant results based on semantic similarity. 
+
+With the Embed model, you can do this across languages. This is particularly powerful for multilingual applications where the same meaning can be expressed in different languages.
+
+In this tutorial, we'll cover:
+- Setting up the Cohere client
+- Embedding text data
+- Building a search index
+- Performing semantic search queries
+
+We'll use Cohere's Embed model deployed on Azure to demonstrate these capabilities and help you understand how to effectively implement semantic search in your applications.
+
+
+## Setup
+
+First, you will need to deploy the Embed model on Azure via Azure AI Foundry. The deployment will create a serverless API with pay-as-you-go token based billing. You can find more information on how to deploy models in the [Azure documentation](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-serverless?tabs=azure-ai-studio).
+
+In the example below, we are deploying the Embed 4 model.
+
+Once the model is deployed, you can access it via Cohere's Python SDK. Let's now install the Cohere SDK and set up our client.
+
+To create a client, you need to provide the API key and the model's base URL for the Azure endpoint. You can get these information from the Azure AI Foundry platform where you deployed the model.
+
+
+```python PYTHON
+# %pip install cohere hnswlib
+
+import pandas as pd
+import hnswlib
+import re
+import cohere
+
+co = cohere.ClientV2(
+    api_key="AZURE_API_KEY_EMBED",
+    base_url="AZURE_ENDPOINT_EMBED",  # example: "https://embed-v-4-0-xyz.eastus.models.ai.azure.com/"
+)
+```
+
+## Download dataset
+
+For this example, we'll be using [MultiFIN](https://aclanthology.org/2023.findings-eacl.66.pdf) - an open-source dataset of financial article headlines in 15 different languages (including English, Turkish, Danish, Spanish, Polish, Greek, Finnish, Hebrew, Japanese, Hungarian, Norwegian, Russian, Italian, Icelandic, and Swedish).
+
+We've prepared a CSV version of the MultiFIN dataset that includes an additional column containing English translations. While we won't use these translations for the model itself, they'll help us understand the results when we encounter headlines in Danish or Spanish. We'll load this CSV file into a pandas dataframe.
+
+
+```python PYTHON
+url = "https://raw.githubusercontent.com/cohere-ai/cohere-aws/main/notebooks/bedrock/multiFIN_train.csv"
+df = pd.read_csv(url)
+
+# Inspect dataset
+df.head(5)
+```
+
+## Pre-Process Dataset
+
+For this example, we'll work with a subset focusing on English, Spanish, and Danish content.
+
+We'll perform several pre-processing steps: removing any duplicate entries, filtering to keep only our three target languages, and selecting the 80 longest articles as our working dataset.
+
+
+```python PYTHON
+# Ensure there is no duplicated text in the headers
+def remove_duplicates(text):
+    return re.sub(
+        r"((\b\w+\b.{1,2}\w+\b)+).+\1", r"\1", text, flags=re.I
+    )
+
+
+df["text"] = df["text"].apply(remove_duplicates)
+
+# Keep only selected languages
+languages = ["English", "Spanish", "Danish"]
+df = df.loc[df["lang"].isin(languages)]
+
+# Pick the top 80 longest articles
+df["text_length"] = df["text"].str.len()
+df.sort_values(by=["text_length"], ascending=False, inplace=True)
+top_80_df = df[:80]
+
+# Language distribution
+top_80_df["lang"].value_counts()
+```
+
+
+```mdx
+lang
+Spanish    33
+English    29
+Danish     18
+Name: count, dtype: int64
+```
+
+
+## Embed and index documents
+
+Let's embed our documents and store the embeddings. These embeddings are high-dimensional vectors (1,024 dimensions) that capture the semantic meaning of each document. We'll use Cohere's Embed 4 model that we have defined in the client setup.
+ 
+The Embed 4 model require us to specify an `input_type` parameter that indicates what we're embedding. For semantic search, we use `search_document` for the documents we want to search through, and `search_query` for the search queries we'll make later.
+
+We'll also keep track information about each document's language and translation to provide richer search results.
+
+Finally, we'll build a search index with the `hnsw` vector library to store these embeddings efficiently, enabling faster document searches.
+
+
+```python PYTHON
+# Embed documents
+# Embed documents
+docs = top_80_df["text"].to_list()
+docs_lang = top_80_df["lang"].to_list()
+translated_docs = top_80_df[
+    "translation"
+].to_list()  # for reference when returning non-English results
+doc_embs = co.embed(
+    model="embed-v4.0",
+    texts=docs,
+    input_type="search_document",
+    embedding_types=["float"],
+).embeddings.float
+
+# Create a search index
+index = hnswlib.Index(space="ip", dim=1536)
+index.init_index(
+    max_elements=len(doc_embs), ef_construction=512, M=64
+)
+index.add_items(doc_embs, list(range(len(doc_embs))))
+```
+
+## Send Query and Retrieve Documents
+
+Next, we build a function that takes a query as input, embeds it, and finds the three documents that are the most similar to the query.
+
+
+```python PYTHON
+# Retrieval of 4 closest docs to query
+def retrieval(query):
+    # Embed query and retrieve results
+    query_emb = co.embed(
+        model="embed-v4.0",  # Pass a dummy string
+        texts=[query],
+        input_type="search_query",
+        embedding_types=["float"],
+    ).embeddings.float
+
+    doc_ids = index.knn_query(query_emb, k=3)[0][
+        0
+    ]  # we will retrieve 3 closest neighbors
+
+    # Print and append results
+    print(f"QUERY: {query.upper()} \n")
+    retrieved_docs, translated_retrieved_docs = [], []
+
+    for doc_id in doc_ids:
+        # Append results
+        retrieved_docs.append(docs[doc_id])
+        translated_retrieved_docs.append(translated_docs[doc_id])
+
+        # Print results
+        print(f"ORIGINAL ({docs_lang[doc_id]}): {docs[doc_id]}")
+        if docs_lang[doc_id] != "English":
+            print(f"TRANSLATION: {translated_docs[doc_id]} \n----")
+        else:
+            print("----")
+    print("END OF RESULTS \n\n")
+    return retrieved_docs, translated_retrieved_docs
+```
+
+Let’s now try to query the index with a couple of examples, one each in English and Danish.
+
+
+```python PYTHON
+queries = [
+    "Can data science help meet sustainability goals?",  # English example
+    "Hvor kan jeg finde den seneste danske boligplan?",  # Danish example - "Where can I find the latest Danish property plan?"
+]
+
+for query in queries:
+    retrieval(query)
+```
+```mdx
+QUERY: CAN DATA SCIENCE HELP MEET SUSTAINABILITY GOALS? 
+
+ORIGINAL (English): Using AI to better manage the environment could reduce greenhouse gas emissions, boost global GDP by up to 38m jobs by 2030
+----
+ORIGINAL (English): Quality of business reporting on the Sustainable Development Goals improves, but has a long way to go to meet and drive targets.
+----
+ORIGINAL (English): Only 10 years to achieve Sustainable Development Goals but businesses remain on starting blocks for integration and progress
+----
+END OF RESULTS 
+
+
+QUERY: HVOR KAN JEG FINDE DEN SENESTE DANSKE BOLIGPLAN? 
+
+ORIGINAL (Danish): Nyt fra CFOdirect: Ny PP&E-guide, FAQs om den nye leasingstandard, podcast om udfordringerne ved implementering af leasingstandarden og meget mere
+TRANSLATION: New from CFOdirect: New PP&E guide, FAQs on the new leasing standard, podcast on the challenges of implementing the leasing standard and much more 
+----
+ORIGINAL (Danish): Lovforslag fremlagt om rentefri lån, udskudt frist for lønsumsafgift, førtidig udbetaling af skattekredit og loft på indestående på skattekontoen
+TRANSLATION: Bills presented on interest -free loans, deferred deadline for payroll tax, early payment of tax credit and ceiling on the balance in the tax account 
+----
+ORIGINAL (Danish): Nyt fra CFOdirect: Shareholder-spørgsmål til ledelsen, SEC cybersikkerhedsguide, den amerikanske skattereform og meget mere
+TRANSLATION: New from CFOdirect: Shareholder questions for management, the SEC cybersecurity guide, US tax reform and more 
+----
+END OF RESULTS 
+```
+    
+
+
+With the first example, notice how the retrieval system was able to surface documents similar in meaning, for example, surfacing documents related to AI when given a query about data science. This is something that keyword-based search will not be able to capture.
+
+As for the second example, this demonstrates the multilingual nature of the model. You can use the same model across different languages. The model can also perform cross-lingual search, such as the example of from the first retrieved document, where “PP&E guide” is an English term that stands for “property, plant, and equipment,”.
+
+## Summary
+
+In this tutorial, we learned about:
+- How to set up the Cohere client to use the Embed model deployed on Azure AI Foundry
+- How to embed text data
+- How to build a search index
+- How to perform multilingualsemantic search
+
+In the next tutorial, we'll explore how to use the Rerank model for reranking search results.
+

@@ -3,11 +3,12 @@ export const CookbookHeader = ({ href }: { href: string }) => {
     <div className="cookbook-nav-container">
       <a
         href="/page/cookbooks"
-        className="back-button group inline-block cursor-pointer font-medium "
+        className="back-button"
+        style={{ display: 'inline-block', cursor: 'pointer', fontWeight: 500 }}
         rel="noreferrer"
         target="_self"
       >
-        <div className="pr-1 inline-block group-hover:no-underline">
+        <div style={{ paddingRight: 4, display: 'inline-block' }}>
           <svg
             width="11.8"
             height="11"
@@ -38,12 +39,13 @@ export const CookbookHeader = ({ href }: { href: string }) => {
 
       <a
         href={href}
-        className="github-button group inline-block cursor-pointer font-medium "
+        className="github-button"
+        style={{ display: 'inline-block', cursor: 'pointer', fontWeight: 500 }}
         rel="noreferrer"
         target="_blank"
       >
         Open in GitHub
-        <div className="pl-1 inline-block group-hover:no-underline">
+        <div style={{ paddingLeft: 4, display: 'inline-block' }}>
           <svg
             width="14"
             height="10"

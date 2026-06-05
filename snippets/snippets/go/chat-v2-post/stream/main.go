@@ -5,24 +5,27 @@ import (
 	"errors"
 	"io"
 	"log"
+	"os"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
 	client "github.com/cohere-ai/cohere-go/v2/client"
 )
 
 func main() {
-	co := client.NewClient()
+	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
 
 	resp, err := co.V2.ChatStream(
 		context.TODO(),
 		&cohere.V2ChatStreamRequest{
-			Model: "command-r-plus-08-2024",
+			Model: "command-a-plus-05-2026",
 			Messages: cohere.ChatMessages{
 				{
 					Role: "user",
-					User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
-						String: "Hello world!",
-					}},
+					User: &cohere.UserMessageV2{
+						Content: &cohere.UserMessageV2Content{
+							String: "Tell me about LLMs",
+						},
+					},
 				},
 			},
 		},
@@ -46,7 +49,7 @@ func main() {
 		}
 
 		if message.ContentDelta != nil {
-			log.Printf("%+v", resp)
+			log.Printf("%+v", message)
 		}
 	}
 }

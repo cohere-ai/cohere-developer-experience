@@ -11,11 +11,16 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # Fork PRs: head branch exists only on the fork; use head repo + SHA.
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -34,6 +39,16 @@ jobs:
 
       - name: Run Python MDX Snippet Formatter
         shell: bash
-        env:
-          CI: true
         run: poetry run python .github/scripts/check_python_code_snippets.py fern/pages
+        continue-on-error: false
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git diff --exit-code || echo "::set-output name=changes::true"
+
+      - name: Fail if changes are detected
+        if: steps.diff.outputs.changes == 'true'
+        run: |
+          echo "Changes in python code snippets are detected. Please run poetry run python .github/scripts/check_python_code_snippets.py fern/pages locally and commit the changes."
+          exit 1

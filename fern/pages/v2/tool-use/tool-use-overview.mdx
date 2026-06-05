@@ -1,0 +1,718 @@
+---
+title: "Basic usage of tool use (function calling)"
+slug: "v2/docs/tool-use-overview"
+
+hidden: false 
+description: >-
+  An overview of using Cohere's tool use capabilities, enabling developers to build agentic workflows (API v2).
+image: "../../../assets/images/4a5325a-cohere_meta_image.jpg"  
+keywords: "Cohere, text generation, LLMs, generative AI"
+
+createdAt: "Thu Feb 29 2024 18:05:29 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Tue Jun 18 2024 07:20:15 GMT+0000 (Coordinated Universal Time)"
+---
+
+## Overview
+
+Tool use is a technique which allows developers to connect Cohere’s Command family of models to external tools like search engines, APIs, functions, databases, etc.
+
+This opens up a richer set of behaviors by leveraging tools to access external data sources, taking actions through APIs, interacting with a vector database, querying a search engine, etc., and is particularly valuable for enterprise developers, since a lot of enterprise data lives in external sources.
+
+The Chat endpoint comes with built-in tool use capabilities such as function calling, multi-step reasoning, and citation generation.
+
+<img src="../../../assets/images/tool-use-overview.jpg" alt="Tool use overview" />
+
+## An end-to-end example using tool use to search docs
+
+This is a complete, minimal example that shows one full tool use "round trip": the model gets a message from a user, generates a tool call, gets tool results, and responds with citations.
+
+```python PYTHON
+# ! pip install -U cohere # Do this if you don't already have the Cohere client installed.
+import json
+
+import cohere
+
+
+def search_docs(query: str, top_k: int = 3):
+    # Implement your retrieval logic here (vector DB, keyword search, etc.)
+    # For simplicity, we'll return a few hardcoded "documents".
+    return [
+        {
+            "title": "Cohere API v2 - Chat",
+            "url": "https://docs.cohere.com/reference/chat",
+            "text": "Use the Chat endpoint to generate responses and optionally call tools.",
+        },
+        {
+            "title": "Tool use (function calling) overview",
+            "url": "https://docs.cohere.com/v2/docs/tool-use-overview",
+            "text": "Tool use connects models to external tools like search engines and APIs.",
+        },
+        {
+            "title": "Structured outputs",
+            "url": "https://docs.cohere.com/docs/structured-outputs",
+            "text": "Use JSON schema to define structured inputs/outputs for tools and responses.",
+        },
+    ][:top_k]
+
+
+functions_map = {"search_docs": search_docs}
+
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "search_docs",
+            "description": "Search documentation and return relevant snippets as documents.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search query to look up in the docs.",
+                    },
+                    "top_k": {
+                        "type": "integer",
+                        "description": "How many documents to return.",
+                    },
+                },
+                "required": ["query"],
+            },
+        },
+    }
+]
+
+co = cohere.ClientV2("COHERE_API_KEY")
+
+# Step 1: user message
+messages = [
+    {
+        "role": "user",
+        "content": "How does tool use work in Cohere? Please cite your sources.",
+    }
+]
+
+# Step 2: model generates tool calls
+response = co.chat(
+    model="command-a-plus-05-2026", messages=messages, tools=tools
+)
+
+if response.message.tool_calls:
+    messages.append(response.message)
+
+    # Step 3: application executes tools and sends tool results back
+    for tc in response.message.tool_calls:
+        tool_result = functions_map[tc.function.name](
+            **json.loads(tc.function.arguments)
+        )
+
+        tool_content = []
+        for data in tool_result:
+            tool_content.append(
+                {
+                    "type": "document",
+                    "document": {"data": json.dumps(data)},
+                }
+            )
+
+        messages.append(
+            {
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": tool_content,
+            }
+        )
+
+# Step 4: model generates a response grounded in tool results (with citations)
+response = co.chat(
+    model="command-a-plus-05-2026", messages=messages, tools=tools
+)
+
+print(response.message.content[0].text)
+print(response.message.citations)
+```
+
+In the sections below, we'll walk through the steps in the tool-use loop, beginning with set up.
+
+## Setup
+
+First, import the Cohere library and create a client.
+
+<Tabs>
+<Tab title="Cohere platform">
+
+```python PYTHON
+# ! pip install -U cohere
+import cohere
+
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
+```
+</Tab>
+
+<Tab title="Private deployment">
+```python PYTHON
+# ! pip install -U cohere
+import cohere
+
+co = cohere.ClientV2(
+    api_key="",  # Leave this blank
+    base_url="<YOUR_DEPLOYMENT_URL>",
+)
+```
+</Tab>
+</Tabs>
+
+## Tool definition
+
+Before we can run a tool use workflow, we have to define the tools. We can break this process into two steps:
+
+- Creating the tool
+- Defining the tool schema
+
+### Creating the tool
+
+A tool can be any function that you create or external services that return an object for a given input. Some examples:
+
+- A web search engine
+- An email service
+- A SQL database
+- A vector database
+- A documentation search service
+- A sports data service
+- Another LLM.
+
+In this walkthrough, we define a `search_docs` function that returns relevant documentation snippets for a given query. You can implement any retrieval logic here, but to simplify, we'll return a few hardcoded documents.
+
+```python PYTHON
+def search_docs(query, top_k=3):
+    # Implement any retrieval logic here (vector DB, keyword search, etc.)
+    return [
+        {
+            "title": "Tool use (function calling) overview",
+            "url": "https://docs.cohere.com/v2/docs/tool-use-overview",
+            "text": "Tool use connects models to external tools like search engines and APIs.",
+        },
+        {
+            "title": "Chat API reference (v2)",
+            "url": "https://docs.cohere.com/reference/chat",
+            "text": "Use the Chat endpoint to generate responses and optionally call tools.",
+        },
+        {
+            "title": "Structured outputs",
+            "url": "https://docs.cohere.com/docs/structured-outputs",
+            "text": "Use JSON schema to define structured inputs/outputs for tools and responses.",
+        },
+    ][:top_k]
+    # Return a string or a list of objects. In Step 3 below, we'll wrap each object into a `document`
+    # content block so the model can cite specific tool results.
+
+
+functions_map = {"search_docs": search_docs}
+```
+
+The Chat endpoint accepts [a string or a list of objects](https://docs.cohere.com/reference/chat#request.body.messages.tool.content) as the tool results. Thus, you should format the return value in this way. The following are some examples.
+
+```python PYTHON
+# Example: String
+docs_search_results = "Tool use connects models to external tools like search engines and APIs."
+
+# Example: List of objects
+docs_search_results = [
+    {
+        "title": "Tool use (function calling) overview",
+        "url": "https://docs.cohere.com/v2/docs/tool-use-overview",
+        "text": "Tool use connects models to external tools like search engines and APIs.",
+    },
+    {
+        "title": "Structured outputs",
+        "url": "https://docs.cohere.com/docs/structured-outputs",
+        "text": "Use JSON schema to define structured inputs/outputs for tools and responses.",
+    },
+]
+```
+
+### Defining the tool schema
+
+We also need to define the tool schemas in a format that can be passed to the Chat endpoint. The schema follows the [JSON Schema specification](https://json-schema.org/understanding-json-schema) and must contain the following fields: 
+
+- `name`: the name of the tool.
+- `description`: a description of what the tool is and what it is used for.
+- `parameters`: a list of parameters that the tool accepts. For each parameter, we need to define the following fields:
+  - `type`: the type of the parameter.
+  - `properties`: the name of the parameter and the following fields:
+    - `type`: the type of the parameter.
+    - `description`: a description of what the parameter is and what it is used for.
+  - `required`: a list of required properties by name, which appear as keys in the `properties` object
+
+This schema informs the LLM about what the tool does, and the LLM decides whether to use a particular tool based on the information that it contains.
+
+Therefore, the more descriptive and clear the schema, the more likely the LLM will make the right tool call decisions.
+
+In a typical development cycle, some fields such as `name`, `description`, and `properties` will likely require a few rounds of iterations in order to get the best results (a similar approach to prompt engineering).
+
+Here's an example:
+
+```python PYTHON
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "search_docs",
+            "description": "Search documentation and return relevant snippets as documents.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search query to look up in the docs.",
+                    },
+                    "top_k": {
+                        "type": "integer",
+                        "description": "How many documents to return.",
+                    },
+                },
+                "required": ["query"],
+            },
+        },
+    },
+]
+```
+
+<Note>The endpoint supports a subset of the JSON Schema specification. Refer to the [Structured Outputs documentation](https://docs.cohere.com/docs/structured-outputs#parameter-types-support) for the list of supported and unsupported parameters.</Note>
+
+## Tool use workflow
+
+At a high level, there are four steps in the core tool-use loop:
+
+- Step 1: **Get user message**: A user asks, "How does tool use work in Cohere? Please cite your sources."
+- Step 2: **Generate tool calls**: A tool call is made to a documentation search tool with something like `search_docs("tool use Cohere")`.
+- Step 3: **Get tool results**: The tool returns relevant documentation snippets (documents).
+- Step 4: **Generate response and citations**: The model provides the answer grounded in those snippets, with citations.
+
+The following sections go through the implementation of these steps in detail.
+
+### Step 1: Get user message
+In the first step, we get the user's message and append it to the `messages` list with the `role` set to `user`.
+
+```python PYTHON
+messages = [
+    {
+        "role": "user",
+        "content": "How does tool use work in Cohere? Please cite your sources.",
+    }
+]
+```
+
+<Accordion title='System message'>
+Optional: If you want to define a system message, you can add it to the `messages` list with the `role` set to `system`.
+
+```python PYTHON
+system_message = """## Task & Context
+You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.
+
+## Style Guide
+Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.
+"""
+
+messages = [
+    {"role": "system", "content": system_message},
+    {
+        "role": "user",
+        "content": "How does tool use work in Cohere? Please cite your sources.",
+    },
+]
+```
+</Accordion>
+
+
+### Step 2: Generate tool calls
+
+Next, we call the Chat endpoint to generate the list of tool calls. This is done by passing the parameters `model`, `messages`, and `tools` to the Chat endpoint.
+
+The endpoint will send back a list of tool calls to be made if the model determines that tools are required. If it does, it will return two types of information:
+- `tool_plan`: its reflection on the next steps it should take, given the user query.
+- `tool_calls`: a list of tool calls to be made (if any), together with auto-generated tool call IDs. Each generated tool call contains:
+    - `id`: the tool call ID
+    - `type`: the type of the tool call (`function`)
+    - `function`: the function to be called, which contains the function's `name` and `arguments` to be passed to the function.
+
+We then append these to the `messages` list with the `role` set to `assistant`.
+
+<CodeBlocks>
+```python PYTHON
+response = co.chat(
+    model="command-a-plus-05-2026", messages=messages, tools=tools
+)
+
+if response.message.tool_calls:
+    messages.append(response.message)
+    print(response.message.tool_plan, "\n")
+    print(response.message.tool_calls)
+```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-plus-05-2026",
+  "messages": [
+    {
+      "role": "user",
+      "content": "How does tool use work in Cohere? Please cite your sources."
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "search_docs",
+        "description": "Search documentation and return relevant snippets as documents.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "The search query to look up in the docs."
+            },
+            "top_k": {
+              "type": "integer",
+              "description": "How many documents to return."
+            }
+          },
+          "required": ["query"]
+        }
+      }
+    }
+  ]
+}'
+```
+</CodeBlocks>
+
+Example response:
+```mdx wordWrap
+I will search the docs for how tool use works in Cohere.
+
+[
+    ToolCallV2(
+        id="search_docs_1byjy32y4hvq",
+        type="function",
+        function=ToolCallV2Function(
+            name="search_docs", arguments='{"query":"tool use Cohere","top_k":3}'
+        ),
+    )
+]
+```
+
+By default, when using the Python SDK, the endpoint passes the tool calls as objects of type `ToolCallV2` and `ToolCallV2Function`. With these, you get built-in type safety and validation that helps prevent common errors during development.
+
+Alternatively, you can use plain dictionaries to structure the tool call message.
+
+These two options are shown below.
+
+<Tabs>
+<Tab title="Python objects">
+```python PYTHON
+messages = [
+    {
+        "role": "user",
+        "content": "Find docs about tool use and structured outputs.",
+    },
+    {
+        "role": "assistant",
+        "tool_plan": "I will search the docs for tool use and structured outputs.",
+        "tool_calls": [
+            ToolCallV2(
+                id="search_docs_dkf0akqdazjb",
+                type="function",
+                function=ToolCallV2Function(
+                    name="search_docs",
+                    arguments='{"query":"tool use","top_k":3}',
+                ),
+            ),
+            ToolCallV2(
+                id="search_docs_gh65bt2tcdy1",
+                type="function",
+                function=ToolCallV2Function(
+                    name="search_docs",
+                    arguments='{"query":"structured outputs","top_k":3}',
+                ),
+            ),
+        ],
+    },
+]
+```
+
+</Tab>
+
+<Tab title="Plain dictionaries">
+```python PYTHON
+messages = [
+    {
+        "role": "user",
+        "content": "Find docs about tool use and structured outputs.",
+    },
+    {
+        "role": "assistant",
+        "tool_plan": "I will search the docs for tool use and structured outputs.",
+        "tool_calls": [
+            {
+                "id": "search_docs_dkf0akqdazjb",
+                "type": "function",
+                "function": {
+                    "name": "search_docs",
+                    "arguments": '{"query":"tool use","top_k":3}',
+                },
+            },
+            {
+                "id": "search_docs_gh65bt2tcdy1",
+                "type": "function",
+                "function": {
+                    "name": "search_docs",
+                    "arguments": '{"query":"structured outputs","top_k":3}',
+                },
+            },
+        ],
+    },
+]
+```
+
+</Tab>
+</Tabs>
+
+<AccordionGroup>
+<Accordion title='Directly responding'>
+The model can decide to *not* make any tool call, and instead, respond to a user message directly. This is described [here](https://docs.cohere.com/docs/tool-use-usage-patterns#directly-answering).
+</Accordion>
+<Accordion title='Parallel tool calling'>
+The model can determine that more than one tool call is required. This can be calling the same tool multiple times or different tools for any number of calls. This is described [here](https://docs.cohere.com/docs/tool-use-usage-patterns#parallel-tool-calling).
+</Accordion>
+</AccordionGroup>
+
+### Step 3: Get tool results
+During this step, the actual function calling happens. We call the necessary tools based on the tool call payloads given by the endpoint.
+
+For each tool call, we append the `messages` list with:
+- the `tool_call_id` generated in the previous step.
+- the `content` of each tool result with the following fields:
+    - `type` which is `document`
+    - `document` containing
+        - `data`: which stores the contents of the tool result.
+        - `id` (optional): you can provide each document with a unique ID for use in citations, otherwise auto-generated
+
+```python PYTHON
+import json
+
+if response.message.tool_calls:
+    for tc in response.message.tool_calls:
+        tool_result = functions_map[tc.function.name](
+            **json.loads(tc.function.arguments)
+        )
+        tool_content = []
+        for data in tool_result:
+            # Optional: the "document" object can take an "id" field for use in citations, otherwise auto-generated
+            tool_content.append(
+                {
+                    "type": "document",
+                    "document": {"data": json.dumps(data)},
+                }
+            )
+        messages.append(
+            {
+                "role": "tool",
+                "tool_call_id": tc.id,
+                "content": tool_content,
+            }
+        )
+```
+
+### Step 4: Generate response and citations
+By this time, the tool call has already been executed, and the result has been returned to the LLM.
+
+In this step, we call the Chat endpoint to generate the response to the user, again by passing the parameters `model`, `messages` (which has now been updated with information from the tool calling and tool execution steps), and `tools`.
+
+The model generates a response to the user, grounded on the information provided by the tool.
+
+We then append the response to the `messages` list with the `role` set to `assistant`.
+
+<CodeBlocks>
+```python PYTHON
+response = co.chat(
+    model="command-a-plus-05-2026", messages=messages, tools=tools
+)
+
+messages.append(
+    {"role": "assistant", "content": response.message.content[0].text}
+)
+
+print(response.message.content[0].text)
+```
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.ai/v2/chat \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+  "model": "command-a-plus-05-2026",
+  "messages": [
+    {
+      "role": "user",
+      "content": "How does tool use work in Cohere? Please cite your sources."
+    },
+    {
+      "role": "assistant",
+      "tool_plan": "I will search the docs for how tool use works in Cohere.",
+      "tool_calls": [
+        {
+          "id": "search_docs_1byjy32y4hvq",
+          "type": "function",
+          "function": {
+            "name": "search_docs",
+            "arguments": "{\"query\":\"tool use Cohere\",\"top_k\":3}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "search_docs_1byjy32y4hvq",
+      "content": [
+        {
+          "type": "document",
+          "document": {
+            "data": "{\"title\": \"Tool use (function calling) overview\", \"url\": \"https://docs.cohere.com/v2/docs/tool-use-overview\", \"text\": \"Tool use connects models to external tools like search engines and APIs.\"}"
+          }
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "search_docs",
+        "description": "Search documentation and return relevant snippets as documents.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "The search query to look up in the docs."
+            },
+            "top_k": {
+              "type": "integer",
+              "description": "How many documents to return."
+            }
+          },
+          "required": ["query"]
+        }
+      }
+    }
+  ]
+}'
+```
+</CodeBlocks>
+Example response:
+```mdx wordWrap
+Tool use lets models call external tools (like doc search) and then answer using the tool results, with citations.
+```
+It also generates fine-grained citations, which are included out-of-the-box with the Command family of models. Here, we see the model generating two citations, one for each specific span in its response, where it uses the tool result to answer the question.
+
+```python PYTHON
+print(response.message.citations)
+```
+Example response:
+```mdx wordWrap
+[Citation(start=0, end=8, text='Tool use', sources=[ToolSource(type='tool', id='search_docs_1byjy32y4hvq:0', tool_output={'title': 'Tool use (function calling) overview', 'url': 'https://docs.cohere.com/v2/docs/tool-use-overview', 'text': 'Tool use connects models to external tools like search engines and APIs.'})], type='TEXT_CONTENT')]
+```
+
+<Accordion title='Multi-step tool use (agents)'>
+Above, we assume the model performs tool calling only once (either single call or parallel calls), and then generates its response. This is not always the case: the model might decide to do a sequence of tool calls in order to answer the user request. This means that steps 2 and 3 will run multiple times in loop. It is called multi-step tool use and is described [here](https://docs.cohere.com/docs/tool-use-usage-patterns#multi-step-tool-use).
+</Accordion>
+
+### State management
+This section provides a more detailed look at how the state is managed via the `messages` list as described in the [tool use workflow](#tool-use-workflow) above.
+
+At each step of the workflow, the endpoint requires that we append specific types of information to the `messages` list. This is to ensure that the model has the necessary context to generate its response at a given point.
+
+In summary, each single turn of a conversation that involves tool calling consists of:
+1. A `user` message containing the user message
+    - `content`
+2. An `assistant` message, containing the tool calling information
+    - `tool_plan`
+    - `tool_calls`
+        - `id`
+        - `type`
+        - `function` (consisting of `name` and `arguments`)
+3. A `tool` message, containing the tool results
+    - `tool_call_id`
+    - `content` containing a list of documents where each document contains the following fields:
+        - `type`
+        - `document` (consisting of `data` and optionally `id`)
+4. A final `assistant` message, containing the model's response
+    - `content`
+
+These correspond to the four steps described above. The list of `messages` is shown below.
+
+```python PYTHON
+for message in messages:
+    print(message, "\n")
+```
+
+```json
+{   
+    "role": "user", 
+    "content": "How does tool use work in Cohere? Please cite your sources."
+}
+
+{
+    "role": "assistant",
+    "tool_plan": "I will search the docs for how tool use works in Cohere.",
+    "tool_calls": [
+        ToolCallV2(
+            id="search_docs_1byjy32y4hvq",
+            type="function",
+            function=ToolCallV2Function(
+                name="search_docs", arguments='{"query":"tool use Cohere","top_k":3}'
+            ),
+        )
+    ],
+}
+
+{
+    "role": "tool",
+    "tool_call_id": "search_docs_1byjy32y4hvq",
+    "content": [{"type": "document", "document": {"data": "{\"title\":\"Tool use (function calling) overview\",\"url\":\"https://docs.cohere.com/v2/docs/tool-use-overview\",\"text\":\"Tool use connects models to external tools like search engines and APIs.\"}"}}],
+}
+
+{   
+    "role": "assistant", 
+    "content": "Tool use lets models call external tools (like doc search) and then answer using the tool results, with citations."
+}
+```
+
+The sequence of `messages` is represented in the diagram below.
+
+```mermaid
+%%{init: {'htmlLabels': true}}%%
+flowchart TD
+    classDef defaultStyle fill:#fff,stroke:#000,color:#000;
+
+    A["<div><b>USER</b><br>Query</div>"]
+    B["<div><b>ASSISTANT</b><br>Tool call</div>"]
+    C["<div><b>TOOL</b><br>Tool result</div>"]
+    D["<div><b>ASSISTANT</b><br>Response</div>"]
+
+    A -.-> B
+    B -.-> C
+    C -.-> D
+
+    class A,B,C,D defaultStyle;
+```
+
+
+Note that this sequence represents a basic usage pattern in tool use. The [next page](https://docs.cohere.com/v2/docs/tool-use-usage-patterns) describes how this is adapted for other scenarios.
+

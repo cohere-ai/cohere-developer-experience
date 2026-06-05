@@ -15,27 +15,12 @@ public class Stream {
             .v2()
             .chatStream(
                 V2ChatStreamRequest.builder()
-                    .model("command-r-plus-08-2024")
+                    .model("command-a-plus-05-2026")
                     .messages(
                         List.of(
                             ChatMessageV2.user(
                                 UserMessage.builder()
-                                    .content(UserMessageContent.of("Who discovered" + " gravity?"))
-                                    .build()),
-                            ChatMessageV2.assistant(
-                                AssistantMessage.builder()
-                                    .content(
-                                        AssistantMessageContent.of(
-                                            "The man"
-                                                + " who is"
-                                                + " widely"
-                                                + " credited"
-                                                + " with"
-                                                + " discovering"
-                                                + " gravity"
-                                                + " is Sir"
-                                                + " Isaac"
-                                                + " Newton"))
+                                    .content(UserMessageContent.of("Tell me about LLMs"))
                                     .build())))
                     .build());
 

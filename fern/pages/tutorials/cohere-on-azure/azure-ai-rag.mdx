@@ -1,5 +1,5 @@
 ---
-title: Retrieval Augmented Generation (RAG)
+title: Retrieval Augmented Generation (RAG) on Azure
 slug: /docs/cohere-on-azure/azure-ai-rag
 
 description: "A guide for performing retrieval augmented generation (RAG) with Cohere's Command models on Azure AI Foundry (API v1)."
@@ -38,18 +38,18 @@ To create a client, you need to provide the API key and the model's base URL for
 import cohere
 
 co_chat = cohere.Client(
-  api_key="AZURE_API_KEY_CHAT",
-  base_url="AZURE_ENDPOINT_CHAT" # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
+    api_key="AZURE_API_KEY_CHAT",
+    base_url="AZURE_ENDPOINT_CHAT",  # example: "https://cohere-command-r-plus-08-2024-xyz.eastus.models.ai.azure.com/"
 )
 
 co_embed = cohere.Client(
-  api_key="AZURE_API_KEY_EMBED",
-  base_url="AZURE_ENDPOINT_EMBED" # example: "https://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/"
+    api_key="AZURE_API_KEY_EMBED",
+    base_url="AZURE_ENDPOINT_EMBED",  # example: "https://cohere-embed-v3-multilingual-xyz.eastus.models.ai.azure.com/"
 )
 
 co_rerank = cohere.Client(
     api_key="AZURE_API_KEY_RERANK",
-    base_url="AZURE_ENDPOINT_RERANK" # example: "https://cohere-rerank-v3-multilingual-xyz.eastus.models.ai.azure.com/"
+    base_url="AZURE_ENDPOINT_RERANK",  # example: "https://cohere-rerank-v3-multilingual-xyz.eastus.models.ai.azure.com/"
 )
 ```
 
@@ -66,13 +66,16 @@ We have seen how to use the Chat endpoint in the text generation chapter. To use
 documents = [
     {
         "title": "Tall penguins",
-        "text": "Emperor penguins are the tallest."},
+        "text": "Emperor penguins are the tallest.",
+    },
     {
         "title": "Penguin habitats",
-        "text": "Emperor penguins only live in Antarctica."},
+        "text": "Emperor penguins only live in Antarctica.",
+    },
     {
         "title": "What are animals?",
-        "text": "Animals are different from plants."}
+        "text": "Animals are different from plants.",
+    },
 ]
 ```
 
@@ -84,10 +87,7 @@ The model leverages the provided documents as context for its response. Specific
 ```python PYTHON
 message = "What are the tallest living penguins?"
 
-response = co_chat.chat(
-    message=message, 
-    documents=documents
-)
+response = co_chat.chat(message=message, documents=documents)
 
 print("\nRESPONSE:\n")
 print(response.text)
@@ -140,16 +140,20 @@ Next, we’ll define the documents we’ll use for RAG. We’ll use a few pages 
 raw_documents = [
     {
         "title": "Crafting Effective Prompts",
-        "url": "https://docs.cohere.com/docs/crafting-effective-prompts"},
+        "url": "https://docs.cohere.com/docs/crafting-effective-prompts",
+    },
     {
         "title": "Advanced Prompt Engineering Techniques",
-        "url": "https://docs.cohere.com/docs/advanced-prompt-engineering-techniques"},
+        "url": "https://docs.cohere.com/docs/advanced-prompt-engineering-techniques",
+    },
     {
         "title": "Prompt Truncation",
-        "url": "https://docs.cohere.com/docs/prompt-truncation"},
+        "url": "https://docs.cohere.com/docs/prompt-truncation",
+    },
     {
         "title": "Preambles",
-        "url": "https://docs.cohere.com/docs/preambles"}
+        "url": "https://docs.cohere.com/docs/preambles",
+    },
 ]
 ```
 
@@ -177,7 +181,6 @@ class Vectorstore:
         self.load_and_chunk()
         self.embed()
         self.index()
-
 
     def load_and_chunk(self) -> None:
         """
@@ -209,8 +212,7 @@ class Vectorstore:
             batch = self.docs[i : min(i + batch_size, self.docs_len)]
             texts = [item["text"] for item in batch]
             docs_embs_batch = co_embed.embed(
-                texts=texts,
-                input_type="search_document"
+                texts=texts, input_type="search_document"
             ).embeddings
             self.docs_embs.extend(docs_embs_batch)
 
@@ -221,10 +223,16 @@ class Vectorstore:
         print("Indexing document chunks...")
 
         self.idx = hnswlib.Index(space="ip", dim=1024)
-        self.idx.init_index(max_elements=self.docs_len, ef_construction=512, M=64)
-        self.idx.add_items(self.docs_embs, list(range(len(self.docs_embs))))
+        self.idx.init_index(
+            max_elements=self.docs_len, ef_construction=512, M=64
+        )
+        self.idx.add_items(
+            self.docs_embs, list(range(len(self.docs_embs)))
+        )
 
-        print(f"Indexing complete with {self.idx.get_current_count()} document chunks.")
+        print(
+            f"Indexing complete with {self.idx.get_current_count()} document chunks."
+        )
 
     def retrieve(self, query: str) -> List[Dict[str, str]]:
         """
@@ -239,21 +247,24 @@ class Vectorstore:
 
         # Dense retrieval
         query_emb = co_embed.embed(
-            texts=[query],
-            input_type="search_query"
+            texts=[query], input_type="search_query"
         ).embeddings
-        
-        doc_ids = self.idx.knn_query(query_emb, k=self.retrieve_top_k)[0][0]
+
+        doc_ids = self.idx.knn_query(
+            query_emb, k=self.retrieve_top_k
+        )[0][0]
 
         # Reranking
         docs_to_rerank = [self.docs[doc_id] for doc_id in doc_ids]
-        yaml_docs = [yaml.dump(doc, sort_keys=False) for doc in docs_to_rerank] 
+        yaml_docs = [
+            yaml.dump(doc, sort_keys=False) for doc in docs_to_rerank
+        ]
         rerank_results = co_rerank.rerank(
-            query=query,
-            documents=yaml_docs,
-            top_n=self.rerank_top_k
+            query=query, documents=yaml_docs, top_n=self.rerank_top_k
         )
-        doc_ids_reranked = [doc_ids[result.index] for result in rerank_results.results]
+        doc_ids_reranked = [
+            doc_ids[result.index] for result in rerank_results.results
+        ]
 
         docs_retrieved = []
         for doc_id in doc_ids_reranked:
@@ -318,17 +329,17 @@ Here's what happens inside the function:
 
 ```python PYTHON
 def run_chatbot(message, chat_history=None):
-        
+
     if chat_history is None:
         chat_history = []
-    
-    # Generate search queries, if any        
+
+    # Generate search queries, if any
     response = co_chat.chat(
         message=message,
         search_queries_only=True,
         chat_history=chat_history,
     )
-    
+
     search_queries = []
     for query in response.search_queries:
         search_queries.append(query.text)
@@ -346,27 +357,26 @@ def run_chatbot(message, chat_history=None):
         response = co_chat.chat(
             message=message,
             documents=documents,
-            chat_history=chat_history
+            chat_history=chat_history,
         )
 
     else:
         response = co_chat.chat(
-            message=message,
-            chat_history=chat_history
+            message=message, chat_history=chat_history
         )
-        
+
     # Print the chatbot response, citations, and documents
     print("\nRESPONSE:\n")
     print(response.text)
-        
+
     if response.citations:
-        print("\nCITATIONS:\n")           
+        print("\nCITATIONS:\n")
         for citation in response.citations:
             print(citation)
-        print("\nDOCUMENTS:\n")           
+        print("\nDOCUMENTS:\n")
         for document in response.documents:
             print(document)
-            
+
     chat_history = response.chat_history
 
     return chat_history
@@ -387,7 +397,10 @@ Hello there! How can I help you today?
 
 
 ```python PYTHON
-chat_history = run_chatbot("What's the difference between zero-shot and few-shot prompting", chat_history)
+chat_history = run_chatbot(
+    "What's the difference between zero-shot and few-shot prompting",
+    chat_history,
+)
 ```
 ```
 Retrieving information...
@@ -409,7 +422,9 @@ DOCUMENTS:
 
 
 ```python PYTHON
-chat_history = run_chatbot("What do you know about 5G networks?", chat_history)
+chat_history = run_chatbot(
+    "What do you know about 5G networks?", chat_history
+)
 ```
 ```mdx
 Retrieving information...

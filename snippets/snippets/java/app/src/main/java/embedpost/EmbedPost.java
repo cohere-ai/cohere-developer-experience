@@ -14,7 +14,7 @@ public class EmbedPost {
         cohere.embed(
             EmbedRequest.builder()
                 .texts(List.of("hello", "goodbye"))
-                .model("embed-english-v3.0")
+                .model("embed-v4.0")
                 .inputType(EmbedInputType.CLASSIFICATION)
                 .build());
 

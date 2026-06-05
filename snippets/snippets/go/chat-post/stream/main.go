@@ -5,34 +5,20 @@ import (
 	"errors"
 	"io"
 	"log"
+	"os"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
 	client "github.com/cohere-ai/cohere-go/v2/client"
 )
 
 func main() {
-	co := client.NewClient()
+	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
 
 	resp, err := co.ChatStream(
 		context.TODO(),
 		&cohere.ChatStreamRequest{
-			ChatHistory: []*cohere.Message{
-				{
-					Role: "USER",
-					User: &cohere.ChatMessage{
-						Message: "Who discovered gravity?",
-					},
-				},
-				{
-					Role: "CHATBOT",
-					Chatbot: &cohere.ChatMessage{
-						Message: "The man who is widely credited with discovering gravity is Sir Isaac Newton",
-					},
-				}},
-			Message: "What year was he born?",
-			Connectors: []*cohere.ChatConnector{
-				{Id: "web-search"},
-			},
+			Model:   cohere.String("command-a-03-2025"),
+			Message: "Tell me about LLMs",
 		},
 	)
 
