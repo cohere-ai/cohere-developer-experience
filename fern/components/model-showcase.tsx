@@ -142,7 +142,7 @@ type Model = {
   longDescription?: string;
   capabilities: Capability[];
   pricing?: { input: number; output: number };
-  specs: { contextWindow: number; maxOutputTokens: number; knowledgeCutoff: string, customSpecs: { name: string; value: string }[] };
+  specs: { contextWindow: number; maxOutputTokens: number; knowledgeCutoff?: string, customSpecs?: { name: string; value: string }[] };
   usageMessage?: React.ReactNode;
   endpoints: Endpoint[];
 };
@@ -231,7 +231,9 @@ export const ModelShowcase = ({ model }: ModelShowcaseProps) => (
         <ul style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.875rem' }}>
           <div><strong>Context Window:</strong> {model.specs.contextWindow} tokens</div>
           <div><strong>Max Output Tokens:</strong> {model.specs.maxOutputTokens} tokens</div>
-          <div><strong>Knowledge Cutoff:</strong> {model.specs.knowledgeCutoff}</div>
+          {model.specs.knowledgeCutoff && (
+            <div><strong>Knowledge Cutoff:</strong> {model.specs.knowledgeCutoff}</div>
+          )}
           {model.specs.customSpecs?.map((spec, i) => (
             <div key={i}><strong>{spec.name}:</strong> {spec.value}</div>
           ))}
