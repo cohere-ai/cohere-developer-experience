@@ -32,152 +32,497 @@ description: >-
   }
   @media (min-width: 768px) {
     .landing-outer {
-      padding: 40px;
-      padding-bottom: 56px;
+      padding: 48px 40px;
+      padding-bottom: 64px;
     }
   }
 
-  /* Product hub */
-  .product-hub {
-    margin-bottom: 48px;
+  /* ---------- Hero carousel ---------- */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    padding: 48px 40px 36px 40px;
+    margin-bottom: 56px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    background:
+      radial-gradient(120% 120% at 0% 0%, rgba(57, 89, 77, 0.10) 0%, transparent 45%),
+      radial-gradient(120% 120% at 100% 0%, rgba(45, 76, 185, 0.10) 0%, transparent 45%),
+      linear-gradient(180deg, #F7F6F3 0%, #FFFFFF 100%);
   }
-  .product-hub-heading {
-    margin: 8px 0 8px 0;
+  :is(.dark) .hero {
+    border-color: rgba(255, 255, 255, 0.08);
+    background:
+      radial-gradient(120% 120% at 0% 0%, rgba(91, 161, 134, 0.16) 0%, transparent 45%),
+      radial-gradient(120% 120% at 100% 0%, rgba(76, 110, 230, 0.16) 0%, transparent 45%),
+      linear-gradient(180deg, #141414 0%, #0B0B0B 100%);
   }
-  .product-hub-sub {
-    margin: 0 0 24px 0;
-    max-width: 640px;
+
+  /* hidden radios that drive the dots / manual selection */
+  .hero-radio {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* all slides occupy the same grid cell, so the container auto-sizes to the
+     tallest slide and nothing overflows onto the dots below */
+  .hero-slides {
+    display: grid;
+  }
+
+  .hero-slide {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+    animation: heroFade 24s infinite;
+  }
+  /* decorative accent glow per slide */
+  .hero-slide::after {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    width: 340px;
+    height: 340px;
+    top: -160px;
+    right: -70px;
+    border-radius: 50%;
+    filter: blur(72px);
+    opacity: 0.55;
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent, #39594d) 50%, transparent), transparent 70%);
+    pointer-events: none;
+  }
+  .hero-slide > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+    color: #ffffff;
+    background: var(--accent, #39594d);
+    margin-bottom: 18px;
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--accent, #39594d) 32%, transparent);
+  }
+  .hero-eyebrow {
+    display: inline-block;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent, #39594d);
+    background: color-mix(in srgb, var(--accent, #39594d) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent, #39594d) 22%, transparent);
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin: 0 0 16px 0;
+  }
+  :is(.dark) .hero-eyebrow {
+    color: color-mix(in srgb, var(--accent, #39594d) 55%, #ffffff);
+    background: color-mix(in srgb, var(--accent, #39594d) 22%, transparent);
+    border-color: color-mix(in srgb, var(--accent, #39594d) 40%, transparent);
+  }
+  .hero-title {
+    margin: 0 0 14px 0;
+    font-size: clamp(1.8rem, 3.6vw, 2.7rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    max-width: 600px;
+  }
+  .hero-sub {
+    margin: 0;
+    max-width: 540px;
+    font-size: 1.05rem;
+    opacity: 0.78;
+  }
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+  }
+  .hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+  .hero-btn-primary {
+    background: var(--accent, #39594d);
+    color: #ffffff;
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--accent, #39594d) 30%, transparent);
+  }
+  .hero-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--accent, #39594d) 38%, transparent);
+  }
+
+  /* dots */
+  .hero-dots {
+    position: relative;
+    z-index: 4;
+    display: flex;
+    gap: 9px;
+    margin-top: 30px;
+  }
+  .hero-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.16);
+    animation: heroDot 24s infinite;
+    transition: background-color 0.3s ease, width 0.3s ease;
+  }
+  :is(.dark) .hero-dot {
+    background: rgba(255, 255, 255, 0.22);
+  }
+  .hero-dot:hover {
+    background: color-mix(in srgb, var(--dot-accent, #39594d) 70%, transparent);
+  }
+
+  /* auto-rotation timeline: 4 slides over 24s (6s each) */
+  @keyframes heroFade {
+    0%   { opacity: 0; pointer-events: none; }
+    1.5% { opacity: 1; pointer-events: auto; }
+    23%  { opacity: 1; pointer-events: auto; }
+    25%  { opacity: 0; pointer-events: none; }
+    100% { opacity: 0; pointer-events: none; }
+  }
+  @keyframes heroDot {
+    0%   { width: 9px;  background: rgba(0,0,0,0.16); }
+    1.5% { width: 28px; background: var(--dot-accent, #39594d); }
+    23%  { width: 28px; background: var(--dot-accent, #39594d); }
+    25%  { width: 9px;  background: rgba(0,0,0,0.16); }
+    100% { width: 9px;  background: rgba(0,0,0,0.16); }
+  }
+
+  /* pause auto-rotation on hover */
+  .hero:hover .hero-slide,
+  .hero:hover .hero-dot {
+    animation-play-state: paused;
+  }
+
+  /* when a dot is clicked, stop auto-rotation and show that slide */
+  .hero:has(.hero-radio:checked) .hero-slide {
+    animation: none;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .hero:has(.hero-radio:checked) .hero-dot {
+    animation: none;
+    width: 9px;
+    background: rgba(0, 0, 0, 0.16);
+  }
+  :is(.dark) .hero:has(.hero-radio:checked) .hero-dot {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  #hero-slide-0:checked ~ .hero-slides .hero-slide[data-i="0"],
+  #hero-slide-1:checked ~ .hero-slides .hero-slide[data-i="1"],
+  #hero-slide-2:checked ~ .hero-slides .hero-slide[data-i="2"],
+  #hero-slide-3:checked ~ .hero-slides .hero-slide[data-i="3"] {
+    opacity: 1;
+    z-index: 2;
+    pointer-events: auto;
+  }
+  #hero-slide-0:checked ~ .hero-dots .hero-dot[data-i="0"],
+  #hero-slide-1:checked ~ .hero-dots .hero-dot[data-i="1"],
+  #hero-slide-2:checked ~ .hero-dots .hero-dot[data-i="2"],
+  #hero-slide-3:checked ~ .hero-dots .hero-dot[data-i="3"] {
+    width: 28px;
+    background: var(--dot-accent, #39594d);
+  }
+
+  /* ---------- Product cards ---------- */
+  .section-heading {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: #6b6b6b;
+    margin: 0 0 20px 0;
   }
   .product-cards-grid {
     display: grid;
     grid-template-columns: repeat(1, minmax(0, 1fr));
     gap: 20px;
   }
-  @media (min-width: 768px) {
+  @media (min-width: 640px) {
     .product-cards-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 24px;
+      gap: 22px;
     }
   }
   @media (min-width: 1024px) {
     .product-cards-grid {
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 24px;
+      gap: 22px;
     }
   }
   .product-card {
-    border-radius: 8px;
-    background-color: #F5F4F2;
-    padding: 24px;
-    border-top: 3px solid var(--accent, #39594d);
-    transition: background-color 0.15s ease;
-  }
-  .product-card:hover {
-    background-color: #E9E6DE;
-  }
-  :is(.dark) .product-card {
-    background-color: #0F0F0F;
-  }
-  :is(.dark) .product-card:hover {
-    background-color: #292929;
-  }
-  .product-card a {
+    position: relative;
     display: flex;
     height: 100%;
     flex-direction: column;
-    justify-content: flex-start;
-    gap: 14px;
+    gap: 16px;
+    overflow: hidden;
+    border-radius: 16px;
+    background: #ffffff;
+    padding: 26px 24px 24px 24px;
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .product-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent, #39594d), color-mix(in srgb, var(--accent, #39594d) 25%, transparent));
+    opacity: 0.9;
+  }
+  .product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.10);
+    border-color: color-mix(in srgb, var(--accent, #39594d) 45%, transparent);
+  }
+  :is(.dark) .product-card {
+    background: #121212;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+  }
+  :is(.dark) .product-card:hover {
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+    border-color: color-mix(in srgb, var(--accent, #39594d) 55%, transparent);
+  }
+  .product-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+    color: var(--accent, #39594d);
+    background: color-mix(in srgb, var(--accent, #39594d) 13%, transparent);
+  }
+  :is(.dark) .product-card-icon {
+    color: #ffffff;
+    background: color-mix(in srgb, var(--accent, #39594d) 38%, transparent);
+  }
+  .product-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-grow: 1;
   }
   .product-card-eyebrow {
     font-size: 0.6875rem;
+    font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #6b6b6b;
+    color: #8a8a8a;
     margin: 0;
   }
   .product-card-title {
-    margin: 2px 0 0 0;
-    font-size: 1.25rem;
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
   .product-card-desc {
-    margin: 0;
+    margin: 6px 0 0 0;
     font-size: 0.9rem;
-    opacity: 0.85;
-    flex-grow: 1;
+    line-height: 1.5;
+    opacity: 0.8;
   }
   .product-card-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-size: 0.875rem;
-    font-weight: 500;
-    color: #2D4CB9;
+    font-weight: 600;
+    color: var(--accent, #39594d);
   }
   :is(.dark) .product-card-cta {
-    color: #4C6EE6;
+    color: color-mix(in srgb, var(--accent, #39594d) 55%, #ffffff);
+  }
+  .product-card-cta .arrow {
+    transition: transform 0.2s ease;
+  }
+  .product-card:hover .product-card-cta .arrow {
+    transform: translateX(5px);
   }
 
 `}
 </style>
 
 <llms-ignore>
-export const ProductCard = ({ href, eyebrow, title, description, accent }) => (
-  <div className="product-card" style={{ "--accent": accent }}>
-    <a href={href} target="_self">
-      <div>
-        <p className="product-card-eyebrow">{eyebrow}</p>
-        <h3 className="product-card-title">{title}</h3>
-      </div>
-      <p className="product-card-desc">{description}</p>
-      <div className="product-card-cta">{"Explore \u2192"}</div>
-    </a>
-  </div>
-);
+export const icons = {
+  platform: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2 2 7l10 5 10-5-10-5Z" />
+      <path d="m2 17 10 5 10-5" />
+      <path d="m2 12 10 5 10-5" />
+    </svg>
+  ),
+  north: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+    </svg>
+  ),
+  modelVault: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-3.6 8-9V5.5L12 2 4 5.5V13c0 5.4 8 9 8 9Z" />
+      <circle cx="12" cy="11" r="1.6" />
+      <path d="M12 12.6V15" />
+    </svg>
+  ),
+  compass: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  ),
+};
 
-export const productCards = [
+export const slides = [
   {
-    href: "/platform",
+    name: "Platform",
     eyebrow: "Platform",
-    title: "Platform",
-    description:
-      "Command, Embed, and Rerank \u2014 the core API and models for building with Cohere.",
+    title: "Build with the Cohere Platform",
+    sub: "Command, Embed, and Rerank \u2014 the core API, models, and SDKs for building with Cohere.",
+    href: "/platform",
     accent: "#39594d",
+    icon: icons.platform,
   },
   {
-    href: "/north",
+    name: "North",
     eyebrow: "Agentic AI",
-    title: "North",
-    description:
-      "Cohere's secure AI workspace for building agents and automating real work.",
+    title: "Automate real work with North",
+    sub: "Cohere's secure AI workspace for building agents and automating multi-step workflows.",
+    href: "/north",
     accent: "#2D4CB9",
+    icon: icons.north,
   },
   {
-    href: "/model-vault",
+    name: "Model Vault",
     eyebrow: "Deployment",
     title: "Model Vault",
-    description:
-      "Cohere-managed, single-tenant inference environments for your models.",
+    sub: "Cohere-managed, secure inference environments for deploying and serving cohere models.",
+    href: "/model-vault",
     accent: "#9A4C2E",
+    icon: icons.modelVault,
   },
   {
-    href: "/compass",
+    name: "Compass",
     eyebrow: "Retrieval",
-    title: "Compass",
-    description:
-      "Enterprise search and retrieval to power grounded, accurate answers.",
+    title: "Ground answers with Compass",
+    sub: "Enterprise search and retrieval to power grounded, accurate answers across your data.",
+    href: "/compass",
     accent: "#5B3E8E",
+    icon: icons.compass,
   },
 ];
 
+export const productCards = slides.map((s) => ({
+  href: s.href,
+  eyebrow: s.eyebrow,
+  title: s.name,
+  description: s.sub,
+  accent: s.accent,
+  icon: s.icon,
+}));
+
+export const ProductCard = ({ href, eyebrow, title, description, accent, icon }) => (
+  <a className="product-card" style={{ "--accent": accent }} href={href} target="_self">
+    <div className="product-card-icon">{icon}</div>
+    <div className="product-card-text">
+      <p className="product-card-eyebrow">{eyebrow}</p>
+      <div className="product-card-title">{title}</div>
+      <p className="product-card-desc">{description}</p>
+    </div>
+    <div className="product-card-cta">
+      Explore
+      <span className="arrow">{"\u2192"}</span>
+    </div>
+  </a>
+);
+
 <div className="landing-outer">
-  <div className="product-hub">
-    <h1 className="product-hub-heading">Cohere Documentation</h1>
-    <p className="p-lg product-hub-sub">
-      Explore guides, references, and deployment docs across all of Cohere's products.
-    </p>
-    <div className="product-cards-grid">
-      {productCards.map((card) => (
-        <ProductCard key={card.title} {...card} />
+  <div className="hero">
+    {slides.map((s, i) => (
+      <input
+        key={"radio-" + i}
+        type="radio"
+        name="hero-carousel"
+        id={"hero-slide-" + i}
+        className="hero-radio"
+      />
+    ))}
+    <div className="hero-slides">
+      {slides.map((s, i) => (
+        <div
+          key={i}
+          className="hero-slide"
+          data-i={i}
+          style={{ "--accent": s.accent, animationDelay: i * 6 + "s" }}
+        >
+          <div className="hero-icon">{s.icon}</div>
+          <span className="hero-eyebrow">{s.eyebrow}</span>
+          <div className="hero-title">{s.title}</div>
+          <p className="hero-sub">{s.sub}</p>
+          <div className="hero-actions">
+            <a className="hero-btn hero-btn-primary" href={s.href}>
+              {"Explore " + s.name}
+              <span>{"\u2192"}</span>
+            </a>
+          </div>
+        </div>
       ))}
     </div>
+    <div className="hero-dots">
+      {slides.map((s, i) => (
+        <label
+          key={i}
+          className="hero-dot"
+          data-i={i}
+          htmlFor={"hero-slide-" + i}
+          aria-label={s.name}
+          style={{ "--dot-accent": s.accent, animationDelay: i * 6 + "s" }}
+        />
+      ))}
+    </div>
+  </div>
+
+  <p className="section-heading">Explore by product</p>
+  <div className="product-cards-grid">
+    {productCards.map((card) => (
+      <ProductCard key={card.title} {...card} />
+    ))}
   </div>
 </div>
 </llms-ignore>
