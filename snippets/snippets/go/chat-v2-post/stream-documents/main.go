@@ -17,7 +17,7 @@ func main() {
 	resp, err := co.V2.ChatStream(
 		context.TODO(),
 		&cohere.V2ChatStreamRequest{
-			Model: "command-a-03-2025",
+			Model: "command-a-plus-05-2026",
 			Documents: []*cohere.V2ChatStreamRequestDocumentsItem{
 				{
 					Document: &cohere.Document{
