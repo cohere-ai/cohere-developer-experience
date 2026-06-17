@@ -15,10 +15,150 @@ You manage all of your vaults in one place from the Cohere dashboard, where you 
 hours, and activity across them. **Every vault is one of two types** — the deployment and management
 experience is the same; the difference is the level of protection.
 
+<div style={{ borderRadius: 16, padding: 28, margin: "28px 0", background: "linear-gradient(135deg, #F6E7DE 0%, #EAEFF6 100%)" }}>
+  <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 18px 40px rgba(15,23,42,0.18)", background: "#ffffff" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "11px 14px", background: "#F5F4F2", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+      <span style={{ width: 11, height: 11, borderRadius: "50%", background: "#FF5F57", display: "inline-block" }} />
+      <span style={{ width: 11, height: 11, borderRadius: "50%", background: "#FEBC2E", display: "inline-block" }} />
+      <span style={{ width: 11, height: 11, borderRadius: "50%", background: "#28C840", display: "inline-block" }} />
+      <span style={{ marginLeft: 12, fontSize: 12, color: "#6B7280", fontFamily: "monospace" }}>vault.cohere.com</span>
+    </div>
+    <img
+      src="../../assets/images/model-vault/model-vault-dashboard-overview.png"
+      alt="The Model Vault dashboard showing total spend, vault count, usage hours, a usage-over-time chart, and a row of vault cards."
+      style={{ display: "block", width: "100%", margin: 0 }}
+    />
+  </div>
+</div>
+
+<style>
+{`
+  .mv-card-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin: 24px 0;
+  }
+  @media (min-width: 640px) {
+    .mv-card-grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .mv-card-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  .mv-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-radius: 12px;
+    background-color: #F5F4F2;
+    padding: 20px;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+  }
+  .mv-card:hover { background-color: #E9E6DE; }
+  :is(.dark) .mv-card { background-color: #0F0F0F; }
+  :is(.dark) .mv-card:hover { background-color: #1C1C1C; }
+  .mv-card img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-radius: 8px;
+    margin: 0 0 16px 0;
+  }
+  .mv-card h3 { margin: 0 0 6px 0; }
+  .mv-card p { margin: 0; opacity: 0.85; }
+  .mv-card-cta {
+    margin-top: 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #2D4CB9;
+  }
+  :is(.dark) .mv-card-cta { color: #4C6EE6; }
+`}
+</style>
+
+## Why Model Vault
+
+<div className="mv-card-grid cols-3">
+  <div className="mv-card">
+    <img src="../../assets/images/model-vault/mv-why-dedicated.png" alt="Dedicated and single-tenant" />
+    <div style={{ flexGrow: 1 }}>
+      <h3>Dedicated and single-tenant</h3>
+      <p>Your load balancer, serving middleware, inference servers, and GPU accelerators are isolated to you; only authentication and base compute are shared.</p>
+    </div>
+  </div>
+  <div className="mv-card">
+    <img src="../../assets/images/model-vault/mv-why-managed.png" alt="Fully managed" />
+    <div style={{ flexGrow: 1 }}>
+      <h3>Fully managed</h3>
+      <p>Create a vault from the dashboard and let Cohere handle maintenance, deployments, updates, and scaling. There's no serving stack for you to operate.</p>
+    </div>
+  </div>
+  <div className="mv-card">
+    <img src="../../assets/images/model-vault/mv-why-tiers.png" alt="Models and performance tiers" />
+    <div style={{ flexGrow: 1 }}>
+      <h3>Models and performance tiers</h3>
+      <p>Pick a model and a size tier (S, M, L, XL) to match your latency and throughput needs.</p>
+    </div>
+  </div>
+  <div className="mv-card">
+    <img src="../../assets/images/model-vault/mv-why-elastic.png" alt="Elastic capacity" />
+    <div style={{ flexGrow: 1 }}>
+      <h3>Elastic capacity</h3>
+      <p>Set a minimum and maximum replica range, with autoscaling available so you only pay for what you use.</p>
+    </div>
+  </div>
+  <div className="mv-card">
+    <img src="../../assets/images/model-vault/mv-why-production.png" alt="Built for production" />
+    <div style={{ flexGrow: 1 }}>
+      <h3>Built for production</h3>
+      <p>Targets 99.9%+ availability SLOs, with request, latency, and utilization metrics to help you tune capacity.</p>
+    </div>
+  </div>
+  <div className="mv-card">
+    <img src="../../assets/images/model-vault/mv-why-north.png" alt="Standalone or with North" />
+    <div style={{ flexGrow: 1 }}>
+      <h3>Standalone or with North</h3>
+      <p>Call a vault directly over the API, or use it as the inference backend for <a href="/docs/model-vault/model-vault-with-north">North</a>.</p>
+    </div>
+  </div>
+</div>
+
+## How it works
+
+<Steps>
+### Create a vault
+
+In the [Vaults dashboard](/docs/model-vault/vaults-dashboard), [create a vault](/docs/model-vault/creating-a-vault): name it, choose a model and performance tier, and set its replica range.
+
+### Get your endpoint
+
+Once the vault is `Ready`, copy its **endpoint URL** and **model name** from the model card — see [Managing Vaults](/docs/model-vault/managing-vaults).
+
+### Call it with the Cohere SDK
+
+Point the SDK's `base_url` at your vault endpoint and send chat, embed, or rerank requests — see [Calling a Vault over the API](/docs/model-vault/api-access).
+</Steps>
+
 ## Two types of vault
 
-- **[Standard Vault](/docs/model-vault/standard)** — a Cohere-managed, single-tenant deployment with data protected in transit and at rest. Best when you want dedicated inference without managing the serving stack.
-- **[Encrypted Vault](/docs/model-vault/encrypted)** 🔒 — everything in a Standard Vault, plus confidential computing: prompts, responses, and model weights stay protected end to end inside hardware-backed trusted execution environments, with verifiable remote attestation. Best for regulated or highly sensitive workloads.
+<div className="mv-card-grid cols-2">
+  <a className="mv-card" href="/docs/model-vault/standard">
+    <img src="../../assets/images/model-vault/mv-card-standard.png" alt="Standard Vault" />
+    <div style={{ flexGrow: 1 }}>
+      <h3>Standard Vault</h3>
+      <p>A Cohere-managed, single-tenant deployment with data protected in transit and at rest. Best when you want dedicated inference without managing the serving stack.</p>
+    </div>
+    <span className="mv-card-cta">EXPLORE STANDARD VAULT →</span>
+  </a>
+  <a className="mv-card" href="/docs/model-vault/encrypted">
+    <img src="../../assets/images/model-vault/mv-card-encrypted.png" alt="Encrypted Vault" />
+    <div style={{ flexGrow: 1 }}>
+      <h3>Encrypted Vault</h3>
+      <p>Everything in a Standard Vault, plus confidential computing: prompts, responses, and model weights stay protected end to end inside hardware-backed trusted execution environments, with verifiable remote attestation. Best for regulated or highly sensitive workloads.</p>
+    </div>
+    <span className="mv-card-cta">EXPLORE ENCRYPTED VAULT →</span>
+  </a>
+</div>
 
 ## How they compare
 
