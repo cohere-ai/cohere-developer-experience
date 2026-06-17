@@ -6938,6 +6938,52 @@ paths:
                       tokens:
                         input_tokens: 499
                         output_tokens: 105
+  /v2/prompt:
+    post:
+      summary: Chat prompt (v2)
+      operationId: promptv2
+      x-fern-audiences:
+        - v2-beta
+      x-fern-sdk-group-name: v2
+      x-fern-sdk-method-name: prompt
+      description: |
+        Returns the constructed text prompt for a v2 chat request without running model generation.
+        The request body matches [Chat v2](/v2/chat) (the `stream` field is ignored).
+      parameters:
+        - $ref: "#/components/parameters/RequestSource"
+      requestBody:
+        $ref: "#/components/requestBodies/requestBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromptResponseV2"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "429":
+          $ref: "#/components/responses/RateLimit"
+        "498":
+          $ref: "#/components/responses/InvalidToken"
+        "499":
+          $ref: "#/components/responses/RequestCancelled"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
   /v1/generate:
     post:
       deprecated: true
@@ -23737,6 +23783,22 @@ components:
           citation-end: "#/components/schemas/CitationEndEvent"
           message-end: "#/components/schemas/ChatMessageEndEvent"
           debug: "#/components/schemas/ChatDebugEvent"
+    PromptResponseV2:
+      x-fern-audiences:
+        - public
+      title: PromptResponseV2
+      description: Response from the v2 prompt endpoint — the constructed text prompt
+        without generation.
+      type: object
+      required:
+        - prompt
+      properties:
+        prompt:
+          x-fern-audiences:
+            - public
+          type: string
+          description: The constructed text prompt that would be sent to the model for
+            this chat request.
     SingleGeneration:
       type: object
       properties:
@@ -28596,6 +28658,201 @@ components:
                 type: string
             x-fern-type-name: InvalidTokenErrorBody
       x-fern-type-name: GatewayTimeout
+  requestBodies:
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - messages
+              - model
+            properties:
+              stream:
+                description: |
+                  Defaults to `false`.
+
+                  When `true`, the response will be a SSE stream of events.
+
+                  Streaming is beneficial for user interfaces that render the contents of the response piece by piece, as it gets generated.
+                type: boolean
+                x-fern-audiences:
+                  - public
+              model:
+                x-fern-audiences:
+                  - public
+                type: string
+                description: The name of a compatible [Cohere
+                  model](https://docs.cohere.com/v2/docs/models).
+              messages:
+                x-fern-audiences:
+                  - public
+                $ref: "#/components/schemas/ChatMessages"
+              tools:
+                x-fern-audiences:
+                  - public
+                type: array
+                items:
+                  $ref: "#/components/schemas/ToolV2"
+                description: |
+                  A list of tools (functions) available to the model. The model response may contain 'tool_calls' to the specified tools.
+
+                  Learn more in the [Tool Use guide](https://docs.cohere.com/docs/tools).
+              strict_tools:
+                x-fern-audiences:
+                  - public
+                x-fern-availability: beta
+                type: boolean
+                description: |
+                  When set to `true`, tool calls in the Assistant message will be forced to follow the tool definition strictly. Learn more in the [Structured Outputs (Tools) guide](https://docs.cohere.com/docs/structured-outputs-json#structured-outputs-tools).
+
+                  **Note**: The first few requests with a new set of tools will take longer to process.
+              documents:
+                x-fern-audiences:
+                  - public
+                type: array
+                items:
+                  oneOf:
+                    - type: string
+                    - $ref: "#/components/schemas/Document"
+                description: |
+                  A list of relevant documents that the model can cite to generate a more accurate reply. Each document is either a string or document object with content and metadata.
+              citation_options:
+                x-fern-audiences:
+                  - public
+                $ref: "#/components/schemas/CitationOptions"
+              response_format:
+                x-fern-audiences:
+                  - public
+                $ref: "#/components/schemas/ResponseFormatV2"
+              safety_mode:
+                x-fern-audiences:
+                  - public
+                enum:
+                  - CONTEXTUAL
+                  - STRICT
+                  - OFF
+                description: |
+                  Used to select the [safety instruction](https://docs.cohere.com/v2/docs/safety-modes) inserted into the prompt. Defaults to `CONTEXTUAL`.
+                  When `OFF` is specified, the safety instruction will be omitted.
+
+                  Safety modes are not yet configurable in combination with `tools` and `documents` parameters.
+
+                  **Note**: This parameter is only compatible newer Cohere models, starting with [Command R 08-2024](https://docs.cohere.com/docs/command-r#august-2024-release) and [Command R+ 08-2024](https://docs.cohere.com/docs/command-r-plus#august-2024-release).
+
+                  **Note**: `command-r7b-12-2024` and newer models only support `"CONTEXTUAL"` and `"STRICT"` modes.
+              max_tokens:
+                x-fern-audiences:
+                  - public
+                type: integer
+                description: |
+                  The maximum number of output tokens the model will generate in the response. If not set, `max_tokens` defaults to the model's maximum output token limit. You can find the maximum output token limits for each model in the [model documentation](https://docs.cohere.com/docs/models).
+
+                  **Note**: Setting a low value may result in incomplete generations. In such cases, the `finish_reason` field in the response will be set to `"MAX_TOKENS"`.
+
+                  **Note**: If `max_tokens` is set higher than the model's maximum output token limit, the generation will be capped at that model-specific maximum limit.
+              stop_sequences:
+                x-fern-audiences:
+                  - public
+                type: array
+                items:
+                  type: string
+                description: |
+                  A list of up to 5 strings that the model will use to stop generation. If the model generates a string that matches any of the strings in the list, it will stop generating tokens and return the generated text up to that point not including the stop sequence.
+              temperature:
+                x-fern-audiences:
+                  - public
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+                description: |
+                  Defaults to `0.3`.
+
+                  A non-negative float that tunes the degree of randomness in generation. Lower temperatures mean less random generations, and higher temperatures mean more random generations.
+
+                  Randomness can be further maximized by increasing the  value of the `p` parameter.
+              seed:
+                x-fern-audiences:
+                  - public
+                type: integer
+                minimum: 0
+                maximum: 18446744073709552000
+                description: |
+                  If specified, the backend will make a best effort to sample tokens
+                  deterministically, such that repeated requests with the same
+                  seed and parameters should return the same result. However,
+                  determinism cannot be totally guaranteed.
+              frequency_penalty:
+                x-fern-audiences:
+                  - public
+                type: number
+                format: float
+                description: |
+                  Defaults to `0.0`, min value of `0.0`, max value of `1.0`.
+                  Used to reduce repetitiveness of generated tokens. The higher the value, the stronger a penalty is applied to previously present tokens, proportional to how many times they have already appeared in the prompt or prior generation.
+              presence_penalty:
+                x-fern-audiences:
+                  - public
+                type: number
+                format: float
+                description: |
+                  Defaults to `0.0`, min value of `0.0`, max value of `1.0`.
+                  Used to reduce repetitiveness of generated tokens. Similar to `frequency_penalty`, except that this penalty is applied equally to all tokens that have already appeared, regardless of their exact frequencies.
+              k:
+                x-fern-audiences:
+                  - public
+                type: integer
+                default: 0
+                minimum: 0
+                maximum: 500
+                description: |
+                  Ensures that only the top `k` most likely tokens are considered for generation at each step. When `k` is set to `0`, k-sampling is disabled.
+                  Defaults to `0`, min value of `0`, max value of `500`.
+              p:
+                x-fern-audiences:
+                  - public
+                type: number
+                format: float
+                default: 0.75
+                minimum: 0.01
+                maximum: 0.99
+                description: |
+                  Ensures that only the most likely tokens, with total probability mass of `p`, are considered for generation at each step. If both `k` and `p` are enabled, `p` acts after `k`.
+                  Defaults to `0.75`. min value of `0.01`, max value of `0.99`.
+              logprobs:
+                x-fern-audiences:
+                  - public
+                type: boolean
+                description: |
+                  Defaults to `false`. When set to `true`, the log probabilities of the generated tokens will be included in the response.
+              tool_choice:
+                x-fern-audiences:
+                  - public
+                enum:
+                  - REQUIRED
+                  - NONE
+                description: |
+                  Used to control whether or not the model will be forced to use a tool when answering. When `REQUIRED` is specified, the model will be forced to use at least one of the user-defined tools, and the `tools` parameter must be passed in the request.
+                  When `NONE` is specified, the model will be forced **not** to use one of the specified tools, and give a direct response.
+                  If tool_choice isn't specified, then the model is free to choose whether to use the specified tools or not.
+
+                  **Note**: This parameter is only compatible with models [Command-r7b](https://docs.cohere.com/v2/docs/command-r7b) and newer.
+              thinking:
+                x-fern-audiences:
+                  - public
+                $ref: "#/components/schemas/Thinking"
+              priority:
+                x-fern-audiences:
+                  - public
+                type: integer
+                default: 0
+                minimum: 0
+                maximum: 999
+                description: "Controls how early the request is handled. Lower numbers indicate
+                  higher priority (default: 0, the highest). When the system is
+                  under load, higher-priority requests are processed first and
+                  are the least likely to be dropped."
   headers:
     ApiWarning:
       description: The name of the project that is making the request.
