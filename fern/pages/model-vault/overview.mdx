@@ -11,9 +11,17 @@ Model Vault is a Cohere-managed inference environment for deploying and serving 
 isolated, single-tenant setup. It provides dedicated infrastructure with full control over model
 selection, scaling, and performance monitoring, without you operating the underlying serving stack.
 
-You manage all of your vaults in one place from the Cohere dashboard, where you can track spend, usage
-hours, and activity across them. **Every vault is one of two types** — the deployment and management
-experience is the same; the difference is the level of protection.
+Because your infrastructure isn't shared with other tenants, you get the security and isolation of
+private hosting with the convenience of an API: no noisy neighbors, no rate limits, and predictable
+performance at scale.
+
+You manage all of your vaults in one place from the Model Vault app, where you can track spend, usage
+hours, and activity across them. **Every vault is one of two types:**
+
+- **[Standard Vault](/docs/model-vault/standard)**: dedicated, single-tenant inference with data protected in transit and at rest.
+- **[Encrypted Vault](/docs/model-vault/encrypted)**: everything in a Standard Vault, plus confidential computing so data stays protected in use.
+
+The deployment and management experience is the same; the difference is the level of protection.
 
 <div style={{ borderRadius: 16, padding: 28, margin: "28px 0", background: "linear-gradient(135deg, #F6E7DE 0%, #EAEFF6 100%)" }}>
   <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 18px 40px rgba(15,23,42,0.18)", background: "#ffffff" }}>
@@ -25,7 +33,7 @@ experience is the same; the difference is the level of protection.
     </div>
     <img
       src="../../assets/images/model-vault/model-vault-dashboard-overview.png"
-      alt="The Model Vault dashboard showing total spend, vault count, usage hours, a usage-over-time chart, and a row of vault cards."
+      alt="The Model Vault dashboard showing token spend, vault counts, and usage hours, a usage-over-time chart, and separate rows of Encrypted vault and Standard vault cards."
       style={{ display: "block", width: "100%", margin: 0 }}
     />
   </div>
@@ -83,14 +91,14 @@ experience is the same; the difference is the level of protection.
     <img src="../../assets/images/model-vault/mv-why-dedicated.png" alt="Dedicated and single-tenant" />
     <div style={{ flexGrow: 1 }}>
       <h3>Dedicated and single-tenant</h3>
-      <p>Your load balancer, serving middleware, inference servers, and GPU accelerators are isolated to you; only authentication and base compute are shared.</p>
+      <p>Your load balancer, serving middleware, inference servers, and GPU accelerators are isolated to you; only authentication and base compute are shared. No noisy neighbors competing for capacity.</p>
     </div>
   </div>
   <div className="mv-card">
     <img src="../../assets/images/model-vault/mv-why-managed.png" alt="Fully managed" />
     <div style={{ flexGrow: 1 }}>
       <h3>Fully managed</h3>
-      <p>Create a vault from the dashboard and let Cohere handle maintenance, deployments, updates, and scaling. There's no serving stack for you to operate.</p>
+      <p>Create a vault from the Model Vault app and let Cohere handle maintenance, deployments, updates, and scaling. There's no serving stack for you to operate.</p>
     </div>
   </div>
   <div className="mv-card">
@@ -103,15 +111,15 @@ experience is the same; the difference is the level of protection.
   <div className="mv-card">
     <img src="../../assets/images/model-vault/mv-why-elastic.png" alt="Elastic capacity" />
     <div style={{ flexGrow: 1 }}>
-      <h3>Elastic capacity</h3>
-      <p>Set a minimum and maximum replica range, with autoscaling available so you only pay for what you use.</p>
+      <h3>Elastic, unthrottled capacity</h3>
+      <p>Set a minimum and maximum replica range (1–25 per model), with autoscaling available. You get dedicated throughput with no rate limits, and only pay for what you use.</p>
     </div>
   </div>
   <div className="mv-card">
     <img src="../../assets/images/model-vault/mv-why-production.png" alt="Built for production" />
     <div style={{ flexGrow: 1 }}>
       <h3>Built for production</h3>
-      <p>Targets 99.9%+ availability SLOs, with request, latency, and utilization metrics to help you tune capacity.</p>
+      <p>Targets 99.9%+ availability SLOs, with real-time monitoring of request rates, latency, token throughput, and GPU utilization to help you tune capacity.</p>
     </div>
   </div>
   <div className="mv-card">
@@ -154,7 +162,7 @@ Point the SDK's `base_url` at your vault endpoint and send chat, embed, or reran
     <img src="../../assets/images/model-vault/mv-card-encrypted.png" alt="Encrypted Vault" />
     <div style={{ flexGrow: 1 }}>
       <h3>Encrypted Vault</h3>
-      <p>Everything in a Standard Vault, plus confidential computing: prompts, responses, and model weights stay protected end to end inside hardware-backed trusted execution environments, with verifiable remote attestation. Best for regulated or highly sensitive workloads.</p>
+      <p>Everything in a Standard Vault, plus confidential computing: prompts, responses, and everything in between stay protected end to end inside hardware-backed trusted execution environments, with verifiable remote attestation. Best for regulated or highly sensitive workloads.</p>
     </div>
     <span className="mv-card-cta">EXPLORE ENCRYPTED VAULT →</span>
   </a>
@@ -162,7 +170,7 @@ Point the SDK's `base_url` at your vault endpoint and send chat, embed, or reran
 
 ## How they compare
 
-| | Standard Vault | Encrypted Vault 🔒 |
+| | Standard Vault | Encrypted Vault |
 | --- | --- | --- |
 | Managed, single-tenant deployment | Yes | Yes |
 | Dashboard, monitoring, usage & billing | Yes | Yes |
@@ -172,27 +180,27 @@ Point the SDK's `base_url` at your vault endpoint and send chat, embed, or reran
 | Verifiable **remote attestation** before each connection | — | Yes |
 | Compliance emphasis (GDPR, HIPAA, SOC 2) | Standard | Enhanced |
 | Regions & data residency | [Regions & multi-region](/docs/model-vault/standard/regions) | {/* TODO: confirm encrypted region availability */} |
-| Supported models | [Standard models](/docs/model-vault/standard/supported-models) | [Encrypted models](/docs/model-vault/encrypted/supported-models) |
-| Pricing | [Standard pricing](/docs/model-vault/standard/pricing) | [Encrypted pricing](/docs/model-vault/encrypted/pricing) |
+| Supported models | [Standard vault models](/docs/model-vault/standard/supported-models) | [Encrypted vault models](/docs/model-vault/encrypted/supported-models) |
+| Pricing | [Standard vault pricing](/docs/model-vault/standard/pricing) | [Encrypted vault pricing](/docs/model-vault/encrypted/pricing) |
 
 ## How this documentation is organized
 
-Pick your vault type first, then use the shared sections for the day-to-day flow:
-
-- **[Standard Vault](/docs/model-vault/standard)** — what's specific to standard vaults (security & isolation, regions & multi-region, API usage, supported models, pricing).
-- **[Encrypted Vault](/docs/model-vault/encrypted)** — what's specific to encrypted vaults (security model, attestation, confidential computing, key management, compliance, API usage, supported models, pricing).
-
-The sections below apply to **every vault**, regardless of type:
+Start with the shared sections that cover the day-to-day flow for **every vault**, regardless of type:
 
 - **Deploy & manage** — [The Vaults Dashboard](/docs/model-vault/vaults-dashboard), [Creating a Vault](/docs/model-vault/creating-a-vault), [Managing Vaults](/docs/model-vault/managing-vaults), [Scaling & Autoscaling](/docs/model-vault/scaling), and [Model Updates & Versioning](/docs/model-vault/model-versioning).
 - **Inference & APIs** — [Calling a Vault over the API](/docs/model-vault/api-access), [Migrate from the Shared API](/docs/model-vault/migrating-from-shared-api), [Embeddings & Reranking](/docs/model-vault/embeddings-and-reranking), [API Keys](/docs/model-vault/api-keys), [Rate Limits & Quotas](/docs/model-vault/rate-limits), and [Async & Batch Inference](/docs/model-vault/async-batch-inference).
 - **Operate & observe** — [Monitoring](/docs/model-vault/monitoring), [Logs & Tracing](/docs/model-vault/logs-and-tracing), and [Usage & Billing](/docs/model-vault/usage-and-billing).
+
+Then dive into the section for your vault type for what's specific to it:
+
+- **[Standard Vault](/docs/model-vault/standard)** — supported models, API usage, security & isolation, regions & multi-region, and pricing.
+- **[Encrypted Vault](/docs/model-vault/encrypted)** — supported models, API usage, the confidential-computing deep dive (confidential computing, security model, remote attestation, key management, compliance), and pricing.
+
+And to connect a vault to North:
+
 - **[Model Vault with North](/docs/model-vault/model-vault-with-north)** — use a vault as the inference backend for North.
 
-<Note title="Work in progress">
-  This documentation is being actively expanded. The shared vault pages reflect the current product;
-  Encrypted Vault pages are early drafts.
-</Note>
+
 
 ## Get started
 
