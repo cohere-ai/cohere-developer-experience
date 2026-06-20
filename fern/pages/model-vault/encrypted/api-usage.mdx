@@ -11,7 +11,7 @@ Encrypted vaults use the same shared API baseline as any other vault
 ([Calling a Vault over the API](/docs/model-vault/api-access)): the same chat, embed, and rerank
 endpoints, and the same request and response shapes. The one critical addition is that the client
 **verifies the deployment's [remote attestation](/docs/model-vault/encrypted/attestation) and encrypts
-end to end before sending any data**, and fails closed if verification does not pass.
+end to end before sending any data**, and refuses the connection if verification does not pass.
 
 ## The attestation-verifying proxy
 
@@ -67,7 +67,7 @@ For the full list of what is checked and how to inspect it, see
 
 ## Handling attestation failures
 
-If verification fails, the proxy **fails closed**: it does not send your request, so your data is never
+If verification fails, the proxy **refuses the connection**: it does not send your request, so your data is never
 exposed to an unverified environment. Common causes include an invalid token signature, a policy that
 did not match (the measured software differs from the approved stack), an expired token, or an
 encryption key that is not bound to the attested environment.

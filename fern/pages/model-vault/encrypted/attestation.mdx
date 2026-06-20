@@ -107,7 +107,7 @@ ITA issues each attestation token as a **JSON Web Token (JWT) signed with PS384*
 that token's signature against ITA's published public keys (JWKS), so it can confirm the result without
 trusting Cohere or the host. A non-empty set of matched policies is the single most important signal: it
 means the hardware was genuine and the measured software matched the approved values. If the policy did
-not match, no token is issued and the client fails closed.
+not match, no token is issued and the connection is refused.
 
 <Note title="Verifying the verifier">
 Intel also offers a **Faithful Verification** service: you can submit an attestation token to Intel and
@@ -141,7 +141,7 @@ security-version and patch level, and the policy that was evaluated. See
 
 ## When attestation runs
 
-- **Per session**: the client verifies attestation before exchanging any data, and **fails closed** (it refuses to connect) if the evidence is invalid or the measurements do not match.
+- **Per session**: the client verifies attestation before exchanging any data, and **refuses the connection** if the evidence is invalid or the measurements do not match.
 - **Short-lived and refreshed**: attestation tokens are valid for only a few minutes and are refreshed periodically, so the result reflects the environment's current state rather than a one-time check at deploy time.
 - **In the Model Vault app**: an encrypted vault carries a verification badge that reflects its current attestation status, so you can see it at a glance alongside your other vaults.
 - **Available through the API**: verification is not limited to the Model Vault app. Every inference response can include an attestation certificate that your client can check programmatically, confirming proof of the policy, CPU, GPU, and software before you trust a response.
