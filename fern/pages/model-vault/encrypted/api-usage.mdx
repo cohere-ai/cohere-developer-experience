@@ -3,43 +3,79 @@ title: Using the API with an Encrypted Vault
 slug: "docs/model-vault/encrypted/api-usage"
 
 hidden: false
-description: "What's specific to calling an Encrypted Vault over the API: an attestation-verified client that confirms the trusted execution environment before sending any data."
-keywords: "encrypted vault, model vault encrypted, api, attestation, confidential computing, verify before send, cohere sdk"
+description: "What's specific to calling an Encrypted Vault over the API: an attestation-verifying client that confirms the trusted execution environment and encrypts end to end before sending any data."
+keywords: "encrypted vault, model vault encrypted, api, attestation, OHTTP, verify before send, cohere sdk"
 ---
 
-<Note title="Work in progress">
-  This page is an outline. Content is being added.
+Encrypted vaults use the same shared API baseline as any other vault
+([Calling a Vault over the API](/docs/model-vault/api-access)): the same chat, embed, and rerank
+endpoints, and the same request and response shapes. The one critical addition is that the client
+**verifies the deployment's [remote attestation](/docs/model-vault/encrypted/attestation) and encrypts
+end to end before sending any data**, and fails closed if verification does not pass.
+
+## The attestation-verifying proxy
+
+Calls to an encrypted vault go through a client-side **TNG proxy** that runs in your environment. The
+proxy does two things on your behalf:
+
+- **Verifies attestation**: it fetches the vault's attestation token and OHTTP public key, confirms the token was genuinely signed by Intel Trust Authority, checks that the attested measurements match the approved policy, and confirms the OHTTP key is bound to that attested environment.
+- **Encrypts end to end**: it encrypts every request to the attested environment using OHTTP, so the load balancer and network only ever see ciphertext, and decrypts the response.
+
+You point the Cohere SDK at the local proxy instead of directly at the vault. Everything above the
+proxy, your application code and the Cohere API calls, stays unchanged.
+
+```python PYTHON
+import cohere
+
+# Point the SDK at the local attestation-verifying proxy.
+# The proxy handles attestation verification and OHTTP encryption to the vault.
+co = cohere.ClientV2(
+    api_key="<COHERE_API_KEY>",
+    base_url="<LOCAL_TNG_PROXY_URL>",
+)
+
+response = co.chat(
+    model="<YOUR_VAULT_MODEL_NAME>",
+    messages=[{"role": "user", "content": "Hello from an encrypted vault!"}],
+)
+
+print(response.message.content[0].text)
+```
+
+<Note>
+The proxy and its exact setup are provided with your encrypted vault. Embed and Rerank calls work the
+same way once the proxy is running; see [Embeddings & Reranking](/docs/model-vault/embeddings-and-reranking).
 </Note>
-
-Encrypted vaults use the same shared API baseline ([Calling a Vault over the API](/docs/model-vault/api-access)),
-with one critical addition: the client **verifies the deployment's
-[remote attestation](/docs/model-vault/encrypted/attestation) before sending any data** and fails
-closed if verification does not pass. This page covers that attestation-verified client setup and the
-behavior that's specific to Encrypted Vaults.
-
-## Attestation-verified client
-
-{/* TODO: show how to construct the client so it performs remote attestation before the first request;
-what is verified (genuine TEE + expected code measurement) and where reference values come from. */}
-
-## SDK attestation configuration
-
-{/* TODO: the SDK options that enable/configure attestation, including the TNG (confirm exact term and
-behavior with the team) configuration used to establish the verified channel. */}
 
 ## Verify before send
 
-{/* TODO: explain the verify-before-send guarantee — no plaintext leaves the client until attestation
-passes — and how this maps to [Verifying Your Deployment](/docs/model-vault/encrypted/verifying-deployment). */}
+The proxy enforces a strict order: **no plaintext leaves your environment until attestation passes.**
+On each session it confirms the environment is genuine Intel TDX CPU and NVIDIA GPU hardware, that debug
+modes are off, that firmware and code measurements match the approved policy, and that the encryption
+key belongs to that environment. Only then does it encrypt and send your request. Attestation tokens
+are short-lived and refreshed periodically, so the guarantee reflects the environment's current state.
+
+Verification is not limited to setup time: every inference response can include an attestation
+certificate that your client can check programmatically, so you can confirm proof of the policy, CPU,
+GPU, and software for the environment that served each response.
+
+For the full list of what is checked and how to inspect it, see
+[Verifying Your Deployment](/docs/model-vault/encrypted/verifying-deployment).
 
 ## Handling attestation failures
 
-{/* TODO: what happens when attestation fails (fail closed), the error surfaced, and how to retry or
-escalate. */}
+If verification fails, the proxy **fails closed**: it does not send your request, so your data is never
+exposed to an unverified environment. Common causes include an invalid token signature, a policy that
+did not match (the measured software differs from the approved stack), an expired token, or an
+encryption key that is not bound to the attested environment.
+
+When this happens, do not bypass the check. Confirm the vault's status in the dashboard, and if it
+consistently fails verification, contact Cohere support. See
+[Verifying Your Deployment](/docs/model-vault/encrypted/verifying-deployment) for what each failure
+means.
 
 ## Related pages
 
 - [Calling a Vault over the API](/docs/model-vault/api-access)
 - [Remote Attestation](/docs/model-vault/encrypted/attestation)
 - [Verifying Your Deployment](/docs/model-vault/encrypted/verifying-deployment)
-- [Errors & Status Codes](/docs/model-vault/errors)

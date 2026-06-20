@@ -3,8 +3,8 @@ title: Supported Models
 slug: "docs/model-vault/encrypted/supported-models"
 
 hidden: false
-description: "Models available in Model Vault Encrypted and the architecture that isolates and protects each deployment."
-keywords: "model vault encrypted, supported models, isolation, confidential computing, zero data retention, cohere"
+description: "Which Cohere models are available in Model Vault Encrypted, the supported confidential-computing GPUs, and the architecture that isolates and protects each deployment."
+keywords: "model vault encrypted, supported models, confidential computing GPU, zero data retention, cohere"
 ---
 
 ## Architecture
@@ -12,9 +12,9 @@ keywords: "model vault encrypted, supported models, isolation, confidential comp
 Model Vault Encrypted builds on the isolated, single-tenant Vault architecture and adds
 confidential-computing protections:
 
-- **Logically isolated**: Isolates all infrastructure components, including the network load balancer, reverse proxy, serving middleware, inference servers, and GPU accelerators.
-- **Confidential computing**: Inference runs inside hardware-backed trusted execution environments, so data stays protected **in use** — see the [Security Model](/docs/model-vault/encrypted/security-model) and [Confidential Computing Primer](/docs/model-vault/encrypted/confidential-computing).
-- **Minimal shared components**: Shared infrastructure is limited to authentication and underlying Kubernetes/compute resources (nodes, CPU, and memory).
+- **Logically isolated**: isolates all infrastructure components, including the network load balancer, reverse proxy, serving middleware, inference servers, and GPU accelerators.
+- **Confidential computing**: inference runs inside hardware-backed trusted execution environments (Intel TDX on the CPU and an NVIDIA GPU in confidential-computing mode), so data stays protected **in use**. See the [Security Model](/docs/model-vault/encrypted/security-model) and [Confidential Computing Primer](/docs/model-vault/encrypted/confidential-computing).
+- **Minimal shared components**: shared infrastructure is limited to authentication and underlying Kubernetes/compute resources (nodes, CPU, and memory).
 - **Cohere-managed operations**: Cohere handles maintenance, deployments, updates, and scaling.
 
 <Note>
@@ -24,35 +24,34 @@ handled, see [Encryption & Key Management](/docs/model-vault/encrypted/encryptio
 
 ## Supported models
 
-{/* TODO: confirm which of the models below are available specifically for the encrypted
-(confidential-computing) product, since hardware support may differ. */}
+Encrypted Vaults support the Cohere models that run on a single confidential-computing GPU. In beta,
+these are:
 
-| Model Name | Type of Model | Supported | Self-Serve Ability |
-| --- | --- | --- | --- |
-| Cohere Transcribe | Speech recognition (ASR) | Yes | No - Behind a Waitlist |
-| Command-A | Generative | Yes | No - Behind a Waitlist |
-| Command-A Reasoning | Generative | Yes | No - Behind a Waitlist |
-| Command-A Translate | Generative | Yes | No - Behind a Waitlist |
-| Command-A Vision | Generative | Yes | No - Behind a Waitlist |
-| Compass Bundle | Embed + Rerank + Vision Parser | Yes | No - Behind a Waitlist |
-| Embed v4 | Embeddings | Yes | Yes |
-| North Bundle | Generative + Compass Bundle | Yes | No - Behind a Waitlist |
-| Rerank-v3.5 | Reranker | Yes | Yes |
-| Rerank-v4.0 | Reranker | Yes | Yes |
+| Model | Type |
+| --- | --- |
+| Embed v3, v4, v5 | Embeddings |
+| Rerank v3.5, v4, v5 | Reranker |
+| Compass Bundle | Embed + Rerank + Vision Parser |
+| North Mini Code | Generative (code) |
+| Cohere Transcribe | Speech recognition (ASR) |
+| Customized Cohere models | Varies |
 
-## Model capabilities
+Because each model must fit on a single GPU, large multi-GPU models such as the **Command A** family
+are not part of the encrypted beta. Model availability is expanding over time, so it can differ from a
+[Standard Vault](/docs/model-vault/standard/supported-models). To confirm availability for a specific
+model, check the model dropdown when [creating a vault](/docs/model-vault/creating-a-vault) with the
+Encrypted option selected, or contact Cohere.
 
-{/* TODO: fill in the capability matrix below — confirm context-length limits, tool/function calling,
-structured outputs (JSON/schema), and vision/multimodal support per model, and note any capabilities
-that differ from Standard Vault due to confidential-computing hardware. */}
+## Supported GPUs
 
-| Model | Max context length | Tool calling | Structured outputs | Vision |
-| --- | --- | --- | --- | --- |
-| Command-A | {/* TODO */} | {/* TODO */} | {/* TODO */} | {/* TODO */} |
-| Command-A Reasoning | {/* TODO */} | {/* TODO */} | {/* TODO */} | {/* TODO */} |
-| Command-A Vision | {/* TODO */} | {/* TODO */} | {/* TODO */} | {/* TODO */} |
-| Embed v4 | {/* TODO */} | {/* TODO */} | {/* TODO */} | {/* TODO */} |
-| Rerank-v4.0 | {/* TODO */} | {/* TODO */} | {/* TODO */} | {/* TODO */} |
+Encrypted Vaults run on a single confidential-computing-capable NVIDIA GPU. To confirm the
+options available for your model, capacity, and region, contact Cohere.
 
 For pricing per model and performance tier, see
 [Model Vault Encrypted Pricing](/docs/model-vault/encrypted/pricing).
+
+## Related pages
+
+- [Creating a Vault](/docs/model-vault/creating-a-vault)
+- [Standard Vault supported models](/docs/model-vault/standard/supported-models)
+- [Security Model](/docs/model-vault/encrypted/security-model)

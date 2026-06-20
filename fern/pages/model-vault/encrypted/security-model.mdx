@@ -7,35 +7,108 @@ description: "The trust boundary and threat model for Model Vault Encrypted: who
 keywords: "model vault encrypted, security model, threat model, trust boundary, confidential computing"
 ---
 
-<Note title="Work in progress">
-  This page is an outline. Content is being expanded.
-</Note>
+Model Vault Encrypted is designed so that your prompts, responses, and model weights stay protected
+end to end, even from the operator of the underlying infrastructure. This page describes the trust
+boundary, who is excluded from access, and the threats the design does and does not address.
 
-Model Vault Encrypted is designed so that your prompts, responses, and model weights remain protected
-end to end, even from the infrastructure operator. This page describes the trust boundary and threat
-model.
+If you are new to the underlying technology, read the
+[Confidential Computing Primer](/docs/model-vault/encrypted/confidential-computing) first.
+
+## The parties involved in an inference request
+
+In a typical hosted inference service, several parties sit in the path of a request and could, in a
+conventional deployment, access your data:
+
+- **Infrastructure provider**: supplies the compute, networking, and hypervisor. This party is highly privileged and, without confidential computing, can read anything in host memory.
+- **Serving and platform layer**: the software that loads the model and runs inference.
+- **Model provider**: supplies the model weights.
+- **Service operator (Cohere)**: integrates the components and operates the service.
+
+The goal of Model Vault Encrypted is that **none** of these parties can access your plaintext prompts,
+responses, or model weights during inference.
 
 ## Trust boundary
 
-{/* TODO: define exactly what runs inside the trusted execution environment vs. outside, and the
-boundary diagram. */}
+The trust boundary is the hardware-backed trusted execution environment (TEE) that runs your vault: an
+Intel TDX confidential VM together with an attested NVIDIA GPU in confidential-computing mode.
 
-## Who is excluded from access
+- **Inside the boundary**: the inference server, the model weights in use, and your prompts and responses while they are being processed. CPU memory is hardware-encrypted by Intel TDX, the GPU runs in confidential-computing mode, and the link between them is authenticated and encrypted. The contents are not visible to anything outside.
+- **Outside the boundary**: the host operating system, the hypervisor, the Kubernetes and orchestration layer, the load balancer, the network, and operator tooling. These components can schedule and route traffic, but cannot read what is inside the TEE.
 
-{/* TODO: enumerate the parties that cannot access plaintext data or model weights (e.g. cloud
-provider, Cohere operators) and the mechanism that enforces this. */}
+Your connection terminates **inside** the TEE. Requests are encrypted client-side with Oblivious HTTP
+(OHTTP) directly to the environment, using keys that are generated inside the TEE and never shared
+with Cohere, so they are only decrypted where they are protected.
+
+## Who cannot access your data
+
+Because the protection is enforced by hardware rather than by policy, the following parties cannot read
+your plaintext prompts, responses, or model weights:
+
+- **Cohere**, including operators and support staff.
+- The **cloud provider** and anyone with hypervisor or host-level access.
+- The **Kubernetes control plane and worker nodes** that orchestrate the deployment.
+- The **load balancer** and the **network** between components (it only ever carries OHTTP ciphertext).
+- **Other tenants**: your vault runs on dedicated, single-tenant infrastructure (see the [Model Vault overview](/docs/model-vault)).
+
+This is enforced by memory encryption and isolation in the TEE, and made verifiable through
+[remote attestation](/docs/model-vault/encrypted/attestation), so you do not have to take the
+guarantee on trust alone.
 
 ## Threat model
 
-{/* TODO: list in-scope and out-of-scope threats (host OS/hypervisor compromise, insider access,
-network attackers, side channels) and the mitigations. */}
+**In scope** (the design is intended to defend against these):
 
-## What you are trusting
+- A compromised or malicious host operating system, hypervisor, or orchestration layer.
+- A privileged insider at the cloud provider or at Cohere attempting to read data in use.
+- A network attacker, or a compromised load balancer, on the path between your client and the vault.
+- An attempt to substitute different or tampered code in place of the expected inference workload (detected by attestation, which fails closed).
 
-{/* TODO: hardware root of trust, chip manufacturer attestation, reproducible builds, transparency
-logs. */}
+**Residual risk** (not fully eliminated):
+
+- Side-channel attacks against TEE hardware, which remain an active research area.
+- Attacks requiring deep physical access to the hardware.
+- Metadata and traffic-pattern observation (timing, sizes, the model being called), even though payload contents stay protected.
+- Availability: the infrastructure operator still controls scheduling and can stop or restart the environment.
+
+## The Trusted Computing Base
+
+The trusted computing base (TCB) is the minimal set of components you have to rely on for the
+confidentiality guarantee to hold. Model Vault Encrypted is deliberately designed to keep this set
+small and verifiable, and to keep Cohere out of it.
+
+**What is trusted:**
+
+- Intel TDX hardware and firmware.
+- NVIDIA GPU hardware and confidential-computing firmware.
+- Intel Trust Authority as the attestation service (and, optionally, Intel's Faithful Verification service, which lets you verify the attestation service itself).
+- The reproducible build pipeline that produces the VM image and registers its measurements (open-source and independently auditable).
+- The container policy and `initdata` contents (open-source, auditable, and enforced at runtime).
+- The container images that run inside the confidential VM (open-source, auditable, and verified at runtime).
+- Your own client environment.
+
+**What is NOT trusted:**
+
+- Cohere.
+- The cloud provider.
+- The Kubernetes control plane and worker nodes.
+- The load balancer.
+- The network between any components (except networking that stays inside a TEE).
+- The component that provisions the VM: it creates the confidential VM but cannot see inside it, and the VM is attested before it is trusted.
+
+You verify these guarantees rather than taking them on faith: hardware roots of trust anchor the
+evidence, Intel Trust Authority confirms it against the expected measurements, and your client checks
+the attestation result before sending any data. See
+[Remote Attestation](/docs/model-vault/encrypted/attestation) for how the Passport model and the
+attestation flow work end to end.
+
+<Note>
+Need dedicated, single-tenant inference without the confidential-computing layer? A
+[Standard Vault](/docs/model-vault/standard) provides the same managed isolation, but protects data
+in transit and at rest only, without protection in use or remote attestation.
+</Note>
 
 ## Related pages
 
 - [Confidential Computing Primer](/docs/model-vault/encrypted/confidential-computing)
 - [Remote Attestation](/docs/model-vault/encrypted/attestation)
+- [Verifying Your Deployment](/docs/model-vault/encrypted/verifying-deployment)
