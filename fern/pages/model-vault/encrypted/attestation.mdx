@@ -39,7 +39,7 @@ VMs and are never shared with Cohere.
 
 ### Components
 
-- **Client**: runs a **TNG proxy** that handles OHTTP encryption/decryption and attestation verification. The proxy embeds an **ITA verifier** that uses ITA's public keys to confirm attestation tokens were genuinely signed by ITA. The client never talks to a confidential VM directly; all traffic goes through the load balancer.
+- **Client**: runs **TNG (Trusted Network Gateway)**, a client-side confidential-computing component that handles OHTTP encryption/decryption and attestation verification. It comes in two forms: a **TNG client** embedded in the SDK, or a standalone **TNG proxy**. Either one embeds an **ITA verifier** that uses ITA's public keys to confirm attestation tokens were genuinely signed by ITA. The client never talks to a confidential VM directly; all traffic goes through the load balancer.
 - **Untrusted load balancer**: a standard cloud load balancer that routes OHTTP traffic. It is **not** part of the trusted computing base and cannot read, modify, or decrypt any payload. In OHTTP the payload stays encrypted while headers remain in the clear, so the model name is promoted to a header to let the load balancer route to the right pool of nodes.
 - **Confidential VM (PeerPod), N replicas**: an Intel TDX confidential VM with an NVIDIA GPU passed through in confidential-computing mode. Inside it run:
   - **Kata Agent**: enforces the container policy delivered via `initdata`, restricting which container images, configuration, processes, and syscalls are allowed.
@@ -82,7 +82,7 @@ lets the fleet scale dynamically.
 
 ### Client key discovery
 
-The client's TNG proxy connects through the load balancer, which routes the first request to one VM
+The client-side TNG connects through the load balancer, which routes the first request to one VM
 (say, replica #1). That VM returns its OHTTP public key and its ITA attestation token. The client's ITA
 verifier confirms the token is validly signed by ITA and that the OHTTP public key is cryptographically
 bound to the attested TEE in the token. The client now trusts that key, and because keys are shared only
@@ -97,7 +97,7 @@ name, is exposed in the OHTTP headers so the load balancer can route to the righ
 load balancer may route the request to any available replica (say, replica #3). That replica already
 holds the matching private key (from the key-sharing step), decrypts the request inside the confidential
 environment, runs inference in the vLLM container on the confidential GPU, encrypts the response with
-OHTTP, and returns it. The client's TNG proxy decrypts the response. The load balancer never sees
+OHTTP, and returns it. The client-side TNG decrypts the response. The load balancer never sees
 plaintext at any point.
 </Steps>
 

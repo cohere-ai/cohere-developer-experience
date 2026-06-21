@@ -13,16 +13,19 @@ endpoints, and the same request and response shapes. The one critical addition i
 **verifies the deployment's [remote attestation](/docs/model-vault/encrypted/attestation) and encrypts
 end to end before sending any data**, and refuses the connection if verification does not pass.
 
-## The attestation-verifying proxy
+## The attestation-verifying TNG client or proxy
 
-Calls to an encrypted vault go through a client-side **TNG proxy** that runs in your environment. The
-proxy does two things on your behalf:
+Calls to an encrypted vault go through **TNG (Trusted Network Gateway)**, a client-side
+confidential-computing component that runs in your environment. It comes in two forms: a **TNG
+client** embedded in the SDK, or a standalone **TNG proxy**. Either one does two things on your
+behalf:
 
 - **Verifies attestation**: it fetches the vault's attestation token and OHTTP public key, confirms the token was genuinely signed by Intel Trust Authority, checks that the attested measurements match the approved policy, and confirms the OHTTP key is bound to that attested environment.
-- **Encrypts end to end**: it encrypts every request to the attested environment using OHTTP, so the load balancer and network only ever see ciphertext, and decrypts the response.
+- **Encrypts end to end**: it encrypts every request to the attested environment using OHTTP and decrypts the response, so the load balancer and network only ever see ciphertext.
 
-You point the Cohere SDK at the local proxy instead of directly at the vault. Everything above the
-proxy, your application code and the Cohere API calls, stays unchanged.
+With the standalone proxy, you point the Cohere SDK at the local proxy instead of directly at the
+vault; with the embedded client, the SDK handles this for you. Either way, your application code and
+the Cohere API calls stay unchanged.
 
 ```python PYTHON
 import cohere
@@ -45,20 +48,20 @@ print(response.message.content[0].text)
 ```
 
 <Note>
-The proxy and its exact setup are provided with your encrypted vault. Embed and Rerank calls work the
-same way once the proxy is running: keep the proxy in place and call `co.embed(...)` or
+The TNG client or proxy and its exact setup are provided with your encrypted vault. Embed and Rerank
+calls work the same way once TNG is running: keep it in place and call `co.embed(...)` or
 `co.rerank(...)` with your vault's model name.
 </Note>
 
 ## Verify before send
 
-The proxy enforces a strict order: **no plaintext leaves your environment until attestation passes.**
+TNG enforces a strict order: **no plaintext leaves your environment until attestation passes.**
 On each session it confirms the environment is genuine Intel TDX CPU and NVIDIA GPU hardware, that debug
 modes are off, that firmware and code measurements match the approved policy, and that the encryption
 key belongs to that environment. Only then does it encrypt and send your request. Attestation tokens
 are short-lived and refreshed periodically, so the guarantee reflects the environment's current state.
 
-Verification is not limited to setup time: every inference response can include an attestation
+Verification is not limited to setup time: every inference response includes an attestation
 certificate that your client can check programmatically, so you can confirm proof of the policy, CPU,
 GPU, and software for the environment that served each response.
 
@@ -67,7 +70,7 @@ For the full list of what is checked and how to inspect it, see
 
 ## Handling attestation failures
 
-If verification fails, the proxy **refuses the connection**: it does not send your request, so your data is never
+If verification fails, TNG **refuses the connection**: it does not send your request, so your data is never
 exposed to an unverified environment. Common causes include an invalid token signature, a policy that
 did not match (the measured software differs from the approved stack), an expired token, or an
 encryption key that is not bound to the attested environment.

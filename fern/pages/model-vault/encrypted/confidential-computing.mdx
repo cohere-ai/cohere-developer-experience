@@ -55,8 +55,8 @@ Model Vault Encrypted runs on **NVIDIA GPUs** in confidential-computing mode. Th
 the CPU TEE and the GPU is authenticated and encrypted (using an SPDM-based secure session), so data
 moving between the confidential VM and the GPU is never exposed in plaintext to the host.
 
-This is what makes confidential **AI inference** possible: the prompt, the response, and the model
-weights stay protected across both the CPU and the GPU for the full duration of the request.
+This is what makes confidential **AI inference** possible: the prompt and the response stay protected
+across both the CPU and the GPU for the full duration of the request.
 
 ## What confidential computing does not protect
 
@@ -77,7 +77,7 @@ research risk.
 
 Model Vault Encrypted layers these primitives on top of a standard vault:
 
-- **Hardware-backed TEEs spanning CPU and GPU**: inference runs inside an Intel TDX confidential VM with an attested NVIDIA GPU in confidential-computing mode, so prompts, responses, and model weights stay protected in transit, at rest, and in use.
+- **Hardware-backed TEEs spanning CPU and GPU**: inference runs inside an Intel TDX confidential VM with an attested NVIDIA GPU in confidential-computing mode, so prompts and responses stay protected in transit, at rest, and in use.
 - **Measured boot**: the confidential VM boots from an integrity-protected image (a read-only root filesystem with verified measurements of firmware, kernel, and the inference workload), and a container policy restricts what can run inside it. These measurements are what attestation checks against.
 - **End-to-end encryption to the TEE**: your client encrypts requests directly to the environment using Oblivious HTTP (OHTTP). The encryption keys are generated inside the TEE and are never shared with Cohere, so the load balancer and network only ever see ciphertext.
 - **Verify before you trust**: before any data is sent, the client verifies the deployment through [remote attestation](/docs/model-vault/encrypted/attestation) and refuses the connection if the environment is not genuine or is running unexpected code.

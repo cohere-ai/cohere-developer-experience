@@ -3,11 +3,11 @@ title: Security Model
 slug: "docs/model-vault/encrypted/security-model"
 
 hidden: false
-description: "The trust boundary and threat model for Model Vault Encrypted: who can and cannot access your data and model weights."
+description: "The trust boundary and threat model for Model Vault Encrypted: who can and cannot access your data."
 keywords: "model vault encrypted, security model, threat model, trust boundary, confidential computing"
 ---
 
-Model Vault Encrypted is designed so that your prompts, responses, and model weights stay protected
+Model Vault Encrypted is designed so that your prompts and responses stay protected
 end to end, even from the operator of the underlying infrastructure. This page describes the trust
 boundary, who is excluded from access, and the threats the design does and does not address.
 
@@ -24,15 +24,15 @@ conventional deployment, access your data:
 - **Model provider**: supplies the model weights.
 - **Service operator (Cohere)**: integrates the components and operates the service.
 
-The goal of Model Vault Encrypted is that **none** of these parties can access your plaintext prompts,
-responses, or model weights during inference.
+The goal of Model Vault Encrypted is that **none** of these parties can access your plaintext prompts
+or responses during inference.
 
 ## Trust boundary
 
 The trust boundary is the hardware-backed trusted execution environment (TEE) that runs your vault: an
 Intel TDX confidential VM together with an attested NVIDIA GPU in confidential-computing mode.
 
-- **Inside the boundary**: the inference server, the model weights in use, and your prompts and responses while they are being processed. CPU memory is hardware-encrypted by Intel TDX, the GPU runs in confidential-computing mode, and the link between them is authenticated and encrypted. The contents are not visible to anything outside.
+- **Inside the boundary**: the inference server, and your prompts and responses while they are being processed. CPU memory is hardware-encrypted by Intel TDX, the GPU runs in confidential-computing mode, and the link between them is authenticated and encrypted. The contents are not visible to anything outside.
 - **Outside the boundary**: the host operating system, the hypervisor, the Kubernetes and orchestration layer, the load balancer, the network, and operator tooling. These components can schedule and route traffic, but cannot read what is inside the TEE.
 
 Your connection terminates **inside** the TEE. Requests are encrypted client-side with Oblivious HTTP
@@ -42,7 +42,7 @@ with Cohere, so they are only decrypted where they are protected.
 ## Who cannot access your data
 
 Because the protection is enforced by hardware rather than by policy, the following parties cannot read
-your plaintext prompts, responses, or model weights:
+your plaintext prompts or responses:
 
 - **Cohere**, including operators and support staff.
 - The **cloud provider** and anyone with hypervisor or host-level access.
