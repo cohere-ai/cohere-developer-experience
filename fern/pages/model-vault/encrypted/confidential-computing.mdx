@@ -20,8 +20,12 @@ Data is normally protected in two states, but left exposed in a third:
 - **In use**: traditionally unprotected. While a workload runs, its data sits in plaintext in memory, where the host operating system, hypervisor, and anyone with privileged access to the machine can read it.
 
 Confidential computing closes that last gap. It protects data **in use** by running the workload
-inside a hardware-isolated environment so that even the operator of the underlying infrastructure
-cannot read the data being processed.
+inside a hardware-based trusted execution environment, where the processor keeps the workload's
+memory encrypted and isolated from the rest of the system, and can also detect tampering with it. The
+encryption keys live inside the processor and are never exposed to software, so even the operator of
+the underlying infrastructure cannot read or alter the data being processed. You can then
+cryptographically verify the environment before trusting it (see [remote
+attestation](/docs/model-vault/encrypted/attestation)).
 
 ## Trusted execution environments (TEEs)
 
@@ -33,7 +37,7 @@ the host operating system, the hypervisor, and system administrators.
 A TEE provides two core guarantees:
 
 - **Confidentiality and integrity in use**: memory used by the workload is encrypted by the hardware, with keys that are generated inside the processor and never leave it. Data outside the processor is only ever ciphertext, so memory dumps, cold-boot attacks, and direct memory access (DMA) from the host yield nothing useful. Keys are destroyed when the environment shuts down.
-- **Verifiability**: trust is established by cryptographic proof, not by a provider's promise. Rooted in keys embedded in the chip at manufacture time, the hardware produces signed evidence that proves both that the environment is genuine TEE hardware and which exact firmware, code, and configuration were loaded into it. A remote party can verify this evidence, and confirm that the environment's encryption key is bound to it, before sending any data. This is [remote attestation](/docs/model-vault/encrypted/attestation).
+- **Verifiability**: trust is established by cryptographic proof, not by a provider's promise. Rooted in keys embedded in the chip at manufacture time, the hardware produces signed evidence that proves both that the environment is genuine TEE hardware and which exact firmware, code, and configuration were loaded into it. This evidence is appraised by an independent **attestation service** (the *verifier* in the confidential-computing model), which confirms it is authentic and that the environment's encryption key is bound to it, so a remote party can check the result before sending any data. Model Vault Encrypted uses **Intel Trust Authority (ITA)** as this attestation service. This is [remote attestation](/docs/model-vault/encrypted/attestation).
 
 ## CPU confidential computing
 
@@ -58,21 +62,6 @@ moving between the confidential VM and the GPU is never exposed in plaintext to 
 This is what makes confidential **AI inference** possible: the prompt and the response stay protected
 across both the CPU and the GPU for the full duration of the request.
 
-## What confidential computing does not protect
-
-TEEs are a strong control, not a silver bullet. It is important to understand the residual risks:
-
-- **Side-channel attacks**: timing, power, or microarchitectural side channels can in principle leak information about a workload, and are an active research area.
-- **Physical attacks**: an adversary with deep physical access to the hardware and significant resources may be able to attack a TEE.
-- **Metadata and traffic patterns**: the host can still observe coarse signals such as request timing, sizes, and resource usage, even though it cannot read the data itself.
-- **Availability**: the infrastructure operator controls scheduling and can stop or restart the environment, so confidential computing protects confidentiality and integrity, not availability.
-
-<Note>
-Remote attestation reduces these risks by ensuring you only ever connect to a genuine, correctly
-configured TEE running the expected code. It does not eliminate side-channel or physical-attack
-research risk.
-</Note>
-
 ## How Model Vault Encrypted uses these
 
 Model Vault Encrypted layers these primitives on top of a standard vault:
@@ -82,8 +71,9 @@ Model Vault Encrypted layers these primitives on top of a standard vault:
 - **End-to-end encryption to the TEE**: your client encrypts requests directly to the environment using Oblivious HTTP (OHTTP). The encryption keys are generated inside the TEE and are never shared with Cohere, so the load balancer and network only ever see ciphertext.
 - **Verify before you trust**: before any data is sent, the client verifies the deployment through [remote attestation](/docs/model-vault/encrypted/attestation) and refuses the connection if the environment is not genuine or is running unexpected code.
 
-The trust boundary, and the specific parties that are excluded from access, are described in the
-[Security Model](/docs/model-vault/encrypted/security-model).
+The trust boundary, the specific parties that are excluded from access, and the residual risks that
+confidential computing does not fully eliminate (such as side-channel and physical attacks) are
+described in the [Security Model](/docs/model-vault/encrypted/security-model).
 
 ## Related pages
 

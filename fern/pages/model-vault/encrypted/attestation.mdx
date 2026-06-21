@@ -16,13 +16,15 @@ For background on TEEs, see the
 
 ## What attestation proves
 
-When a TEE starts, the hardware measures what is loaded into it and produces a signed **attestation
-report**. Model Vault Encrypted uses **composite attestation** that covers both the CPU and the GPU,
-answering three questions:
+When a TEE starts, the hardware measures what is loaded into it and produces signed **evidence**
+(often called a quote), rooted in keys embedded in the chip. An **attestation service** then appraises
+this evidence and issues a signed **attestation result** that clients can verify. Model Vault
+Encrypted uses **composite attestation** that covers both the CPU and the GPU, together answering
+three questions:
 
 - **Is this genuine TEE hardware?** The evidence is rooted in keys embedded by the hardware manufacturers (Intel for the TDX CPU, NVIDIA for the GPU), so it cannot be forged by software pretending to be a secure environment.
-- **Is it configured securely?** The report confirms the security-critical configuration: that the Intel TDX VM is not debuggable, that the GPU booted with secure boot enabled and debug disabled, and that confidential-computing mode is active.
-- **Is it running the expected code?** The report contains cryptographic measurements (in effect, a fingerprint) of the firmware, kernel, inference workload, and container policy that were loaded, plus the GPU's firmware and driver measurements. If anything differs, the fingerprint differs.
+- **Is it configured securely?** The evidence confirms the security-critical configuration: that the Intel TDX VM is not debuggable, that the GPU booted with debug disabled, and that confidential-computing mode is active.
+- **Is it running the expected code?** The evidence contains cryptographic measurements (in effect, a fingerprint) of the firmware, kernel, inference workload, and container policy that were loaded, plus the GPU's firmware and driver measurements. If anything differs, the fingerprint differs.
 
 ## The Passport model with Intel Trust Authority
 
@@ -144,7 +146,7 @@ security-version and patch level, and the policy that was evaluated. See
 - **Per session**: the client verifies attestation before exchanging any data, and **refuses the connection** if the evidence is invalid or the measurements do not match.
 - **Short-lived and refreshed**: attestation tokens are valid for only a few minutes and are refreshed periodically, so the result reflects the environment's current state rather than a one-time check at deploy time.
 - **In the Model Vault app**: an encrypted vault carries a verification badge that reflects its current attestation status, so you can see it at a glance alongside your other vaults.
-- **Available through the API**: verification is not limited to the Model Vault app. Every inference response can include an attestation certificate that your client can check programmatically, confirming proof of the policy, CPU, GPU, and software before you trust a response.
+- **Available through the API**: verification is not limited to the Model Vault app. Every inference response includes an attestation certificate that your client can check programmatically, confirming proof of the policy, CPU, GPU, and software before you trust a response.
 
 ## Related pages
 
