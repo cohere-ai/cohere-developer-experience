@@ -54,7 +54,12 @@ dev: stop build
 		pid=$$!; \
 		pgid=$$(ps -o pgid= -p $$pid | tr -d " "); \
 		echo $$pgid > "$(FERN_PGID_FILE)"; \
-		wait $$pid || true'
+				status=0; \
+		wait $$pid || status=$$?; \
+		if [ "$$status" -eq 130 ] || [ "$$status" -eq 143 ]; then \
+			exit 0; \
+		fi; \
+		exit "$$status"'
 
 run:
 	@make dev
