@@ -31,7 +31,7 @@ key management, compliance, and the models and pricing that apply.
 ## What Encrypted Vaults add
 
 - Data is protected **in transit, at rest, and in use**, so prompts and responses are never exposed in plaintext, not even to Cohere or the cloud operator.
-- Inference runs inside hardware-backed TEEs spanning the CPU (Intel TDX) and the GPU (an NVIDIA GPU in confidential-computing mode), and your requests stay encrypted from your client all the way into the TEE, so the load balancer and network in between never see plaintext.
+- Inference runs inside hardware-backed TEEs spanning the CPU (a confidential VM such as Intel TDX or AMD SEV-SNP) and the GPU (an NVIDIA GPU in confidential-computing mode), and your requests stay encrypted from your client all the way into the TEE, so the load balancer and network in between never see plaintext.
 - Verifiable **remote attestation** lets you confirm you are talking to a genuine TEE running the exact code you expect. (This is what the vault's verification badge in the Model Vault app reflects.)
 - Every inference response includes an **attestation certificate** you can check, so you can verify the TEE and its code on each request.
 - Designed to help regulated organizations meet compliance obligations (for example, GDPR, HIPAA, SOC 2).
@@ -62,9 +62,11 @@ grounding in TEEs, secure enclaves, and GPU confidential computing.
 Provision a vault as usual and choose the encrypted option. See
 [Creating a Vault](/docs/model-vault/creating-a-vault).
 
-### Verify your deployment
+### Understand how verification works
 
-Before sending sensitive data, confirm the environment is genuine and running the expected code via
+You do not have to verify manually before each request: the TNG client or proxy checks the
+deployment's attestation automatically and refuses the connection if it does not pass. To understand
+what is checked, and how you can inspect the evidence yourself, see
 [Remote Attestation](/docs/model-vault/encrypted/attestation) and
 [Verifying Your Deployment](/docs/model-vault/encrypted/verifying-deployment).
 

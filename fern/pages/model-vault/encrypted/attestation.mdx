@@ -14,6 +14,12 @@ data. It turns "trust us" into "verify it yourself."
 For background on TEEs, see the
 [Confidential Computing Primer](/docs/model-vault/encrypted/confidential-computing).
 
+<Note>
+The flow below describes Model Vault Encrypted's Intel TDX deployment with Intel Trust Authority as the
+attestation service. Other confidential-VM platforms (for example, AMD SEV-SNP) provide the same
+guarantees through equivalent mechanisms, with platform-specific evidence formats and verifiers.
+</Note>
+
 ## What attestation proves
 
 When a TEE starts, the hardware measures what is loaded into it and produces signed **evidence**
@@ -140,6 +146,19 @@ approved stack. The token also reports supporting detail you can inspect, such a
 registers (MRTD, RTMR0 to RTMR3), the GPU firmware and driver measurement results, the TEE's
 security-version and patch level, and the policy that was evaluated. See
 [Verifying Your Deployment](/docs/model-vault/encrypted/verifying-deployment) for what each field means.
+
+### What you are actually trusting
+
+Attestation proves *which* code is running, but that code still has to be trustworthy: whatever runs
+inside the TEE can see your plaintext, so it is part of the trusted computing base. Cohere authors that
+code, but its trustworthiness does not rest on Cohere's word. Two properties let you verify it for
+yourself:
+
+- **The code is open source and built reproducibly.** Cohere authors the vault image, the container policy, and the workload, but they are open and reproducibly built, so you (or an independent party) can rebuild the artifacts and confirm that the measurements in the attestation policy correspond to inspectable source, not to a black box.
+- **An independent party enforces the check.** The expected measurements are registered with Intel Trust Authority, which appraises the evidence and issues the token. Cohere supplies the policy, but it cannot forge a passing result, and you can verify the verifier itself with Intel's Faithful Verification service.
+
+In other words, you do not trust Cohere's word that the right code is running; you trust hardware
+roots, an independent verifier, and source you can inspect.
 
 ## When attestation runs
 

@@ -29,10 +29,11 @@ or responses during inference.
 
 ## Trust boundary
 
-The trust boundary is the hardware-backed trusted execution environment (TEE) that runs your vault: an
-Intel TDX confidential VM together with an attested NVIDIA GPU in confidential-computing mode.
+The trust boundary is the hardware-backed trusted execution environment (TEE) that runs your vault: a
+hardware-based confidential VM (for example, Intel TDX or AMD SEV-SNP) together with an attested NVIDIA
+GPU in confidential-computing mode.
 
-- **Inside the boundary**: the inference server, and your prompts and responses while they are being processed. CPU memory is hardware-encrypted by Intel TDX, the GPU runs in confidential-computing mode, and the link between them is authenticated and encrypted. The contents are not visible to anything outside.
+- **Inside the boundary**: the inference server, and your prompts and responses while they are being processed. CPU memory is hardware-encrypted by the confidential VM, the GPU runs in confidential-computing mode, and the link between them is authenticated and encrypted. The contents are not visible to anything outside.
 - **Outside the boundary**: the host operating system, the hypervisor, the Kubernetes and orchestration layer, the load balancer, the network, and operator tooling. These components can schedule and route traffic, but cannot read what is inside the TEE.
 
 Your connection terminates **inside** the TEE. Requests are encrypted client-side with Oblivious HTTP
@@ -79,7 +80,7 @@ small and verifiable.
 
 **What is trusted:**
 
-- Intel TDX hardware and firmware.
+- The confidential-VM CPU hardware and firmware (for example, Intel TDX or AMD SEV-SNP).
 - NVIDIA GPU hardware and confidential-computing firmware.
 - Intel Trust Authority as the attestation service (and, optionally, Intel's Faithful Verification service, which lets you verify the attestation service itself).
 - The reproducible build pipeline that produces the VM image and registers its measurements (open-source and independently auditable).
@@ -95,6 +96,14 @@ small and verifiable.
 - The load balancer.
 - The network between any components (except networking that stays inside a TEE).
 - The component that provisions the VM: it creates the confidential VM but cannot see inside it, and the VM is attested before it is trusted.
+
+<Note title="A note on closed-source platform components">
+Not every layer is open source. Some low-level platform firmware and virtual-device components
+supplied by the hardware vendor and the cloud platform are closed source, and are trusted as part of
+the hardware vendor's root of trust rather than independently inspectable. The degree of this residual
+trust varies by platform. Attestation still proves these components are genuine and at a known
+version, but they are not auditable in the way Cohere's open, reproducibly built code is.
+</Note>
 
 You verify these guarantees rather than taking them on faith: hardware roots of trust anchor the
 evidence, Intel Trust Authority confirms it against the expected measurements, and your client checks

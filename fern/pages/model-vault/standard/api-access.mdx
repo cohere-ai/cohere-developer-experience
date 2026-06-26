@@ -1,0 +1,95 @@
+---
+title: Calling a Standard Vault over the API
+slug: "docs/model-vault/standard/api-access"
+
+hidden: false
+description: "Call a Standard Vault with the Cohere SDK, raw HTTP, or an OpenAI-compatible client by pointing requests at your vault endpoint URL."
+keywords: "standard vault, model vault, api, endpoint, inference, cohere sdk, openai compatible, http, rest"
+---
+
+Once your Standard Vault is set up in the Model Vault app, use the **Vault endpoint URL** and **model
+name** shown in the model card (see [Managing Vaults](/docs/model-vault/managing-vaults)) in your API
+calls. You authenticate with your Cohere API key.
+
+You can call a Standard Vault three ways: the **Cohere SDK**, **raw HTTP**, or an **OpenAI-compatible**
+client. In every case you point the request directly at your vault endpoint instead of the default
+Cohere API base URL.
+
+<Note>
+This page covers **Standard Vaults**, where clients connect directly to the vault endpoint. An
+**Encrypted Vault** uses the same request and response shapes, but traffic must go through an
+attestation-verifying client or proxy. See
+[Calling an Encrypted Vault over the API](/docs/model-vault/encrypted/api-usage).
+</Note>
+
+## Cohere SDK
+
+Point the Cohere SDK at your vault endpoint with `base_url`:
+
+```python PYTHON
+import cohere
+
+co = cohere.ClientV2(
+    api_key="<COHERE_API_KEY>",
+    base_url="<YOUR_VAULT_ENDPOINT_URL>",
+)
+
+response = co.chat(
+    model="<YOUR_VAULT_MODEL_NAME>",
+    messages=[
+        {"role": "user", "content": "Hello from Model Vault!"}
+    ],
+)
+
+print(response.message.content[0].text)
+```
+
+## Raw HTTP
+
+If you don't use the SDK, call the vault endpoint directly over HTTP. Send your API key as a bearer
+token and use the same request body as the Cohere API:
+
+```bash cURL
+curl "<YOUR_VAULT_ENDPOINT_URL>/v2/chat" \
+  -H "Authorization: bearer <COHERE_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "<YOUR_VAULT_MODEL_NAME>",
+    "messages": [{"role": "user", "content": "Hello from Model Vault!"}]
+  }'
+```
+
+## OpenAI-compatible API
+
+For existing OpenAI integrations, point an OpenAI-compatible client at your vault's compatibility base
+URL (`<YOUR_VAULT_ENDPOINT_URL>/compatibility/v1`) and use your Cohere API key:
+
+```python PYTHON
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="<COHERE_API_KEY>",
+    base_url="<YOUR_VAULT_ENDPOINT_URL>/compatibility/v1",
+)
+
+response = client.chat.completions.create(
+    model="<YOUR_VAULT_MODEL_NAME>",
+    messages=[
+        {"role": "user", "content": "Hello from Model Vault!"}
+    ],
+)
+
+print(response.choices[0].message.content)
+```
+
+## Chat, Embed, and Rerank
+
+The chat example above points the SDK at your vault. Embed and Rerank requests work the same way:
+keep the `base_url` pointed at your vault endpoint and call `co.embed(...)` or `co.rerank(...)` with
+your vault's model name.
+
+## Next steps
+
+- [Calling an Encrypted Vault over the API](/docs/model-vault/encrypted/api-usage)
+- [Managing Vaults](/docs/model-vault/managing-vaults)
+- [Monitoring](/docs/model-vault/monitoring)

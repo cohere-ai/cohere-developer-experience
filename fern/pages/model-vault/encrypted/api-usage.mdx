@@ -1,37 +1,71 @@
 ---
-title: Using the API with an Encrypted Vault
+title: Calling an Encrypted Vault over the API
 slug: "docs/model-vault/encrypted/api-usage"
 
 hidden: false
-description: "Calling an Encrypted Vault over the API: an attestation-verifying client confirms the TEE and encrypts end to end before any data is sent."
-keywords: "encrypted vault, model vault encrypted, api, attestation, OHTTP, verify before send, cohere sdk"
+description: "Call an Encrypted Vault through a TNG client or proxy that verifies the TEE and encrypts end to end before any data is sent."
+keywords: "encrypted vault, model vault encrypted, api, attestation, OHTTP, TNG proxy, verify before send, cohere sdk, openai compatible"
 ---
 
-Encrypted vaults use the same shared API baseline as any other vault
-([Calling a Vault over the API](/docs/model-vault/api-access)): the same chat, embed, and rerank
-endpoints, and the same request and response shapes. The one critical addition is that the client
-**verifies the deployment's [remote attestation](/docs/model-vault/encrypted/attestation) and encrypts
-end to end before sending any data**, and refuses the connection if verification does not pass.
+An Encrypted Vault uses the same endpoints and the same request and response shapes as a
+[Standard Vault](/docs/model-vault/standard/api-access): the same chat, embed, and rerank calls. The
+one critical difference is that you **cannot call the vault endpoint directly**. Traffic must go
+through **TNG (Trusted Network Gateway)**, a client-side confidential-computing component that runs in
+your environment and, before any data leaves it, **verifies the deployment's
+[remote attestation](/docs/model-vault/encrypted/attestation) and encrypts your request end to end**,
+refusing the connection if verification does not pass.
 
-## The attestation-verifying TNG client or proxy
+## Two ways to connect through TNG
 
-Calls to an encrypted vault go through **TNG (Trusted Network Gateway)**, a client-side
-confidential-computing component that runs in your environment. It comes in two forms: a **TNG
-client** embedded in the SDK, or a standalone **TNG proxy**. Either one does two things on your
-behalf:
+TNG comes in two forms, and which one you use determines which clients you can use:
+
+| Form | What it is | Clients you can use |
+| --- | --- | --- |
+| **Embedded TNG client** | Built into the Cohere SDK; it verifies attestation and handles OHTTP for you | Cohere SDK |
+| **TNG proxy** | A standalone local proxy you run; it verifies attestation and handles OHTTP transparently | Cohere SDK, raw HTTP, **or** OpenAI-compatible (point any of them at the local proxy) |
+
+In both cases TNG does the same two things on your behalf:
 
 - **Verifies attestation**: it fetches the vault's attestation token and OHTTP public key, confirms the token was genuinely signed by Intel Trust Authority, checks that the attested measurements match the approved policy, and confirms the OHTTP key is bound to that attested environment.
 - **Encrypts end to end**: it encrypts every request to the attested environment using OHTTP and decrypts the response, so the load balancer and network only ever see ciphertext.
 
-With the standalone proxy, you point the Cohere SDK at the local proxy instead of directly at the
-vault; with the embedded client, the SDK handles this for you. Either way, your application code and
-the Cohere API calls stay unchanged.
+
+## Option 1: Cohere SDK with the embedded TNG client
+
+With the embedded client, point the Cohere SDK at the vault as usual; the SDK verifies attestation and
+encrypts to the TEE transparently. Your application code is unchanged from a standard vault.
 
 ```python PYTHON
 import cohere
 
-# Point the SDK at the local attestation-verifying proxy.
-# The proxy handles attestation verification and OHTTP encryption to the vault.
+co = cohere.ClientV2(
+    api_key="<COHERE_API_KEY>",
+    base_url="<YOUR_VAULT_ENDPOINT_URL>",
+)
+
+response = co.chat(
+    model="<YOUR_VAULT_MODEL_NAME>",
+    messages=[
+        {"role": "user", "content": "Hello from an encrypted vault!"}
+    ],
+)
+
+print(response.message.content[0].text)
+```
+
+## Option 2: TNG proxy with any client
+
+Run the TNG proxy locally, then point **any** client at the local proxy URL instead of the vault
+endpoint. The proxy verifies attestation and applies OHTTP, so from your code's perspective the call
+looks like an ordinary plaintext request to a local address, which means raw HTTP and
+OpenAI-compatible clients work without changes.
+
+**Cohere SDK via the proxy:**
+
+```python PYTHON
+import cohere
+
+# Point the SDK at the local TNG proxy instead of the vault endpoint.
 co = cohere.ClientV2(
     api_key="<COHERE_API_KEY>",
     base_url="<LOCAL_TNG_PROXY_URL>",
@@ -47,16 +81,48 @@ response = co.chat(
 print(response.message.content[0].text)
 ```
 
+**Raw HTTP via the proxy:**
+
+```bash cURL
+curl "<LOCAL_TNG_PROXY_URL>/v2/chat" \
+  -H "Authorization: bearer <COHERE_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "<YOUR_VAULT_MODEL_NAME>",
+    "messages": [{"role": "user", "content": "Hello from an encrypted vault!"}]
+  }'
+```
+
+**OpenAI-compatible client via the proxy:**
+
+```python PYTHON
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="<COHERE_API_KEY>",
+    base_url="<LOCAL_TNG_PROXY_URL>/compatibility/v1",
+)
+
+response = client.chat.completions.create(
+    model="<YOUR_VAULT_MODEL_NAME>",
+    messages=[
+        {"role": "user", "content": "Hello from an encrypted vault!"}
+    ],
+)
+
+print(response.choices[0].message.content)
+```
+
 <Note>
-The TNG client or proxy and its exact setup are provided with your encrypted vault. Embed and Rerank
-calls work the same way once TNG is running: keep it in place and call `co.embed(...)` or
-`co.rerank(...)` with your vault's model name.
+Embed and Rerank calls work the same way through TNG: keep the client or proxy in place and call
+`co.embed(...)` or `co.rerank(...)` (or the corresponding HTTP/OpenAI-compatible endpoints) with your
+vault's model name.
 </Note>
 
 ## Verify before send
 
 TNG enforces a strict order: **no plaintext leaves your environment until attestation passes.**
-On each session it confirms the environment is genuine Intel TDX CPU and NVIDIA GPU hardware, that debug
+On each session it confirms the environment is genuine confidential-VM CPU and NVIDIA GPU hardware, that debug
 modes are off, that firmware and code measurements match the approved policy, and that the encryption
 key belongs to that environment. Only then does it encrypt and send your request. Attestation tokens
 are short-lived and refreshed periodically, so the guarantee reflects the environment's current state.
@@ -82,6 +148,6 @@ means.
 
 ## Related pages
 
-- [Calling a Vault over the API](/docs/model-vault/api-access)
+- [Calling a Standard Vault over the API](/docs/model-vault/standard/api-access)
 - [Remote Attestation](/docs/model-vault/encrypted/attestation)
 - [Verifying Your Deployment](/docs/model-vault/encrypted/verifying-deployment)

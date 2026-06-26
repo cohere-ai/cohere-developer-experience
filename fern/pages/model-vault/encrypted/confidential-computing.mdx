@@ -30,9 +30,10 @@ attestation](/docs/model-vault/encrypted/attestation)).
 ## Trusted execution environments (TEEs)
 
 A trusted execution environment (TEE), sometimes called a secure enclave, is a hardware-isolated
-region of a machine with its own protected memory and execution. You can think of it as a computer
-within a computer: code and data inside the TEE are shielded from everything outside it, including
-the host operating system, the hypervisor, and system administrators.
+region of a machine with its own protected memory and execution. Unlike an ordinary virtual machine,
+whose memory the hypervisor and host can read, a TEE has its memory encrypted by the hardware and
+isolated so that code and data inside it are shielded from everything outside, including the host
+operating system, the hypervisor, and system administrators.
 
 A TEE provides two core guarantees:
 
@@ -46,8 +47,9 @@ The CPU transparently encrypts the VM's memory and isolates it from the hypervis
 application's point of view, code runs normally; the protection is enforced by the hardware
 underneath.
 
-Model Vault Encrypted runs its inference workload inside an **Intel TDX** (Trust Domain Extensions)
-confidential VM, so the operating system, hypervisor, and cloud operator cannot read the VM's memory.
+Model Vault Encrypted runs its inference workload inside a hardware-based **confidential VM** (for
+example, **Intel TDX** or **AMD SEV-SNP**), so the operating system, hypervisor, and cloud operator
+cannot read the VM's memory.
 
 ## GPU confidential computing
 
@@ -66,7 +68,7 @@ across both the CPU and the GPU for the full duration of the request.
 
 Model Vault Encrypted layers these primitives on top of a standard vault:
 
-- **Hardware-backed TEEs spanning CPU and GPU**: inference runs inside an Intel TDX confidential VM with an attested NVIDIA GPU in confidential-computing mode, so prompts and responses stay protected in transit, at rest, and in use.
+- **Hardware-backed TEEs spanning CPU and GPU**: inference runs inside a hardware-based confidential VM with an attested NVIDIA GPU in confidential-computing mode, so prompts and responses stay protected in transit, at rest, and in use.
 - **Measured boot**: the confidential VM boots from an integrity-protected image (a read-only root filesystem with verified measurements of firmware, kernel, and the inference workload), and a container policy restricts what can run inside it. These measurements are what attestation checks against.
 - **End-to-end encryption to the TEE**: your client encrypts requests directly to the environment using Oblivious HTTP (OHTTP). The encryption keys are generated inside the TEE and are never shared with Cohere, so the load balancer and network only ever see ciphertext.
 - **Verify before you trust**: before any data is sent, the client verifies the deployment through [remote attestation](/docs/model-vault/encrypted/attestation) and refuses the connection if the environment is not genuine or is running unexpected code.

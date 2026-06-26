@@ -10,8 +10,11 @@ keywords: "attestation verification, intel trust authority, TDX measurements, GP
 This page covers how you verify a Model Vault Encrypted deployment in practice. For the underlying
 mechanism, see [Remote Attestation](/docs/model-vault/encrypted/attestation).
 
-There are two ways verification happens: **automatically**, every time your client connects, and
-**visually**, when you inspect a vault's attestation details in the Model Vault app.
+The verification that actually protects your data is **automatic and client-side**: the TNG client or
+proxy checks attestation on every connection, binds it to the key it encrypts to, and refuses to
+connect if anything is wrong. Separately, the Model Vault app displays a vault's attestation details
+for at-a-glance status and audit. That display is informational; it is the client-side check, not the
+app view, that gates your traffic.
 
 ## Automatic verification (the client)
 
@@ -23,11 +26,15 @@ runs the full check on every session and **refuses the connection** if anything 
 2. It verifies the token's signature against Intel Trust Authority's published public keys (JWKS), confirming Intel genuinely issued it and it was not tampered with.
 3. It confirms the attestation **policy matched**, meaning the hardware was genuine and the measured software matched the approved values.
 4. It confirms the OHTTP public key is cryptographically **bound to the attested TEE**, so it is encrypting only to the genuine environment.
-5. A fresh nonce ties the result to this request, preventing replay of an old attestation.
+5. It checks the token is still within its short validity window.
 
-Only if all of these pass does the client encrypt and send your request. Tokens are short-lived (valid
-for only a few minutes) and refreshed periodically, so the result reflects the environment's current
-state.
+Only if all of these pass does the client encrypt and send your request.
+
+In the Passport model the client does not run its own nonce challenge against the deployment. Freshness
+is instead guaranteed by the token's short lifetime: Intel Trust Authority issues a token only after a
+nonce exchange with the VM that produced the evidence, so a valid, unexpired token attests that the
+underlying evidence was fresh when ITA appraised it. Tokens are valid for only a few minutes and are
+refreshed periodically, so the result reflects the environment's current state.
 
 ## Inspecting attestation in the Model Vault app
 
@@ -39,6 +46,15 @@ checks:
 
 The single most important field is the **policy result**: if the attested evidence matched a registered
 policy, the overall verdict is secure. The sections below explain what each group of fields tells you.
+
+<Note title="The app view is informational, not the security boundary">
+What you see in the Model Vault app is a convenient status display, not proof of the environment that
+served a particular request: nothing about the rendered details binds them to your actual connection,
+so they should not be relied on as a standalone guarantee. The tamper-resistant guarantee comes from
+the client-side TNG check, which binds the attestation to the OHTTP key it encrypts to on every
+connection, and from the per-response attestation certificate your client can verify. Use the app view
+for review and the client-side verification for trust decisions.
+</Note>
 
 ### Overall token
 
@@ -54,7 +70,8 @@ These fields describe the attestation token itself.
 
 ### CPU confidentiality (Intel TDX)
 
-These fields describe the confidential VM the workload runs inside.
+These fields describe the confidential VM the workload runs inside. They are shown here for the Intel
+TDX deployment; other confidential-VM platforms expose equivalent fields with platform-specific names.
 
 | Field | What it tells you | Look for |
 | --- | --- | --- |
@@ -64,7 +81,14 @@ These fields describe the confidential VM the workload runs inside.
 | TCB status | Whether the platform firmware is at the latest security level | `UpToDate` (see note below) |
 | TCB date | The date of the platform's trusted computing base level | Informational |
 | Security advisories | Known Intel advisories applicable at this TCB level | Review if present |
-| Measurement registers | `MRTD` and `RTMR0`-`RTMR3`: fingerprints of the launched VM, firmware, OS loader, kernel, and application | For audit and independent comparison |
+| Measurement registers | `MRTD` and `RTMR0`-`RTMR3`: fingerprints of the launched VM, firmware, kernel, OS, and workload | For audit and independent comparison |
+
+The measurement registers record what was loaded, in stages:
+
+- **`MRTD`**: the initial measurement of the confidential VM, taken by the hardware as the TD is built (the virtual firmware that launches it).
+- **`RTMR0`**: virtual firmware (OVMF/TDVF) and its configuration.
+- **`RTMR1` / `RTMR2`**: the kernel, `initrd`, boot parameters, and OS components measured during boot.
+- **`RTMR3`**: runtime, workload-specific measurements (for example, the inference stack and configuration).
 
 <Note>
 A **TCB status** of `OutOfDate` means the platform firmware is not at the very latest patch level. It
@@ -75,7 +99,7 @@ advisories, but it is worth reviewing for sensitive workloads.
 ### GPU security
 
 These fields prove the GPU is genuine hardware running verified firmware. The GPU evidence is checked by
-NVIDIA's Remote Attestation Service and folded into the composite token.
+**NVIDIA's Remote Attestation Service (NRAS)** and folded into the composite token.
 
 | Field | What it tells you | Look for |
 | --- | --- | --- |
@@ -87,17 +111,23 @@ NVIDIA's Remote Attestation Service and folded into the composite token.
 
 ### Software and firmware integrity
 
-The attestation also runs a set of detailed GPU verification checks. In the Model Vault app these appear as a
-checklist; all should pass:
+Attestation verifies the integrity of the whole stack, not just the GPU. The evidence and the ITA
+policy together confirm both the CPU/VM side and the GPU side.
 
-- The attestation report was parsed and its certificate chain validated.
-- The report signature was cryptographically verified.
+**CPU and virtual machine (Intel TDX):**
+
+- The virtual firmware (OVMF/TDVF) and the TDX module that launched the confidential VM, captured in `MRTD` and `RTMR0`.
+- The kernel, `initrd`, and boot configuration, captured in the runtime measurement registers.
+- The read-only root filesystem (`dm-verity`) and the enforced Kata container policy, so only the approved image, containers, and processes can run.
+
+**GPU (checked by NRAS):**
+
+- The attestation report was parsed, its certificate chain validated, and its signature cryptographically verified.
 - The driver and VBIOS Reference Integrity Manifests (RIMs) were validated and their signatures verified.
-- All firmware measurements match their reference values.
-- The nonce matches what was sent (replay protection).
+- All GPU firmware measurements match their reference values.
 
-Together with the CPU's measured boot (the integrity-protected image and enforced container policy),
-this confirms the entire software stack is the approved one.
+Together these confirm that the firmware, operating system, inference workload, and GPU are all the
+approved, measured stack, not just that the underlying hardware is genuine.
 
 ### Policy compliance
 
@@ -131,4 +161,4 @@ a vault consistently fails verification, check its status in the Model Vault app
 
 - [Remote Attestation](/docs/model-vault/encrypted/attestation)
 - [Security Model](/docs/model-vault/encrypted/security-model)
-- [Calling a Vault over the API](/docs/model-vault/api-access)
+- [Calling an Encrypted Vault over the API](/docs/model-vault/encrypted/api-usage)
