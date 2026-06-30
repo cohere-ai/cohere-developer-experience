@@ -3,34 +3,34 @@ title: Calling an Encrypted Vault over the API
 slug: "docs/model-vault/encrypted/api-usage"
 
 hidden: false
-description: "Call an Encrypted Vault through a TNG client or proxy that verifies the TEE and encrypts end to end before any data is sent."
-keywords: "encrypted vault, model vault encrypted, api, attestation, OHTTP, TNG proxy, verify before send, cohere sdk, openai compatible"
+description: "Call an Encrypted Vault through the Cohere OHTTP proxy that verifies the TEE and encrypts end to end before any data is sent."
+keywords: "encrypted vault, model vault encrypted, api, attestation, OHTTP, Cohere OHTTP proxy, verify before send, cohere sdk, openai compatible"
 ---
 
 An Encrypted Vault uses the same endpoints and the same request and response shapes as a
 [Standard Vault](/docs/model-vault/standard/api-access): the same chat, embed, and rerank calls. The
 one critical difference is that you **cannot call the vault endpoint directly**. Traffic must go
-through **TNG (Trusted Network Gateway)**, a client-side confidential-computing component that runs in
+through the **Cohere OHTTP proxy**, a client-side confidential-computing component that runs in
 your environment and, before any data leaves it, **verifies the deployment's
 [remote attestation](/docs/model-vault/encrypted/attestation) and encrypts your request end to end**,
 refusing the connection if verification does not pass.
 
-## Two ways to connect through TNG
+## Two ways to connect through the Cohere OHTTP proxy
 
-TNG comes in two forms, and which one you use determines which clients you can use:
+The Cohere OHTTP proxy comes in two forms, and which one you use determines which clients you can use:
 
 | Form | What it is | Clients you can use |
 | --- | --- | --- |
-| **Embedded TNG client** | Built into the Cohere SDK; it verifies attestation and handles OHTTP for you | Cohere SDK |
-| **TNG proxy** | A standalone local proxy you run; it verifies attestation and handles OHTTP transparently | Cohere SDK, raw HTTP, **or** OpenAI-compatible (point any of them at the local proxy) |
+| **Embedded Cohere OHTTP client** | Built into the Cohere SDK; it verifies attestation and handles OHTTP for you | Cohere SDK |
+| **Standalone Cohere OHTTP proxy** | A standalone local proxy you run; it verifies attestation and handles OHTTP transparently | Cohere SDK, raw HTTP, **or** OpenAI-compatible (point any of them at the local proxy) |
 
-In both cases TNG does the same two things on your behalf:
+In both cases, the Cohere OHTTP proxy does the same two things on your behalf:
 
 - **Verifies attestation**: it fetches the vault's attestation token and OHTTP public key, confirms the token was genuinely signed by Intel Trust Authority, checks that the attested measurements match the approved policy, and confirms the OHTTP key is bound to that attested environment.
 - **Encrypts end to end**: it encrypts every request to the attested environment using OHTTP and decrypts the response, so the load balancer and network only ever see ciphertext.
 
 
-## Option 1: Cohere SDK with the embedded TNG client
+## Option 1: Cohere SDK with the embedded Cohere OHTTP client
 
 With the embedded client, point the Cohere SDK at the vault as usual; the SDK verifies attestation and
 encrypts to the TEE transparently. Your application code is unchanged from a standard vault.
@@ -53,9 +53,9 @@ response = co.chat(
 print(response.message.content[0].text)
 ```
 
-## Option 2: TNG proxy with any client
+## Option 2: Cohere OHTTP proxy with any client
 
-Run the TNG proxy locally, then point **any** client at the local proxy URL instead of the vault
+Run the Cohere OHTTP proxy locally, then point **any** client at the local proxy URL instead of the vault
 endpoint. The proxy verifies attestation and applies OHTTP, so from your code's perspective the call
 looks like an ordinary plaintext request to a local address, which means raw HTTP and
 OpenAI-compatible clients work without changes.
@@ -65,10 +65,10 @@ OpenAI-compatible clients work without changes.
 ```python PYTHON
 import cohere
 
-# Point the SDK at the local TNG proxy instead of the vault endpoint.
+# Point the SDK at the local Cohere OHTTP proxy instead of the vault endpoint.
 co = cohere.ClientV2(
     api_key="<COHERE_API_KEY>",
-    base_url="<LOCAL_TNG_PROXY_URL>",
+    base_url="<LOCAL_OHTTP_PROXY_URL>",
 )
 
 response = co.chat(
@@ -84,7 +84,7 @@ print(response.message.content[0].text)
 **Raw HTTP via the proxy:**
 
 ```bash cURL
-curl "<LOCAL_TNG_PROXY_URL>/v2/chat" \
+curl "<LOCAL_OHTTP_PROXY_URL>/v2/chat" \
   -H "Authorization: bearer <COHERE_API_KEY>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -100,7 +100,7 @@ from openai import OpenAI
 
 client = OpenAI(
     api_key="<COHERE_API_KEY>",
-    base_url="<LOCAL_TNG_PROXY_URL>/compatibility/v1",
+    base_url="<LOCAL_OHTTP_PROXY_URL>/compatibility/v1",
 )
 
 response = client.chat.completions.create(
@@ -114,14 +114,14 @@ print(response.choices[0].message.content)
 ```
 
 <Note>
-Embed and Rerank calls work the same way through TNG: keep the client or proxy in place and call
+Embed and Rerank calls work the same way through the Cohere OHTTP proxy: keep the client or proxy in place and call
 `co.embed(...)` or `co.rerank(...)` (or the corresponding HTTP/OpenAI-compatible endpoints) with your
 vault's model name.
 </Note>
 
 ## Verify before send
 
-TNG enforces a strict order: **no plaintext leaves your environment until attestation passes.**
+The Cohere OHTTP proxy enforces a strict order: **no plaintext leaves your environment until attestation passes.**
 On each session it confirms the environment is genuine confidential-VM CPU and NVIDIA GPU hardware, that debug
 modes are off, that firmware and code measurements match the approved policy, and that the encryption
 key belongs to that environment. Only then does it encrypt and send your request. Attestation tokens
@@ -136,7 +136,7 @@ For the full list of what is checked and how to inspect it, see
 
 ## Handling attestation failures
 
-If verification fails, TNG **refuses the connection**: it does not send your request, so your data is never
+If verification fails, the Cohere OHTTP proxy **refuses the connection**: it does not send your request, so your data is never
 exposed to an unverified environment. Common causes include an invalid token signature, a policy that
 did not match (the measured software differs from the approved stack), an expired token, or an
 encryption key that is not bound to the attested environment.

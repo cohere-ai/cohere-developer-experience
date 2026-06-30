@@ -4,7 +4,7 @@ slug: "docs/model-vault/encrypted/attestation"
 
 hidden: false
 description: "How remote attestation and the Passport model with Intel Trust Authority prove which code is running inside a Model Vault Encrypted deployment."
-keywords: "remote attestation, intel trust authority, passport model, OHTTP, TNG, attestation token, model vault encrypted"
+keywords: "remote attestation, intel trust authority, passport model, OHTTP, Cohere OHTTP proxy, attestation token, model vault encrypted"
 ---
 
 Remote attestation lets you cryptographically confirm that a Model Vault Encrypted deployment is a
@@ -34,79 +34,55 @@ three questions:
 
 ## The Passport model with Intel Trust Authority
 
-Model Vault Encrypted uses the **Passport attestation model**. Each confidential VM obtains a signed
-attestation token (its "passport") from **Intel Trust Authority (ITA)**, an external attestation
-service operated by Intel. Clients and peers then verify that passport rather than re-evaluating raw
+Model Vault Encrypted uses the **Passport attestation model**. Each trusted environment obtains a
+signed attestation token (its "passport") from **Intel Trust Authority (ITA)**, an external
+attestation service operated by Intel. Clients verify that passport rather than re-evaluating raw
 hardware evidence themselves.
 
 End-to-end encryption between the client and the deployment uses **Oblivious HTTP (OHTTP)**, so the
 load balancer and network only ever see ciphertext. The OHTTP keys are generated inside the confidential
 VMs and are never shared with Cohere.
 
-<img src="../../../assets/images/model-vault/model-vault-encrypted-passport-architecture.svg" />
-
-### Components
-
-- **Client**: runs **TNG (Trusted Network Gateway)**, a client-side confidential-computing component that handles OHTTP encryption/decryption and attestation verification. It comes in two forms: a **TNG client** embedded in the SDK, or a standalone **TNG proxy**. Either one embeds an **ITA verifier** that uses ITA's public keys to confirm attestation tokens were genuinely signed by ITA. The client never talks to a confidential VM directly; all traffic goes through the load balancer.
-- **Untrusted load balancer**: a standard cloud load balancer that routes OHTTP traffic. It is **not** part of the trusted computing base and cannot read, modify, or decrypt any payload. In OHTTP the payload stays encrypted while headers remain in the clear, so the model name is promoted to a header to let the load balancer route to the right pool of nodes.
-- **Confidential VM (PeerPod), N replicas**: an Intel TDX confidential VM with an NVIDIA GPU passed through in confidential-computing mode. Inside it run:
-  - **Kata Agent**: enforces the container policy delivered via `initdata`, restricting which container images, configuration, processes, and syscalls are allowed.
-  - **Attestation Agent (AA)**: collects composite CPU (TDX) + GPU (confidential-computing) evidence at boot.
-  - **TNG container**: contains the ITA client, the OHTTP server, and key management. It acquires attestation tokens, performs mutual attestation with peers, handles OHTTP encryption/decryption, and rotates OHTTP keys.
-  - **vLLM container**: runs model inference on the confidential CPU and GPU.
-- **Intel Trust Authority (ITA)**: validates the authenticity of CPU + GPU evidence against the hardware vendors' keys, verifies it against a pre-registered policy of expected build measurements, and issues a signed token that binds to the TEE's measurements (MRTD, RTMRs, GPU firmware).
-
 ## End-to-end attestation and request flow
 
 <Steps>
-### Confidential VM bootstrap
+### Secure environment starts
 
-The VM boots as a TDX-enabled confidential VM with GPU passthrough. The image boots from a read-only
-`squashfs` root protected by `dm-verity`, and the Kata Agent enforces the container policy from
-`initdata`. The NVIDIA driver establishes an SPDM-authenticated, encrypted channel to the GPU, and the
-GPU enters confidential-computing mode (locked on). The TNG and vLLM containers start. At this point the
-VM is running but not yet attested.
+The deployment starts inside a confidential-computing environment with protected CPU execution and a
+GPU running in confidential-computing mode. During startup, the platform measures the firmware,
+kernel, runtime configuration, workload, and GPU state. Those measurements become the evidence that is
+later checked against an approved policy. The evidence is rooted in hardware keys built into the CPU
+and GPU, so the host or application software cannot forge different measurements and make them look
+valid.
 
 ### ITA attestation (per VM)
 
-The TNG container generates an OHTTP key pair locally and asks the Attestation Agent to collect
-composite TDX + GPU evidence with the OHTTP public key bound into it. The ITA client sends this
-evidence to ITA, which validates authenticity against the hardware vendors' keys and checks it against
-the registered policy (PodVM image hash, kernel and `initrd` measurements, firmware versions, and
-confidential-computing mode state for both the CPU and GPU). If it matches, ITA returns a signed token.
-The token is refreshed periodically.
+The deployment generates an OHTTP key pair inside the trusted environment and binds the public key to
+the attestation evidence. Intel Trust Authority validates the CPU and GPU evidence against the hardware
+vendors' roots of trust and checks the measured values against the registered policy. If the evidence
+matches, ITA returns a signed attestation token. The token is refreshed periodically.
 
-### Mutual attestation and OHTTP key sharing
+### Fleet-level trust
 
-Once attested, replicas discover each other through a **Serf gossip** mesh. Each presents its
-ITA-signed token, and each peer verifies it against ITA's published signing keys (JWKS), confirming the
-peer runs an identical approved stack on verified hardware. Only after this mutual check do verified
-peers exchange their OHTTP key pairs over the attested channel, and they keep exchanging keys as they
-rotate. In other words, a replica only shares its keys with peers it has cryptographically confirmed to
-be genuine, attested CVMs. These keys live and move only inside the trusted environment; Cohere and the
-host never have access to them. As a result, any verified replica can decrypt a request that was
-encrypted to any other verified replica's public key, which lets the load balancer route freely and
-lets the fleet scale dynamically.
+For deployments with multiple replicas, only environments that pass the same attestation policy are
+trusted to serve encrypted traffic. OHTTP keys remain inside attested environments and are never
+available to Cohere or the host infrastructure. This lets the service scale while preserving the same
+client-side verification and end-to-end encryption guarantees.
 
 ### Client key discovery
 
-The client-side TNG connects through the load balancer, which routes the first request to one VM
-(say, replica #1). That VM returns its OHTTP public key and its ITA attestation token. The client's ITA
-verifier confirms the token is validly signed by ITA and that the OHTTP public key is cryptographically
-bound to the attested TEE in the token. The client now trusts that key, and because keys are shared only
-among mutually attested replicas, trusting one attested replica means the client can trust any replica
-that holds the matching key, without re-attesting against each one individually.
+The client-side Cohere OHTTP proxy fetches the deployment's OHTTP public key and attestation token. It
+verifies that the token was signed by ITA, that the measurements match the approved policy, and that
+the OHTTP key is cryptographically bound to the attested environment. Only after those checks pass does
+the client trust the key.
 
 ### Encrypted request serving
 
 The client encrypts the request with OHTTP using the attested public key and sends it through the load
-balancer. The payload stays encrypted end to end; only selected routing metadata, such as the model
-name, is exposed in the OHTTP headers so the load balancer can route to the right pool of nodes. The
-load balancer may route the request to any available replica (say, replica #3). That replica already
-holds the matching private key (from the key-sharing step), decrypts the request inside the confidential
-environment, runs inference in the vLLM container on the confidential GPU, encrypts the response with
-OHTTP, and returns it. The client-side TNG decrypts the response. The load balancer never sees
-plaintext at any point.
+balancer. The payload stays encrypted end to end; intermediate infrastructure can route the request but
+cannot decrypt it. The request is decrypted only inside an attested environment, inference runs there,
+and the response is encrypted before it leaves. The client-side Cohere OHTTP proxy decrypts the
+response. The load balancer never sees plaintext at any point.
 </Steps>
 
 ## How Intel Trust Authority verifies
@@ -133,9 +109,8 @@ impersonate the environment:
 - The client encrypts requests to the attested public key, so only a genuine, attested TEE can decrypt them.
 
 Because the public key is covered by the signed attestation, the client knows the key really belongs to
-the attested environment and not to the host or load balancer. Possessing a shared OHTTP private key is
-itself proof of having passed attestation, which is how trust extends across the replica fleet without
-re-attesting on every request.
+the attested environment and not to the host or load balancer. For scaled deployments, this trust model
+extends across the serving fleet without exposing plaintext to intermediate infrastructure.
 
 ## Matching measurements to expected code
 
