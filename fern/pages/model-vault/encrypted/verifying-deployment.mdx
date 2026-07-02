@@ -10,7 +10,7 @@ keywords: "attestation verification, intel trust authority, TDX measurements, GP
 This page covers how you verify a Model Vault Encrypted deployment in practice. For the underlying
 mechanism, see [Remote Attestation](/docs/model-vault/encrypted/attestation).
 
-The verification that actually protects your data is **automatic and client-side**: the TNG client or
+The verification that actually protects your data is **automatic and client-side**: the Cohere OHTTP
 proxy checks attestation on every connection, binds it to the key it encrypts to, and refuses to
 connect if anything is wrong. Separately, the Model Vault app displays a vault's attestation details
 for at-a-glance status and audit. That display is informational; it is the client-side check, not the
@@ -18,9 +18,9 @@ app view, that gates your traffic.
 
 ## Automatic verification (the client)
 
-You do not have to do anything manually for verification to occur. The client-side **TNG (Trusted
-Network Gateway)** component, whether the TNG client embedded in the SDK or a standalone TNG proxy,
-runs the full check on every session and **refuses the connection** if anything is wrong:
+You do not have to do anything manually for verification to occur. The client-side **Cohere OHTTP
+proxy**, whether embedded in the SDK or run as a standalone proxy, runs the full check on every
+session and **refuses the connection** if anything is wrong:
 
 1. It fetches the deployment's attestation token and OHTTP public key.
 2. It verifies the token's signature against Intel Trust Authority's published public keys (JWKS), confirming Intel genuinely issued it and it was not tampered with.
@@ -51,7 +51,7 @@ policy, the overall verdict is secure. The sections below explain what each grou
 What you see in the Model Vault app is a convenient status display, not proof of the environment that
 served a particular request: nothing about the rendered details binds them to your actual connection,
 so they should not be relied on as a standalone guarantee. The tamper-resistant guarantee comes from
-the client-side TNG check, which binds the attestation to the OHTTP key it encrypts to on every
+the client-side Cohere OHTTP proxy check, which binds the attestation to the OHTTP key it encrypts to on every
 connection, and from the per-response attestation certificate your client can verify. Use the app view
 for review and the client-side verification for trust decisions.
 </Note>
