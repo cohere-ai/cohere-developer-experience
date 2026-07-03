@@ -23,7 +23,7 @@ The Cohere OHTTP proxy comes in three forms, and which one you use determines wh
 | --- | --- | --- |
 | **Embedded Cohere OHTTP client (coming soon)** | Built into the Cohere Python SDK; it verifies attestation and handles OHTTP for you | Cohere SDK |
 | **Cohere Python OHTTP wrapper (conseel)** | A Python package that verifies attestation and handles OHTTP by wrapping httpx-based communication | Cohere SDK, OpenAI SDK, other httpx-based Python SDKs |
-| **Standalone Cohere OHTTP proxy (coming soon)** | A standalone local proxy container you run; it verifies attestation and handles OHTTP transparently | Cohere SDK, raw HTTP, **or** OpenAI-compatible (point any of them at the local proxy) |
+| **Standalone Cohere OHTTP proxy** | A standalone local proxy container you run; it verifies attestation and handles OHTTP transparently | Cohere SDK, raw HTTP, **or** OpenAI-compatible (point any of them at the local proxy) |
 
 In all cases, the Cohere OHTTP proxy does the same two things on your behalf:
 
@@ -37,7 +37,7 @@ With the embedded client, point the Cohere SDK at the vault as usual; the SDK ve
 encrypts all traffic to the attested environment transparently using an encrypted vault URL. Your application
 code remains unchanged from a standard vault.
 
-Install Cohere client with encrypted vault support via PyPI (for x86/ARM machines running Linux/Mac):
+Install Cohere client with encrypted vault support via PyPI (for x86/ARM machines running Linux/Mac OS):
 ```bash BASH
 pip install cohere[mve]
 ```
@@ -116,14 +116,14 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
-## Option 3: Cohere OHTTP proxy with any client (coming soon)
+## Option 3: Cohere OHTTP proxy with any client
 
 Run the Cohere OHTTP proxy container locally, then point **any** client at the local proxy address instead 
 of the vault endpoint. The proxy verifies attestation and encrypts all traffic to the attested environment,
 so from your client's perspective the call looks like an ordinary plaintext request to a local address. This
 means any clients producing HTTP Cohere/OpenAI API requests work without changes. The only change required is
-the addition of an `X-Gateway-Model-Name` header to any requests to aid in routing through load balancers that
-cannot inspect the request body.
+the addition of an `X-Gateway-Model-Name` header to any requests to aid in routing through load balancers since
+they cannot inspect the request body for encrypted vaults.
 
 
 Run the container using a container platform such as Docker:
@@ -131,7 +131,7 @@ Run the container using a container platform such as Docker:
 docker run -it --rm --network host \
   -e IN_HOST=0.0.0.0 -e IN_PORT=8080 \
   -e TARGET_URL=<YOUR_VAULT_ENDPOINT_URL> \
-  ghcr.io/cohere-ai/tng-ingress:latest
+  ghcr.io/cohere-ai/tng-ingress:0.5.0
 ```
 
 Then use the Cohere SDK via the proxy:
