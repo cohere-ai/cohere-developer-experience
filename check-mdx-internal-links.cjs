@@ -50,6 +50,20 @@ function loadDocVersions() {
   }
 }
 
+// Union of every file referenced by any version's nav tree. Used as a
+// liveness signal for pages that are nav-placed but lack an explicit
+// frontmatter `slug:` (Fern can still auto-derive a URL for them from the
+// nav structure) — as opposed to files that merely exist on disk (e.g.
+// under archived/, snippets/, or simply orphaned) but aren't wired into any
+// nav and therefore have no real route on the live site.
+function navReferencedFiles() {
+  const out = new Set();
+  for (const { navPaths } of docVersions) {
+    for (const p of navPaths) out.add(p);
+  }
+  return out;
+}
+
 function toPosix(p) {
   return p.split(path.sep).join("/");
 }
@@ -315,6 +329,7 @@ loadFiles();
 loadRedirects();
 loadKnownRoots();
 indexAssetBasenames();
+const navFiles = navReferencedFiles();
 
 const errors = [];
 const warnings = [];
@@ -380,13 +395,22 @@ for (const file of pageFiles) {
       }
 
       const sourceFile = resolveFileTarget(file, target);
+      // A resolved file only counts as "live" if it actually has a route
+      // (explicit slug / changelog date) or is placed in some version's
+      // nav tree. Otherwise it merely exists on disk (archived, snippets,
+      // or simply orphaned) and would 404 on the live site.
+      const sourceFileIsLive =
+        sourceFile &&
+        ((fileToRoutes.get(sourceFile) || []).length > 0 || navFiles.has(sourceFile));
       const renderedRoutes = renderedRouteTargets(file, target);
       const renderedOk = renderedRoutes.some(routeExists);
 
-      if (!sourceFile && !renderedOk) {
-        const why = renderedRoutes.length
-          ? "source file not found and rendered route not registered"
-          : "source file not found (no route candidates)";
+      if (!sourceFileIsLive && !renderedOk) {
+        const why = sourceFile
+          ? "resolved file is not part of any nav/route (likely archived or orphaned)"
+          : renderedRoutes.length
+            ? "source file not found and rendered route not registered"
+            : "source file not found (no route candidates)";
         report(
           "error",
           `${file}:${line}: unresolved relative link "${target}" (${why})` +
