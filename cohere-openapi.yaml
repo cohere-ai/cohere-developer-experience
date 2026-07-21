@@ -6938,52 +6938,6 @@ paths:
                       tokens:
                         input_tokens: 499
                         output_tokens: 105
-  /v2/prompt:
-    post:
-      summary: Chat prompt (v2)
-      operationId: promptv2
-      x-fern-audiences:
-        - v2-beta
-      x-fern-sdk-group-name: v2
-      x-fern-sdk-method-name: prompt
-      description: |
-        Returns the constructed text prompt for a v2 chat request without running model generation.
-        The request body matches [Chat v2](/v2/chat) (the `stream` field is ignored).
-      parameters:
-        - $ref: "#/components/parameters/RequestSource"
-      requestBody:
-        $ref: "#/components/requestBodies/requestBody"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PromptResponseV2"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "422":
-          $ref: "#/components/responses/UnprocessableEntity"
-        "429":
-          $ref: "#/components/responses/RateLimit"
-        "498":
-          $ref: "#/components/responses/InvalidToken"
-        "499":
-          $ref: "#/components/responses/RequestCancelled"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "501":
-          $ref: "#/components/responses/NotImplemented"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
   /v1/generate:
     post:
       deprecated: true
@@ -22767,6 +22721,7 @@ components:
                 - `ERROR` - something went wrong when generating the reply
                 - `ERROR_TOXIC` - the model generated a reply that was deemed toxic
               type: string
+              x-fern-type-name: ChatStreamEndEventFinishReason
               x-fern-audiences:
                 - public
               enum:
@@ -23081,10 +23036,12 @@ components:
           description: A chain-of-thought style reflection and plan that the model
             generates when working with Tools.
         content:
+          x-fern-type-name: AssistantMessageV2Content
           oneOf:
             - type: string
             - type: array
               items:
+                x-fern-type-name: AssistantMessageV2ContentOneItem
                 oneOf:
                   - $ref: "#/components/schemas/ChatTextContent"
                   - $ref: "#/components/schemas/ChatThinkingContent"
