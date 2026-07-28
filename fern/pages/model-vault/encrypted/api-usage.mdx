@@ -35,9 +35,7 @@ In all cases, the Cohere OHTTP proxy does the same two things on your behalf:
 Run the Cohere OHTTP proxy container locally, then point **any** client at the local proxy address instead 
 of the vault endpoint. The proxy verifies attestation and encrypts all traffic to the attested environment,
 so from your client's perspective the call looks like an ordinary plaintext request to a local address. This
-means any clients producing HTTP Cohere/OpenAI API requests work without changes. The only change required is
-the addition of an `X-Gateway-Model-Name` header to any requests to aid in routing through load balancers since
-they cannot inspect the request body for encrypted vaults.
+means any clients producing HTTP Cohere/OpenAI API requests work without changes. 
 
 
 Run the container using a container platform such as Docker:
@@ -45,7 +43,7 @@ Run the container using a container platform such as Docker:
 docker run -it --rm --network host \
   -e IN_HOST=0.0.0.0 -e IN_PORT=8080 \
   -e TARGET_URL=<YOUR_VAULT_ENDPOINT_URL> \
-  ghcr.io/cohere-ai/tng-ingress:0.5.0
+  ghcr.io/cohere-ai/tng-ingress:0.6.0
 ```
 
 Then use the Cohere SDK via the proxy:
@@ -57,9 +55,6 @@ import httpx
 co = cohere.ClientV2(
     api_key="<COHERE_API_KEY>",
     base_url="<LOCAL_OHTTP_PROXY_URL>",
-    httpx_client=httpx.Client(
-        headers={"X-Gateway-Model-Name": "<YOUR_VAULT_MODEL_NAME>"}
-    ),
 )
 
 response = co.chat(
@@ -77,7 +72,6 @@ Make a raw HTTP request via the proxy:
 curl "<LOCAL_OHTTP_PROXY_URL>/v2/chat" \
   -H "Authorization: Bearer <COHERE_API_KEY>" \
   -H "Content-Type: application/json" \
-  -H "X-Gateway-Model-Name: <YOUR_VAULT_MODEL_NAME>" \
   -d '{
     "model": "<YOUR_VAULT_MODEL_NAME>",
     "messages": [{"role": "user", "content": "Hello to an encrypted vault!"}]
@@ -91,9 +85,6 @@ from openai import OpenAI
 client = OpenAI(
     api_key="<COHERE_API_KEY>",
     base_url="<LOCAL_OHTTP_PROXY_URL>/v1",
-    default_headers={
-        "X-Gateway-Model-Name": "<YOUR_VAULT_MODEL_NAME>"
-    },
 )
 
 response = client.chat.completions.create(
@@ -231,10 +222,9 @@ Cohere also offers a hosted OHTTP proxy that allows you to interact with an encr
 it were a standard vault, without running any of the client-side options described above. This option
 is intended strictly for demo purposes, as it changes the security model by requiring you to trust
 Cohere with the proxy layer. To use the hosted OHTTP proxy, send requests to the encrypted vault as you
-would a standard vault and include the following headers with all requests:
+would a standard vault and include the following header with all requests:
 ```
 "X-Cohere-Demo-Encrypt": "1"
-"X-Gateway-Model-Name": "<YOUR_VAULT_MODEL_NAME>"
 ```
 <Note>
 For security reasons, the hosted OHTTP proxy is disabled by default. Please reach out to us to enable it for your vault.
