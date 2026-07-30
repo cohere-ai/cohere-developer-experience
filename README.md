@@ -61,8 +61,18 @@ make dev
 
 If you change any Python code samples, you must complete the following steps.
 
-1. Install the required version of the [black](https://pypi.org/project/black/) package.
+1. Install the required version of the [black](https://pypi.org/project/black/) package. Note that
+   on MacOS, it's best to do so in a virtual environment to avoid interfering with Python packages
+   used by the operating system.
    
+   - MacOS
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install "black==24.10.0"
+   ```
+
+   - Non-MacOS
    ```bash
    pip3 install "black==24.10.0"
    ```

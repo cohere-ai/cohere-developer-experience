@@ -10,43 +10,27 @@ keywords: 'tool use, generative AI, langchain'
 createdAt: 'Wed Apr 03 2024 12:21:56 GMT+0000 (Coordinated Universal Time)'
 updatedAt: 'Tue Jun 11 2024 15:41:50 GMT+0000 (Coordinated Universal Time)'
 ---
-Cohere supports various integrations with LangChain, a large language model (LLM) framework which allows you to quickly create applications based on Cohere's models. This doc will guide you through how to leverage [Cohere tools](/docs/tool-use) with LangChain. 
+Cohere supports various integrations with LangChain, a large language model (LLM) framework which allows you to quickly create applications based on Cohere's models. This doc will guide you through how to leverage [Cohere tools](../docs/tool-use) with LangChain. 
 
 ### Prerequisites
 
-Running Cohere tools with LangChain doesn't require many prerequisites, consult the [top-level document](/docs/cohere-and-langchain) for more information.
+Running Cohere tools with LangChain doesn't require many prerequisites, consult the [top-level document](../docs/cohere-and-langchain) for more information.
 
 ## Multi-Step Tool Use
 
-Multi-step is enabled by default. Here's an example of using it to put together a simple agent:
+The idiomatic way to build a multi-step agent with LangChain v1 is [`create_agent`](https://docs.langchain.com/oss/python/langchain/agents) from `langchain.agents` (it ships with `langchain`, so no extra install is needed). The agent can call tools repeatedly, reasoning across multiple steps before returning a final answer. Here we give it an internet search tool (Tavily); install it with `pip install langchain-tavily`, set a `TAVILY_API_KEY` environment variable to run it, and swap in any other LangChain tool you like. You can steer the agent's behavior with a system instruction by passing it to `create_agent` via the `system_prompt` argument.
 
 ```python PYTHON
-from langchain.agents import AgentExecutor
-from langchain_cohere.react_multi_hop.agent import (
-    create_cohere_react_agent,
-)
-from langchain_core.prompts import ChatPromptTemplate
+import os
+
+from langchain.agents import create_agent
 from langchain_cohere import ChatCohere
+from langchain_tavily import TavilySearch
 
-from langchain_community.tools.tavily_search import (
-    TavilySearchResults,
-)
-from pydantic import BaseModel, Field
-
+# Internet search tool. Replace the placeholder with your Tavily API key.
 os.environ["TAVILY_API_KEY"] = "TAVILY_API_KEY"
 
-internet_search = TavilySearchResults()
-internet_search.name = "internet_search"
-internet_search.description = "Returns a list of relevant document snippets for a textual query retrieved from the internet."
-
-
-class TavilySearchInput(BaseModel):
-    query: str = Field(
-        description="Query to search the internet with"
-    )
-
-
-internet_search.args_schema = TavilySearchInput
+internet_search = TavilySearch()
 
 # Define the Cohere LLM
 llm = ChatCohere(
@@ -54,42 +38,36 @@ llm = ChatCohere(
     model="command-a-03-2025",
     temperature=0,
 )
-# Preamble
-preamble = """
-You are an expert who answers the user's question with the most relevant datasource. You are equipped with an internet search tool and a special vectorstore of information about how to write good essays.
+
+# System instruction for the agent
+system_prompt = """
+You are an expert who answers the user's question by searching the internet for the most relevant, up-to-date information.
 """
 
-# Prompt template
-prompt = ChatPromptTemplate.from_template("{input}")
-
-# Create the ReAct agent
-agent = create_cohere_react_agent(
-    llm=llm,
-    tools=[internet_search],
-    prompt=prompt,
+# Create a multi-step agent, passing the instruction via `system_prompt`
+agent = create_agent(
+    llm, tools=[internet_search], system_prompt=system_prompt
 )
 
-agent_executor = AgentExecutor(
-    agent=agent, tools=[internet_search], verbose=True
-)
-
-response = agent_executor.invoke(
+# The agent can search multiple times to answer the question
+result = agent.invoke(
     {
-        "input": "Who is the mayor of the capital of Ontario",
-        "preamble": preamble,
+        "messages": [
+            ("user", "Who is the mayor of the capital of Ontario?")
+        ]
     }
 )
 
-print(response["output"])
+print(result["messages"][-1].content)
 ```
 
 ## Single-Step Tool Use
 
-In order to utilize single-step mode, you have to set `force_single_step=True`. Here's an example of using it to answer a few questions:
+Single-step tool use lets the model decide which tools to call for a query without executing them. Bind your tools to the model and read the chosen tool calls from the response's `.tool_calls` attribute. Provide the routing instruction as a `SystemMessage` at the start of the conversation.
 
 ```python PYTHON
 from langchain_cohere import ChatCohere
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
 
@@ -114,45 +92,52 @@ class vectorstore(BaseModel):
     )
 
 
-# Preamble
-preamble = """You are an expert at routing a user question to a vectorstore or web search.
+# System instruction that tells the model how to route
+system_message = SystemMessage(
+    content="""You are an expert at routing a user question to a vectorstore or web search.
 The vectorstore contains documents related to agents, prompt engineering, and adversarial attacks.
 Use the vectorstore for questions on these topics. Otherwise, use web-search."""
+)
 
-# LLM with tool use and preamble
 # Define the Cohere LLM
 llm = ChatCohere(
     cohere_api_key="COHERE_API_KEY", model="command-a-03-2025"
 )
 
-llm_with_tools = llm.bind_tools(
-    tools=[web_search, vectorstore], preamble=preamble
-)
+# Bind the tools to the model
+llm_with_tools = llm.bind_tools(tools=[web_search, vectorstore])
 
+# The model routes this question to web search
 messages = [
-    HumanMessage("Who will the Bears draft first in the NFL draft?")
+    system_message,
+    HumanMessage("Who will the Bears draft first in the NFL draft?"),
 ]
-response = llm_with_tools.invoke(messages, force_single_step=True)
-print(response.response_metadata["tool_calls"])
+response = llm_with_tools.invoke(messages)
+print(response.tool_calls)
 
-messages = [HumanMessage("What are the types of agent memory?")]
-response = llm_with_tools.invoke(messages, force_single_step=True)
-print(response.response_metadata["tool_calls"])
+# The model routes this question to the vectorstore
+messages = [
+    system_message,
+    HumanMessage("What are the types of agent memory?"),
+]
+response = llm_with_tools.invoke(messages)
+print(response.tool_calls)
 
-messages = [HumanMessage("Hi, How are you?")]
-response = llm_with_tools.invoke(messages, force_single_step=True)
-print("tool_calls" in response.response_metadata)
+# When no tool is needed, `.tool_calls` is an empty list
+messages = [system_message, HumanMessage("Hi, how are you?")]
+response = llm_with_tools.invoke(messages)
+print(response.tool_calls)
 ```
 
 ## SQL Agent
-LangChain's SQL Agent abstraction provides a flexible way of interacting with SQL Databases. This can be accessed via the `create_sql_agent` constructor.
+You can build an agent that interacts with a SQL database by giving `create_agent` the tools from LangChain's `SQLDatabaseToolkit`.
 
 ```python PYTHON
-from langchain_cohere import ChatCohere, create_sql_agent
+from langchain.agents import create_agent
+from langchain_cohere import ChatCohere
+from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from langchain_community.utilities import SQLDatabase
 import urllib.request
-import pandas as pd
-import sqlite3
 
 # Download the Chinook SQLite database
 url = "https://github.com/lerocha/chinook-database/raw/master/ChinookDatabase/DataSources/Chinook_Sqlite.sqlite"
@@ -171,19 +156,42 @@ llm = ChatCohere(
     temperature=0,
 )
 
-agent_executor = create_sql_agent(llm, db=db, verbose=True)
+# Build a SQL agent from the database toolkit's tools
+toolkit = SQLDatabaseToolkit(db=db, llm=llm)
+agent_executor = create_agent(llm, tools=toolkit.get_tools())
 
-resp = agent_executor.invoke(
-    "Show me the first 5 rows of the Album table."
+result = agent_executor.invoke(
+    {
+        "messages": [
+            ("user", "Show me the first 5 rows of the Album table.")
+        ]
+    }
 )
-print(resp)
+print(result["messages"][-1].content)
 ```
 
 ## CSV Agent
-LangChain's CSV Agent abstraction enables building agents that can interact with CSV files. This can be accessed via the `create_csv_agent` constructor.
+You can build an agent that answers questions about a CSV file by loading it into a pandas dataframe and giving `create_agent` a Python REPL tool with the dataframe in scope, so the agent can answer arbitrary questions about the data by writing and running pandas code (install `pip install langchain-experimental pandas`).
+
+<Note>
+The Python REPL tool runs model-generated code, so only use it with data and queries you trust.
+</Note>
 
 ```python PYTHON
-from langchain_cohere import ChatCohere, create_csv_agent
+from langchain.agents import create_agent
+from langchain_cohere import ChatCohere
+from langchain_experimental.tools import PythonAstREPLTool
+import pandas as pd
+import urllib.request
+
+# Download the Titanic CSV and load it into a dataframe
+url = "https://raw.githubusercontent.com/pandas-dev/pandas/main/doc/data/titanic.csv"
+urllib.request.urlretrieve(url, "titanic.csv")
+df = pd.read_csv("titanic.csv")
+
+# Give the agent a Python REPL with the dataframe (`df`) in scope so it can
+# answer arbitrary questions about the CSV by writing pandas code.
+python_tool = PythonAstREPLTool(locals={"df": df})
 
 # Define the Cohere LLM
 llm = ChatCohere(
@@ -192,15 +200,24 @@ llm = ChatCohere(
     temperature=0,
 )
 
-agent_executor = create_csv_agent(
-    llm,
-    "titanic.csv",  # https://github.com/langchain-ai/langchain/blob/master/templates/csv-agent/titanic.csv
+# Give the model the dataframe's columns and a preview so it knows the schema
+# before it writes any pandas code.
+system_prompt = (
+    "You are a data analyst working with a pandas dataframe named `df`.\n"
+    f"The dataframe columns are: {list(df.columns)}.\n"
+    f"Here is `df.head()`:\n{df.head().to_string()}\n\n"
+    "Answer the user's question by writing pandas code against `df` and running "
+    "it with the Python tool, then report the result."
 )
 
-resp = agent_executor.invoke(
-    {"input": "How many people were on the titanic?"}
+agent_executor = create_agent(
+    llm, tools=[python_tool], system_prompt=system_prompt
 )
-print(resp.get("output"))
+
+result = agent_executor.invoke(
+    {"messages": [("user", "How many people were on the titanic?")]}
+)
+print(result["messages"][-1].content)
 ```
 
 ## Streaming for Tool Calling
@@ -299,9 +316,7 @@ while True:
 To handle queries our chatbot can't answer "from memory", we'll integrate a web search tool. Our bot can use this tool to find relevant information and provide better responses.
 
 ```python PYTHON
-from langchain_community.tools.tavily_search import (
-    TavilySearchResults,
-)
+from langchain_tavily import TavilySearch
 from langchain_cohere import ChatCohere
 from langgraph.graph import StateGraph, START
 from langgraph.graph.message import add_messages
@@ -312,7 +327,7 @@ from typing_extensions import TypedDict
 import json
 
 # Create a tool
-tool = TavilySearchResults(max_results=2)
+tool = TavilySearch(max_results=2)
 tools = [tool]
 
 
