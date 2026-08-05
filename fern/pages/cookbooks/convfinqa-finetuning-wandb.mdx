@@ -64,7 +64,6 @@ co = cohere.ClientV2(os.environ["COHERE_API_KEY"])
 ## Dataset
 
 [ConvFinQA](https://github.com/czyssrs/ConvFinQA) dataset is a conversational dataset comprising of multi-turn numerical question and answers based on a given financial report which includes text and tables. We process the original dataset to do a few things:
-
 - We preprocess the financial reports to combine various fields in the original dataset to create a single text blurb from which the questions are to be answered. This involves concatenating various pieces of text, converting the tables to simple text with heuristic regex mappings, among other cosmetic things.
 - For finetuning Command R models, the dataset needs to be a `jsonl` file, where each `json` object is a conversation. Each conversation has a list of messages, and each message has two properties: role and content. The role identifies the sender (Chatbot, System, or User), while the content contains the text content. You can find more detailed guide on preparing the dataset including the data validations we have, train/eval splits we recommend, etc. [here](https://docs.cohere.com/docs/chat-preparing-the-data). We format the conversations in the original dataset to conform to these requirements.
 
@@ -112,7 +111,6 @@ Following is an example datapoint from the finetuning data.
 As you can see, the financial report based on which we answer the questions is put in as System role. This acts as the 'system prompt', which is part of the prompt used as context/instructions for the entire conversation. Since the information in the report is required and relevant to every user question in the conversation, we would want to put it as the overall context of the conversation.
 
 Few things to note in the above example:
-
 - Each datapoint has multiple turns alternating between `User` and `Chatbot`; during finetuning, we consume messages from all roles but only the `Chatbot` messages contribute to the model updates.
 - We want the model to learn to strictly follow the domain specific language as represented by the desired Chatbot responses in this example.
 
@@ -160,7 +158,6 @@ hp_config = Hyperparameters(
 ```
 
 <a id="sec_wandb"></a>
-
 ### WandB integration
 
 For chat finetuning, we support WandB integration which allows you to monitor the loss curves of finetuning jobs in real-time without having to wait for the job to finish. You can find more info [here](https://docs.cohere.com/reference/createfinetunedmodel#request.body.settings.wandb).
@@ -213,7 +210,6 @@ print(
 ```
 
 You may view the fine-tuning job loss curves via the Weights and Biases dashboard. It will be available via the following URL once the training starts: `https://wandb.ai/<your-entity>/<your-project>/runs/<finetuned-model-id>`. We log the following to WandB:
-
 - training loss at every training step
 - validation loss and accuracy (as described [here](https://docs.cohere.com/docs/chat-understanding-the-results)) at every validation step
 
