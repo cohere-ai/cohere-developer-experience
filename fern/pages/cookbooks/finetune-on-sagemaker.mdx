@@ -27,7 +27,8 @@ This sample notebook shows you how to finetune and deploy a custom Command-R mod
 
 > **Note**: This is a reference notebook and it cannot run unless you make changes suggested in the notebook.
 
-## Pre-requisites:
+## Pre-requisites
+
 1. **Note: This notebook contains elements which render correctly in Jupyter interface. Open this notebook from an Amazon SageMaker Notebook Instance or Amazon SageMaker Studio.**
 1. Ensure that IAM role used has **AmazonSageMakerFullAccess**
 1. To deploy this ML model successfully, ensure that:
@@ -37,7 +38,8 @@ This sample notebook shows you how to finetune and deploy a custom Command-R mod
         1. **aws-marketplace:Subscribe**  
     2. or your AWS account has a subscription to the packages for [Cohere Command R Finetuning](https://aws.amazon.com/marketplace/ai/configuration?productId=1762e582-e7df-47f0-a49f-98e22302a702). If so, skip step: [Subscribe to the finetune algorithm](#1.-Subscribe-to-the-finetune-algorithm)
 
-## Contents:
+## Contents
+
 1. [Subscribe to the finetune algorithm](#1.-Subscribe-to-the-finetune-algorithm)
 2. [Upload data and finetune Command-R Model](#2.-Upload-data-and-finetune-Command-R)
 3. [Create an endpoint for inference with the custom model](#3.-Create-an-endpoint-for-inference-with-the-custom-model)
@@ -49,11 +51,13 @@ This sample notebook shows you how to finetune and deploy a custom Command-R mod
     
 
 ## Usage instructions
+
 You can run this notebook one cell at a time (By using Shift+Enter for running a cell).
 
 ## 1. Subscribe to the finetune algorithm
 
 To subscribe to the model algorithm:
+
 1. Open the algorithm listing page [Cohere Command R Finetuning](https://aws.amazon.com/marketplace/pp/prodview-2czs5tbao7b7c)
 2. On the AWS Marketplace listing, click on the **Continue to Subscribe** button.
 3. On the **Subscribe to this software** page, review and click on **"Accept Offer"** if you and your organization agrees with EULA, pricing, and support terms. On the "Configure and launch" page, make sure ARN displayed in your region match with the ARN in the following cell.
@@ -108,14 +112,15 @@ s3_data_dir = "s3://..."  # Do not add a trailing slash otherwise the upload wil
 
 Upload sample training data to S3:
 
-### Note:
+### Note
 
 You'll need your data in a .jsonl file that contains chat-formatted data. [Doc](https://docs.cohere.com/docs/chat-preparing-the-data#data-requirements)
 
 
-### Example:
+### Example
 
 JSONL:
+
 ```
 {
   "messages": [
@@ -190,16 +195,19 @@ co = cohere.SagemakerClient(region_name=region)
 | Default | Min | Max |
 | --- | --- | --- |
 | 1 | 1 | 10 |
+
 - `learning_rate`: Float. The initial learning rate to be used during training. Default to **0.0001**
 
 | Default | Min | Max |
 | --- | --- | --- |
 | 0.0001 | 0.000005 | 0.1 |
+
 - `train_batch_size`: Integer. The batch size used during training. Defaults to **16** for Command.
 
 | Default | Min | Max |
 | --- | --- | --- |
 | 16 | 8 | 32 |
+
 - `early_stopping_enabled`: Boolean. Enables early stopping. When set to true, the final model is the best model found based on the validation set. When set to false, the final model is the last model of training. Defaults to **true**.
 
 - `early_stopping_patience`: Integer. Stop training if the loss metric does not improve beyond 'early_stopping_threshold' for this many times of evaluation. Defaults to **10**
@@ -207,6 +215,7 @@ co = cohere.SagemakerClient(region_name=region)
 | Default | Min | Max |
 | --- | --- | --- |
 | 10 | 1 | 15 |
+
 - `early_stopping_threshold`: Float. How much the loss must improve to prevent early stopping. Defaults to **0.001**.
 
 | Default | Min | Max |
@@ -214,6 +223,7 @@ co = cohere.SagemakerClient(region_name=region)
 | 0.001 | 0.001 | 0.1 |
 
 If the algorithm is **command-r-0824-ft**, you have the option to define:
+
 - `lora_rank': Integer`. Lora adapter rank. Defaults to **32**
 
 | Default | Min | Max |
@@ -288,7 +298,7 @@ result = co.sagemaker_finetuning.chat(message=message)
 print(result)
 ```
 
-#### [Optional] Now let's evaluate our finetuned model using the evaluation dataset. 
+#### [Optional] Now let's evaluate our finetuned model using the evaluation dataset 
 
 
 ```python
@@ -330,6 +340,7 @@ co.close()
 If you would like to unsubscribe to the model package, follow these steps. Before you cancel the subscription, ensure that you do not have any [deployable models](https://console.aws.amazon.com/sagemaker/home#/models) created from the model package or using the algorithm. Note - You can find this information by looking at the container name associated with the model. 
 
 **Steps to unsubscribe to product from AWS Marketplace**:
-1. Navigate to __Machine Learning__ tab on [__Your Software subscriptions page__](https://aws.amazon.com/marketplace/ai/library?productType=ml&ref_=mlmp_gitdemo_indust)
-2. Locate the listing that you want to cancel the subscription for, and then choose __Cancel Subscription__  to cancel the subscription.
+
+1. Navigate to **Machine Learning** tab on [**Your Software subscriptions page**](https://aws.amazon.com/marketplace/ai/library?productType=ml&ref_=mlmp_gitdemo_indust)
+2. Locate the listing that you want to cancel the subscription for, and then choose **Cancel Subscription**  to cancel the subscription.
 

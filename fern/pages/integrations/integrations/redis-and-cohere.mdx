@@ -22,7 +22,7 @@ updatedAt: 'Thu May 23 2024 17:06:49 GMT+0000 (Coordinated Universal Time)'
 
 To see the full code sample, refer to this [notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/Cohere_Redis_Guide.ipynb). You can also consult [this guide](https://www.redisvl.com/user_guide/vectorizers_04.html#cohere) for more information on using Cohere with Redis.
 
-## Prerequisites:
+## Prerequisites
 
 The code samples on this page assume the following:
 
@@ -35,7 +35,7 @@ docker run -d --name redis-stack -p 6379:6379 -p 8001:8001 redis/redis-stack:lat
 - You have Redis installed (follow this [link](https://www.redisvl.com/overview/installation.html#redis-stack-local-development) if you don't).
 - You have a Cohere API Key (you can get your API Key at this [link](https://dashboard.cohere.com/api-keys)).
 
-## Install Packages:
+## Install Packages
 
 Install and import the required Python Packages:
 
@@ -51,7 +51,7 @@ To install the packages, use the following code
 !pip install jsonlines
 ```
 
-### Import the required packages:
+### Import the required packages
 
 ```python PYTHON
 from redis import Redis
@@ -65,7 +65,7 @@ import jsonlines
 
 # Building a Retrieval Pipeline with Cohere and Redis
 
-## Setting up the Schema.yaml:
+## Setting up the Schema.yaml
 
 To configure a Redis index you can either specify a `yaml` file or import a dictionary. In this tutorial we will be using a `yaml` file with the following schema. Either use the `yaml` file found at this [link](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/configs/redis_guide_schema.yaml), or create a `.yaml` file locally with the following configuration.
 
@@ -106,7 +106,7 @@ This index has a name of `semantic_search_demo` and uses `storage_type: hash` wh
 
 For this guide, we will be using the Cohere `embed-english-v3.0 model` which has a vector dimension size of `1024`.
 
-## Initializing the Cohere Text Vectorizer:
+## Initializing the Cohere Text Vectorizer
 
 ```python PYTHON
 # create a vectorizer
@@ -122,7 +122,7 @@ Create a `CohereTextVectorizer` by specifying the embedding model and your api k
 
 The following [link](/docs/embed-2) contains details around the available embedding models from Cohere and their respective dimensions.
 
-## Initializing the Redis Index:
+## Initializing the Redis Index
 
 ```python PYTHON
 # construct a search index from the schema - this schema is called "semantic_search_demo"
@@ -184,7 +184,7 @@ You can also visit: <a target="_blank" href="http://localhost:8001/redis-stack/b
 <img src="../../../assets/images/a346870-image.png" alt="GUI" />
 </Frame>
 
-## Loading your Documents and Embedding them into Redis:
+## Loading your Documents and Embedding them into Redis
 
 ```python PYTHON
 # read in your documents
@@ -208,7 +208,7 @@ res = cohere_vectorizer.embed_many(
 
 We will be loading a subset of data which contains paragraphs from wikipedia - the data lives in a `jsonl` and we will need to parse it to get the text field which is what we are embedding. To do this, we load the file and read it line-by-line, creating a corpus object and a text_to_embed object. We then pass the text_to_embed object into `co.embed_many` which takes in an list of strings.
 
-## Prepare your Data to be inserted into the Index:
+## Prepare your Data to be inserted into the Index
 
 ```python PYTHON
 # contruct the data payload to be uploaded to your index
@@ -235,7 +235,7 @@ We want to preserve all the meta-data for each paragraph into our table and crea
 
 At this point, your Redis DB is ready for semantic search!
 
-## Query your Redis DB:
+## Query your Redis DB
 
 ```python PYTHON
 # use the Cohere vectorizer again to create a query embedding
@@ -274,7 +274,7 @@ Use the `VectorQuery` class to construct a query object - here you can specify t
 
 # Redis Filters
 
-## Adding Tag Filters:
+## Adding Tag Filters
 
 ```python PYTHON
 # Initialize a tag filter
@@ -293,7 +293,7 @@ for doc in results:
 
 One feature of Redis is the ability to add [filtering](https://www.redisvl.com/api/query.html) to your queries on the fly. Here we are constructing a `tag filter` on the column `title` which was initialized in our schema with `type=tag`.
 
-## Using Filter Expressions:
+## Using Filter Expressions
 
 ```python PYTHON
 # define a tag match on the title, text match on the text field, and numeric filter on the views field

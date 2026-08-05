@@ -102,6 +102,7 @@ input_prompt = tokenizer.apply_chat_template(
 ```
 
 And here’s a sample output:
+
 ```JSON
 {
  "wes_anderson_movies": [
@@ -150,7 +151,7 @@ The following safety instruction is added into the Cohere system message under t
 You are in strict safety mode. You will reject requests to generate child sexual abuse material and child exploitation material in your responses. You will reject requests to generate content related to violence, hate, misinformation or sex to any amount. You will avoid using profanity. You will not provide users with instructions to perform regulated, controlled or illegal activities.
 ```
 
-## Grounded Generation and RAG Capabilities:
+## Grounded Generation and RAG Capabilities
 
 Command A has been trained specifically for tasks like summarization and the final step of Retrieval Augmented Generation (RAG). The model takes a conversation as input (with an optional user-supplied system message, indicating task, context and desired output style), along with a list of document snippets. This behavior has been trained into the model via a mixture of supervised fine-tuning and preference fine-tuning. 
 
@@ -165,16 +166,19 @@ Grounded generation in Command A is supported through [chat templates](https://h
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 # Load the model and tokenizer
+
 model_id = "CohereForAI/c4ai-command-a-03-2025"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(model_id)
 
 # Define conversation input
+
 conversation = [
     {"role": "user", "content": "What has Man always dreamed of?"}
 ]
 
 # Define documents for retrieval-based generation
+
 documents = [
     {
         "heading": "The Moon: Our Age-Old Foe",
@@ -191,6 +195,7 @@ documents = [
 ]
 
 # Get the Grounded Generation prompt
+
 input_prompt = tokenizer.apply_chat_template(
     conversation=conversation,
     documents=documents,
@@ -201,9 +206,11 @@ input_prompt = tokenizer.apply_chat_template(
 print("== Grounded Generation prompt:", input_prompt)
 
 # Tokenize the prompt
+
 input_ids = tokenizer.encode_plus(input_prompt, return_tensors="pt")
 
 # Generate a response
+
 gen_tokens = model.generate(
     input_ids,
     max_new_tokens=512,
@@ -213,8 +220,10 @@ gen_tokens = model.generate(
 )
 
 # Decode and print the generated text along with generation prompt
+
 gen_text = tokenizer.decode(gen_tokens[0])
 print(gen_text)
+
 ```
 </Accordion>
 
@@ -262,7 +271,9 @@ Each tool is represented as a JSON object with fields like "name", "description"
 ```
 
 # Default Preamble
+
 The following instructions are your defaults unless specified elsewhere in a developer system message or user prompt.
+
 - Your name is Command.
 - You are a large language model built by Cohere.
 - You reply conversationally with a friendly and informative tone and often include introductory statements and follow-up questions.
@@ -292,6 +303,7 @@ The following instructions are your defaults unless specified elsewhere in a dev
         "is_error": null
     }
 ]<|END_TOOL_RESULT|><|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
+
 ````
 </Accordion>
 
@@ -472,6 +484,7 @@ The following instructions are your defaults unless specified elsewhere in a dev
 - When generating code output without specifying the programming language, please generate Python code.
 - If you are asked a question that requires reasoning, first think through your answer, slowly and step by step, then answer.<|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|USER_TOKEN|>Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?<|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
 ````
+
 </Accordion>
 
 <Accordion title='Example of a Tool Use completion'>
@@ -573,11 +586,13 @@ After that, you can generate() again to let the model use the tool result in the
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 # Load the model and tokenizer
+
 model_id = "CohereForAI/c4ai-command-a-03-2025"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(model_id)
 
 # Get the Tool Use prompt
+
 input_prompt = tokenizer.apply_chat_template(
     conversation=conversation,
     tools=tools,
@@ -588,9 +603,11 @@ input_prompt = tokenizer.apply_chat_template(
 print("== Prompt for step 2 of the Agent:", input_prompt)
 
 # Tokenize the prompt
+
 input_ids = tokenizer.encode_plus(input_prompt, return_tensors="pt")
 
 # Generate a response
+
 gen_tokens = model.generate(
     input_ids,
     max_new_tokens=512,
@@ -599,10 +616,12 @@ gen_tokens = model.generate(
 )
 
 # Decode and print the generated text along with generation prompt
+
 gen_text = tokenizer.decode(
     gen_tokens[0][len(input_ids[0]) :], skip_special_tokens=True
 )
 print(gen_text)
+
 ```
 </Accordion>
 
@@ -651,7 +670,9 @@ Each tool is represented as a JSON object with fields like "name", "description"
 ```
 
 # Default Preamble
+
 The following instructions are your defaults unless specified elsewhere in a developer preamble or user prompt.
+
 - Your name is Command.
 - You are a large language model built by Cohere.
 - You reply conversationally with a friendly and informative tone and often include introductory statements and follow-up questions.
@@ -687,6 +708,7 @@ The following instructions are your defaults unless specified elsewhere in a dev
         "is_error": null
     }
 ]<|END_TOOL_RESULT|><|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
+
 ````
 </Accordion>
 

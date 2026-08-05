@@ -23,6 +23,7 @@ co = cohere.ClientV2(
     api_key="YOUR_API_KEY"
 )  # Get your free API key: https://dashboard.cohere.com/api-keys
 ```
+
 The Embed endpoint takes in texts as input and returns embeddings as output.
 
 For semantic search, there are two types of documents we need to turn into embeddings.
@@ -31,6 +32,7 @@ For semantic search, there are two types of documents we need to turn into embed
 - The query that will be used to search the documents.
 
 ### Step 1: Embed the documents
+
 We call the Embed endpoint using `co.embed()` and pass the required arguments:
 
 - `texts`: The list of texts
@@ -39,9 +41,11 @@ We call the Embed endpoint using `co.embed()` and pass the required arguments:
 - `embedding_types`: We choose `float` to get a float array as the output
 
 ### Step 2: Embed the query
+
 Next, we add and embed a query. We choose `search_query` as the `input_type` to ensure the model treats this as the query (instead of documents) for search.
 
 ### Step 3: Return the most similar documents
+
 Next, we calculate and sort similarity scores between a query and document embeddings, then display the top N most similar documents. Here, we are using the numpy library for calculating similarity using a dot product approach. 
 
 <CodeBlocks>
@@ -49,6 +53,7 @@ Next, we calculate and sort similarity scores between a query and document embed
 ### STEP 1: Embed the documents
 
 # Define the documents
+
 documents = [
     "Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.",
     "Finding Coffee Spots: For your caffeine fix, head to the break room's coffee machine or cross the street to the café for artisan coffee.",
@@ -57,11 +62,13 @@ documents = [
 ]
 
 # Constructing the embed_input object
+
 embed_input = [
     {"content": [{"type": "text", "text": doc}]} for doc in documents
 ]
 
 # Embed the documents
+
 doc_emb = co.embed(
     inputs=embed_input,
     model="embed-v4.0",
@@ -73,11 +80,13 @@ doc_emb = co.embed(
 ### STEP 2: Embed the query
 
 # Add the user query
+
 query = "How to connect with my teammates?"
 
 query_input = [{"content": [{"type": "text", "text": query}]}]
 
 # Embed the query
+
 query_emb = co.embed(
     inputs=query_input,
     model="embed-v4.0",
@@ -89,16 +98,20 @@ query_emb = co.embed(
 ### STEP 3: Return the most similar documents
 
 # Calculate similarity scores
+
 scores = np.dot(query_emb, np.transpose(doc_emb))[0]
 
 # Sort and filter documents based on scores
+
 top_n = 2
-top_doc_idxs = np.argsort(-scores)[:top_n]
+top_doc_idxs = np.argsort[-scores](:top_n)
 
 # Display search results
+
 for idx, docs_idx in enumerate(top_doc_idxs):
     print(f"Rank: {idx+1}")
     print(f"Document: {documents[docs_idx]}\n")
+
 ```
 ```bash cURL
 # Step 1: Embed the documents
@@ -171,9 +184,11 @@ curl --request POST \
   ]
 }'
 ```
+
 </CodeBlocks>
 
 Here's an example output:
+
 ```
 Rank: 1
 Document: Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!
@@ -258,6 +273,7 @@ for idx, docs_idx in enumerate(top_doc_idxs):
 ```
 
 Here's a sample output:
+
 ```
 Rank: 1
 Document: COVID-19 symptoms can include: a high temperature or shivering (chills); a new, continuous cough; a loss or change to your sense of smell or taste; and many more
@@ -363,6 +379,7 @@ Embed v4 solves this problem as it is designed to natively understand mixed-moda
 Here's an example of how to use the Embed endpoint to perform multimodal PDF search.
 
 First, import the required libraries.
+
 ```python PYTHON
 from pdf2image import convert_from_path
 from io import BytesIO
@@ -393,6 +410,7 @@ for page in pages:
 ```
 
 Next, generate the embeddings for these pages and store them in a vector database (in this example, we use Chroma).
+
 ```python PYTHON
 # Generate the document embeddings
 embeddings = []
@@ -444,6 +462,7 @@ print(results["ids"][0][0])
 ```mdx
 22
 ```
+
 The top-ranked page is shown below:
 
 <img src='../../../assets/images/multimodal-pdf-search-example-1.png' />

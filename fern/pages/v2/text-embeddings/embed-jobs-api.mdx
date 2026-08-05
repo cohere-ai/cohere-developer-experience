@@ -27,6 +27,7 @@ The Embed Jobs API was designed for users who want to leverage the power of retr
 The Embed Jobs API works in conjunction with the Embed API; in production use-cases, Embed Jobs is used to stage large periodic updates to your corpus and Embed handles real-time queries and smaller real-time updates.
 
 ![](../../../assets/images/0826a69-image.png)
+
 ### Constructing a Dataset for Embed Jobs
 
 To create a dataset for Embed Jobs, you will need to set dataset `type` as `embed-input`. The schema of the file looks like: `text:string`.
@@ -55,7 +56,9 @@ ds = co.datasets.create(
 )
 
 # wait for the dataset to finish validation
+
 print(co.wait(ds))
+
 ```
 ```bash cURL
 curl --request POST \
@@ -69,6 +72,7 @@ curl --request POST \
   --form 'optional_fields=["langs"]' \
   --form 'data=@embed_jobs_sample_data.jsonl'
 ```
+
 </CodeBlocks>
 
 Currently the dataset endpoint will accept `.csv` and `.jsonl` files - in both cases, it is imperative to have either a field called `text` or a header called `text`. You can see an example of a valid `jsonl` file [here](https://raw.githubusercontent.com/cohere-ai/cohere-developer-experience/main/notebooks/data/embed_jobs_sample_data.jsonl) and a valid csv file [here](https://raw.githubusercontent.com/cohere-ai/cohere-developer-experience/main/notebooks/data/embed_jobs_sample_data.csv).
@@ -90,7 +94,9 @@ input_dataset = co.datasets.create(
 )
 
 # block on server-side validation
+
 print(co.wait(input_dataset))
+
 ```
 ```bash cURL
 curl --request POST \
@@ -102,6 +108,7 @@ curl --request POST \
   --form 'type=embed-input' \
   --form 'data=@/content/your_file_path'
 ```
+
 </CodeBlocks>
 
 Upon uploading the dataset you will get a response like this:
@@ -133,7 +140,9 @@ embed_job_response = co.embed_jobs.create(
 )
 
 # block until the job is complete
+
 embed_job = co.wait(embed_job_response)
+
 ```
 ```bash cURL
 curl --request POST \
@@ -149,6 +158,7 @@ curl --request POST \
     "truncate": "END"
   }'
 ```
+
 </CodeBlocks>
 
 Since we’d like to search over these embeddings and we can think of them as constituting our knowledge base, we set `input_type='search_document'`.

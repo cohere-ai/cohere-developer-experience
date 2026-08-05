@@ -18,11 +18,13 @@ It would be great if we could design a system that could leverage this metadata 
 We can achieve this using a tool use approach. Here, we can build a system that generates multi-faceted queries to capture the full intent of a user's request. This allows for more precise and relevant results by utilizing the semi-structured nature of the data.
 
 Here are some examples of how this approach can be applied:
+
 1. E-commerce product searches: Filtering by price range, category, brand, customer ratings, and availability.
 2. Academic research databases: Narrowing results by publication year, field of study, citation count, and peer-review status.
 3. Job search platforms: Refining job listings by location, experience level, salary range, and required skills.
 
 In this tutorial, we'll cover:
+
 - Defining the function for data querying
 - Creating the tool for generating multi-faceted queries
 - Building an agent for performing multi-faceted queries
@@ -55,6 +57,7 @@ co = cohere.ClientV2(
 We'll remove the other tools from Part 1 and just use one – `search_code_examples`.
 
 Now, instead of just the `query` parameter, we'll add two more parameters: `programming_language` and `endpoints`:
+
 - `programming_language`: The programming language of the code example or tutorial.
 - `endpoints`: The Cohere endpoints used in the code example or tutorial.
 
@@ -86,6 +89,7 @@ functions_map = {
 ## Creating the tool for generating multi-faceted queries
 
 With the `search_code_examples` modified, we now need to modify the tool definition as well. Here, we are adding the two new properties to the tool definition:
+
 - `programming_language`: This is a string property which we provide a list of options for the model to choose from. We do this by adding "Possible enum values" to the description, which in our case is `py, js`.
 - `endpoints`: We want the model to be able to choose from more than one endpoint, and so here we define an array property. When defining an array property, we need to specify the type of the items in the array using the `items` key, which in our case is `string`. We also provide a list of endpoint options for the model to choose from, which is `chat, embed, rerank, classify`.
 
@@ -219,6 +223,7 @@ And this is shown by the agent's response, which provides only one parameter, `q
 messages = run_agent("Do you have any RAG code examples")
 # Tool name: search_code_examples | Parameters: {"query":"RAG code examples"}
 ```
+
 ```mdx
 QUESTION:
 Do you have any RAG code examples
@@ -250,6 +255,7 @@ This time, the agent uses the `programming_language` parameter and passed the va
 messages = run_agent("Javascript tutorials on summarization")
 # Tool name: search_code_examples | Parameters: {"programming_language":"js","query":"..."}
 ```
+
 ```mdx
 QUESTION:
 Javascript tutorials on summarization
@@ -285,6 +291,7 @@ messages = run_agent(
 
 # Tool name: search_code_examples | Parameters: {"endpoints":["embed","rerank"],"query":"..."}
 ```
+
 ```mdx
 QUESTION:
 Code examples of using embed and rerank endpoints.
@@ -330,6 +337,7 @@ messages = run_agent("Python examples of using the chat endpoint.")
 
 # Tool name: search_code_examples | Parameters: {"endpoints":["chat"],"programming_language":"py","query":"..."}
 ```
+
 ```mdx
 QUESTION:
 Python examples of using the chat endpoint.
@@ -368,6 +376,7 @@ Sources:
 ## Summary
 
 In this tutorial, we learned about:
+
 - How to define the function for data querying
 - How to create the tool for generating multi-faceted queries
 - How to build an agent for performing multi-faceted queries

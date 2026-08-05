@@ -148,6 +148,7 @@ co = cohere.ClientV2(
     "COHERE_API_KEY"
 )  # Get your free API key here: https://dashboard.cohere.com/api-keys
 ```
+
 </Tab>
 
 <Tab title="Private deployment">
@@ -159,6 +160,7 @@ co = cohere.ClientV2(
     api_key="",  # Leave this blank
     base_url="<YOUR_DEPLOYMENT_URL>",
 )
+
 ```
 </Tab>
 </Tabs>
@@ -293,6 +295,7 @@ At a high level, there are four steps in the core tool-use loop:
 The following sections go through the implementation of these steps in detail.
 
 ### Step 1: Get user message
+
 In the first step, we get the user's message and append it to the `messages` list with the `role` set to `user`.
 
 ```python PYTHON
@@ -323,6 +326,7 @@ messages = [
     },
 ]
 ```
+
 </Accordion>
 
 
@@ -331,11 +335,12 @@ messages = [
 Next, we call the Chat endpoint to generate the list of tool calls. This is done by passing the parameters `model`, `messages`, and `tools` to the Chat endpoint.
 
 The endpoint will send back a list of tool calls to be made if the model determines that tools are required. If it does, it will return two types of information:
+
 - `tool_plan`: its reflection on the next steps it should take, given the user query.
 - `tool_calls`: a list of tool calls to be made (if any), together with auto-generated tool call IDs. Each generated tool call contains:
-    - `id`: the tool call ID
-    - `type`: the type of the tool call (`function`)
-    - `function`: the function to be called, which contains the function's `name` and `arguments` to be passed to the function.
+  - `id`: the tool call ID
+  - `type`: the type of the tool call (`function`)
+  - `function`: the function to be called, which contains the function's `name` and `arguments` to be passed to the function.
 
 We then append these to the `messages` list with the `role` set to `assistant`.
 
@@ -349,6 +354,7 @@ if response.message.tool_calls:
     messages.append(response.message)
     print(response.message.tool_plan, "\n")
     print(response.message.tool_calls)
+
 ```
 ```bash cURL
 curl --request POST \
@@ -389,9 +395,11 @@ curl --request POST \
   ]
 }'
 ```
+
 </CodeBlocks>
 
 Example response:
+
 ```mdx wordWrap
 I will search the docs for how tool use works in Cohere.
 
@@ -492,15 +500,17 @@ The model can determine that more than one tool call is required. This can be ca
 </AccordionGroup>
 
 ### Step 3: Get tool results
+
 During this step, the actual function calling happens. We call the necessary tools based on the tool call payloads given by the endpoint.
 
 For each tool call, we append the `messages` list with:
+
 - the `tool_call_id` generated in the previous step.
 - the `content` of each tool result with the following fields:
-    - `type` which is `document`
-    - `document` containing
-        - `data`: which stores the contents of the tool result.
-        - `id` (optional): you can provide each document with a unique ID for use in citations, otherwise auto-generated
+  - `type` which is `document`
+  - `document` containing
+    - `data`: which stores the contents of the tool result.
+    - `id` (optional): you can provide each document with a unique ID for use in citations, otherwise auto-generated
 
 ```python PYTHON
 import json
@@ -529,6 +539,7 @@ if response.message.tool_calls:
 ```
 
 ### Step 4: Generate response and citations
+
 By this time, the tool call has already been executed, and the result has been returned to the LLM.
 
 In this step, we call the Chat endpoint to generate the response to the user, again by passing the parameters `model`, `messages` (which has now been updated with information from the tool calling and tool execution steps), and `tools`.
@@ -548,6 +559,7 @@ messages.append(
 )
 
 print(response.message.content[0].text)
+
 ```
 ```bash cURL
 curl --request POST \
@@ -614,6 +626,7 @@ curl --request POST \
   ]
 }'
 ```
+
 </CodeBlocks>
 Example response:
 ```mdx wordWrap
@@ -624,7 +637,9 @@ It also generates fine-grained citations, which are included out-of-the-box with
 ```python PYTHON
 print(response.message.citations)
 ```
+
 Example response:
+
 ```mdx wordWrap
 [Citation(start=0, end=8, text='Tool use', sources=[ToolSource(type='tool', id='search_docs_1byjy32y4hvq:0', tool_output={'title': 'Tool use (function calling) overview', 'url': 'https://docs.cohere.com/v2/docs/tool-use-overview', 'text': 'Tool use connects models to external tools like search engines and APIs.'})], type='TEXT_CONTENT')]
 ```
@@ -634,11 +649,13 @@ Above, we assume the model performs tool calling only once (either single call o
 </Accordion>
 
 ### State management
+
 This section provides a more detailed look at how the state is managed via the `messages` list as described in the [tool use workflow](#tool-use-workflow) above.
 
 At each step of the workflow, the endpoint requires that we append specific types of information to the `messages` list. This is to ensure that the model has the necessary context to generate its response at a given point.
 
 In summary, each single turn of a conversation that involves tool calling consists of:
+
 1. A `user` message containing the user message
     - `content`
 2. An `assistant` message, containing the tool calling information
