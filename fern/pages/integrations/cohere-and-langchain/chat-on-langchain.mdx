@@ -12,11 +12,11 @@ updatedAt: 'Tue May 28 2024 16:53:43 GMT+0000 (Coordinated Universal Time)'
 ---
 Cohere supports various integrations with LangChain, a large language model (LLM) framework which allows you to quickly create applications based on Cohere's models. This doc will guide you through how to leverage Cohere Chat with LangChain. 
 
-### Prerequisites
+## Prerequisites
 
 Running Cohere Chat with LangChain doesn't require many prerequisites, consult the [top-level document](../docs/cohere-and-langchain) for more information. 
 
-### Cohere Chat with LangChain
+## Cohere Chat with LangChain
 
 To use [Cohere chat](../docs/chat-api) with LangChain, simply create a [ChatCohere](https://python.langchain.com/docs/integrations/chat/cohere/) object and pass in the message or message history. In the example below, you will need to add your Cohere API key. 
 
@@ -42,7 +42,7 @@ current_message_and_history = [
 print(llm.invoke(current_message_and_history))
 ```
 
-### Reasoning with LangChain
+## Reasoning with LangChain
 
 When you select a reasoning model (like `command-a-reasoning-08-2025`), its response includes both the model's reasoning and its final answer as structured content blocks—no extra parameters required. For background on how reasoning models work, see Cohere's [Reasoning](../../v2/docs/reasoning) guide.
 
@@ -76,7 +76,7 @@ for block in response.content:
         print("Answer:", block["text"])
 ```
 
-### Image Inputs with LangChain
+## Image Inputs with LangChain
 
 Command A Vision (`command-a-vision-07-2025`) can interpret images. Pass image content blocks using the `image_url` type—a publicly accessible image URL or a base64 data URI—together with your text prompt. For more on Cohere's vision capabilities, see the [Image Inputs](../../v2/docs/image-inputs) guide.
 
@@ -106,7 +106,7 @@ message = HumanMessage(
 print(llm.invoke([message]).content)
 ```
 
-### Cohere Agents with LangChain
+## Cohere Agents with LangChain
 
 An agent uses a language model to choose a sequence of actions to take. With LangChain v1, the idiomatic way to build one is [`create_agent`](https://docs.langchain.com/oss/python/langchain/agents) from `langchain.agents` (it ships with `langchain`, so no extra install is needed). Pass in the LangChain tools you would like the agent to use.
 
@@ -140,11 +140,11 @@ result = agent.invoke(
 print(result["messages"][-1].content)
 ```
 
-### Cohere Chat and RAG with LangChain
+## Cohere Chat and RAG with LangChain
 
 To use Cohere's [retrieval augmented generation (RAG)](../docs/retrieval-augmented-generation-rag) functionality with LangChain, pass your documents to `ChatCohere` through its `documents` argument. Cohere grounds its answer in those documents and returns citations that point back to them. The next few sections show a couple of ways to supply the documents.
 
-#### Using LangChain's Retrievers
+### Using LangChain's Retrievers
 
 In this example, we use the [wikipedia retriever](https://python.langchain.com/docs/integrations/retrievers/wikipedia) but any [retriever supported by LangChain](https://python.langchain.com/docs/integrations/retrievers) can be used here.  In order to set up the wikipedia retriever you need to install the wikipedia python package using `%pip install --upgrade --quiet  wikipedia`. Wikipedia also requires a descriptive User-Agent, so set one with `wikipedia.set_user_agent(...)` before querying. With that done, you can execute this code to see how a retriever works:
 
@@ -180,7 +180,7 @@ print("Citations:")
 print(response.additional_kwargs.get("citations"))
 ```
 
-#### Using Documents
+### Using Documents
 
 In this example, we take documents (which might be generated in other parts of your application) and pass them to `ChatCohere` directly:
 
@@ -217,7 +217,7 @@ print("Citations:")
 print(response.additional_kwargs.get("citations"))
 ```
 
-#### Web Search
+### Web Search
 
 To answer a query with up-to-date information from the web, give the model a search tool with [tool use](../docs/tool-use): the model requests a search, you run it and pass the results back, and Cohere grounds its answer in those results and returns citations. Set a `TAVILY_API_KEY` environment variable to run the example, or swap in any other search tool.
 
@@ -260,7 +260,7 @@ print("Answer:", final.content)
 print("Citations:", final.additional_kwargs.get("citations"))
 ```
 
-#### Using the `create_stuff_documents_chain` Chain
+### Using the `create_stuff_documents_chain` Chain
 
 This chain takes a list of documents and formats them all into a prompt, then passes that prompt to an LLM. It passes ALL documents, so you should make sure it fits within the context window of the LLM you are using. 
 
@@ -296,7 +296,7 @@ res = chain.invoke({"context": docs})
 print(res)
 ```
 
-### Structured Output Generation
+## Structured Output Generation
 
 Cohere supports generating JSON objects to structure and organize the model’s responses in a way that can be used in downstream applications.
 
@@ -339,7 +339,7 @@ res = llm.invoke(
 print(res)
 ```
 
-### Text Summarization
+## Text Summarization
 
 You can use the `load_summarize_chain` chain to perform text summarization.
 
@@ -364,7 +364,7 @@ result = chain.invoke({"input_documents": docs})
 print(result["output_text"])
 ```
 
-### Using LangChain on Private Deployments
+## Using LangChain on Private Deployments
 
 You can use LangChain with privately deployed Cohere models. To use it, specify your model deployment URL in the `base_url` parameter.
 

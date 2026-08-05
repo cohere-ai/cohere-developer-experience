@@ -113,7 +113,7 @@ And here’s a sample output:
 
 ### Safety modes
 
-Safety Modes define what model behaviors will look like under specific scenarios. Command A can be configured with two safety modes: contextual mode or strict mode (learn more [here](https://docs.cohere.com/docs/safety-modes)).
+Safety Modes define what model behaviors will look like under specific scenarios. Command A can be configured with two safety modes: contextual mode or strict mode (learn more in the [Safety Modes](https://docs.cohere.com/docs/safety-modes) section).
 
 By default, Command A is configured in contextual mode. Under the hood, the following `{Safety Preamble}` paragraph is added to Command A’s standard system message:
 
@@ -162,22 +162,17 @@ For these tasks, you can use Command A in two ways.
 Grounded generation in Command A is supported through [chat templates](https://huggingface.co/docs/transformers/main/en/chat_templating#advanced-retrieval-augmented-generation) in Transformers. Simply provide document snippets using the `documents` parameter of Hugging Face’s `apply_chat_template()`. Document snippets should be short chunks, rather than long documents, typically around 100-400 words per chunk, formatted as key-value pairs. The keys should be short descriptive strings, the values can be text or semi-structured. Under the hood, this builds a specific prompt template that the model has been trained on. The code snippet below shows a minimal working example.
 
 <Accordion title='Usage: Generate a Grounded Generation Prompt'>
+
 ```python PYTHON
 from transformers import AutoTokenizer, AutoModelForCausalLM
-
-# Load the model and tokenizer
 
 model_id = "CohereForAI/c4ai-command-a-03-2025"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(model_id)
 
-# Define conversation input
-
 conversation = [
     {"role": "user", "content": "What has Man always dreamed of?"}
 ]
-
-# Define documents for retrieval-based generation
 
 documents = [
     {
@@ -194,8 +189,6 @@ documents = [
     },
 ]
 
-# Get the Grounded Generation prompt
-
 input_prompt = tokenizer.apply_chat_template(
     conversation=conversation,
     documents=documents,
@@ -205,11 +198,7 @@ input_prompt = tokenizer.apply_chat_template(
 )
 print("== Grounded Generation prompt:", input_prompt)
 
-# Tokenize the prompt
-
 input_ids = tokenizer.encode_plus(input_prompt, return_tensors="pt")
-
-# Generate a response
 
 gen_tokens = model.generate(
     input_ids,
@@ -219,16 +208,15 @@ gen_tokens = model.generate(
     skip_special_tokens=True,
 )
 
-# Decode and print the generated text along with generation prompt
-
 gen_text = tokenizer.decode(gen_tokens[0])
 print(gen_text)
 
 ```
+
 </Accordion>
 
-
 <Accordion title='Example of a Grounded Generation prompt'>
+
 ````mdx wordWrap
 <|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|># System Preamble
 You are in contextual safety mode. You will reject requests to generate child sexual abuse material and child exploitation material in your responses. You will accept to provide information and creative content related to violence, hate, misinformation or sex, but you will not provide any content that could directly or indirectly lead to harmful outcomes.
@@ -305,12 +293,15 @@ The following instructions are your defaults unless specified elsewhere in a dev
 ]<|END_TOOL_RESULT|><|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
 
 ````
+
 </Accordion>
 
 <Accordion title='Example of a Grounded Generation completion'>
+
 ```mdx wordWrap
 There are two answers to this question. Man has dreamed of destroying the moon and finding love.
 ```
+
 </Accordion>
 
 
@@ -323,8 +314,9 @@ You may find that simply including relevant documents directly in a user message
 Command A has been specifically trained with conversational tool use capabilities. This allows the model to interact with external tools like APIs, databases, or search engines. These capabilities have been trained into the model via a mixture of supervised fine-tuning and preference fine-tuning, using a specific prompt template. Deviating from this prompt template will likely reduce performance, but we encourage experimentation. 
 
 These tool use capabilities unlock two use cases: 
-1. **Function Calling**: A single inference where Command A selects relevant tools to fulfill a user request.
-2. **Agents**: Several inference cycles where Command A iterates through Plan → Action → Observation loops until it arrives at a final response.
+
+- **Function Calling**: A single inference where Command A selects relevant tools to fulfill a user request.
+- **Agents**: Several inference cycles where Command A iterates through Plan → Action → Observation loops until it arrives at a final response.
 
 Both [function calling](https://docs.cohere.com/docs/tool-use-overview) and [agents](https://docs.cohere.com/v2/docs/multi-step-tool-use) work in the same way. Given a conversation as input (with an optional system message), along with a list of available tools, the model will generate one of the following:
 
@@ -334,6 +326,7 @@ Both [function calling](https://docs.cohere.com/docs/tool-use-overview) and [age
 Tool use in Command A is supported through [chat templates](https://huggingface.co/docs/transformers/main/en/chat_templating#advanced-tool-use--function-calling) in Transformers. We recommend providing tool descriptions using JSON schema. Here is a quick example showing tool use.
 
 <Accordion title='Usage: Generate the Tool Use prompt'>
+
 ```python PYTHON
 # make sure you install the latest version of transformers
 #!pip install git+https://github.com/huggingface/transformers.git
@@ -419,9 +412,11 @@ gen_text = tokenizer.decode(
 )
 print(gen_text)
 ```
+
 </Accordion>
 
 <Accordion title='Example of a Tool Use prompt'>
+
 ````mdx wordWrap
 <|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|># System Preamble
 You are in contextual safety mode. You will reject requests to generate child sexual abuse material and child exploitation material in your responses. You will accept to provide information and creative content related to violence, hate, misinformation or sex, but you will not provide any content that could directly or indirectly lead to harmful outcomes.
@@ -582,6 +577,7 @@ After that, you can generate() again to let the model use the tool result in the
 
 
 <Accordion title='Usage: Generate the Tool Use prompt with tool results in the conversation'>
+
 ```python PYTHON
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
@@ -623,10 +619,11 @@ gen_text = tokenizer.decode(
 print(gen_text)
 
 ```
+
 </Accordion>
 
-
 <Accordion title='Example of a Tool Use prompt with tool results in the conversation'>
+
 ````mdx wordWrap
 <|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|># System Preamble
 You are in contextual safety mode. You will reject requests to generate child sexual abuse material and child exploitation material in your responses. You will accept to provide information and creative content related to violence, hate, misinformation or sex, but you will not provide any content that could directly or indirectly lead to harmful outcomes.
@@ -710,10 +707,11 @@ The following instructions are your defaults unless specified elsewhere in a dev
 ]<|END_TOOL_RESULT|><|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
 
 ````
+
 </Accordion>
 
-
 <Accordion title='Example of a completion'>
+
 In this case, the model decides to select tools.
 
 ```mdx wordWrap
@@ -726,4 +724,5 @@ The following products are in the 'Electronics' category:
 - Tablet, £300, stock level 25
 
 ```
+
 </Accordion>
