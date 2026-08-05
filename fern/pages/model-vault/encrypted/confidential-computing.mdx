@@ -9,7 +9,7 @@ keywords: "confidential computing, TEE, secure enclave, GPU confidential computi
 
 This primer introduces the confidential-computing building blocks behind Model Vault Encrypted. It is
 background reading: if you only need to deploy and verify a vault, start with the
-[Model Vault Encrypted track](/docs/model-vault/encrypted).
+[Model Vault Encrypted track](../../../docs/model-vault/encrypted).
 
 ## Why confidential computing
 
@@ -25,7 +25,7 @@ memory encrypted and isolated from the rest of the system, and can also detect t
 encryption keys live inside the processor and are never exposed to software, so even the operator of
 the underlying infrastructure cannot read or alter the data being processed. You can then
 cryptographically verify the environment before trusting it (see [remote
-attestation](/docs/model-vault/encrypted/attestation)).
+attestation](../../../docs/model-vault/encrypted/attestation)).
 
 ## Trusted execution environments (TEEs)
 
@@ -38,7 +38,7 @@ operating system, the hypervisor, and system administrators.
 A TEE provides two core guarantees:
 
 - **Confidentiality and integrity in use**: memory used by the workload is encrypted by the hardware, with keys that are generated inside the processor and never leave it. Data outside the processor is only ever ciphertext, so memory dumps, cold-boot attacks, and direct memory access (DMA) from the host yield nothing useful. Keys are destroyed when the environment shuts down.
-- **Verifiability**: trust is established by cryptographic proof, not by a provider's promise. Rooted in keys embedded in the chip at manufacture time, the hardware produces signed evidence that proves both that the environment is genuine TEE hardware and which exact firmware, code, and configuration were loaded into it. This evidence is appraised by an independent **attestation service** (the *verifier* in the confidential-computing model), which confirms it is authentic and that the environment's encryption key is bound to it, so a remote party can check the result before sending any data. Model Vault Encrypted uses **Intel Trust Authority (ITA)** as this attestation service. This is [remote attestation](/docs/model-vault/encrypted/attestation).
+- **Verifiability**: trust is established by cryptographic proof, not by a provider's promise. Rooted in keys embedded in the chip at manufacture time, the hardware produces signed evidence that proves both that the environment is genuine TEE hardware and which exact firmware, code, and configuration were loaded into it. This evidence is appraised by an independent **attestation service** (the *verifier* in the confidential-computing model), which confirms it is authentic and that the environment's encryption key is bound to it, so a remote party can check the result before sending any data. Model Vault Encrypted uses **Intel Trust Authority (ITA)** as this attestation service. This is [remote attestation](../../../docs/model-vault/encrypted/attestation).
 
 ## CPU confidential computing
 
@@ -71,14 +71,14 @@ Model Vault Encrypted layers these primitives on top of a standard vault:
 - **Hardware-backed TEEs spanning CPU and GPU**: inference runs inside a hardware-based confidential VM with an attested NVIDIA GPU in confidential-computing mode, so prompts and responses stay protected in transit, at rest, and in use.
 - **Measured boot**: the confidential VM boots from an integrity-protected image (a read-only root filesystem with verified measurements of firmware, kernel, and the inference workload), and a container policy restricts what can run inside it. These measurements are what attestation checks against.
 - **End-to-end encryption to the TEE**: your client encrypts requests directly to the environment using Oblivious HTTP (OHTTP). The encryption keys are generated inside the TEE and are never shared with Cohere, so the load balancer and network only ever see ciphertext.
-- **Verify before you trust**: before any data is sent, the client verifies the deployment through [remote attestation](/docs/model-vault/encrypted/attestation) and refuses the connection if the environment is not genuine or is running unexpected code.
+- **Verify before you trust**: before any data is sent, the client verifies the deployment through [remote attestation](../../../docs/model-vault/encrypted/attestation) and refuses the connection if the environment is not genuine or is running unexpected code.
 
 The trust boundary, the specific parties that are excluded from access, and the residual risks that
 confidential computing does not fully eliminate (such as side-channel and physical attacks) are
-described in the [Security Model](/docs/model-vault/encrypted/security-model).
+described in the [Security Model](../../../docs/model-vault/encrypted/security-model).
 
 ## Related pages
 
-- [Security Model](/docs/model-vault/encrypted/security-model)
-- [Remote Attestation](/docs/model-vault/encrypted/attestation)
-- [Verifying Your Deployment](/docs/model-vault/encrypted/verifying-deployment)
+- [Security Model](../../../docs/model-vault/encrypted/security-model)
+- [Remote Attestation](../../../docs/model-vault/encrypted/attestation)
+- [Verifying Your Deployment](../../../docs/model-vault/encrypted/verifying-deployment)
