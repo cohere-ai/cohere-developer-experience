@@ -47,8 +47,18 @@ jobs:
           URL=$(echo "$OUTPUT" | grep -oP 'Published docs to \K.*(?= \()')
           echo "Preview URL: $URL"
           echo "🌿 Preview your docs: $URL" > preview_url.txt
+          echo "preview_url=$URL" >> "$GITHUB_OUTPUT"
 
       - name: Comment URL in PR
         uses: thollander/actions-comment-pull-request@v2.4.3
         with:
           filePath: preview_url.txt
+
+    outputs:
+      preview_url: ${{ steps.generate-docs.outputs.preview_url }}
+
+  check-links:
+    needs: run
+    uses: ./.github/workflows/check-links.yml
+    with:
+      preview_url: ${{ needs.run.outputs.preview_url }}
