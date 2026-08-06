@@ -54,6 +54,11 @@ def format_python_snippets_in_mdx(file_path, line_length=DEFAULT_LINE_LENGTH):
         block_label = match.group(2)  # Capture the label (python or python PYTHON)
         code = match.group(3)
 
+        # A trailing blank line before the closing fence is often required by
+        # markdownlint's MD031 (blanks-around-fences) rule. Preserve it so this
+        # formatter doesn't fight markdownlint --fix in an endless loop.
+        had_trailing_blank_line = code.endswith("\n")
+
         # Comment out lines starting with '!' or '%' for formatting
         processed_code = re.sub(r"^\s*(!|%)(.*)", r"# TEMP_COMMENT_\1\2", code, flags=re.MULTILINE)
 
@@ -70,9 +75,11 @@ def format_python_snippets_in_mdx(file_path, line_length=DEFAULT_LINE_LENGTH):
         # Revert the temporary comments back to their original form
         reverted_code = re.sub(r"^\s*# TEMP_COMMENT_(!|%)(.*)", r"\1\2", formatted_code, flags=re.MULTILINE)
 
-        # Return the fully formatted and reverted block
-        return f"{backtick_count}{block_label}\n{reverted_code.strip()}\n{backtick_count}"
-
+        # Return the fully formatted and reverted block, restoring the trailing
+        # blank line if the original block had one (see comment above).
+        trailing = "\n\n" if had_trailing_blank_line else "\n"
+        return f"{backtick_count}{block_label}\n{reverted_code.strip()}{trailing}{backtick_count}"
+ 
     new_content = code_block_pattern.sub(format_with_black, original_content)
 
     with open(file_path, 'w', encoding='utf-8') as file:

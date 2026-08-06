@@ -12,6 +12,7 @@ createdAt: "Fri Aug 18 2023 19:13:29 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Wed Jun 19 2024 13:01:22 GMT+0000 (Coordinated Universal Time)"
 ---
 This section expands on the [basic RAG usage](https://docs.cohere.com/docs/retrieval-augmented-generation-rag) by demonstrating a more complete example that includes:
+
 - Retrieval and reranking of documents (via the Embed and Rerank endpoints).
 - Building RAG for chatbots (involving multi-turn conversations).
 
@@ -32,9 +33,11 @@ co = cohere.ClientV2(
     "COHERE_API_KEY"
 )  # Get your free API key here: https://dashboard.cohere.com/api-keys
 ```
+
 </Tab>
 
 <Tab title="Private deployment">
+
 ```python PYTHON
 # ! pip install -U cohere
 import cohere
@@ -46,6 +49,7 @@ co = cohere.ClientV2(
     base_url="<YOUR_DEPLOYMENT_URL>",
 )
 ```
+
 </Tab>
 </Tabs>
 
@@ -54,7 +58,9 @@ co = cohere.ClientV2(
 Next, we create a search query generation tool for generating search queries from user queries.
 
 We pass a user query, which in this example, asks about how to get to know the team.
+
 <CodeBlocks>
+
 ```python PYTHON
 message = "How to get to know my teammates"
 
@@ -102,6 +108,7 @@ if res.message.tool_calls:
 
 print(search_queries)
 ```
+
 ```bash cURL
 curl --request POST \
   --url 'https://api.cohere.ai/v2/chat' \
@@ -144,8 +151,11 @@ curl --request POST \
   ]
 }'
 ```
+
 </CodeBlocks>
+
 Example response:
+
 ```mdx
 ['how to get to know your teammates']
 ```
@@ -170,6 +180,7 @@ First, we need to embed the documents to search from. We call the Embed endpoint
 - `embedding_types`: We choose the `float` as the embedding type.
 
 <CodeBlocks>
+
 ```python PYTHON
 # Define the documents
 documents = [
@@ -226,6 +237,7 @@ documents = [
 ]
 
 # Embed the documents
+
 doc_emb = co.embed(
     model="embed-v4.0",
     input_type="search_document",
@@ -233,6 +245,7 @@ doc_emb = co.embed(
     embedding_types=["float"],
 ).embeddings.float
 ```
+
 ```bash cURL
 curl --request POST \
   --url 'https://api.cohere.ai/v2/embed' \
@@ -257,6 +270,7 @@ curl --request POST \
   ]
 }'
 ```
+
 </CodeBlocks>
 
 
@@ -264,6 +278,7 @@ We choose `search_query` as the `input_type` in the Embed endpoint call. This en
 
 
 <CodeBlocks>
+
 ```python PYTHON
 # Embed the search query
 query_emb = co.embed(
@@ -273,6 +288,7 @@ query_emb = co.embed(
     embedding_types=["float"],
 ).embeddings.float
 ```
+
 ```bash cURL
 curl --request POST \
   --url 'https://api.cohere.ai/v2/embed' \
@@ -286,8 +302,8 @@ curl --request POST \
   "texts": ["how to get to know your teammates"]
 }'
 ```
-</CodeBlocks>
 
+</CodeBlocks>
 
 
 Now, we want to search for the most relevant documents to the query. For this, we make use of the `numpy` library to compute the similarity between each query-document pair using the dot product approach.
@@ -337,7 +353,7 @@ Document: {'data': {'text': 'Health and Wellness Benefits: We care about your we
 For simplicity, in this example, we are assuming only one query being generated. For practical implementations, multiple queries may be generated. For those scenarios, you will need to perform retrieval for each query.
 </Note>
 
-### Reranking with Rerank
+## Reranking with Rerank
 
 Reranking can boost the results from semantic or lexical search further. The [Rerank endpoint](https://docs.cohere.com/reference/rerank) takes a list of search results and reranks them according to the most relevant documents to a query. This requires just a single line of code to implement.
 
@@ -354,6 +370,7 @@ Here we select `top_n` to be 2, which will be the documents we will pass next fo
 
 
 <CodeBlocks>
+
 ```python PYTHON
 # Rerank the documents
 results = co.rerank(
@@ -364,6 +381,7 @@ results = co.rerank(
 )
 
 # Display the reranking results
+
 for idx, result in enumerate(results.results):
     print(f"Rank: {idx+1}")
     print(f"Score: {result.relevance_score}")
@@ -373,6 +391,7 @@ reranked_documents = [
     retrieved_documents[result.index] for result in results.results
 ]
 ```
+
 ```bash cURL
 curl --request POST \
   --url 'https://api.cohere.ai/v2/rerank' \
@@ -392,7 +411,9 @@ curl --request POST \
   ]
 }'
 ```
+
 </CodeBlocks>
+
 ```mdx
 Rank: 1
 Score: 0.07272241
@@ -411,6 +432,7 @@ The response and citations are then generated based on the the query and the doc
 
 
 <CodeBlocks>
+
 ```python PYTHON
 messages = [{"role": "user", "content": message}]
 
@@ -430,6 +452,7 @@ if response.message.citations:
     for citation in response.message.citations:
         print(citation, "\n")
 ```
+
 ```bash cURL
 curl --request POST \
   --url 'https://api.cohere.ai/v2/chat' \
@@ -458,7 +481,9 @@ curl --request POST \
   ]
 }'
 ```
+
 </CodeBlocks>
+
 ```mdx
 To get to know your teammates, you can join relevant Slack channels to stay informed and engaged. You will receive an invite via email. You can also participate in team-building activities such as monthly outings and weekly game nights.
 
@@ -472,4 +497,5 @@ start=107 end=135 text='receive an invite via email.' sources=[DocumentSource(ty
 start=164 end=188 text='team-building activities' sources=[DocumentSource(type='document', id='doc:0', document={'id': 'doc:0', 'text': 'Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!'})] type='TEXT_CONTENT' 
 
 start=197 end=236 text='monthly outings and weekly game nights.' sources=[DocumentSource(type='document', id='doc:0', document={'id': 'doc:0', 'text': 'Team-Building Activities: We foster team spirit with monthly outings and weekly game nights. Feel free to suggest new activity ideas anytime!'})] type='TEXT_CONTENT'
+
 ```

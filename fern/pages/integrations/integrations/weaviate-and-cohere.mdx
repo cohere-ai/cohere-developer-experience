@@ -17,12 +17,14 @@ updatedAt: "Thu May 23 2024 16:56:09 GMT+0000 (Coordinated Universal Time)"
 [Weaviate](https://weaviate.io/) is an open source vector search engine that stores both objects and vectors, allowing for combining vector search with structured filtering. Here, we'll create a Weaviate Cluster to index your data with Cohere Embed, and process it with Rerank and Command. 
 
 Here are the steps involved:
+
 - Create the Weaviate cluster (see [this post](https://weaviate.io/developers/wcs/quickstart) for more detail.)
 - Once the cluster is created, you will receive the cluster URL and API key.
 - Use the provided URL and API key to connect to your Weaviate cluster.
 - Use the Weaviate Python client to create your collection to store data
 
 ## Getting Set up
+
 First, let's handle the imports, the URLs, and the pip installs.
 
 ```python PYTHON
@@ -58,6 +60,7 @@ client = weaviate.connect_to_weaviate_cloud(
 ```
 
 ## Embed
+
 Now, we'll create a new collection named `"Healthcare_Compliance"` in the Weaviate database.
 
 ```python PYTHON
@@ -80,6 +83,7 @@ client.collections.create(
 ```
 
 You'll see something like this:
+
 ```
 <weaviate.collections.collection.sync.Collection at 0x7f48a5604590>
 ```
@@ -212,7 +216,9 @@ Distance: 0.6262975931167603
 ```
 
 ## Embed + Rerank
+
 Now, we'll add in Cohere Rerank to surface more relevant results. This will involve some more set up:
+
 ```python PYTHON
 # Import the weaviate module to interact with the Weaviate vector database
 import weaviate
@@ -234,6 +240,7 @@ client = weaviate.connect_to_weaviate_cloud(
 ```
 
 And here we'll create a `"Legal_Docs"` collection in the Weaviate database:
+
 ```python PYTHON
 from weaviate.classes.config import Configure, Property, DataType
 
@@ -254,6 +261,7 @@ client.collections.create(
     ),
 )
 ```
+
 ```python PYTHON
 legal_documents = [
     {
@@ -336,6 +344,7 @@ with collection.batch.dynamic() as batch:
 ```
 
 Now, we'll need to define a searh query:
+
 ```python PYTHON
 search_query = "eligibility requirements for filing bankruptcy"
 ```
@@ -371,6 +380,7 @@ for obj in response.objects:
 ```
 
 The output will look something like this:
+
 ```
 Semantic Search
 **************************************************
@@ -389,6 +399,7 @@ Metadata Distance: 0.7075160145759583
 ```
 
 This code sets up Rerank infrastructure:
+
 ```python PYTHON
 # Import the Rerank class from weaviate.classes.query to enable reranking in queries
 from weaviate.classes.query import Rerank
@@ -418,6 +429,7 @@ for obj in rerank_response.objects:
 ```
 
 Here's what the output looks like:
+
 ```
 Reranked Search Results:
 Title: Bankruptcy Law Overview
@@ -437,6 +449,7 @@ Rerank Score: 6.4895394e-06
 Based on the rerank scores, it's clear that the Bankruptcy Law Overview is the most relevant result, while the other two documents (Tax Law for Businesses and Consumer Protection Laws) have significantly lower scores, indicating they are less relevant to the query. Therefore, we should focus only on the most relevant result and can skip the other two.
 
 ## Embed + Rerank + Command
+
 Finally, we'll add Command into the mix. This handles imports and creates a fresh `"Legal_Docs"` in the Weaviate database.
 
 ```python PYTHON
@@ -466,6 +479,7 @@ client.collections.create(
 ```
 
 You should see something like that:
+
 ```
 <weaviate.collections.collection.sync.Collection at 0x7f48afc06410>
 ```

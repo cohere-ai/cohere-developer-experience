@@ -16,7 +16,7 @@ Cohere's connector parameter was deprecated on September 15, 2025. For informati
 
 Once your connector is deployed and registered, there are a couple of features that will help you to manage it.
 
-### Listing your Connectors
+## Listing your Connectors
 
 You can see all the connectors registered under your organization through the [Cohere dashboard](https://dashboard.cohere.com/connectors). Alternatively, you can make a GET request like the one below:
 
@@ -40,12 +40,14 @@ const cohere = new CohereClient({
 import cohere
 
 # initialize the Cohere Client with an API Key
+
 co = cohere.Client("YOUR_API_KEY")
 connectors = co.list_connectors()
+
 ```
 </CodeBlocks>
 
-### Authorizing an OAuth 2.0 Connector
+## Authorizing an OAuth 2.0 Connector
 
 If your connector is set up using OAuth 2.0, a user in your organization can authorize the connector through the dashboard by clicking on “connect your account”. Alternatively, you can make a request to the `/oauth/authorize` endpoint in your application. This will provide a redirect URL that the user can follow to authorize the OAuth application. 
 
@@ -55,6 +57,7 @@ curl --request POST
   --url 'https://api.cohere.ai/v1/connectors/{connector-id}/oauth/authorize' 
   --header 'Authorization: Bearer {Cohere API key for user wishing to authorize}'
 ```
+
 ```typescript TYPESCRIPT
 const { CohereClient } = require("cohere-ai");
 const cohere = new CohereClient({
@@ -67,13 +70,15 @@ const cohere = new CohereClient({
   console.log(connector);
 })();
 ```
+
 </CodeBlocks>
 
-### Updating a Connector
+## Updating a Connector
 
 You can enable and disable a connector [through the dashboard](https://dashboard.cohere.com/connectors). Additionally, you can update the connector name, URL, auth settings, and handle similar sorts of tasks through the API, as follows: 
 
 <CodeBlocks>
+
 ```curl CURL
 curl --request PATCH  
   --url 'https://api.cohere.ai/v1/connectors/{id}' 
@@ -91,6 +96,7 @@ curl --request PATCH
         "active": true,  
     }'
 ```
+
 ```python PYTHON
 import cohere
 
@@ -100,6 +106,7 @@ connectors = co.update_connector(
     connector_id, name="new name", url="new_url"
 )
 ```
+
 ```typescript TYPESCRIPT
 const { CohereClient } = require("cohere-ai");
 const cohere = new CohereClient({
@@ -113,15 +120,17 @@ const cohere = new CohereClient({
   console.log(connector);
 })();
 ```
+
 </CodeBlocks>
 
-### Debugging a Connector
+## Debugging a Connector
 
 To debug issues with a registered connector, you can follow the steps in this section. 
 
 Step 1: Make a streaming request to the connector using the Chat API and check the search results for the error. Here's an example request:
 
 <CodeBlocks>
+
 ```python PYTHON
 import cohere
 
@@ -134,6 +143,7 @@ response = co.chat(
     ],  # this is from the create step
 )
 ```
+
 ```curl CURL
 curl --request POST  \
 --url <https://api.cohere.ai/chat>  \
@@ -141,11 +151,12 @@ curl --request POST  \
 --header 'Authorization: Bearer {Your API key}' \
 --data '
 {
-	  "stream" : true,  
+    "stream" : true,  
     "message": "What is the chemical formula for glucose?",
     "connectors": [{"id": "example_connector_id"}]
 }
 ```
+
 ```typescript TYPESCRIPT
 import { CohereClient } from "cohere-ai";
 const cohere = new CohereClient({
@@ -155,13 +166,16 @@ const cohere = new CohereClient({
     const response = await cohere.chat({
       message:"What is the chemical formula for glucose?", 
       stream:True,
-			connectors:[{"id": "web-search"}],  
+      connectors:[{"id": "web-search"}],  
     });
     console.log("Received response", response);
 })();
 ```
+
 ```go GO
 import (
+  "context"
+  
   cohere       "github.com/cohere-ai/cohere-go/v2"
   cohereclient "github.com/cohere-ai/cohere-go/v2/client"
 )
@@ -171,9 +185,11 @@ response, err := client.Chat(
   &cohere.ChatRequest{
     Stream: true,
     Message: "What is the chemical formula for glucose?",
-	  Connectors:[]*cohereclient.ChatConnector{{Id: "web-search"}},  
+    Connectors:[]*cohereclient.ChatConnector{{Id: "web-search"}}, 
+  } 
 )
 ```
+
 </CodeBlocks>
 
 The response in the search results array should contain the error message from the connector:

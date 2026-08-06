@@ -38,12 +38,12 @@ co_v2 = cohere.ClientV2(api_key="<YOUR API KEY>")
 ## Messages
 
 - Message structure: 
-   - v1: uses separate `preamble` and `message` parameters.
-   - v2: uses a single `messages` parameter consisting of a list of roles (`system`, `user`, `assistant`, or `tool`). The `system` role in v2 replaces the `preamble` parameter in v1.
+  - v1: uses separate `preamble` and `message` parameters.
+  - v2: uses a single `messages` parameter consisting of a list of roles (`system`, `user`, `assistant`, or `tool`). The `system` role in v2 replaces the `preamble` parameter in v1.
 
 - Chat history:
-   - v1: manages the chat history via the `chat_history` parameter.
-   - v2: manages the chat history via the `messages` list.
+  - v1: manages the chat history via the `chat_history` parameter.
+  - v2: manages the chat history via the `messages` list.
 
 **v1**
 
@@ -92,6 +92,7 @@ res = co_v2.chat(
 
 print(res.message.content[0].text)
 ```
+
 ```
 Excited to join the team at Co1t, bringing my passion for innovation and a background in [your expertise] to contribute to the company's success!
 ```  
@@ -108,6 +109,7 @@ res = co_v1.chat(model="command-a-03-2025", message="What is 2 + 2")
 
 print(res.text)
 ```
+
 ```
 The answer is 4.
 ```
@@ -122,6 +124,7 @@ res = co_v2.chat(
 
 print(res.message.content[0].text)
 ```
+
 ```
 The answer is 4.
 ```
@@ -129,12 +132,12 @@ The answer is 4.
 ## Streaming
 
 - Events containing content:
-   - v1: `chunk.event_type == "text-generation"`
-   - v2: `chunk.type == "content-delta"`
+  - v1: `chunk.event_type == "text-generation"`
+  - v2: `chunk.type == "content-delta"`
 
 - Accessing response content:
-   - v1: `chunk.text`
-   - v2: `chunk.delta.message.content.text`
+  - v1: `chunk.text`
+  - v2: `chunk.delta.message.content.text`
 
 **v1**
 
@@ -147,6 +150,7 @@ for chunk in res:
     if chunk.event_type == "text-generation":
         print(chunk.text, end="")
 ```
+
 ```
 "Hi, I'm [your name] and I'm thrilled to join the Co1t team today as a [your role], eager to contribute my skills and ideas to help drive innovation and success for our startup!"
 ```
@@ -166,6 +170,7 @@ for chunk in res:
         if chunk.type == "content-delta":
             print(chunk.delta.message.content.text, end="")
 ```
+
 ```
 "Hi everyone, I'm thrilled to join the Co1t team today and look forward to contributing my skills and ideas to drive innovation and success!"
 ```
@@ -176,9 +181,9 @@ for chunk in res:
 
 - v1: the `documents` parameter supports a list of objects with multiple fields per document.
 - v2: the `documents` parameter supports a few different options for structuring documents:
-    - List of objects with `data` object: same as v1 described above, but each document passed as a `data` object (with an optional `id` field to be used in citations).
-    - List of objects with `data` string (with an optional `id` field to be used in citations).
-    - List of strings.
+  - List of objects with `data` object: same as v1 described above, but each document passed as a `data` object (with an optional `id` field to be used in citations).
+  - List of objects with `data` string (with an optional `id` field to be used in citations).
+  - List of strings.
 
 **v1**
 
@@ -205,6 +210,7 @@ res_v1 = co_v1.chat(
 
 print(res_v1.text)
 ```
+
 ```
 Yes, there are fitness-related benefits. We offer gym memberships, on-site yoga classes, and comprehensive health insurance.
 ```
@@ -238,6 +244,7 @@ res_v2 = co_v2.chat(
 
 print(res_v2.message.content[0].text)
 ```
+
 ```
 Yes, we offer gym memberships, on-site yoga classes, and comprehensive health insurance.
 ```
@@ -268,11 +275,11 @@ documents_v2 = [
 ## Citations
 
 - Citations access:
-   - v1: `citations`
-   - v2: `message.citations`
+  - v1: `citations`
+  - v2: `message.citations`
 - Cited documents access:
-   - v1: `documents`
-   - v2: as part of `message.citations`, in the `sources` field
+  - v1: `documents`
+  - v2: as part of `message.citations`, in the `sources` field
 
 **v1**
 
@@ -282,6 +289,7 @@ documents_v2 = [
 print(res_v1.citations)
 print(res_v1.documents)
 ```
+
 ```
 [ChatCitation(start=50, end=124, text='gym memberships, on-site yoga classes, and comprehensive health insurance.', document_ids=['doc_1'])]
 
@@ -295,6 +303,7 @@ print(res_v1.documents)
 
 print(res_v2.message.citations)
 ```
+
 ```
 [Citation(start=14, end=88, text='gym memberships, on-site yoga classes, and comprehensive health insurance.', sources=[DocumentSource(type='document', id='doc:1', document={'id': 'doc:1', 'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'})])]
 ```
@@ -326,9 +335,11 @@ res_v1 = co_v1.chat(
 
 print(res_v1.text)
 ```
+
 ```
 Spain won the UEFA Euro 2024, defeating England 2-1 in the final.
 ```
+
 **v2**
 
 Web search functionality is supported via tools.
@@ -446,6 +457,7 @@ while response.message.tool_calls:
 
 print(response.message.content[0].text)
 ```
+
 ```
 Tool plan:
 I will search for 'who won euro 2024' to find out who won the competition. 
@@ -459,20 +471,20 @@ Spain won the 2024 European Championship. They beat England in the final, with s
 ## Streaming
 
 - Event containing content:
-   - v1: `chunk.event_type == "text-generation"`
-   - v2: `chunk.type == "content-delta"`
+  - v1: `chunk.event_type == "text-generation"`
+  - v2: `chunk.type == "content-delta"`
 
 - Accessing response content:
-   - v1: `chunk.text`
-   - v2: `chunk.delta.message.content.text`
+  - v1: `chunk.text`
+  - v2: `chunk.delta.message.content.text`
 
 - Events containing citations:
-   - v1: `chunk.event_type == "citation-generation"`
-   - v2: `chunk.type == "citation-start"`
+  - v1: `chunk.event_type == "citation-generation"`
+  - v2: `chunk.type == "citation-start"`
 
 - Accessing citations:
-   - v1: `chunk.citations`
-   - v2: `chunk.delta.message.citations`
+  - v1: `chunk.citations`
+  - v2: `chunk.delta.message.citations`
 
 **v1**
 
@@ -491,6 +503,7 @@ for chunk in res_v1:
     if chunk.event_type == "citation-generation":
         print(f"\n{chunk.citations}")
 ```
+
 ```
 Yes, we offer gym memberships, on-site yoga classes, and comprehensive health insurance as part of our health and wellness benefits.
 
@@ -591,12 +604,12 @@ tools_v2 = [
 ## Tool calling
 
 - Response handling
-   - v1: Tool calls accessed through `response.tool_calls`
-   - v2: Tool calls accessed through `response.message.tool_calls`
+  - v1: Tool calls accessed through `response.tool_calls`
+  - v2: Tool calls accessed through `response.message.tool_calls`
 
 - Chat history management
-   - v1: Tool calls stored in the response's `chat_history`
-   - v2: Append the tool call details (`tool_calls` and `tool_plan`) to the `messages` list
+  - v1: Tool calls stored in the response's `chat_history`
+  - v2: Append the tool call details (`tool_calls` and `tool_plan`) to the `messages` list
 
 **v1**
 
@@ -609,6 +622,7 @@ res_v1 = co_v1.chat(
 
 print(res_v1.tool_calls)
 ```
+
 ```
 [ToolCall(name='get_weather', parameters={'location': 'Toronto'})]
 ```
@@ -629,6 +643,7 @@ if res_v2.message.tool_calls:
 
     print(res_v2.message.tool_calls)
 ```
+
 ```
 [ToolCallV2(id='get_weather_k88p0m8504w5', type='function', function=ToolCallV2Function(name='get_weather', arguments='{"location":"Toronto"}'))]
 ```
@@ -640,6 +655,7 @@ if res_v2.message.tool_calls:
 
 
 **v1**
+
 ```python PYTHON
 tool_results = [
     {
@@ -651,7 +667,9 @@ tool_results = [
     },
 ]
 ```
+
 **v2**
+
 ```python PYTHON
 messages = [
     {
@@ -673,16 +691,16 @@ messages = [
 ## Response generation
 
 - Tool execution: Chat history management
-   - v1: Append `call` and `outputs` to the chat history
-   - v2: Append `tool_call_id` and `tool_content` to `messages` to the chat history
+  - v1: Append `call` and `outputs` to the chat history
+  - v2: Append `tool_call_id` and `tool_content` to `messages` to the chat history
 
 - Tool execution: Tool results
-    - v1: Passed as `tool_results` parameter
-    - v2: Incorporated into the `messages` list as tool responses
+  - v1: Passed as `tool_results` parameter
+  - v2: Incorporated into the `messages` list as tool responses
 
 - User message
-    - v1: Set as empty (`""`)
-    - v2: No action required
+  - v1: Set as empty (`""`)
+  - v2: No action required
 
 **v1**
 
@@ -706,6 +724,7 @@ res_v1 = co_v1.chat(
 
 print(res_v1.text)
 ```
+
 ```
 It is currently 20°C in Toronto.
 ```
@@ -741,6 +760,7 @@ res_v2 = co_v2.chat(
 
 print(res_v2.message.content[0].text)
 ```
+
 ```
 It's 20°C in Toronto.
 ```
@@ -748,11 +768,11 @@ It's 20°C in Toronto.
 ## Citations
 
 - Citations access:
-   - v1: `citations`
-   - v2: `message.citations`
+  - v1: `citations`
+  - v2: `message.citations`
 - Cited tools access:
-   - v1: `documents`
-   - v2: as part of `message.citations`, in the `sources` field
+  - v1: `documents`
+  - v2: as part of `message.citations`, in the `sources` field
 
 **v1**
 
@@ -760,6 +780,7 @@ It's 20°C in Toronto.
 print(res_v1.citations)
 print(res_v1.documents)
 ```
+
 ```
 [ChatCitation(start=16, end=20, text='20°C', document_ids=['get_weather:0:2:0'])]
 
@@ -771,6 +792,7 @@ print(res_v1.documents)
 ```python PYTHON
 print(res_v2.message.citations)
 ```
+
 ```
 [Citation(start=5, end=9, text='20°C', sources=[ToolSource(type='tool', id='get_weather_k88p0m8504w5:0', tool_output={'temperature': '20C'})])]
 ```
@@ -778,20 +800,20 @@ print(res_v2.message.citations)
 ## Streaming
 
 - Event containing content:
-   - v1: `chunk.event_type == "text-generation"`
-   - v2: `chunk.type == "content-delta"`
+  - v1: `chunk.event_type == "text-generation"`
+  - v2: `chunk.type == "content-delta"`
 
 - Accessing response content:
-   - v1: `chunk.text`
-   - v2: `chunk.delta.message.content.text`
+  - v1: `chunk.text`
+  - v2: `chunk.delta.message.content.text`
 
 - Events containing citations:
-   - v1: `chunk.event_type == "citation-generation"`
-   - v2: `chunk.type == "citation-start"`
+  - v1: `chunk.event_type == "citation-generation"`
+  - v2: `chunk.type == "citation-start"`
 
 - Accessing citations:
-   - v1: `chunk.citations`
-   - v2: `chunk.delta.message.citations`
+  - v1: `chunk.citations`
+  - v2: `chunk.delta.message.citations`
 
 **v1**
 
@@ -818,6 +840,7 @@ for chunk in res_v1:
     if chunk.event_type == "citation-generation":
         print(f"\n{chunk.citations}")
 ```
+
 ```
 It's 20°C in Toronto.
 
@@ -860,6 +883,7 @@ for chunk in res_v2:
         elif chunk.type == "citation-start":
             print(f"\n{chunk.delta.message.citations}")
 ```
+
 ```
 It's 20°C in Toronto.
 
@@ -867,17 +891,19 @@ start=5 end=9 text='20°C' sources=[ToolSource(type='tool', id='get_weather_k88p
 ```
 
 ## Citation quality (both RAG and tool use)
+
 - v1: controlled via `citation_quality` parameter
 - v2: controlled via `citation_options` parameter (with `mode` as a key)
 
 # Unsupported features in v2
 
 The following v1 features are not supported in v2:
+
 - General chat
-    - `conversation_id` parameter (chat history is now managed by the developer via the `messages` parameter)
+  - `conversation_id` parameter (chat history is now managed by the developer via the `messages` parameter)
 - RAG
-    - `search_queries_only` parameter
-    - `connectors` parameter
-    - `prompt_truncation` parameter
+  - `search_queries_only` parameter
+  - `connectors` parameter
+  - `prompt_truncation` parameter
 - Tool use
-    - `force_single_step` parameter (all tool calls are now multi-step by default)
+  - `force_single_step` parameter (all tool calls are now multi-step by default)

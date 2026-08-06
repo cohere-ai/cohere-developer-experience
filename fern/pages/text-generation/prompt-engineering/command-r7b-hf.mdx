@@ -12,16 +12,19 @@ updatedAt: "Fri Dec 13 2024 19:22:34 GMT+0000 (Coordinated Universal Time)"
 ---
 
 This page contains detailed instructions about
+
 - How to set a system instruction (preamble) for Command R7B in Hugging Face
 - How to run Command R7B in Hugging Face for Chat, RAG, Tool Use and Agents use cases.
 
 ## Chat Capabilities
 
 Command R7B can be configured as both a conversational model and an instruct model.
+
 - The conversational mode conditions the model on interactive behaviour, meaning it is expected to reply in a conversational fashion, provides introductory statements and follow-up questions, and uses Markdown as well as LaTeX where appropriate. It is optimized for interactive experiences, such as chatbots, where the model engages in dialogue.
 - The instruct mode, in contrast, conditions the model to provide concise yet comprehensive responses, and does not use Markdown / LaTeX by default. It is designed for non-interactive, task-focused use cases like extracting information, summarizing text, translation, and categorization.
 
-### Conversational Mode
+## Conversational Mode
+
 The system instruction (preamble) for conversational mode is as follows:
 
 ````mdx wordWrap
@@ -66,9 +69,11 @@ The strict safety mode preamble is as follows:
 ````mdx wordWrap
 You are in strict safety mode. You will reject requests to generate child sexual abuse material and child exploitation material in your responses. You will reject requests to generate content related to violence, hate, misinformation or sex to any amount. You will avoid using profanity. You will not provide users with instructions to perform regulated, controlled or illegal activities.
 ````
+
 ### Instruct Mode
 
 The instruct mode system instruction is as follows:
+
 ````mdx wordWrap
 # System Preamble
 {Safety Preamble}
@@ -97,10 +102,11 @@ The following instructions are your defaults unless specified elsewhere in devel
 - When generating code output without specifying the programming language, please generate Python code.
 - If you are asked a question that requires reasoning, first think through your answer, slowly and step by step, then answer.
 ````
+
 Where `{Safety Preamble}` represents either the contextual or the strict safety mode instruction.
 
 
-### Example
+## Example
 
 An example of how the model can be called using the conversational mode system instruction can be found below.
 
@@ -138,16 +144,18 @@ conversation = [
 ]
 ````
 
-## Grounded Generation and RAG Capabilities:
+## Grounded Generation and RAG Capabilities
 
 Command R7B has been trained specifically for tasks like summarization and the final step of Retrieval Augmented Generation (RAG). The model takes a conversation as input (with an optional user-supplied system system message, indicating task, context and desired output style), along with a list of document snippets. This behavior has been trained into the model via a mixture of supervised fine-tuning and preference fine-tuning. 
 
 For these tasks, you can use Command R7B in two ways.
 
-### Option 1: Grounded Generation
+## Option 1: Grounded Generation
+
 Grounded generation in Command R7B is supported through [chat templates](https://huggingface.co/docs/transformers/main/en/chat_templating#advanced-retrieval-augmented-generation) in Transformers. Simply provide document snippets using the `documents` parameter of Hugging Face’s `apply_chat_template()`. Document snippets should be short chunks, rather than long documents, typically around 100-400 words per chunk, formatted as key-value pairs. The keys should be short descriptive strings, the values can be text or semi-structured. Under the hood, this builds a specific prompt template that the model has been trained on. The code snippet below shows a minimal working example.
 
 <Accordion title='Usage: Generate a Grounded Generation Prompt'>
+
 ````python PYTHON
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
@@ -203,10 +211,11 @@ gen_tokens = model.generate(
 gen_text = tokenizer.decode(gen_tokens[0])
 print(gen_text)
 ````
+
 </Accordion>
 
-
 <Accordion title='Example of a Grounded Generation prompt'>
+
 ````mdx wordWrap
 <|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|># System Preamble
 You are in contextual safety mode. You will reject requests to generate child sexual abuse material and child exploitation material in your responses. You will accept to provide information and creative content related to violence, hate, misinformation or sex, but you will not provide any content that could directly or indirectly lead to harmful outcomes.
@@ -280,16 +289,19 @@ The following instructions are your defaults unless specified elsewhere in devel
     }
 ]<|END_TOOL_RESULT|><|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
 ````
+
 </Accordion>
 
 <Accordion title='Example of a Grounded Generation completion'>
+
 ````mdx wordWrap
 There are two answers to this question. Man has dreamed of destroying the moon and finding love.
 ````
+
 </Accordion>
 
 
-### Option 2: Regular Generation
+## Option 2: Regular Generation
 
 You may find that simply including relevant documents directly in a user message works just as well, or better than using the documents parameter to render the special grounded generation template. Grounded Generation is generally a strong default, but Regular Generation can offer more control and customization over the prompt, at the cost of some effort to find an optimal prompt. We encourage users to play with both Grounded Generation and Regular Generation, and to evaluate which mode works best for their specific use case.
 
@@ -298,6 +310,7 @@ You may find that simply including relevant documents directly in a user message
 Command R7B has been specifically trained with conversational tool use capabilities. This allows the model to interact with external tools like APIs, databases, or search engines. These capabilities have been trained into the model via a mixture of supervised fine-tuning and preference fine-tuning, using a specific prompt template. Deviating from this prompt template will likely reduce performance, but we encourage experimentation. 
 
 These tool use capabilities unlock two use cases: 
+
 1. **Function Calling**: A single inference where Command R7B selects relevant tools to fulfill a user request.
 2. **Agents**: Several inference cycles where Command R7B iterates through Plan → Action → Observation loops until it arrives at a final response.
 
@@ -309,6 +322,7 @@ Both Function Calling and Agents work in the same way. Given a conversation as i
 Tool use in Command R7B is supported through [chat templates](https://huggingface.co/docs/transformers/main/en/chat_templating#advanced-tool-use--function-calling) in Transformers. We recommend providing tool descriptions using JSON schema. Here is a quick example showing tool use.
 
 <Accordion title='Usage: Generate the Tool Use prompt'>
+
 ````python PYTHON
 # make sure you install the latest version of transformers
 #!pip install git+https://github.com/huggingface/transformers.git
@@ -393,10 +407,13 @@ gen_text = tokenizer.decode(
     gen_tokens[0][len(input_ids[0]) :], skip_special_tokens=True
 )
 print(gen_text)
+
 ````
+
 </Accordion>
 
 <Accordion title='Example of a Tool Use prompt'>
+
 ````mdx wordWrap
 <|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|># System Preamble
 You are in contextual safety mode. You will reject requests to generate child sexual abuse material and child exploitation material in your responses. You will accept to provide information and creative content related to violence, hate, misinformation or sex, but you will not provide any content that could directly or indirectly lead to harmful outcomes.
@@ -459,6 +476,7 @@ The following instructions are your defaults unless specified elsewhere in devel
 - When generating code output without specifying the programming language, please generate Python code.
 - If you are asked a question that requires reasoning, first think through your answer, slowly and step by step, then answer.<|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|USER_TOKEN|>Can you provide a sales summary for 29th September 2023, and also give me some details about the products in the 'Electronics' category, for example their prices and stock levels?<|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
 ````
+
 </Accordion>
 
 <Accordion title='Example of a Tool Use completion'>
@@ -562,11 +580,13 @@ After that, you can generate() again to let the model use the tool result in the
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 # Load the model and tokenizer
+
 model_id = "CohereForAI/c4ai-command-r7b-12-2024"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(model_id)
 
 # Get the Tool Use prompt
+
 input_prompt = tokenizer.apply_chat_template(
     conversation=conversation,
     tools=tools,
@@ -577,9 +597,11 @@ input_prompt = tokenizer.apply_chat_template(
 print("== Prompt for step 2 of the Agent:", input_prompt)
 
 # Tokenize the prompt
+
 input_ids = tokenizer.encode_plus(input_prompt, return_tensors="pt")
 
 # Generate a response
+
 gen_tokens = model.generate(
     input_ids,
     max_new_tokens=512,
@@ -588,15 +610,18 @@ gen_tokens = model.generate(
 )
 
 # Decode and print the generated text along with generation prompt
+
 gen_text = tokenizer.decode(
     gen_tokens[0][len(input_ids[0]) :], skip_special_tokens=True
 )
 print(gen_text)
+
 ````
+
 </Accordion>
 
-
 <Accordion title='Example of a Tool Use prompt with tool results in the conversation'>
+
 ````mdx wordWrap
 <|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|># System Preamble
 You are in contextual safety mode. You will reject requests to generate child sexual abuse material and child exploitation material in your responses. You will accept to provide information and creative content related to violence, hate, misinformation or sex, but you will not provide any content that could directly or indirectly lead to harmful outcomes.
@@ -678,10 +703,11 @@ The following instructions are your defaults unless specified elsewhere in devel
 ]<|END_TOOL_RESULT|><|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>
 
 ````
+
 </Accordion>
 
-
 <Accordion title='Example of a completion'>
+
 In this case, the model decides to select tools.
 
 ````mdx wordWrap
@@ -694,4 +720,5 @@ The following products are in the 'Electronics' category:
 - Tablet, £300, stock level 25
 
 ````
+
 </Accordion>
