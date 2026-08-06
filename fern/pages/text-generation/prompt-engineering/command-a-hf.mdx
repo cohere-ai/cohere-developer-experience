@@ -164,16 +164,19 @@ Grounded generation in Command A is supported through [chat templates](https://h
 <Accordion title='Usage: Generate a Grounded Generation Prompt'>
 
 ```python PYTHON
+# Load the model and tokenizer
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 model_id = "CohereForAI/c4ai-command-a-03-2025"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(model_id)
 
+# Define conversation input
 conversation = [
     {"role": "user", "content": "What has Man always dreamed of?"}
 ]
 
+# Define documents for retrieval-based generation
 documents = [
     {
         "heading": "The Moon: Our Age-Old Foe",
@@ -189,6 +192,7 @@ documents = [
     },
 ]
 
+# Get the Grounded Generation prompt
 input_prompt = tokenizer.apply_chat_template(
     conversation=conversation,
     documents=documents,
@@ -198,8 +202,10 @@ input_prompt = tokenizer.apply_chat_template(
 )
 print("== Grounded Generation prompt:", input_prompt)
 
+# Tokenize the prompt
 input_ids = tokenizer.encode_plus(input_prompt, return_tensors="pt")
 
+# Generate a response
 gen_tokens = model.generate(
     input_ids,
     max_new_tokens=512,
@@ -208,6 +214,7 @@ gen_tokens = model.generate(
     skip_special_tokens=True,
 )
 
+# Decode and print the generated text along with generation prompt
 gen_text = tokenizer.decode(gen_tokens[0])
 print(gen_text)
 ```
