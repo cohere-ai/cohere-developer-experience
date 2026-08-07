@@ -1,0 +1,101 @@
+name: check-links
+
+on:
+  workflow_call:
+    inputs:
+      preview_url:
+        description: "Fern preview URL to check (e.g. https://...buildwithfern.com)"
+        required: true
+        type: string
+
+jobs:
+  muffet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      MUFFET_VERSION: v2.11.4
+      MUFFET_LINUX_AMD64_SHA256: c2e80080725a96b4ea50e0c3fc98952882415080982dde0791a0dcec614dde50
+      MUFFET_MAX_CONNECTIONS: "24"
+      MUFFET_MAX_CONNECTIONS_PER_HOST: "4"
+      MUFFET_RATE_LIMIT: "8"
+      MUFFET_TIMEOUT_SECONDS: "30"
+      MUFFET_MAX_RETRIES: "1"
+      TRANSIENT_MAX_ATTEMPTS: "3"
+      TRANSIENT_RETRY_DELAY_SECONDS: "15"
+
+    steps:
+      - name: Validate input URL
+        env:
+          PREVIEW_URL: ${{ inputs.preview_url }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${PREVIEW_URL}" ]]; then
+            echo "preview_url input is required"
+            exit 1
+          fi
+          if [[ ! "${PREVIEW_URL}" =~ ^https?:// ]]; then
+            echo "preview_url must start with http:// or https://"
+            exit 1
+          fi
+          echo "Using preview URL: ${PREVIEW_URL}"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install muffet
+        run: |
+          set -euo pipefail
+          curl -sSL "https://github.com/raviqqe/muffet/releases/download/${MUFFET_VERSION}/muffet_linux_amd64.tar.gz" -o muffet.tar.gz
+          echo "${MUFFET_LINUX_AMD64_SHA256}  muffet.tar.gz" | sha256sum -c -
+          tar -xzf muffet.tar.gz
+          chmod +x muffet
+          sudo mv muffet /usr/local/bin/muffet
+          muffet --version
+
+      - name: Check preview availability
+        env:
+          PREVIEW_URL: ${{ inputs.preview_url }}
+        run: |
+          set -euo pipefail
+          BASE_URL="${PREVIEW_URL%/}"
+
+          echo "Checking preview availability before starting recursive link crawl: ${BASE_URL}/"
+          curl --fail --silent --show-error --location \
+            --max-time "${MUFFET_TIMEOUT_SECONDS}" \
+            --retry 3 \
+            --retry-all-errors \
+            --retry-delay 5 \
+            --output /dev/null \
+            "${BASE_URL}/"
+
+      - name: Run muffet link checks
+        env:
+          PREVIEW_URL: ${{ inputs.preview_url }}
+        run: |
+          set -euo pipefail
+          BASE_URL="${PREVIEW_URL%/}"
+          echo "Stripping preview URL of any trailing slashes: BASE_URL is ${BASE_URL}"
+
+          ESCAPED_BASE_URL=$(printf '%s\n' "$BASE_URL" | sed -E 's/[][(){}.+*?^$|\\]/\\&/g')
+          echo "Escaping chars in base URL to pass to muffet: ESCAPED_BASE_URL is ${ESCAPED_BASE_URL}"
+
+          # Fern bug: canonical/og:url tags on nested `section:` pages get a sibling
+          # page's slug wrongly prepended (e.g. /docs/integrations/v2/docs/foo instead
+          # of /v2/docs/foo). Metadata only - no <a> tag uses these, not fixable from
+          # our side. Excluding these from the check.
+
+          ./.github/scripts/run-muffet-with-transient-retries.sh \
+            muffet "${BASE_URL}/" \
+            -i "^${ESCAPED_BASE_URL}/(v1/|v2/)?(docs|reference|changelog|page)(/|$)" \
+            -e "^${ESCAPED_BASE_URL}/(_next|_vercel|_local)/" \
+            -e "^${ESCAPED_BASE_URL}/docs/.+/v[12]/(docs|reference)/" \
+            --ignore-fragments \
+            --max-connections "${MUFFET_MAX_CONNECTIONS}" \
+            --max-connections-per-host "${MUFFET_MAX_CONNECTIONS_PER_HOST}" \
+            --rate-limit "${MUFFET_RATE_LIMIT}" \
+            --max-redirections 5 \
+            --timeout "${MUFFET_TIMEOUT_SECONDS}" \
+            --max-retries "${MUFFET_MAX_RETRIES}" \
+            --color never

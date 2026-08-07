@@ -14,11 +14,11 @@ This document walks through how to pull Cohere's container images using a licens
 
 Before starting, ensure you have a license and image tag provided by Cohere.
 
-## Pull Container Images with A License
+## Pull Container Images with a License
 
 Cohere provides access to container images through a registry authenticated with a license. Users can pull these images and replicate them in their environment, as needed, to avoid runtime network access from inside the cluster. 
 
-Images will come through the `proxy.replicated.com` registry. Pulling the images will require firewall access open to `proxy.replicated.com` and `proxy-auth.replicated.com`. More information on these endpoints may be found [here](https://docs.replicated.com/enterprise/installing-general-requirements#firewall-openings-for-online-installations).
+Images will come through the `proxy.replicated.com` registry. Pulling the images will require firewall access open to `proxy.replicated.com` and `proxy-auth.replicated.com`. More information on these endpoints may be found in the [Replicated documentation](https://docs.replicated.com/enterprise/installing-general-requirements#firewall-openings-for-online-installations).
 
 To test pulling images with a license, modify your docker CLI configuration to include authentication details for the registry. Note: `docker login` will not work.
 
@@ -62,7 +62,7 @@ To test the container image with Docker, you should have a machine with the foll
 - [Nvidia drivers](https://github.com/NVIDIA/open-gpu-kernel-modules) installed on host (minimum 525).
 - [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) and corresponding configuration for docker/containerd.
 
-#### Example Usage
+### Example Usage
 
 Different models have different inputs.
 
@@ -81,12 +81,15 @@ Here are the `bash` commands you can run to use the Embed v4, Embed Multilingual
 docker run -d --rm --name embed-v4 --gpus=1 --net=host $IMAGE_TAG
 
 # wait 5-10 seconds for the container to start
+
 # you can use `curl http://localhost:8080/ping` to check for readiness
+
 curl --header "Content-Type: application/json" --request POST http://localhost:8080/embed --data-raw '{"input_type": "search_query", "texts":["Why are embeddings good"], "embedding_types": ["float"]}'
 
 {"id":"6d54d453-f2c8-44da-aab8-39e3c11d29d5","texts":["Why are embeddings good"],"embeddings":{"float":[[0.033935547,0.06347656,0.020263672,-0.020507812,0.014160156,0.0038757324,-0.07421875,-0.05859375,...
 
 docker stop embed-v4
+
 ```
 
 ```Text Embed Multilingual
@@ -98,6 +101,7 @@ curl --header "Content-Type: application/json" --request POST http://localhost:8
 
 docker stop multilingual
 ```
+
 ```Text Rerank English
 docker run -d --rm --name rerank-english --gpus=1 --net=host $IMAGE_TAG
 
@@ -107,6 +111,7 @@ curl --header "Content-Type: application/json" --request POST http://localhost:8
 
 docker stop rerank-english
 ```
+
 ```Text Rerank Multilingual
 docker run -d --rm --name rerank-multilingual --gpus=1 --net=host $IMAGE_TAG
 
@@ -116,6 +121,7 @@ curl --header "Content-Type: application/json" --request POST http://localhost:8
 
 docker stop rerank-multilingual
 ```
+
 ```Text Command
 docker run -d --rm --name command --gpus=2 --net=host $IMAGE_TAG # Number of GPUs may be different depending on the target model
 
@@ -238,11 +244,12 @@ curl --header "Content-Type: application/json" --request POST http://localhost:8
 
 docker stop command
 ```
+
 </CodeBlocks>
 
 You'll note that final example includes documents that the Command model can use to ground its replies. This functionality falls under [retrieval augmented generation](/docs/retrieval-augmented-generation-rag).
 
-### Kubernetes
+## Kubernetes
 
 Deploying to Kubernetes requires nodes with the following installed:
 
@@ -346,6 +353,7 @@ Here are the `bash` commands you can run to use the Embed v4, Embed Multilingual
 curl --header "Content-Type: application/json" --request POST http://localhost:8080/embed --data-raw '{"texts": ["testing embeddings in english"], "input_type": "classification"}'
 
 # {"id":"2ffe4bca-8664-4456-b858-1b3b15411f2c","embeddings":[[-0.5019531,-2.0917969,-1.6220703,-1.2919922,-0.80029297,1.3173828,1.4677734,-1.7763672,0.03869629,1.9033203...}
+
 ```
 
 ```Text Embed Multilingual
@@ -353,16 +361,19 @@ curl --header "Content-Type: application/json" --request POST http://localhost:8
 
 # {"id":"2eab88e7-5906-44e1-9644-01893a70f1e7","texts":["testing multilingual embeddings"],"embeddings":[[-0.022094727,-0.0121154785,0.037628174,-0.0026988983,-0.0129776,0.013305664,0.005458832,-0.03161621,-0.019744873,-0.026290894,0.017333984,-0.02444458,0.01953125...
 ```
+
 ```Text Rerank English
 curl --header "Content-Type: application/json" --request POST http://localhost:8080/rerank --data-raw '{"documents": [{"text": "orange"},{"text": "Ottawa"},{"text": "Toronto"},{"text": "Ontario"}],"query": "what is the capital of Canada","top_n": 2}'
 
 # {"id":"a547bcc5-a243-42dd-8617-d12a7944c164","results":[{"index":1,"relevance_score":0.9734939},{"index":2,"relevance_score":0.73772544}]}
 ```
+
 ```Text Rerank Multilingual
 curl --header "Content-Type: application/json" --request POST http://localhost:8080/rerank --data-raw '{"documents": [{"text": "orange"},{"text": "Ottawa"},{"text": "Toronto"},{"text": "Ontario"}],"query": "what is the capital of Canada","top_n": 2}'
 
 # {"id":"8abeacf2-e657-415c-bab3-ac593e67e8e5","results":[{"index":1,"relevance_score":0.6124835},{"index":2,"relevance_score":0.5305253}],"meta":{"api_version":{"version":"2022-12-06"},"billed_units":{"search_units":1}}}
 ```
+
 ```Text Command
 curl --header "Content-Type: application/json" --request POST http://localhost:8080/chat --data-raw '{"query":"Docker is good because"}'
 
@@ -481,6 +492,7 @@ curl --header "Content-Type: application/json" --request POST http://localhost:8
   ]
 }
 ```
+
 </CodeBlocks>
 
 Remember that this is only an illustrative deployment. Feel free to modify it as needed to accommodate your environment.
