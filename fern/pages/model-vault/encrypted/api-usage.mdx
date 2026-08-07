@@ -15,15 +15,14 @@ your environment and, before any data leaves it, **verifies the deployment's
 [remote attestation](../../../docs/model-vault/encrypted/attestation) and encrypts your request end to end**,
 refusing the connection if verification does not pass.
 
-## Three ways to connect through the Cohere OHTTP proxy
+## Two ways to connect through the Cohere OHTTP proxy
 
-The Cohere OHTTP proxy comes in three forms, and which one you use determines which clients you can use:
+The Cohere OHTTP proxy comes in two forms, and which one you use determines which clients you can use:
 
 | Form | What it is | Clients you can use |
 | --- | --- | --- |
 | **Standalone Cohere OHTTP proxy** | A standalone local proxy container you run; it verifies attestation and handles OHTTP transparently | Cohere SDK, raw HTTP, **or** OpenAI-compatible (point any of them at the local proxy) |
 | **Cohere Python OHTTP wrapper (conseel)** | A Python package that verifies attestation and handles OHTTP by wrapping httpx-based communication | Cohere SDK, OpenAI SDK, other httpx-based Python SDKs |
-| **Embedded Cohere OHTTP client (coming soon)** | Built into the Cohere Python SDK; it verifies attestation and handles OHTTP for you | Cohere SDK |
 
 In all cases, the Cohere OHTTP proxy does the same two things on your behalf:
 
@@ -164,38 +163,6 @@ response = client.chat.completions.create(
 )
 
 print(response.choices[0].message.content)
-```
-
-## Option 3: Cohere SDK with the embedded Cohere OHTTP client (coming soon)
-
-With the embedded client, point the Cohere SDK at the vault as usual; the SDK verifies attestation and
-encrypts all traffic to the attested environment transparently using an encrypted vault URL. Your application
-code remains unchanged from a standard vault.
-
-Install Cohere client with encrypted vault support via PyPI (for x86/ARM machines running Linux/Mac OS):
-
-```bash BASH
-pip install cohere[mve]
-```
-
-Use Cohere client as normal:
-
-```python PYTHON
-import cohere
-
-co = cohere.ClientV2(
-    api_key="<COHERE_API_KEY>",
-    base_url="<YOUR_VAULT_ENDPOINT_URL>",
-)
-
-response = co.chat(
-    model="<YOUR_VAULT_MODEL_NAME>",
-    messages=[
-        {"role": "user", "content": "Hello to an encrypted vault!"}
-    ],
-)
-
-print(response.message.content[0].text)
 ```
 
 ## Verify before send
