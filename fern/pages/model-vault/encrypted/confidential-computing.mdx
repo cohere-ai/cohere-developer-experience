@@ -1,0 +1,84 @@
+---
+title: Confidential Computing Primer
+slug: "docs/model-vault/encrypted/confidential-computing"
+
+hidden: false
+description: "A primer on the trusted execution environments and GPU confidential computing that power Model Vault Encrypted."
+keywords: "confidential computing, TEE, secure enclave, GPU confidential computing, model vault encrypted"
+---
+
+This primer introduces the confidential-computing building blocks behind Model Vault Encrypted. It is
+background reading: if you only need to deploy and verify a vault, start with the
+[Model Vault Encrypted track](../../../docs/model-vault/encrypted).
+
+## Why confidential computing
+
+Data is normally protected in two states, but left exposed in a third:
+
+- **In transit**: protected by TLS while moving over the network.
+- **At rest**: protected by disk and storage encryption.
+- **In use**: traditionally unprotected. While a workload runs, its data sits in plaintext in memory, where the host operating system, hypervisor, and anyone with privileged access to the machine can read it.
+
+Confidential computing closes that last gap. It protects data **in use** by running the workload
+inside a hardware-based trusted execution environment, where the processor keeps the workload's
+memory encrypted and isolated from the rest of the system, and can also detect tampering with it. The
+encryption keys live inside the processor and are never exposed to software, so even the operator of
+the underlying infrastructure cannot read or alter the data being processed. You can then
+cryptographically verify the environment before trusting it (see [remote
+attestation](../../../docs/model-vault/encrypted/attestation)).
+
+## Trusted execution environments (TEEs)
+
+A trusted execution environment (TEE), sometimes called a secure enclave, is a hardware-isolated
+region of a machine with its own protected memory and execution. Unlike an ordinary virtual machine,
+whose memory the hypervisor and host can read, a TEE has its memory encrypted by the hardware and
+isolated so that code and data inside it are shielded from everything outside, including the host
+operating system, the hypervisor, and system administrators.
+
+A TEE provides two core guarantees:
+
+- **Confidentiality and integrity in use**: memory used by the workload is encrypted by the hardware, with keys that are generated inside the processor and never leave it. Data outside the processor is only ever ciphertext, so memory dumps, cold-boot attacks, and direct memory access (DMA) from the host yield nothing useful. Keys are destroyed when the environment shuts down.
+- **Verifiability**: trust is established by cryptographic proof, not by a provider's promise. Rooted in keys embedded in the chip at manufacture time, the hardware produces signed evidence that proves both that the environment is genuine TEE hardware and which exact firmware, code, and configuration were loaded into it. This evidence is appraised by an independent **attestation service** (the *verifier* in the confidential-computing model), which confirms it is authentic and that the environment's encryption key is bound to it, so a remote party can check the result before sending any data. Model Vault Encrypted uses **Intel Trust Authority (ITA)** as this attestation service. This is [remote attestation](../../../docs/model-vault/encrypted/attestation).
+
+## CPU confidential computing
+
+Modern server CPUs can run an entire virtual machine inside a TEE, often called a confidential VM.
+The CPU transparently encrypts the VM's memory and isolates it from the hypervisor and host. From the
+application's point of view, code runs normally; the protection is enforced by the hardware
+underneath.
+
+Model Vault Encrypted runs its inference workload inside a hardware-based **confidential VM** (for
+example, **Intel TDX** or **AMD SEV-SNP**), so the operating system, hypervisor, and cloud operator
+cannot read the VM's memory.
+
+## GPU confidential computing
+
+Model inference runs on GPUs, so protecting only the CPU is not enough: prompts, model weights, and
+intermediate activations also pass through GPU memory. Recent data-center GPUs extend the TEE to the
+GPU, so the GPU's confidential-computing state can be measured and attested.
+
+Model Vault Encrypted runs on **NVIDIA GPUs** in confidential-computing mode. The link between
+the CPU TEE and the GPU is authenticated and encrypted (using an SPDM-based secure session), so data
+moving between the confidential VM and the GPU is never exposed in plaintext to the host.
+
+This is what makes confidential **AI inference** possible: the prompt and the response stay protected
+across both the CPU and the GPU for the full duration of the request.
+
+## How Model Vault Encrypted uses these
+
+Model Vault Encrypted layers these primitives on top of a standard vault:
+
+- **Hardware-backed TEEs spanning CPU and GPU**: inference runs inside a hardware-based confidential VM with an attested NVIDIA GPU in confidential-computing mode, so prompts and responses stay protected in transit, at rest, and in use.
+- **Measured boot**: the confidential VM boots from an integrity-protected image (a read-only root filesystem with verified measurements of firmware, kernel, and the inference workload), and a container policy restricts what can run inside it. These measurements are what attestation checks against.
+- **End-to-end encryption to the TEE**: your client encrypts requests directly to the environment using Oblivious HTTP (OHTTP). The encryption keys are generated inside the TEE and are never shared with Cohere, so the load balancer and network only ever see ciphertext.
+- **Verify before you trust**: before any data is sent, the client verifies the deployment through [remote attestation](../../../docs/model-vault/encrypted/attestation) and refuses the connection if the environment is not genuine or is running unexpected code.
+
+The trust boundary, the specific parties that are excluded from access, and the residual risks that
+confidential computing does not fully eliminate (such as side-channel and physical attacks) are
+described in the [Security Model](../../../docs/model-vault/encrypted/security-model).
+
+## Related pages
+
+- [Security Model](../../../docs/model-vault/encrypted/security-model)
+- [Remote Attestation](../../../docs/model-vault/encrypted/attestation)
+- [Verifying Your Deployment](../../../docs/model-vault/encrypted/verifying-deployment)

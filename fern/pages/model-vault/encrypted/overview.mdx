@@ -1,0 +1,101 @@
+---
+title: Encrypted Vault Overview
+slug: "docs/model-vault/encrypted"
+
+hidden: false
+description: "Encrypted Vaults add confidential computing to Model Vault, so prompts and responses stay protected end to end with verifiable attestation."
+keywords: "encrypted vault, model vault encrypted, confidential computing, attestation, encrypted ai, cohere"
+---
+
+An **Encrypted Vault** adds end-to-end encryption and confidential computing to standard vaults, so your prompts,
+responses, and everything in the middle are never exposed in plaintext, not even to Cohere or the cloud
+operator. Everything stays encrypted end to end inside hardware-backed trusted execution
+environments (TEEs), and you can cryptographically verify exactly what's running before you send a
+single byte of data.
+
+It gives you private AI without self-hosting: a one-click, fully managed SaaS experience with the
+privacy posture of an on-prem deployment, and privacy you can **verify** rather than take on trust.
+
+Encrypted vaults deploy through the same [shared vault flow](../../docs/model-vault/quickstart) as any
+other vault, and you call them with the same API. The one addition is the **Cohere OHTTP proxy**, a
+confidential-computing component that runs on the client side and establishes an attested,
+end-to-end-encrypted tunnel to the vault. It comes as a standalone proxy running in your environment
+or as a Python package that wraps your client's transport layer. Either form verifies the
+deployment's attestation and encrypts every request before any data leaves your machine, so your
+application code stays unchanged. See
+[Using the API with an Encrypted Vault](../../docs/model-vault/encrypted/api-usage).
+
+This section covers only what's **specific** to encrypted vaults: the security model, verification,
+key management, compliance, and the models and pricing that apply.
+
+## What Encrypted Vaults add
+
+- Data is protected **in transit, at rest, and in use**, so prompts and responses are never exposed in plaintext, not even to Cohere or the cloud operator.
+- Inference runs inside hardware-backed TEEs spanning the CPU (a confidential VM such as Intel TDX or AMD SEV-SNP) and the GPU (an NVIDIA GPU in confidential-computing mode), and your requests stay encrypted from your client all the way into the TEE, so the load balancer and network in between never see plaintext.
+- Verifiable **remote attestation** lets you confirm you are talking to a genuine TEE running the exact code you expect. (This is what the vault's verification badge in the Model Vault app reflects.)
+- Every inference response includes an **attestation certificate** you can check, so you can verify the TEE and its code on each request.
+- Designed to help regulated organizations meet compliance obligations (for example, GDPR, HIPAA, SOC 2).
+
+<Note>
+Don't need confidential-computing protections? A [Standard Vault](../../docs/model-vault/standard) offers
+the same managed, single-tenant deployment without the encryption-in-use and attestation features.
+</Note>
+
+## Deploy an Encrypted Vault
+
+Follow the shared flow, choosing the **Encrypted** option when you create the vault:
+
+<Steps>
+### Understand what Encrypted Vaults protect
+
+Review the [Security Model](../../docs/model-vault/encrypted/security-model) to understand the trust
+boundary and threat model, specifically who is (and is not) able to access your data.
+
+### Learn the foundations (optional)
+
+New to confidential computing? Read the
+[Confidential Computing Primer](../../docs/model-vault/encrypted/confidential-computing) for a quick
+grounding in TEEs, secure enclaves, and GPU confidential computing.
+
+### Create your vault
+
+Provision a vault as usual and choose the encrypted option. See
+[Creating a Vault](../../docs/model-vault/creating-a-vault).
+
+### Understand how verification works
+
+You do not have to verify manually before each request: the Cohere OHTTP proxy checks the
+deployment's attestation automatically and refuses the connection if it does not pass. To understand
+what is checked, and how you can inspect the evidence yourself, see
+[Remote Attestation](../../docs/model-vault/encrypted/attestation) and
+[Verifying Your Deployment](../../docs/model-vault/encrypted/verifying-deployment).
+
+### Configure encryption and keys
+
+Review [Encryption & Key Management](../../docs/model-vault/encrypted/encryption-key-management) to
+understand how data is protected in transit, at rest, and in use, and how keys (and ZDR) are handled.
+
+### Call your vault
+
+Make inference requests using your vault endpoint. See
+[Using the API with an Encrypted Vault](../../docs/model-vault/encrypted/api-usage), where the Cohere OHTTP
+proxy verifies the deployment's attestation and encrypts every request before any data leaves your
+machine.
+
+### Confirm compliance
+
+Check [Compliance](../../docs/model-vault/encrypted/compliance) for how Encrypted Vaults map to GDPR,
+HIPAA, SOC 2, and audit-logging requirements.
+</Steps>
+
+## What's specific to Encrypted Vaults
+
+- [Security Model](../../docs/model-vault/encrypted/security-model)
+- [Confidential Computing Primer](../../docs/model-vault/encrypted/confidential-computing)
+- [Remote Attestation](../../docs/model-vault/encrypted/attestation)
+- [Verifying Your Deployment](../../docs/model-vault/encrypted/verifying-deployment)
+- [Encryption & Key Management](../../docs/model-vault/encrypted/encryption-key-management)
+- [Compliance](../../docs/model-vault/encrypted/compliance)
+- [Using the API with an Encrypted Vault](../../docs/model-vault/encrypted/api-usage)
+- [Supported Models](../../docs/model-vault/encrypted/supported-models)
+- [Pricing](../../docs/model-vault/encrypted/pricing)
