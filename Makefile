@@ -1,15 +1,15 @@
 .PHONY: install build dev run stop
 
-PNPM10 := npx -y pnpm@10
+PNPM8 := npx -y pnpm@8
 NODE24 := npx -y node@24
 FERN_PGID_FILE := .fern-docs-dev.pgid
 
 install:
-	$(PNPM10) install --frozen-lockfile --filter .
+	$(PNPM8) install --frozen-lockfile --filter .
 
 build:
-	@$(PNPM10) run clean
-	$(PNPM10) install --frozen-lockfile --filter .
+	@$(PNPM8) run clean
+	$(PNPM8) install --frozen-lockfile --filter .
 
 stop:
 	@echo "Stopping Fern's next server..."
@@ -56,7 +56,7 @@ dev: stop build
 		echo $$pgid > "$(FERN_PGID_FILE)"; \
 				status=0; \
 		wait $$pid || status=$$?; \
-		if [ "$$status" -eq 130 ] || [ "$$status" -eq 143 ]; then \
+		if [ "$$status" -eq 130 ] || [ "$$status" -eq 143 ] || [ "$$status" -eq 137 ]; then \
 			exit 0; \
 		fi; \
 		exit "$$status"'
