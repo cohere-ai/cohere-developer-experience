@@ -23791,8 +23791,12 @@ components:
         content:
           type: string
           description: |
-            Block content. For text blocks this is the extracted text; for image blocks
-            this is the image annotation; for table blocks this is the table HTML.
+            Content for this block. For text blocks this is the extracted text (same
+            span as in `page.markdown`); for image blocks this is
+            `![<image_annotation>](<image_id>)`; for table blocks this is the table
+            HTML. When `table_format=html`, `page.markdown` uses a placeholder such as
+            `[tbl-0.html](tbl-0.html)` while this field and `page.tables[].content`
+            still carry the HTML.
         top_left_x:
           type: integer
           description: X coordinate of the top-left corner of the block bounding box.
@@ -23811,8 +23815,9 @@ components:
             `image`.
         table_id:
           type: string
-          description: ID of the corresponding entry in `page.tables` when `type` is
-            `table`.
+          description: |
+            ID of the corresponding entry in `page.tables` when `type` is `table` and
+            `table_format` extracted tables (for example `html`).
       x-fern-type-name: ParseBlock
     ParseImage:
       type: object
@@ -23824,7 +23829,7 @@ components:
         id:
           type: string
           description: Unique identifier for the image within the page (for example
-            `img-0`).
+            `img-0.jpeg`).
         image_annotation:
           type: string
           description: Model-generated description / annotation of the image.
@@ -23860,7 +23865,7 @@ components:
         id:
           type: string
           description: Unique identifier for the table within the page (for example
-            `tbl-0`).
+            `tbl-0.html`).
         format:
           type: string
           description: Serialization format of `content`.
@@ -23872,6 +23877,26 @@ components:
         title:
           type: string
           description: Optional table title when detected.
+        top_left_x:
+          type:
+            - integer
+            - "null"
+          description: X coordinate of the top-left corner of the table bounding box.
+        top_left_y:
+          type:
+            - integer
+            - "null"
+          description: Y coordinate of the top-left corner of the table bounding box.
+        bottom_right_x:
+          type:
+            - integer
+            - "null"
+          description: X coordinate of the bottom-right corner of the table bounding box.
+        bottom_right_y:
+          type:
+            - integer
+            - "null"
+          description: Y coordinate of the bottom-right corner of the table bounding box.
       x-fern-type-name: ParseTable
     ParsePage:
       type: object
@@ -23886,18 +23911,17 @@ components:
         markdown:
           type: string
           description: |
-            Page content as markdown. Image and table assets are referenced with
-            placeholders such as `![img-0](img-0)` and `[tbl-0](tbl-0)`.
-        raw_generation:
-          type: string
-          description: |
-            Unparsed model generation for this page. Only present when
-            `enable_debugging` was `true` in the request.
+            Page content as markdown. Images are embedded as
+            `![<image_annotation>](<image_id>)`. By default, tables are inlined as HTML.
+            When `table_format=html`, tables are replaced with placeholders such as
+            `[tbl-0.html](tbl-0.html)` that map to `tables`.
         blocks:
           type: array
           description: |
             Ordered content blocks with optional bounding boxes. Only present when
-            `include_blocks` was `true` in the request.
+            `include_blocks` was `true` in the request. Text and image block `content`
+            match the corresponding span in `markdown`. Table block `content` is the
+            table HTML (see `ParseBlock`).
           items:
             $ref: "#/components/schemas/ParseBlock"
         images:
@@ -23907,7 +23931,9 @@ components:
             $ref: "#/components/schemas/ParseImage"
         tables:
           type: array
-          description: Tables extracted from the page.
+          description: |
+            Tables extracted from the page. Only present when `table_format` is set
+            (for example `html`).
           items:
             $ref: "#/components/schemas/ParseTable"
       x-fern-type-name: ParsePage
