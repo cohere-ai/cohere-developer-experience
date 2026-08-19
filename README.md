@@ -28,7 +28,7 @@ We support the following SDKs which can be used to interact with the Cohere plat
 
 ## How to contribute to this repository
 
-We welcome contributions to this repository! Feel free to pull request any of the content you see and we will work with you to merge it. The OpenAPI sepcs and snippets are one-way synced from our internal repositories so we will need to take your changes and merge them behind the scenes.
+We welcome contributions to this repository! Feel free to pull request any of the content you see and we will work with you to merge it. The OpenAPI specs and snippets are one-way synced from our internal repositories so we will need to take your changes and merge them behind the scenes.
 
 ## Making local builds
 
