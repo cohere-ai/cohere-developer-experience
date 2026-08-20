@@ -22459,6 +22459,12 @@ components:
                 - public
               description: |
                 The number of billed classifications units.
+            pages:
+              type: number
+              x-fern-audiences:
+                - public
+              description: |
+                The number of billed pages parsed.
           x-fern-type-name: ApiMetaBilledUnits
         tokens:
           type: object
@@ -23771,171 +23777,276 @@ components:
             - image_url
         image_url:
           type: string
-          description: Image URL or base64 data URI to parse.
+          description: |
+            Image URL or base64 data URI to parse.
+
+            Limits:
+            - Maximum file size: 20 MB (compressed upload, download, or decoded
+              data-URI payload)
+            - Maximum decoded size: 50 megapixels or 200 MB decompressed
+              (whichever is exceeded first)
       x-fern-type-name: ParseDocument
-    ParseBlock:
-      type: object
+    ParseOutputFormat:
+      type: string
       description: |
-        A content block on a parsed page. Present when `include_blocks` is `true`.
+        Selects the page payload shape in the response. Defaults to `"markdown"`.
+
+        - `"markdown"`: each page includes markdown content. Tables are inlined as
+          HTML, and images are referenced as `![<description>](<image_id>)` with
+          matching entries in `page.markdown.images`.
+        - `"blocks"`: each page includes an ordered `blocks` array of text, image,
+          and table content regions, including bounding boxes where available.
+      enum:
+        - blocks
+        - markdown
+      default: markdown
+      x-fern-type-name: ParseOutputFormat
+    ParseTextBlock:
+      type: object
+      description: Payload for a text block.
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          description: Extracted text content.
+      x-fern-type-name: ParseTextBlock
+    ParseTextContentBlock:
+      type: object
+      description: A text content block.
       required:
         - type
-        - content
+        - text
       properties:
         type:
           type: string
-          description: Block kind.
           enum:
             - text
-            - image
-            - table
-        content:
-          type: string
-          description: |
-            Content for this block. For text blocks this is the extracted text (same
-            span as in `page.markdown`); for image blocks this is
-            `![<image_annotation>](<image_id>)`; for table blocks this is the table
-            HTML. When `table_format=html`, `page.markdown` uses a placeholder such as
-            `[tbl-0.html](tbl-0.html)` while this field and `page.tables[].content`
-            still carry the HTML.
+        text:
+          $ref: "#/components/schemas/ParseTextBlock"
+      x-fern-type-name: ParseTextContentBlock
+    ParseImageCategory:
+      type: string
+      description: Image element category.
+      enum:
+        - other
+        - flowchart
+        - logo
+        - signature
+      x-fern-type-name: ParseImageCategory
+    ParseBoundingBox:
+      type: object
+      description: A bounding box with pixel coordinates on the source document image.
+      required:
+        - top_left_x
+        - top_left_y
+        - bottom_right_x
+        - bottom_right_y
+      properties:
         top_left_x:
           type: integer
-          description: X coordinate of the top-left corner of the block bounding box.
+          description: X coordinate of the top-left corner.
         top_left_y:
           type: integer
-          description: Y coordinate of the top-left corner of the block bounding box.
+          description: Y coordinate of the top-left corner.
         bottom_right_x:
           type: integer
-          description: X coordinate of the bottom-right corner of the block bounding box.
+          description: X coordinate of the bottom-right corner.
         bottom_right_y:
           type: integer
-          description: Y coordinate of the bottom-right corner of the block bounding box.
-        image_id:
-          type: string
-          description: ID of the corresponding entry in `page.images` when `type` is
-            `image`.
-        table_id:
-          type: string
-          description: |
-            ID of the corresponding entry in `page.tables` when `type` is `table` and
-            `table_format` extracted tables (for example `html`).
-      x-fern-type-name: ParseBlock
-    ParseImage:
+          description: Y coordinate of the bottom-right corner.
+      x-fern-type-name: ParseBoundingBox
+    ParseBoundingBoxNormalized:
       type: object
-      description: Extracted image asset from a parsed page.
+      description: |
+        A bounding box with coordinates in [0, 1] relative to the source page (model
+        coordinates are thousandths of page width/height).
+      required:
+        - top_left_x
+        - top_left_y
+        - bottom_right_x
+        - bottom_right_y
+      properties:
+        top_left_x:
+          type: number
+          format: double
+          description: Normalized X coordinate of the top-left corner.
+        top_left_y:
+          type: number
+          format: double
+          description: Normalized Y coordinate of the top-left corner.
+        bottom_right_x:
+          type: number
+          format: double
+          description: Normalized X coordinate of the bottom-right corner.
+        bottom_right_y:
+          type: number
+          format: double
+          description: Normalized Y coordinate of the bottom-right corner.
+      x-fern-type-name: ParseBoundingBoxNormalized
+    ParseImageBlock:
+      type: object
+      description: Payload for an image block.
       required:
         - id
-        - image_annotation
+        - description
+        - category
+        - bounding_box
+        - bounding_box_normalized
       properties:
         id:
           type: string
           description: Unique identifier for the image within the page (for example
-            `img-0.jpeg`).
-        image_annotation:
+            `img-0`).
+        description:
           type: string
-          description: Model-generated description / annotation of the image.
-        top_left_x:
-          type:
-            - integer
-            - "null"
-          description: X coordinate of the top-left corner of the image bounding box.
-        top_left_y:
-          type:
-            - integer
-            - "null"
-          description: Y coordinate of the top-left corner of the image bounding box.
-        bottom_right_x:
-          type:
-            - integer
-            - "null"
-          description: X coordinate of the bottom-right corner of the image bounding box.
-        bottom_right_y:
-          type:
-            - integer
-            - "null"
-          description: Y coordinate of the bottom-right corner of the image bounding box.
-      x-fern-type-name: ParseImage
-    ParseTable:
+          description: Model-generated description of the image.
+        category:
+          $ref: "#/components/schemas/ParseImageCategory"
+        bounding_box:
+          $ref: "#/components/schemas/ParseBoundingBox"
+        bounding_box_normalized:
+          $ref: "#/components/schemas/ParseBoundingBoxNormalized"
+      x-fern-type-name: ParseImageBlock
+    ParseImageContentBlock:
       type: object
-      description: Extracted table asset from a parsed page.
+      description: An image content block.
       required:
-        - id
-        - format
-        - content
+        - type
+        - image
       properties:
-        id:
+        type:
           type: string
-          description: Unique identifier for the table within the page (for example
-            `tbl-0.html`).
-        format:
-          type: string
-          description: Serialization format of `content`.
           enum:
-            - html
-        content:
+            - image
+        image:
+          $ref: "#/components/schemas/ParseImageBlock"
+      x-fern-type-name: ParseImageContentBlock
+    ParseTableContentType:
+      type: string
+      description: Table serialization format.
+      enum:
+        - html
+      x-fern-type-name: ParseTableContentType
+    ParseTableBlock:
+      type: object
+      description: Payload for a table block.
+      required:
+        - type
+        - html
+        - bounding_box
+        - bounding_box_normalized
+      properties:
+        type:
+          $ref: "#/components/schemas/ParseTableContentType"
+        html:
           type: string
-          description: Table content in the format specified by `format`.
+          description: Table content as HTML.
         title:
           type: string
           description: Optional table title when detected.
-        top_left_x:
-          type:
-            - integer
-            - "null"
-          description: X coordinate of the top-left corner of the table bounding box.
-        top_left_y:
-          type:
-            - integer
-            - "null"
-          description: Y coordinate of the top-left corner of the table bounding box.
-        bottom_right_x:
-          type:
-            - integer
-            - "null"
-          description: X coordinate of the bottom-right corner of the table bounding box.
-        bottom_right_y:
-          type:
-            - integer
-            - "null"
-          description: Y coordinate of the bottom-right corner of the table bounding box.
-      x-fern-type-name: ParseTable
-    ParsePage:
+        description:
+          type: string
+          description: Optional table description when detected.
+        bounding_box:
+          $ref: "#/components/schemas/ParseBoundingBox"
+        bounding_box_normalized:
+          $ref: "#/components/schemas/ParseBoundingBoxNormalized"
+      x-fern-type-name: ParseTableBlock
+    ParseTableContentBlock:
       type: object
-      description: A single parsed page.
+      description: A table content block.
+      required:
+        - type
+        - table
+      properties:
+        type:
+          type: string
+          enum:
+            - table
+        table:
+          $ref: "#/components/schemas/ParseTableBlock"
+      x-fern-type-name: ParseTableContentBlock
+    ParseBlock:
+      description: A content block on a parsed page.
+      oneOf:
+        - $ref: "#/components/schemas/ParseTextContentBlock"
+        - $ref: "#/components/schemas/ParseImageContentBlock"
+        - $ref: "#/components/schemas/ParseTableContentBlock"
+      discriminator:
+        propertyName: type
+        mapping:
+          text: "#/components/schemas/ParseTextContentBlock"
+          image: "#/components/schemas/ParseImageContentBlock"
+          table: "#/components/schemas/ParseTableContentBlock"
+      x-fern-type-name: ParseBlock
+    ParseBlocksPageVariant:
+      type: object
+      description: A parsed page with structured content blocks.
       required:
         - index
+        - type
+        - blocks
+      properties:
+        index:
+          type: integer
+          description: Zero-based page index.
+        type:
+          type: string
+          enum:
+            - blocks
+        blocks:
+          type: array
+          description: Ordered content blocks extracted from the page.
+          items:
+            $ref: "#/components/schemas/ParseBlock"
+      x-fern-type-name: ParseBlocksPageVariant
+    ParseMarkdownPage:
+      type: object
+      description: Markdown output payload for a parsed page.
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          description: |
+            Page content as markdown. Images are embedded as
+            `![<description>](<image_id>)`. Tables are inlined as HTML.
+        images:
+          type: array
+          description: Image metadata referenced from `content`.
+          items:
+            $ref: "#/components/schemas/ParseImageBlock"
+      x-fern-type-name: ParseMarkdownPage
+    ParseMarkdownPageVariant:
+      type: object
+      description: A parsed page with markdown content.
+      required:
+        - index
+        - type
         - markdown
       properties:
         index:
           type: integer
           description: Zero-based page index.
-        markdown:
+        type:
           type: string
-          description: |
-            Page content as markdown. Images are embedded as
-            `![<image_annotation>](<image_id>)`. By default, tables are inlined as HTML.
-            When `table_format=html`, tables are replaced with placeholders such as
-            `[tbl-0.html](tbl-0.html)` that map to `tables`.
-        blocks:
-          type: array
-          description: |
-            Ordered content blocks with optional bounding boxes. Only present when
-            `include_blocks` was `true` in the request. Text and image block `content`
-            match the corresponding span in `markdown`. Table block `content` is the
-            table HTML (see `ParseBlock`).
-          items:
-            $ref: "#/components/schemas/ParseBlock"
-        images:
-          type: array
-          description: Images extracted from the page.
-          items:
-            $ref: "#/components/schemas/ParseImage"
-        tables:
-          type: array
-          description: |
-            Tables extracted from the page. Only present when `table_format` is set
-            (for example `html`).
-          items:
-            $ref: "#/components/schemas/ParseTable"
+          enum:
+            - markdown
+        markdown:
+          $ref: "#/components/schemas/ParseMarkdownPage"
+      x-fern-type-name: ParseMarkdownPageVariant
+    ParsePage:
+      description: A single parsed page. The payload shape depends on `output_format`.
+      oneOf:
+        - $ref: "#/components/schemas/ParseBlocksPageVariant"
+        - $ref: "#/components/schemas/ParseMarkdownPageVariant"
+      discriminator:
+        propertyName: type
+        mapping:
+          blocks: "#/components/schemas/ParseBlocksPageVariant"
+          markdown: "#/components/schemas/ParseMarkdownPageVariant"
+          raw_generation: "#/components/schemas/ParseRawGenerationPageVariant"
       x-fern-type-name: ParsePage
     ParseResponse:
       type: object
