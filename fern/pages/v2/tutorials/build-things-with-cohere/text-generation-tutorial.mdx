@@ -44,8 +44,6 @@ co = cohere.ClientV2(api_key="COHERE_API_KEY")
 
 To get started with Chat, we need to pass two parameters, `model` for the LLM model ID and `messages`, which we add a single user message. We then call the Chat endpoint through the client we created earlier.
 
-The response contains several objects. For simplicity, what we want right now is the `message.content[0].text` object.
-
 Here's an example of the assistant responding to a new hire's query asking for help to make introductions.
 
 
@@ -60,7 +58,11 @@ response = co.chat(
 )
 #    messages=[cohere.UserMessage(content=message)])
 
-print(response.message.content[0].text)
+for content_item in response.message.content:
+    if content_item.type == "thinking":
+        print("thinking:", content_item.thinking)
+    if content_item.type == "text":
+        print("text:", content_item.text)
 ```
 
 ```
@@ -103,7 +105,11 @@ response = co.chat(
 )
 #    messages=[cohere.UserMessage(content=message)])
 
-print(response.message.content[0].text)
+for content_item in response.message.content:
+    if content_item.type == "thinking":
+        print("thinking:", content_item.thinking)
+    if content_item.type == "text":
+        print("text:", content_item.text)
 ```
 
 ```
@@ -144,7 +150,11 @@ response = co.chat(
     messages=[{"role": "user", "content": message}],
 )
 
-print(response.message.content[0].text)
+for content_item in response.message.content:
+    if content_item.type == "thinking":
+        print("thinking:", content_item.thinking)
+    if content_item.type == "text":
+        print("text:", content_item.text)
 ```
 
 ```
@@ -173,7 +183,11 @@ response = co.chat(
     messages=[{"role": "user", "content": message}],
 )
 
-print(response.message.content[0].text)
+for content_item in response.message.content:
+    if content_item.type == "thinking":
+        print("thinking:", content_item.thinking)
+    if content_item.type == "text":
+        print("text:", content_item.text)
 ```
 
 ```
@@ -201,7 +215,9 @@ for idx in range(3):
         temperature=0,
     )
 
-    print(f"{idx+1}: {response.message.content[0].text}\n")
+    for content_item in response.message.content:
+        if content_item.type == "text":
+            print(f"{idx+1}: {content_item.text}\n")
 ```
 
 ```
@@ -228,7 +244,9 @@ for idx in range(3):
         temperature=1,
     )
 
-    print(f"{idx+1}: {response.message.content[0].text}\n")
+    for content_item in response.message.content:
+        if content_item.type == "text":
+            print(f"{idx+1}: {content_item.text}\n")
 ```
 
 ```
@@ -293,7 +311,10 @@ response = co.chat(
     },
 )
 
-json_object = json.loads(response.message.content[0].text)
+for content_item in response.message.content:
+    if content_item.type == "text":
+        json_object = json.loads(content_item.text)
+        break
 
 print(json_object)
 ```
