@@ -13,6 +13,7 @@ Large Language Models (LLMs) excel at generating text and maintaining conversati
 Retrieval-augmented generation (RAG) addresses this limitation by enabling LLMs to incorporate external knowledge sources into their response generation process. By grounding responses in retrieved facts, RAG significantly reduces hallucinations and improves the accuracy and reliability of the model's outputs.
 
 In this tutorial, we'll cover:
+
 - Setting up the Cohere client
 - Building a RAG application by combining retrieval and chat capabilities
 - Managing chat history and maintaining conversational context
@@ -288,6 +289,7 @@ With the Vectorstore set up, we can process the documents, which will involve ch
 # Create an instance of the Vectorstore class with the given sources
 vectorstore = Vectorstore(raw_documents)
 ```
+
 ```mdx
 Loading documents...
 Embedding document chunks...
@@ -320,6 +322,7 @@ vectorstore.retrieve("Prompting by giving examples")
 We can now run the chatbot. For this, we create a `run_chatbot` function that accepts the user message and the history of the conversation, if any.
 
 Here's what happens inside the function:
+
 - For each user message, we use the Chat endpoint’s search query generation feature to turn the user message into one or more queries that are optimized for retrieval. The endpoint can even return no query, meaning a user message can be responded to directly without retrieval. This is done by calling the Chat endpoint with the `search_queries_only` parameter and setting it as `True`.
 - If no search query is generated, we call the Chat endpoint to generate a response directly. If there is at least one, we call the `retrieve` method from the `Vectorstore` instance to retrieve the most relevant documents to each query.
 - Finally, all the results from all queries are appended to a list and passed to the Chat endpoint for response generation.
@@ -402,6 +405,7 @@ chat_history = run_chatbot(
     chat_history,
 )
 ```
+
 ```
 Retrieving information...
 RESPONSE:
@@ -426,6 +430,7 @@ chat_history = run_chatbot(
     "What do you know about 5G networks?", chat_history
 )
 ```
+
 ```mdx
 Retrieving information...
 RESPONSE:
@@ -439,6 +444,7 @@ print("Chat history:")
 for c in chat_history:
     print(c, "\n")
 ```
+
 ```mdx
 Chat history:
 role='USER' message='Hello, I have a question' tool_calls=None 
@@ -466,6 +472,7 @@ There are a few observations worth pointing out:
 ## Conclusion
 
 In this tutorial, we learned about:
+
 - How to set up the Cohere client to use the Command model deployed on Azure AI Foundry for chat
 - How to build a RAG application by combining retrieval and chat capabilities
 - How to manage chat history and maintain conversational context

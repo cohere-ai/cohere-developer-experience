@@ -16,11 +16,11 @@ Cohere's connector parameter was deprecated on September 15, 2025. For informati
 
 Here, we'll address some common issues that users have encountered while implementing connectors, along with some solutions. This information should help you get started using connectors to customize your application of Cohere's language models.
 
-#### How can I stop the connector from returning duplicates?
+## How can I stop the connector from returning duplicates?
 
 If you're finding a lot of duplicates in the results returned by your model, try deduplicating either the datastore or the retrieved response in the connector. Either can improve the quality of your results.
 
-#### Why don't the documents returned from a connector seem intuitively correct or reasonable?
+## Why don't the documents returned from a connector seem intuitively correct or reasonable?
 
 There are a couple of reasons you might be getting results that seem unintuitive or vaguely "off" somehow. Here a few things you can try to resolve this problem:
 
@@ -31,17 +31,17 @@ There are a couple of reasons you might be getting results that seem unintuitive
 - Check that the field `prompt_truncation` is set to `AUTO`.
 - Consider a different search implementation, or reduce the store only to include documents relevant to a particular subject. If the data store contains a large volume of information the model can struggle to find the right answer, and thinning out its contents can help.
 
-#### Do I need multiple connectors per data source if each connector won’t get much traffic?
+## Do I need multiple connectors per data source if each connector won’t get much traffic?
 
 You don’t need multiple connectors if none of them is getting much traffic. If you have multiple `Elasticsearch` indices, for example, you can nest them behind a single Elasticsearch connector and handle any routing with query parameters.
 
 In this case, each route would be treated as a separate connector being served by one unified "connector interface", allowing more efficient use of your infrastructure.
 
-#### The connector accesses documents which are all individual sentences, how can I boost the quality of grounded responses?
+## The connector accesses documents which are all individual sentences, how can I boost the quality of grounded responses?
 
 If you're working with many single-sentence documents don’t pre-chunk them into tiny pieces, because too much information is lost this way.
 
-#### How can I speed up the connector or stop it from timing out?
+## How can I speed up the connector or stop it from timing out?
 
 Should you find yourself facing connector latency issues, there are a few things you can try:
 
@@ -49,25 +49,25 @@ Should you find yourself facing connector latency issues, there are a few things
 - Ensure your underlying data source is responding in a reasonable amount of time by looking at query statistics in the data source or by profiling the connector.
 - If you’re hosting your connector on something like AWS Lambda or Cloud Run, be aware of issues that can arise from [cold start times](https://docs.aws.amazon.com/lambda/latest/operatorguide/execution-environments.html).
 
-#### How can I stop the connector from returning too many or too few documents, or returning completely irrelevant documents?
+## How can I stop the connector from returning too many or too few documents, or returning completely irrelevant documents?
 
 If your connector is returning vast numbers of trivial documents, it may be that the underlying search API is matching on "stopwords". These are low-information words like "the" or "and" which are routinely removed before natural language tasks, and you can modify the search query to get rid of them with a library like NLTK. Here's an example:
 
 - ```python PYTHON
-  from nltk.corpus import stopwords	  
+  from nltk.corpus import stopwords   
   stop_words = set(stopwords.words("english"))  
   query = [word for word in query if word.lower() not in stop_words]
   ```
 
-#### The connector is returning API binary files, and has to parse them into structured pdf, csv, doc, etc. formats. How can I deal with that?
+## The connector is returning API binary files, and has to parse them into structured pdf, csv, doc, etc. formats. How can I deal with that?
 
 If you're running into problems with binary files, consider using a service like [Unstructured](https://unstructured.io/) to parse the binary into structured data.
 
-#### What do I do if the connector is timing out or needs to do repeated computation for the same API call?
+## What do I do if the connector is timing out or needs to do repeated computation for the same API call?
 
 Try adding a caching layer on top of the connector to increase the query's average performance.
 
-#### What do I do if the connector cannot be reached, or is otherwise having network issues?
+## What do I do if the connector cannot be reached, or is otherwise having network issues?
 
 Check that the connector is hosted under a public address (not hiding behind firewall rules), is hosted under a permitted port (80 or 443), and does not have query parameters.
 

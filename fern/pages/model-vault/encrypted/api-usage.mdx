@@ -1,0 +1,219 @@
+---
+title: Calling an Encrypted Vault over the API
+slug: "docs/model-vault/encrypted/api-usage"
+
+hidden: false
+description: "Call an Encrypted Vault through the Cohere OHTTP proxy that verifies the TEE and encrypts end to end before any data is sent."
+keywords: "encrypted vault, model vault encrypted, api, attestation, OHTTP, Cohere OHTTP proxy, verify before send, cohere sdk, openai compatible"
+---
+
+An Encrypted Vault uses the same endpoints and the same request and response shapes as a
+[Standard Vault](../../../docs/model-vault/standard/api-access): the same chat, embed, and rerank calls. The
+one critical difference is that you **cannot call the vault endpoint directly**. Traffic must go
+through the **Cohere OHTTP proxy**, a client-side confidential-computing component that runs in
+your environment and, before any data leaves it, **verifies the deployment's
+[remote attestation](../../../docs/model-vault/encrypted/attestation) and encrypts your request end to end**,
+refusing the connection if verification does not pass.
+
+## Two ways to connect through the Cohere OHTTP proxy
+
+The Cohere OHTTP proxy comes in two forms, and which one you use determines which clients you can use:
+
+| Form | What it is | Clients you can use |
+| --- | --- | --- |
+| **Standalone Cohere OHTTP proxy** | A standalone local proxy container you run; it verifies attestation and handles OHTTP transparently | Cohere SDK, raw HTTP, **or** OpenAI-compatible (point any of them at the local proxy) |
+| **Cohere Python OHTTP wrapper (conseel)** | A Python package that verifies attestation and handles OHTTP by wrapping httpx-based communication | Cohere SDK, OpenAI SDK, other httpx-based Python SDKs |
+
+In all cases, the Cohere OHTTP proxy does the same two things on your behalf:
+
+- **Verifies attestation**: it fetches the environment's attestation token and OHTTP public key, confirms the token was genuinely signed by Intel Trust Authority, checks that the attested measurements match the approved policy, and confirms the OHTTP key is bound to that attested environment.
+- **Encrypts end to end**: it encrypts every request to the attested environment using OHTTP and decrypts the response, so the load balancer and network only ever see ciphertext.
+
+## Option 1: Cohere OHTTP proxy with any client
+
+Run the Cohere OHTTP proxy container locally, then point **any** client at the local proxy address instead 
+of the vault endpoint. The proxy verifies attestation and encrypts all traffic to the attested environment,
+so from your client's perspective the call looks like an ordinary plaintext request to a local address. This
+means any clients producing HTTP Cohere/OpenAI API requests work without changes. 
+
+
+Run the container using a container platform such as Docker:
+
+```bash BASH
+docker run -it --rm \
+  -p 127.0.0.1:8080:8080 \
+  -e IN_HOST=0.0.0.0 -e IN_PORT=8080 \
+  -e TARGET_URL=<YOUR_VAULT_ENDPOINT_URL> \
+  ghcr.io/cohere-ai/tng-ingress:latest
+```
+
+The `latest` tag always points at the current release. In production, pin a specific version (for
+example `ghcr.io/cohere-ai/tng-ingress:0.6.0`) so proxy updates only land when you choose them.
+
+Then use the Cohere SDK via the proxy:
+
+```python PYTHON
+import cohere
+
+# Point the SDK at the local Cohere OHTTP proxy instead of the vault endpoint.
+co = cohere.ClientV2(
+    api_key="<COHERE_API_KEY>",
+    base_url="<LOCAL_OHTTP_PROXY_URL>",
+)
+
+response = co.chat(
+    model="<YOUR_VAULT_MODEL_NAME>",
+    messages=[
+        {"role": "user", "content": "Hello to an encrypted vault!"}
+    ],
+)
+
+print(response.message.content[0].text)
+```
+
+Make a raw HTTP request via the proxy:
+
+```bash cURL
+curl "<LOCAL_OHTTP_PROXY_URL>/v2/chat" \
+  -H "Authorization: Bearer <COHERE_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "<YOUR_VAULT_MODEL_NAME>",
+    "messages": [{"role": "user", "content": "Hello to an encrypted vault!"}]
+  }'
+```
+
+Use OpenAI-compatible client via the proxy:
+
+```python PYTHON
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="<COHERE_API_KEY>",
+    base_url="<LOCAL_OHTTP_PROXY_URL>/v1",
+)
+
+response = client.chat.completions.create(
+    model="<YOUR_VAULT_MODEL_NAME>",
+    messages=[
+        {"role": "user", "content": "Hello to an encrypted vault!"}
+    ],
+)
+
+print(response.choices[0].message.content)
+```
+
+<Note>
+Embed and Rerank calls work the same way through the Cohere OHTTP proxy: keep the client or proxy in place and call
+`co.embed(...)` or `co.rerank(...)` (or the corresponding HTTP/OpenAI-compatible endpoints) with your
+vault's model name.
+</Note>
+
+
+
+## Option 2: Cohere Python OHTTP Wrapper
+
+Use our 'conseel' package to replace the transport layer in any httpx-based Python SDK with
+one that verifies attestation and encrypts all traffic to the attested environment. Besides the
+change in client construction, the SDK usage remains unchanged from a standard vault.
+
+Install package via PyPI (for x86/ARM machines running Linux/Mac):
+
+```
+pip install conseel
+```
+
+Use with Cohere SDK:
+
+```python PYTHON
+import cohere
+import httpx
+from conseel import Transport
+
+co = cohere.ClientV2(
+    api_key="<COHERE_API_KEY>",
+    base_url="<YOUR_VAULT_ENDPOINT_URL>",
+    httpx_client=httpx.Client(transport=Transport()),
+)
+
+response = co.chat(
+    model="<YOUR_VAULT_MODEL_NAME>",
+    messages=[
+        {"role": "user", "content": "Hello to an encrypted vault!"}
+    ],
+)
+
+print(response.message.content[0].text)
+```
+
+Use with other httpx-based clients such as the OpenAI SDK:
+
+```python PYTHON
+import openai
+import httpx
+from conseel import Transport
+
+client = openai.OpenAI(
+    api_key="<COHERE_API_KEY>",
+    base_url="<YOUR_VAULT_ENDPOINT_URL>/v1",
+    httpx_client=httpx.Client(transport=Transport()),
+)
+
+response = client.chat.completions.create(
+    model="<YOUR_VAULT_MODEL_NAME>",
+    messages=[
+        {"role": "user", "content": "Hello to an encrypted vault!"}
+    ],
+)
+
+print(response.choices[0].message.content)
+```
+
+## Verifying before send
+
+The Cohere OHTTP proxy enforces a strict order: **no plaintext leaves your environment until attestation passes.**
+On each session it confirms the environment is genuine confidential-VM CPU and NVIDIA GPU hardware, that debug
+modes are off, that firmware and code measurements match the approved policy, and that the encryption
+key belongs to that environment. Only then does it encrypt and send your request. Attestation tokens
+are short-lived and refreshed periodically, so the guarantee reflects the environment's current state.
+
+Verification is not limited to setup time: With the Cohere Python OHTTP wrapper (conseel), every inference response 
+includes an attestation certificate (under the `x-tng-attestation-token` header) that your client can check programmatically,
+so you can inspect proof of the policy, CPU, GPU, and software for the environment that served each response.
+
+For the full list of what is checked and how to inspect it, see
+[Verifying Your Deployment](../../../docs/model-vault/encrypted/verifying-deployment).
+
+## Handling attestation failures
+
+If verification fails, the Cohere OHTTP proxy **refuses the connection**: it does not send your request, so your data is never
+exposed to an unverified environment. Common causes include an invalid token signature, a policy that
+did not match (the measured software differs from the approved stack), an expired token, or an
+encryption key that is not bound to the attested environment.
+
+When this happens, confirm the vault's status in the Model Vault app, and if it
+consistently fails verification, contact Cohere support. See
+[Verifying Your Deployment](../../../docs/model-vault/encrypted/verifying-deployment) for what each failure
+means.
+
+## Hosted Cohere OHTTP proxy for demos
+
+Cohere also offers a hosted OHTTP proxy that allows you to interact with an encrypted vault as though
+it were a standard vault, without running any of the client-side options described above. This option
+is intended strictly for demo purposes, as it changes the security model by requiring you to trust
+Cohere with the proxy layer. To use the hosted OHTTP proxy, send requests to the encrypted vault as you
+would a standard vault and include the following header with all requests:
+
+```
+"X-Cohere-Demo-Encrypt": "1"
+```
+
+<Note>
+For security reasons, the hosted OHTTP proxy is disabled by default. Please reach out to us to enable it for your vault.
+</Note>
+
+## Related pages
+
+- [Calling a Standard Vault over the API](../../../docs/model-vault/standard/api-access)
+- [Remote Attestation](../../../docs/model-vault/encrypted/attestation)
+- [Verifying Your Deployment](../../../docs/model-vault/encrypted/verifying-deployment)

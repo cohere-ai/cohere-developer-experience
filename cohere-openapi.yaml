@@ -280,7 +280,7 @@ paths:
                 asyncio.run(main())
             - sdk: curl
               name: Default
-              code: |-
+              code: |
                 curl --request POST \
                   --url https://api.cohere.com/v1/chat \
                   --header 'accept: application/json' \
@@ -664,7 +664,7 @@ paths:
                 print(response)
             - sdk: curl
               name: Documents
-              code: >-
+              code: >
                 curl --request POST \
                   --url https://api.cohere.com/v1/chat \
                   --header 'accept: application/json' \
@@ -1088,7 +1088,7 @@ paths:
                         print(event.text, end="")
             - sdk: curl
               name: Streaming
-              code: |-
+              code: |
                 curl --request POST \
                   --url https://api.cohere.com/v1/chat \
                   --header 'accept: application/json' \
@@ -2747,7 +2747,7 @@ paths:
                 }
             - sdk: curl
               name: Documents
-              code: >-
+              code: >
                 curl --request POST \
                   --url https://api.cohere.com/v2/chat \
                   --header 'accept: application/json' \
@@ -6938,6 +6938,456 @@ paths:
                       tokens:
                         input_tokens: 499
                         output_tokens: 105
+  /v2/parse:
+    post:
+      summary: Parse API (v2)
+      operationId: parsev2
+      x-fern-audiences:
+        - v2-beta
+      x-fern-sdk-group-name: v2
+      x-fern-sdk-method-name: parse
+      description: |
+        Parse a document image into structured output. Use `output_format` to select
+        blocks or markdown (default).
+
+        Currently supports `document.type = image_url` only (data URI or remote http(s)
+        image URL). PDF / file URL inputs are not yet supported.
+
+        Image limits: 20 MB file size; 50 megapixels or 200 MB decoded (whichever is
+        exceeded first).
+      parameters:
+        - $ref: "#/components/parameters/RequestSource"
+      x-fern-examples:
+        - code-samples:
+            - sdk: go
+              name: Markdown
+              code: >
+                //go:build ignore
+
+                // +build ignore
+
+
+                package main
+
+
+                import (
+                	"context"
+                	"log"
+                	"os"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	"github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
+
+                	resp, err := co.V2.Parse(
+                		context.TODO(),
+                		&cohere.ParseRequest{
+                			Model: "parse-v5.0",
+                			Document: &cohere.ParseDocument{
+                				ImageUrl: "https://cohere.com/favicon-32x32.png",
+                			},
+                			OutputFormat: cohere.ParseOutputFormatMarkdown.Ptr(),
+                		},
+                	)
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	log.Printf("%+v", resp)
+                }
+            - sdk: typescript
+              name: Markdown
+              code: |
+                import { CohereClient } from 'cohere-ai';
+
+                const cohere = new CohereClient({});
+
+                (async () => {
+                  const response = await cohere.v2.parse({
+                    model: 'parse-v5.0',
+                    document: {
+                      type: 'image_url',
+                      imageUrl: 'https://cohere.com/favicon-32x32.png',
+                    },
+                    outputFormat: 'markdown',
+                  });
+                  console.log(response);
+                })();
+            - sdk: python
+              name: Markdown
+              code: |
+                import cohere
+
+                co = cohere.ClientV2()
+
+                response = co.parse(
+                    model="parse-v5.0",
+                    document={
+                        "type": "image_url",
+                        "image_url": "https://cohere.com/favicon-32x32.png",
+                    },
+                    output_format="markdown",
+                )
+
+                print(response)
+            - sdk: python
+              name: Markdown (async)
+              code: |
+                import asyncio
+
+                import cohere
+
+                co = cohere.AsyncClientV2()
+
+
+                async def main():
+                    response = await co.parse(
+                        model="parse-v5.0",
+                        document={
+                            "type": "image_url",
+                            "image_url": "https://cohere.com/favicon-32x32.png",
+                        },
+                        output_format="markdown",
+                    )
+                    print(response)
+
+
+                asyncio.run(main())
+            - sdk: java
+              name: Markdown
+              code: >
+                package parsev2post; /* (C)2024 */
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.resources.v2.requests.ParseRequest;
+
+                import com.cohere.api.types.ParseDocument;
+
+                import com.cohere.api.types.ParseOutputFormat;
+
+                import com.cohere.api.types.ParseResponse;
+
+
+                public class Markdown {
+                  public static void main(String[] args) {
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
+
+                    ParseResponse response =
+                        cohere
+                            .v2()
+                            .parse(
+                                ParseRequest.builder()
+                                    .model("parse-v5.0")
+                                    .document(
+                                        ParseDocument.builder()
+                                            .imageUrl("https://cohere.com/favicon-32x32.png")
+                                            .build())
+                                    .outputFormat(ParseOutputFormat.MARKDOWN)
+                                    .build());
+
+                    System.out.println(response);
+                  }
+                }
+            - sdk: curl
+              name: Markdown
+              code: |
+                curl --request POST \
+                  --url https://api.cohere.com/v2/parse \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY" \
+                  --data '{
+                    "model": "parse-v5.0",
+                    "document": {
+                      "type": "image_url",
+                      "image_url": "https://cohere.com/favicon-32x32.png"
+                    },
+                    "output_format": "markdown"
+                  }'
+          request:
+            model: parse-v5.0
+            document:
+              type: image_url
+              image_url: https://cohere.com/favicon-32x32.png
+            output_format: markdown
+          response:
+            body:
+              id: 8f2a1c3e-4b5d-6e7f-8091-a2b3c4d5e6f7
+              pages:
+                - index: 0
+                  type: markdown
+                  markdown:
+                    content: |
+                      # Sample Document
+
+                      Cohere builds AI that understands language.
+
+                      ![Company logo](img-0)
+                    images:
+                      - id: img-0
+                        description: Company logo
+                        category: logo
+                        bounding_box:
+                          top_left_x: 12
+                          top_left_y: 8
+                          bottom_right_x: 48
+                          bottom_right_y: 44
+                        bounding_box_normalized:
+                          top_left_x: 0.04
+                          top_left_y: 0.03
+                          bottom_right_x: 0.15
+                          bottom_right_y: 0.14
+              meta:
+                api_version:
+                  version: '2'
+                billed_units:
+                  pages: 1
+        - code-samples:
+            - sdk: go
+              name: Blocks
+              code: >
+                //go:build ignore
+
+                // +build ignore
+
+
+                package main
+
+
+                import (
+                	"context"
+                	"log"
+                	"os"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	"github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
+
+                	resp, err := co.V2.Parse(
+                		context.TODO(),
+                		&cohere.ParseRequest{
+                			Model: "parse-v5.0",
+                			Document: &cohere.ParseDocument{
+                				ImageUrl: "https://cohere.com/favicon-32x32.png",
+                			},
+                			OutputFormat: cohere.ParseOutputFormatBlocks.Ptr(),
+                		},
+                	)
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	log.Printf("%+v", resp)
+                }
+            - sdk: typescript
+              name: Blocks
+              code: |
+                import { CohereClient } from 'cohere-ai';
+
+                const cohere = new CohereClient({});
+
+                (async () => {
+                  const response = await cohere.v2.parse({
+                    model: 'parse-v5.0',
+                    document: {
+                      type: 'image_url',
+                      imageUrl: 'https://cohere.com/favicon-32x32.png',
+                    },
+                    outputFormat: 'blocks',
+                  });
+                  console.log(response);
+                })();
+            - sdk: python
+              name: Blocks
+              code: |
+                import cohere
+
+                co = cohere.ClientV2()
+
+                response = co.parse(
+                    model="parse-v5.0",
+                    document={
+                        "type": "image_url",
+                        "image_url": "https://cohere.com/favicon-32x32.png",
+                    },
+                    output_format="blocks",
+                )
+
+                print(response)
+            - sdk: python
+              name: Blocks (async)
+              code: |
+                import asyncio
+
+                import cohere
+
+                co = cohere.AsyncClientV2()
+
+
+                async def main():
+                    response = await co.parse(
+                        model="parse-v5.0",
+                        document={
+                            "type": "image_url",
+                            "image_url": "https://cohere.com/favicon-32x32.png",
+                        },
+                        output_format="blocks",
+                    )
+                    print(response)
+
+
+                asyncio.run(main())
+            - sdk: java
+              name: Blocks
+              code: >
+                package parsev2post; /* (C)2024 */
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.resources.v2.requests.ParseRequest;
+
+                import com.cohere.api.types.ParseDocument;
+
+                import com.cohere.api.types.ParseOutputFormat;
+
+                import com.cohere.api.types.ParseResponse;
+
+
+                public class Blocks {
+                  public static void main(String[] args) {
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
+
+                    ParseResponse response =
+                        cohere
+                            .v2()
+                            .parse(
+                                ParseRequest.builder()
+                                    .model("parse-v5.0")
+                                    .document(
+                                        ParseDocument.builder()
+                                            .imageUrl("https://cohere.com/favicon-32x32.png")
+                                            .build())
+                                    .outputFormat(ParseOutputFormat.BLOCKS)
+                                    .build());
+
+                    System.out.println(response);
+                  }
+                }
+            - sdk: curl
+              name: Blocks
+              code: |
+                curl --request POST \
+                  --url https://api.cohere.com/v2/parse \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY" \
+                  --data '{
+                    "model": "parse-v5.0",
+                    "document": {
+                      "type": "image_url",
+                      "image_url": "https://cohere.com/favicon-32x32.png"
+                    },
+                    "output_format": "blocks"
+                  }'
+          request:
+            model: parse-v5.0
+            document:
+              type: image_url
+              image_url: https://cohere.com/favicon-32x32.png
+            output_format: blocks
+          response:
+            body:
+              id: 1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809
+              pages:
+                - index: 0
+                  type: blocks
+                  blocks:
+                    - type: text
+                      text:
+                        content: '# Sample Document'
+                    - type: text
+                      text:
+                        content: Cohere builds AI that understands language.
+                    - type: image
+                      image:
+                        id: img-0
+                        description: Company logo
+                        category: logo
+                        bounding_box:
+                          top_left_x: 12
+                          top_left_y: 8
+                          bottom_right_x: 48
+                          bottom_right_y: 44
+                        bounding_box_normalized:
+                          top_left_x: 0.04
+                          top_left_y: 0.03
+                          bottom_right_x: 0.15
+                          bottom_right_y: 0.14
+              meta:
+                api_version:
+                  version: '2'
+                billed_units:
+                  pages: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - model
+                - document
+              properties:
+                model:
+                  type: string
+                  description: The name of a compatible Cohere parse model.
+                document:
+                  $ref: "#/components/schemas/ParseDocument"
+                output_format:
+                  $ref: "#/components/schemas/ParseOutputFormat"
+              x-fern-type-name: ParseRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParseResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "429":
+          $ref: "#/components/responses/RateLimit"
+        "498":
+          $ref: "#/components/responses/InvalidToken"
+        "499":
+          $ref: "#/components/responses/RequestCancelled"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
   /v1/generate:
     post:
       deprecated: true
@@ -7120,7 +7570,7 @@ paths:
                 }
             - sdk: curl
               name: cURL
-              code: |-
+              code: |
                 curl --request POST \
                   --url https://api.cohere.com/v1/generate \
                   --header 'accept: application/json' \
@@ -15067,7 +15517,7 @@ paths:
                 }
             - sdk: curl
               name: Default
-              code: |-
+              code: |
                 curl --request GET \
                   --url https://api.cohere.com/v2/batches \
                   --header 'accept: application/json' \
@@ -15232,7 +15682,7 @@ paths:
                 }
             - sdk: curl
               name: Default
-              code: |-
+              code: |
                 curl --request POST \
                   --url https://api.cohere.com/v2/batches/v2/batches \
                   --header 'accept: application/json' \
@@ -15390,9 +15840,9 @@ paths:
                 }
             - sdk: curl
               name: Default
-              code: |-
+              code: |
                 curl --request GET \
-                  --url https://api.cohere.com/v2/batches/<batch_job_id> \
+                  --url 'https://api.cohere.com/v2/batches/<batch_job_id>' \
                   --header 'accept: application/json' \
                   --header "Authorization: Bearer $CO_API_KEY"
   "/v2/batches/{id}:cancel":
@@ -15521,9 +15971,9 @@ paths:
                 }
             - sdk: curl
               name: Default
-              code: >-
+              code: >
                 curl --request POST \
-                  --url https://api.cohere.com/v2/batches/<batch_job_id>:cancel \
+                  --url 'https://api.cohere.com/v2/batches/<batch_job_id>:cancel' \
                   --header "Authorization: Bearer $CO_API_KEY"
   /v1/embed-jobs:
     post:
@@ -15816,7 +16266,7 @@ paths:
                 })();
             - sdk: curl
               name: cURL
-              code: |-
+              code: |
                 curl --request GET \
                   --url https://api.cohere.com/v1/embed-jobs \
                   --header 'accept: application/json' \
@@ -15965,7 +16415,7 @@ paths:
                 })();
             - sdk: curl
               name: cURL
-              code: |-
+              code: |
                 curl --request GET \
                   --url https://api.cohere.com/v1/embed-jobs/id \
                   --header 'accept: application/json' \
@@ -16102,7 +16552,7 @@ paths:
                 })();
             - sdk: curl
               name: cURL
-              code: |-
+              code: |
                 curl --request POST \
                   --url https://api.cohere.com/v1/embed-jobs/id/cancel \
                   --header 'accept: application/json' \
@@ -16513,7 +16963,7 @@ paths:
                 }
             - sdk: curl
               name: cURL
-              code: >-
+              code: >
                 curl --request POST \
                   --url https://api.cohere.com/v1/rerank \
                   --header 'accept: application/json' \
@@ -16842,7 +17292,7 @@ paths:
                 }
             - sdk: curl
               name: cURL
-              code: >-
+              code: >
                 curl --request POST \
                   --url https://api.cohere.com/v2/rerank \
                   --header 'accept: application/json' \
@@ -17131,7 +17581,7 @@ paths:
                 }
             - sdk: curl
               name: cURL
-              code: >-
+              code: >
                 curl --request POST \
                   --url https://api.cohere.com/v1/classify \
                   --header 'accept: application/json' \
@@ -17689,7 +18139,7 @@ paths:
                 })();
             - sdk: curl
               name: cURL
-              code: >-
+              code: >
                 curl --request POST \
                   --url "https://api.cohere.com/v1/datasets?name=my-dataset&type=embed-input" \
                   --header 'Content-Type: multipart/form-data' \
@@ -18026,7 +18476,7 @@ paths:
                 })();
             - sdk: curl
               name: cURL
-              code: |-
+              code: |
                 curl --request GET \
                   --url https://api.cohere.com/v1/datasets/usage \
                   --header 'accept: application/json' \
@@ -18316,7 +18766,7 @@ paths:
                 }
             - sdk: curl
               name: cURL
-              code: |-
+              code: |
                 curl --request DELETE \
                   --url https://api.cohere.com/v1/datasets/id \
                   --header 'accept: application/json' \
@@ -18566,13 +19016,13 @@ paths:
                 }
             - sdk: curl
               name: cURL
-              code: >-
+              code: >
                 curl --request POST \
                   --url https://api.cohere.com/v1/summarize \
                   --header 'accept: application/json' \
                   --header 'content-type: application/json' \
                   --header "Authorization: bearer $CO_API_KEY" \
-                    --data '{
+                  --data '{
                     "text": "Ice cream is a sweetened frozen food typically eaten as a snack or dessert. It may be made from milk or cream and is flavoured with a sweetener, either sugar or an alternative, and a spice, such as cocoa or vanilla, or with fruit such as strawberries or peaches. It can also be made by whisking a flavored cream base and liquid nitrogen together. Food coloring is sometimes added, in addition to stabilizers. The mixture is cooled below the freezing point of water and stirred to incorporate air spaces and to prevent detectable ice crystals from forming. The result is a smooth, semi-solid foam that is solid at very low temperatures (below 2 °C or 35 °F). It becomes more malleable as its temperature increases.\n\nThe meaning of the name \"ice cream\" varies from one country to another. In some countries, such as the United States, \"ice cream\" applies only to a specific variety, and most governments regulate the commercial use of the various terms according to the relative quantities of the main ingredients, notably the amount of cream. Products that do not meet the criteria to be called ice cream are sometimes labelled \"frozen dairy dessert\" instead. In other countries, such as Italy and Argentina, one word is used for all variants. Analogues made from dairy alternatives, such as goat'\''s or sheep'\''s milk, or milk substitutes (e.g., soy, cashew, coconut, almond milk or tofu), are available for those who are lactose intolerant, allergic to dairy protein or vegan."
                   }'
           request:
@@ -18894,7 +19344,7 @@ paths:
                 })();
             - sdk: curl
               name: cURL
-              code: |-
+              code: |
                 curl --request POST \
                   --url https://api.cohere.com/v1/tokenize \
                   --header 'accept: application/json' \
@@ -19162,7 +19612,7 @@ paths:
                 }
             - sdk: curl
               name: cURL
-              code: |-
+              code: |
                 curl --request POST \
                   --url https://api.cohere.com/v1/detokenize \
                   --header 'accept: application/json' \
@@ -19423,7 +19873,7 @@ paths:
                 })();
             - sdk: curl
               name: cURL
-              code: |-
+              code: |
                 curl --request GET \
                   --url https://api.cohere.com/v1/connectors \
                   --header 'accept: application/json' \
@@ -19592,7 +20042,7 @@ paths:
                 })();
             - sdk: curl
               name: Curl
-              code: |-
+              code: |
                 curl --request POST \
                   --url https://api.cohere.com/v1/connectors \
                   --header 'accept: application/json' \
@@ -19741,7 +20191,7 @@ paths:
                 })();
             - sdk: curl
               name: cURL
-              code: |-
+              code: |
                 curl --request GET \
                   --url https://api.cohere.com/v1/connectors/id \
                   --header 'accept: application/json' \
@@ -19915,7 +20365,7 @@ paths:
                 })();
             - sdk: curl
               name: Curl
-              code: |-
+              code: |
                 curl --request PATCH \
                   --url https://api.cohere.com/v1/connectors/id \
                   --header 'accept: application/json' \
@@ -20055,7 +20505,7 @@ paths:
                 }
             - sdk: curl
               name: cURL
-              code: |-
+              code: |
                 curl --request DELETE \
                   --url https://api.cohere.com/v1/connectors/id \
                   --header 'accept: application/json' \
@@ -20233,7 +20683,7 @@ paths:
                 })();
             - sdk: curl
               name: cURL
-              code: >-
+              code: >
                 curl --request POST \
                   --url https://api.cohere.com/v1/connectors/id/oauth/authorize \
                   --header 'accept: application/json' \
@@ -20343,7 +20793,7 @@ paths:
                 }
             - sdk: curl
               name: cURL
-              code: |-
+              code: |
                 curl --request GET \
                   --url https://api.cohere.com/v1/models/command-a-03-2025 \
                   --header 'accept: application/json' \
@@ -20506,7 +20956,7 @@ paths:
                 }
             - sdk: curl
               name: cURL
-              code: |-
+              code: |
                 curl --request GET \
                   --url https://api.cohere.com/v1/models \
                   --header 'accept: application/json' \
@@ -22459,6 +22909,12 @@ components:
                 - public
               description: |
                 The number of billed classifications units.
+            pages:
+              type: number
+              x-fern-audiences:
+                - public
+              description: |
+                The number of billed pages parsed.
           x-fern-type-name: ApiMetaBilledUnits
         tokens:
           type: object
@@ -22721,6 +23177,7 @@ components:
                 - `ERROR` - something went wrong when generating the reply
                 - `ERROR_TOXIC` - the model generated a reply that was deemed toxic
               type: string
+              x-fern-type-name: ChatStreamEndEventFinishReason
               x-fern-audiences:
                 - public
               enum:
@@ -23035,10 +23492,12 @@ components:
           description: A chain-of-thought style reflection and plan that the model
             generates when working with Tools.
         content:
+          x-fern-type-name: AssistantMessageV2Content
           oneOf:
             - type: string
             - type: array
               items:
+                x-fern-type-name: AssistantMessageV2ContentOneItem
                 oneOf:
                   - $ref: "#/components/schemas/ChatTextContent"
                   - $ref: "#/components/schemas/ChatThinkingContent"
@@ -23221,9 +23680,7 @@ components:
       oneOf: []
       discriminator:
         propertyName: type
-        mapping:
-          auto: "#/components/schemas/TruncationStrategyAutoPreserveOrder"
-          none: "#/components/schemas/TruncationStrategyNone"
+        mapping: {}
       x-fern-type-name: TruncationStrategy
     ResponseFormatTypeV2:
       x-fern-audiences:
@@ -23737,6 +24194,325 @@ components:
           citation-end: "#/components/schemas/CitationEndEvent"
           message-end: "#/components/schemas/ChatMessageEndEvent"
           debug: "#/components/schemas/ChatDebugEvent"
+    PromptResponseV2:
+      x-fern-audiences:
+        - public
+      title: PromptResponseV2
+      description: Response from the v2 prompt endpoint — the constructed text prompt
+        without generation.
+      type: object
+      required:
+        - prompt
+      properties:
+        prompt:
+          x-fern-audiences:
+            - public
+          type: string
+          description: The constructed text prompt that would be sent to the model for
+            this chat request.
+    ParseDocument:
+      type: object
+      description: |
+        Document to parse. Currently only `image_url` documents are supported.
+      required:
+        - type
+        - image_url
+      properties:
+        type:
+          type: string
+          description: Discriminator for the document payload.
+          enum:
+            - image_url
+        image_url:
+          type: string
+          description: |
+            Image URL or base64 data URI to parse.
+
+            Limits:
+            - Maximum file size: 20 MB (compressed upload, download, or decoded
+              data-URI payload)
+            - Maximum decoded size: 50 megapixels or 200 MB decompressed
+              (whichever is exceeded first)
+      x-fern-type-name: ParseDocument
+    ParseOutputFormat:
+      type: string
+      description: |
+        Selects the page payload shape in the response. Defaults to `"markdown"`.
+
+        - `"markdown"`: each page includes markdown content. Tables are inlined as
+          HTML, and images are referenced as `![<description>](<image_id>)` with
+          matching entries in `page.markdown.images`.
+        - `"blocks"`: each page includes an ordered `blocks` array of text, image,
+          and table content regions, including bounding boxes where available.
+      enum:
+        - blocks
+        - markdown
+      default: markdown
+      x-fern-type-name: ParseOutputFormat
+    ParseTextBlock:
+      type: object
+      description: Payload for a text block.
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          description: Extracted text content.
+      x-fern-type-name: ParseTextBlock
+    ParseTextContentBlock:
+      type: object
+      description: A text content block.
+      required:
+        - type
+        - text
+      properties:
+        type:
+          type: string
+          enum:
+            - text
+        text:
+          $ref: "#/components/schemas/ParseTextBlock"
+      x-fern-type-name: ParseTextContentBlock
+    ParseImageCategory:
+      type: string
+      description: Image element category.
+      enum:
+        - other
+        - flowchart
+        - logo
+        - signature
+      x-fern-type-name: ParseImageCategory
+    ParseBoundingBox:
+      type: object
+      description: A bounding box with pixel coordinates on the source document image.
+      required:
+        - top_left_x
+        - top_left_y
+        - bottom_right_x
+        - bottom_right_y
+      properties:
+        top_left_x:
+          type: integer
+          description: X coordinate of the top-left corner.
+        top_left_y:
+          type: integer
+          description: Y coordinate of the top-left corner.
+        bottom_right_x:
+          type: integer
+          description: X coordinate of the bottom-right corner.
+        bottom_right_y:
+          type: integer
+          description: Y coordinate of the bottom-right corner.
+      x-fern-type-name: ParseBoundingBox
+    ParseBoundingBoxNormalized:
+      type: object
+      description: |
+        A bounding box with coordinates in [0, 1] relative to the source page (model
+        coordinates are thousandths of page width/height).
+      required:
+        - top_left_x
+        - top_left_y
+        - bottom_right_x
+        - bottom_right_y
+      properties:
+        top_left_x:
+          type: number
+          format: double
+          description: Normalized X coordinate of the top-left corner.
+        top_left_y:
+          type: number
+          format: double
+          description: Normalized Y coordinate of the top-left corner.
+        bottom_right_x:
+          type: number
+          format: double
+          description: Normalized X coordinate of the bottom-right corner.
+        bottom_right_y:
+          type: number
+          format: double
+          description: Normalized Y coordinate of the bottom-right corner.
+      x-fern-type-name: ParseBoundingBoxNormalized
+    ParseImageBlock:
+      type: object
+      description: Payload for an image block.
+      required:
+        - id
+        - description
+        - category
+        - bounding_box
+        - bounding_box_normalized
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the image within the page (for example
+            `img-0`).
+        description:
+          type: string
+          description: Model-generated description of the image.
+        category:
+          $ref: "#/components/schemas/ParseImageCategory"
+        bounding_box:
+          $ref: "#/components/schemas/ParseBoundingBox"
+        bounding_box_normalized:
+          $ref: "#/components/schemas/ParseBoundingBoxNormalized"
+      x-fern-type-name: ParseImageBlock
+    ParseImageContentBlock:
+      type: object
+      description: An image content block.
+      required:
+        - type
+        - image
+      properties:
+        type:
+          type: string
+          enum:
+            - image
+        image:
+          $ref: "#/components/schemas/ParseImageBlock"
+      x-fern-type-name: ParseImageContentBlock
+    ParseTableContentType:
+      type: string
+      description: Table serialization format.
+      enum:
+        - html
+      x-fern-type-name: ParseTableContentType
+    ParseTableBlock:
+      type: object
+      description: Payload for a table block.
+      required:
+        - type
+        - html
+        - bounding_box
+        - bounding_box_normalized
+      properties:
+        type:
+          $ref: "#/components/schemas/ParseTableContentType"
+        html:
+          type: string
+          description: Table content as HTML.
+        title:
+          type: string
+          description: Optional table title when detected.
+        description:
+          type: string
+          description: Optional table description when detected.
+        bounding_box:
+          $ref: "#/components/schemas/ParseBoundingBox"
+        bounding_box_normalized:
+          $ref: "#/components/schemas/ParseBoundingBoxNormalized"
+      x-fern-type-name: ParseTableBlock
+    ParseTableContentBlock:
+      type: object
+      description: A table content block.
+      required:
+        - type
+        - table
+      properties:
+        type:
+          type: string
+          enum:
+            - table
+        table:
+          $ref: "#/components/schemas/ParseTableBlock"
+      x-fern-type-name: ParseTableContentBlock
+    ParseBlock:
+      description: A content block on a parsed page.
+      oneOf:
+        - $ref: "#/components/schemas/ParseTextContentBlock"
+        - $ref: "#/components/schemas/ParseImageContentBlock"
+        - $ref: "#/components/schemas/ParseTableContentBlock"
+      discriminator:
+        propertyName: type
+        mapping:
+          text: "#/components/schemas/ParseTextContentBlock"
+          image: "#/components/schemas/ParseImageContentBlock"
+          table: "#/components/schemas/ParseTableContentBlock"
+      x-fern-type-name: ParseBlock
+    ParseBlocksPageVariant:
+      type: object
+      description: A parsed page with structured content blocks.
+      required:
+        - index
+        - type
+        - blocks
+      properties:
+        index:
+          type: integer
+          description: Zero-based page index.
+        type:
+          type: string
+          enum:
+            - blocks
+        blocks:
+          type: array
+          description: Ordered content blocks extracted from the page.
+          items:
+            $ref: "#/components/schemas/ParseBlock"
+      x-fern-type-name: ParseBlocksPageVariant
+    ParseMarkdownPage:
+      type: object
+      description: Markdown output payload for a parsed page.
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          description: |
+            Page content as markdown. Images are embedded as
+            `![<description>](<image_id>)`. Tables are inlined as HTML.
+        images:
+          type: array
+          description: Image metadata referenced from `content`.
+          items:
+            $ref: "#/components/schemas/ParseImageBlock"
+      x-fern-type-name: ParseMarkdownPage
+    ParseMarkdownPageVariant:
+      type: object
+      description: A parsed page with markdown content.
+      required:
+        - index
+        - type
+        - markdown
+      properties:
+        index:
+          type: integer
+          description: Zero-based page index.
+        type:
+          type: string
+          enum:
+            - markdown
+        markdown:
+          $ref: "#/components/schemas/ParseMarkdownPage"
+      x-fern-type-name: ParseMarkdownPageVariant
+    ParsePage:
+      description: A single parsed page. The payload shape depends on `output_format`.
+      oneOf:
+        - $ref: "#/components/schemas/ParseBlocksPageVariant"
+        - $ref: "#/components/schemas/ParseMarkdownPageVariant"
+      discriminator:
+        propertyName: type
+        mapping:
+          blocks: "#/components/schemas/ParseBlocksPageVariant"
+          markdown: "#/components/schemas/ParseMarkdownPageVariant"
+      x-fern-type-name: ParsePage
+    ParseResponse:
+      type: object
+      description: Response from the v2 parse endpoint.
+      required:
+        - id
+        - pages
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the parse response.
+        pages:
+          type: array
+          description: Parsed pages in document order.
+          items:
+            $ref: "#/components/schemas/ParsePage"
+        meta:
+          $ref: "#/components/schemas/ApiMeta"
+      x-fern-type-name: ParseResponse
     SingleGeneration:
       type: object
       properties:
@@ -28596,6 +29372,201 @@ components:
                 type: string
             x-fern-type-name: InvalidTokenErrorBody
       x-fern-type-name: GatewayTimeout
+  requestBodies:
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - messages
+              - model
+            properties:
+              stream:
+                description: |
+                  Defaults to `false`.
+
+                  When `true`, the response will be a SSE stream of events.
+
+                  Streaming is beneficial for user interfaces that render the contents of the response piece by piece, as it gets generated.
+                type: boolean
+                x-fern-audiences:
+                  - public
+              model:
+                x-fern-audiences:
+                  - public
+                type: string
+                description: The name of a compatible [Cohere
+                  model](https://docs.cohere.com/v2/docs/models).
+              messages:
+                x-fern-audiences:
+                  - public
+                $ref: "#/components/schemas/ChatMessages"
+              tools:
+                x-fern-audiences:
+                  - public
+                type: array
+                items:
+                  $ref: "#/components/schemas/ToolV2"
+                description: |
+                  A list of tools (functions) available to the model. The model response may contain 'tool_calls' to the specified tools.
+
+                  Learn more in the [Tool Use guide](https://docs.cohere.com/docs/tools).
+              strict_tools:
+                x-fern-audiences:
+                  - public
+                x-fern-availability: beta
+                type: boolean
+                description: |
+                  When set to `true`, tool calls in the Assistant message will be forced to follow the tool definition strictly. Learn more in the [Structured Outputs (Tools) guide](https://docs.cohere.com/docs/structured-outputs-json#structured-outputs-tools).
+
+                  **Note**: The first few requests with a new set of tools will take longer to process.
+              documents:
+                x-fern-audiences:
+                  - public
+                type: array
+                items:
+                  oneOf:
+                    - type: string
+                    - $ref: "#/components/schemas/Document"
+                description: |
+                  A list of relevant documents that the model can cite to generate a more accurate reply. Each document is either a string or document object with content and metadata.
+              citation_options:
+                x-fern-audiences:
+                  - public
+                $ref: "#/components/schemas/CitationOptions"
+              response_format:
+                x-fern-audiences:
+                  - public
+                $ref: "#/components/schemas/ResponseFormatV2"
+              safety_mode:
+                x-fern-audiences:
+                  - public
+                enum:
+                  - CONTEXTUAL
+                  - STRICT
+                  - OFF
+                description: |
+                  Used to select the [safety instruction](https://docs.cohere.com/v2/docs/safety-modes) inserted into the prompt. Defaults to `CONTEXTUAL`.
+                  When `OFF` is specified, the safety instruction will be omitted.
+
+                  Safety modes are not yet configurable in combination with `tools` and `documents` parameters.
+
+                  **Note**: This parameter is only compatible newer Cohere models, starting with [Command R 08-2024](https://docs.cohere.com/docs/command-r#august-2024-release) and [Command R+ 08-2024](https://docs.cohere.com/docs/command-r-plus#august-2024-release).
+
+                  **Note**: `command-r7b-12-2024` and newer models only support `"CONTEXTUAL"` and `"STRICT"` modes.
+              max_tokens:
+                x-fern-audiences:
+                  - public
+                type: integer
+                description: |
+                  The maximum number of output tokens the model will generate in the response. If not set, `max_tokens` defaults to the model's maximum output token limit. You can find the maximum output token limits for each model in the [model documentation](https://docs.cohere.com/docs/models).
+
+                  **Note**: Setting a low value may result in incomplete generations. In such cases, the `finish_reason` field in the response will be set to `"MAX_TOKENS"`.
+
+                  **Note**: If `max_tokens` is set higher than the model's maximum output token limit, the generation will be capped at that model-specific maximum limit.
+              stop_sequences:
+                x-fern-audiences:
+                  - public
+                type: array
+                items:
+                  type: string
+                description: |
+                  A list of up to 5 strings that the model will use to stop generation. If the model generates a string that matches any of the strings in the list, it will stop generating tokens and return the generated text up to that point not including the stop sequence.
+              temperature:
+                x-fern-audiences:
+                  - public
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+                description: |
+                  Defaults to `0.3`.
+
+                  A non-negative float that tunes the degree of randomness in generation. Lower temperatures mean less random generations, and higher temperatures mean more random generations.
+
+                  Randomness can be further maximized by increasing the  value of the `p` parameter.
+              seed:
+                x-fern-audiences:
+                  - public
+                type: integer
+                minimum: 0
+                maximum: 18446744073709552000
+                description: |
+                  If specified, the backend will make a best effort to sample tokens
+                  deterministically, such that repeated requests with the same
+                  seed and parameters should return the same result. However,
+                  determinism cannot be totally guaranteed.
+              frequency_penalty:
+                x-fern-audiences:
+                  - public
+                type: number
+                format: float
+                description: |
+                  Defaults to `0.0`, min value of `0.0`, max value of `1.0`.
+                  Used to reduce repetitiveness of generated tokens. The higher the value, the stronger a penalty is applied to previously present tokens, proportional to how many times they have already appeared in the prompt or prior generation.
+              presence_penalty:
+                x-fern-audiences:
+                  - public
+                type: number
+                format: float
+                description: |
+                  Defaults to `0.0`, min value of `0.0`, max value of `1.0`.
+                  Used to reduce repetitiveness of generated tokens. Similar to `frequency_penalty`, except that this penalty is applied equally to all tokens that have already appeared, regardless of their exact frequencies.
+              k:
+                x-fern-audiences:
+                  - public
+                type: integer
+                default: 0
+                minimum: 0
+                maximum: 500
+                description: |
+                  Ensures that only the top `k` most likely tokens are considered for generation at each step. When `k` is set to `0`, k-sampling is disabled.
+                  Defaults to `0`, min value of `0`, max value of `500`.
+              p:
+                x-fern-audiences:
+                  - public
+                type: number
+                format: float
+                default: 0.75
+                minimum: 0.01
+                maximum: 0.99
+                description: |
+                  Ensures that only the most likely tokens, with total probability mass of `p`, are considered for generation at each step. If both `k` and `p` are enabled, `p` acts after `k`.
+                  Defaults to `0.75`. min value of `0.01`, max value of `0.99`.
+              logprobs:
+                x-fern-audiences:
+                  - public
+                type: boolean
+                description: |
+                  Defaults to `false`. When set to `true`, the log probabilities of the generated tokens will be included in the response.
+              tool_choice:
+                x-fern-audiences:
+                  - public
+                enum:
+                  - REQUIRED
+                  - NONE
+                description: |
+                  Used to control whether or not the model will be forced to use a tool when answering. When `REQUIRED` is specified, the model will be forced to use at least one of the user-defined tools, and the `tools` parameter must be passed in the request.
+                  When `NONE` is specified, the model will be forced **not** to use one of the specified tools, and give a direct response.
+                  If tool_choice isn't specified, then the model is free to choose whether to use the specified tools or not.
+
+                  **Note**: This parameter is only compatible with models [Command-r7b](https://docs.cohere.com/v2/docs/command-r7b) and newer.
+              thinking:
+                x-fern-audiences:
+                  - public
+                $ref: "#/components/schemas/Thinking"
+              priority:
+                x-fern-audiences:
+                  - public
+                type: integer
+                default: 0
+                minimum: 0
+                maximum: 999
+                description: "Controls how early the request is handled. Lower numbers indicate
+                  higher priority (default: 0, the highest). When the system is
+                  under load, higher-priority requests are processed first and
+                  are the least likely to be dropped."
   headers:
     ApiWarning:
       description: The name of the project that is making the request.

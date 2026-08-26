@@ -1,0 +1,229 @@
+---
+title: Frequently Asked Questions About Model Vault Encrypted
+slug: "docs/model-vault/encrypted/faq"
+
+hidden: false
+description: "Answers to common questions about Model Vault Encrypted: data privacy, attestation and verification, the trust boundary, keys, compliance, and performance."
+keywords: "model vault encrypted, confidential computing FAQ, attestation, verifiable privacy, data privacy, cohere"
+---
+
+Common questions about Model Vault Encrypted. For the underlying concepts, start with the
+[Encrypted Vault overview](../../../docs/model-vault/encrypted) and the
+[Confidential Computing Primer](../../../docs/model-vault/encrypted/confidential-computing).
+
+## Getting started
+
+<AccordionGroup>
+<Accordion title="How do I get an Encrypted Vault?">
+Create a vault as usual and choose the **Encrypted** option. Model Vault Encrypted is currently in
+beta; to join, [contact Cohere](https://cohere.com/contact-sales). See the
+[Quickstart](../../../docs/model-vault/quickstart).
+</Accordion>
+
+<Accordion title="How much does it cost?">
+Model Vault Encrypted is priced separately from a Standard Vault. See
+[Pricing](../../../docs/model-vault/encrypted/pricing).
+</Accordion>
+</AccordionGroup>
+
+## Compliance and legal
+
+<AccordionGroup>
+<Accordion title="Does this help with GDPR, HIPAA, or SOC 2?">
+Yes. Hardware-enforced confidentiality, single-tenant isolation, Zero Data Retention, and verifiable
+attestation map onto common requirements, and the attestation evidence can support audits. It is not
+legal advice; evaluate the controls against your own obligations. See
+[Compliance](../../../docs/model-vault/encrypted/compliance).
+</Accordion>
+
+<Accordion title="Could Cohere be compelled to hand over my prompts and responses?">
+The cryptographic material needed to decrypt your prompts and responses never leaves the TEE, and with
+Zero Data Retention nothing is persisted, so there is no plaintext for Cohere to produce. There are no
+operational, debug, or support paths that bypass the TEE boundary.
+</Accordion>
+
+<Accordion title="Can I get evidence for an audit?">
+Yes. Each attestation token identifies the environment, the policy evaluated, and when verification
+occurred, giving you a verifiable record. For the strongest assurance, Intel's Faithful Verification
+service lets you confirm the attestation service itself ran genuine, unmodified code. See
+[Compliance](../../../docs/model-vault/encrypted/compliance).
+</Accordion>
+</AccordionGroup>
+
+## Data and privacy
+
+<AccordionGroup>
+<Accordion title="Can Cohere see my prompts and responses?">
+No. Your prompts and responses are decrypted only **inside** the trusted execution environment (TEE),
+using keys that are generated inside the environment and never shared with Cohere. The protection is
+enforced by the hardware and verified through attestation. See the
+[Security Model](../../../docs/model-vault/encrypted/security-model).
+</Accordion>
+
+<Accordion title="Can the cloud provider or host operator see my data?">
+No. The confidential VM keeps CPU memory hardware-encrypted and the NVIDIA GPU runs in
+confidential-computing mode, so the hypervisor, host operating system, and anyone with privileged
+access to the machine see only ciphertext. This is the core difference from a conventional cloud
+deployment.
+</Accordion>
+
+<Accordion title="Are my prompts or responses used to train Cohere's models?">
+No, and more fundamentally Cohere cannot. Your prompts and responses are decrypted only inside the
+TEE and Cohere never has access to them, so there is no plaintext that could be used to train,
+fine-tune, or improve any model.
+[Zero Data Retention (ZDR)](../../../docs/model-vault/encrypted/encryption-key-management) further ensures
+they are not retained after inference.
+</Accordion>
+
+<Accordion title="What can Cohere and the infrastructure still see?">
+Content stays inside the TEE, but a few things are necessarily visible outside it: routing metadata
+carried in request headers (such as the model name, so the load balancer can route the request),
+operational metrics derived from infrastructure telemetry (latency, throughput, utilization), and
+network-level metadata (timing and byte volume). None of these expose the contents of your prompts or
+responses. See [Monitoring](../../../docs/model-vault/monitoring).
+</Accordion>
+</AccordionGroup>
+
+## Trust boundary and threat model
+
+<AccordionGroup>
+<Accordion title="Who is excluded from accessing my data?">
+Cohere (including operators and support), the cloud provider and anyone with hypervisor or host-level
+access, the Kubernetes control plane, the load balancer and network, and other tenants (your vault is
+single-tenant). All of them sit **outside** the trust boundary. See the
+[Security Model](../../../docs/model-vault/encrypted/security-model).
+</Accordion>
+
+<Accordion title="What threats does Model Vault Encrypted protect against?">
+A compromised or malicious host OS, hypervisor, or orchestration layer; a privileged insider at the
+cloud provider or at Cohere attempting to read data in use; a network attacker or compromised load
+balancer on the path; and any attempt to substitute tampered code for the approved inference workload
+(caught by attestation).
+</Accordion>
+
+<Accordion title="What does it not protect against?">
+Confidential computing does not eliminate every risk. Residual risks include hardware side-channel
+attacks (timing, cache, microarchitectural leaks), attacks requiring deep physical access to the
+hardware, metadata and traffic-pattern observation (request timing, sizes, the model called), and
+availability (the operator still controls scheduling and can stop or restart the environment). These
+depend on the correctness of the underlying Intel and NVIDIA hardware.
+</Accordion>
+
+<Accordion title="How is this different from a Standard Vault?">
+A [Standard Vault](../../../docs/model-vault/standard) gives you a dedicated, single-tenant deployment with
+data protected in transit and at rest. Model Vault Encrypted adds protection **in use** (confidential
+computing across CPU and GPU) plus verifiable remote attestation, so your data is also protected while
+the model is running, and you can prove it.
+</Accordion>
+
+<Accordion title="How is this different from standard TLS and encryption at rest?">
+TLS protects data in transit and disk encryption protects data at rest, but both leave data in
+plaintext in memory while it is processed. Confidential computing closes that gap by keeping data
+encrypted and isolated **in use**, inside the TEE, where even the infrastructure operator cannot read
+it. See the [Confidential Computing Primer](../../../docs/model-vault/encrypted/confidential-computing).
+</Accordion>
+</AccordionGroup>
+
+## Encryption and keys
+
+<AccordionGroup>
+<Accordion title="Who holds the encryption keys?">
+The keys that protect your data are generated **inside** the TEE and never leave its hardware
+boundary, so Cohere and the cloud provider never have access to them. Memory-encryption keys live in
+the processor; the OHTTP keys that protect your traffic are generated per environment and shared only
+with peer environments that pass attestation. See
+[Encryption & Key Management](../../../docs/model-vault/encrypted/encryption-key-management).
+</Accordion>
+
+<Accordion title="How is my data protected end to end?">
+Requests are end-to-end encrypted from your client into the TEE with Oblivious HTTP (in transit),
+processed inside a hardware-based confidential VM and an NVIDIA GPU in confidential-computing mode (in
+use), and the vault boots from an integrity-protected, read-only image (at rest). Plaintext exists
+only inside the TEE, only for the duration of the request.
+</Accordion>
+</AccordionGroup>
+
+## Verification and attestation
+
+<AccordionGroup>
+<Accordion title="What is remote attestation, and why does it matter?">
+Remote attestation lets you cryptographically confirm that you are talking to a genuine TEE running
+the exact, approved code, **before** any data is sent. It turns "trust us" into "verify it yourself,"
+which is what makes the privacy guarantee verifiable rather than contractual. See
+[Remote Attestation](../../../docs/model-vault/encrypted/attestation).
+</Accordion>
+
+<Accordion title="What does attestation actually prove?">
+That the environment is **genuine TEE hardware** (rooted in keys from Intel and NVIDIA), that it is
+**configured securely** (debug disabled, confidential-computing mode on), and that it is **running the
+expected code** (measured firmware, kernel, inference workload, container policy, and GPU firmware). If
+anything differs, the measurements differ and attestation does not pass.
+</Accordion>
+
+<Accordion title="Do I have to do anything to verify, or is it automatic?">
+It is automatic. The client SDK, or proxy, verifies attestation on your behalf and refuses the connection if anything is wrong. Every
+inference response also includes an attestation certificate your client checks, confirming proof of the
+policy, CPU, GPU, and software for the environment that served it. You can also inspect the result
+visually in the Model Vault app. See
+[Verifying Your Deployment](../../../docs/model-vault/encrypted/verifying-deployment).
+</Accordion>
+
+<Accordion title="Can I verify a past request, or only before data is sent?">
+Both. The client sdk or proxy verifies attestation before sending data, and every inference response
+includes an attestation certificate you can retain as a verifiable record of the exact environment that
+served the request. See [Compliance](../../../docs/model-vault/encrypted/compliance).
+</Accordion>
+
+<Accordion title="What happens if verification fails?">
+The client refuses the connection and does not send your request, so your data is never exposed to an
+unverified environment. Verification failing is the safe outcome by design.
+</Accordion>
+
+<Accordion title="What happens when a model or the vault software is updated?">
+Any change to the vault image, model, or configuration changes its attestation measurements. The
+updated measurements are registered through the reproducible build pipeline, and attestation continues
+to gate every request against the approved values, so an unexpected or tampered build fails
+verification rather than silently serving traffic.
+</Accordion>
+
+<Accordion title="Can a load balancer or proxy in front of the vault read my data or route me to untrusted hardware?">
+No. The load balancer and network only ever carry [Oblivious HTTP (OHTTP)](../../../docs/model-vault/encrypted/encryption-key-management)
+ciphertext and cannot decrypt it. Your client verifies attestation and encrypts only to an OHTTP key
+that is cryptographically bound to a genuine, attested environment, so a host or proxy cannot route you
+to untrusted hardware or impersonate the vault: traffic sent to anything that has not passed
+attestation simply cannot be decrypted.
+</Accordion>
+</AccordionGroup>
+
+## Models, performance, and deployment
+
+<AccordionGroup>
+<Accordion title="Which models are supported?">
+See [Supported Models](../../../docs/model-vault/encrypted/supported-models) for the current list,
+which is expanding over time.
+</Accordion>
+
+<Accordion title="Does confidential computing slow down inference?">
+The impact is modest. The GPU's internal computation and on-package memory bandwidth are unaffected;
+the main cost is encrypting data as it moves between the CPU and GPU. Newer generations of confidential-computing GPUs reduce this cost further, narrowing the
+gap with non-confidential execution.
+</Accordion>
+
+<Accordion title="What hardware does it run on?">
+Inference runs inside a hardware-based confidential VM (for example, Intel TDX or AMD SEV-SNP) paired
+with a confidential-computing-capable NVIDIA GPU. To confirm the options available for your model,
+capacity, and region, contact Cohere.
+</Accordion>
+
+<Accordion title="Do I use the same API as a standard vault?">
+Yes, the API is the same. The only difference is that your traffic goes through the Cohere client or
+proxy, which verifies attestation before any data is sent, then encrypts your requests and decrypts
+your responses end to end using OHTTP. Your application code stays unchanged. See
+[Using the API with an Encrypted Vault](../../../docs/model-vault/encrypted/api-usage).
+</Accordion>
+</AccordionGroup>
+
+## Still have questions?
+
+[Contact Cohere](https://cohere.com/contact-sales) to discuss your requirements or request access to
+the beta.

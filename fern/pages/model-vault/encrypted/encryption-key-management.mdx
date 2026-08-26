@@ -1,0 +1,68 @@
+---
+title: Encryption & Key Management
+slug: "docs/model-vault/encrypted/encryption-key-management"
+
+hidden: false
+description: "How Model Vault Encrypted protects data in transit, at rest, and in use, and how encryption keys and Zero Data Retention are handled."
+keywords: "encryption, key management, OHTTP, zero data retention, ZDR, data in use, model vault encrypted"
+---
+
+Model Vault Encrypted protects your data across its full lifecycle, in transit, at rest, and in use.
+This page describes the encryption model and how keys are generated, held, and rotated.
+
+The most important property to keep in mind: the keys that protect your data are generated **inside**
+the trusted execution environment (TEE) and are **never shared with Cohere**.
+
+## Data in transit
+
+Requests are end-to-end encrypted from your client all the way into the TEE using Oblivious HTTP
+(OHTTP):
+
+- Your client encrypts each request to the vault's OHTTP public key, which is cryptographically bound to the attested environment (see [Remote Attestation](../../../docs/model-vault/encrypted/attestation)).
+- The encrypted request travels through the untrusted load balancer and network, which only ever see ciphertext. In OHTTP the payload stays encrypted while routing headers remain in the clear.
+- Only a genuine, attested TEE holds the matching private key, so only it can decrypt the request. The response is encrypted the same way back to your client.
+
+Because the client verifies attestation before encrypting, it will only ever encrypt to a verified
+environment, never to the host or a man-in-the-middle.
+
+## Data in use
+
+This is what sets Encrypted Vaults apart from standard transport security. While the model runs, your
+prompts and responses stay protected inside the TEE:
+
+- **CPU**: the confidential VM (for example, Intel TDX or AMD SEV-SNP) encrypts memory using keys that are generated inside the processor and never leave it. The host operating system, hypervisor, and operators cannot read VM memory.
+- **GPU**: the NVIDIA GPU runs in confidential-computing mode, and the link between the CPU TEE and the GPU is authenticated and encrypted over an SPDM-based secure session, so data moving to and from GPU memory is never exposed in plaintext to the host.
+
+See the [Confidential Computing Primer](../../../docs/model-vault/encrypted/confidential-computing) for the
+underlying concepts.
+
+## Data at rest
+
+The vault image is integrity-protected: it boots from a read-only root filesystem whose measurements
+are verified at boot and checked during attestation, so the running software cannot be silently
+modified. Combined with Zero Data Retention (below), your prompts and responses are not written to
+durable storage in plaintext.
+
+## Key management
+
+Several distinct keys protect a vault, and they are all managed within the confidential environment:
+
+- **Memory-encryption keys** (CPU and GPU): generated inside the processor, never exposed to software outside the TEE, and destroyed when the environment shuts down.
+- **OHTTP keys**: each confidential VM generates its OHTTP key pair locally at boot. The private key stays inside TEE-protected memory, and the public key is bound into the attestation evidence. Keys are rotated periodically.
+- **Attestation-gated key sharing**: a VM only shares its OHTTP keys with peers that have passed attestation, so possessing a shared key is itself proof of having been verified. This lets any replica decrypt a request and lets the fleet scale, without your data leaving the protected boundary. See [Remote Attestation](../../../docs/model-vault/encrypted/attestation) for the full key-sharing flow.
+
+Cohere operates the infrastructure but is outside this boundary: it cannot read the private keys or the
+data they protect.
+
+## Zero Data Retention (ZDR)
+
+When Zero Data Retention (ZDR) is enabled, Cohere processes inputs and outputs for inference but does
+not retain any prompts or responses. Combined with confidential computing, this means your inference
+data is only ever present, in plaintext, inside the TEE for the duration of the request, and is not
+persisted afterward.
+
+## Related pages
+
+- [Security Model](../../../docs/model-vault/encrypted/security-model)
+- [Remote Attestation](../../../docs/model-vault/encrypted/attestation)
+- [Compliance](../../../docs/model-vault/encrypted/compliance)

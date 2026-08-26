@@ -1,0 +1,36 @@
+name: check-mdx-links
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'fern/pages/**/*.mdx'
+      - 'fern/pages/**/**/*.mdx'
+      - 'fern/docs.yml'
+      - 'fern/v1.yml'
+      - 'fern/v2.yml'
+      - '.github/scripts/check-mdx-internal-links.cjs'
+      - '.github/workflows/check-mdx-links.yml'
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install Dependencies
+        shell: bash
+        run: pnpm install
+
+      - name: Check internal MDX links
+        run: node .github/scripts/check-mdx-internal-links.cjs --warn-only
+
