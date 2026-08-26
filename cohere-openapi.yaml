@@ -6938,6 +6938,456 @@ paths:
                       tokens:
                         input_tokens: 499
                         output_tokens: 105
+  /v2/parse:
+    post:
+      summary: Parse API (v2)
+      operationId: parsev2
+      x-fern-audiences:
+        - v2-beta
+      x-fern-sdk-group-name: v2
+      x-fern-sdk-method-name: parse
+      description: |
+        Parse a document image into structured output. Use `output_format` to select
+        blocks or markdown (default).
+
+        Currently supports `document.type = image_url` only (data URI or remote http(s)
+        image URL). PDF / file URL inputs are not yet supported.
+
+        Image limits: 20 MB file size; 50 megapixels or 200 MB decoded (whichever is
+        exceeded first).
+      parameters:
+        - $ref: "#/components/parameters/RequestSource"
+      x-fern-examples:
+        - code-samples:
+            - sdk: go
+              name: Markdown
+              code: >
+                //go:build ignore
+
+                // +build ignore
+
+
+                package main
+
+
+                import (
+                	"context"
+                	"log"
+                	"os"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	"github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
+
+                	resp, err := co.V2.Parse(
+                		context.TODO(),
+                		&cohere.ParseRequest{
+                			Model: "parse-v5.0",
+                			Document: &cohere.ParseDocument{
+                				ImageUrl: "https://cohere.com/favicon-32x32.png",
+                			},
+                			OutputFormat: cohere.ParseOutputFormatMarkdown.Ptr(),
+                		},
+                	)
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	log.Printf("%+v", resp)
+                }
+            - sdk: typescript
+              name: Markdown
+              code: |
+                import { CohereClient } from 'cohere-ai';
+
+                const cohere = new CohereClient({});
+
+                (async () => {
+                  const response = await cohere.v2.parse({
+                    model: 'parse-v5.0',
+                    document: {
+                      type: 'image_url',
+                      imageUrl: 'https://cohere.com/favicon-32x32.png',
+                    },
+                    outputFormat: 'markdown',
+                  });
+                  console.log(response);
+                })();
+            - sdk: python
+              name: Markdown
+              code: |
+                import cohere
+
+                co = cohere.ClientV2()
+
+                response = co.parse(
+                    model="parse-v5.0",
+                    document={
+                        "type": "image_url",
+                        "image_url": "https://cohere.com/favicon-32x32.png",
+                    },
+                    output_format="markdown",
+                )
+
+                print(response)
+            - sdk: python
+              name: Markdown (async)
+              code: |
+                import asyncio
+
+                import cohere
+
+                co = cohere.AsyncClientV2()
+
+
+                async def main():
+                    response = await co.parse(
+                        model="parse-v5.0",
+                        document={
+                            "type": "image_url",
+                            "image_url": "https://cohere.com/favicon-32x32.png",
+                        },
+                        output_format="markdown",
+                    )
+                    print(response)
+
+
+                asyncio.run(main())
+            - sdk: java
+              name: Markdown
+              code: >
+                package parsev2post; /* (C)2024 */
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.resources.v2.requests.ParseRequest;
+
+                import com.cohere.api.types.ParseDocument;
+
+                import com.cohere.api.types.ParseOutputFormat;
+
+                import com.cohere.api.types.ParseResponse;
+
+
+                public class Markdown {
+                  public static void main(String[] args) {
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
+
+                    ParseResponse response =
+                        cohere
+                            .v2()
+                            .parse(
+                                ParseRequest.builder()
+                                    .model("parse-v5.0")
+                                    .document(
+                                        ParseDocument.builder()
+                                            .imageUrl("https://cohere.com/favicon-32x32.png")
+                                            .build())
+                                    .outputFormat(ParseOutputFormat.MARKDOWN)
+                                    .build());
+
+                    System.out.println(response);
+                  }
+                }
+            - sdk: curl
+              name: Markdown
+              code: |
+                curl --request POST \
+                  --url https://api.cohere.com/v2/parse \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY" \
+                  --data '{
+                    "model": "parse-v5.0",
+                    "document": {
+                      "type": "image_url",
+                      "image_url": "https://cohere.com/favicon-32x32.png"
+                    },
+                    "output_format": "markdown"
+                  }'
+          request:
+            model: parse-v5.0
+            document:
+              type: image_url
+              image_url: https://cohere.com/favicon-32x32.png
+            output_format: markdown
+          response:
+            body:
+              id: 8f2a1c3e-4b5d-6e7f-8091-a2b3c4d5e6f7
+              pages:
+                - index: 0
+                  type: markdown
+                  markdown:
+                    content: |
+                      # Sample Document
+
+                      Cohere builds AI that understands language.
+
+                      ![Company logo](img-0)
+                    images:
+                      - id: img-0
+                        description: Company logo
+                        category: logo
+                        bounding_box:
+                          top_left_x: 12
+                          top_left_y: 8
+                          bottom_right_x: 48
+                          bottom_right_y: 44
+                        bounding_box_normalized:
+                          top_left_x: 0.04
+                          top_left_y: 0.03
+                          bottom_right_x: 0.15
+                          bottom_right_y: 0.14
+              meta:
+                api_version:
+                  version: '2'
+                billed_units:
+                  pages: 1
+        - code-samples:
+            - sdk: go
+              name: Blocks
+              code: >
+                //go:build ignore
+
+                // +build ignore
+
+
+                package main
+
+
+                import (
+                	"context"
+                	"log"
+                	"os"
+
+                	cohere "github.com/cohere-ai/cohere-go/v2"
+                	"github.com/cohere-ai/cohere-go/v2/client"
+                )
+
+
+                func main() {
+                	co := client.NewClient(client.WithToken(os.Getenv("CO_API_KEY")))
+
+                	resp, err := co.V2.Parse(
+                		context.TODO(),
+                		&cohere.ParseRequest{
+                			Model: "parse-v5.0",
+                			Document: &cohere.ParseDocument{
+                				ImageUrl: "https://cohere.com/favicon-32x32.png",
+                			},
+                			OutputFormat: cohere.ParseOutputFormatBlocks.Ptr(),
+                		},
+                	)
+                	if err != nil {
+                		log.Fatal(err)
+                	}
+
+                	log.Printf("%+v", resp)
+                }
+            - sdk: typescript
+              name: Blocks
+              code: |
+                import { CohereClient } from 'cohere-ai';
+
+                const cohere = new CohereClient({});
+
+                (async () => {
+                  const response = await cohere.v2.parse({
+                    model: 'parse-v5.0',
+                    document: {
+                      type: 'image_url',
+                      imageUrl: 'https://cohere.com/favicon-32x32.png',
+                    },
+                    outputFormat: 'blocks',
+                  });
+                  console.log(response);
+                })();
+            - sdk: python
+              name: Blocks
+              code: |
+                import cohere
+
+                co = cohere.ClientV2()
+
+                response = co.parse(
+                    model="parse-v5.0",
+                    document={
+                        "type": "image_url",
+                        "image_url": "https://cohere.com/favicon-32x32.png",
+                    },
+                    output_format="blocks",
+                )
+
+                print(response)
+            - sdk: python
+              name: Blocks (async)
+              code: |
+                import asyncio
+
+                import cohere
+
+                co = cohere.AsyncClientV2()
+
+
+                async def main():
+                    response = await co.parse(
+                        model="parse-v5.0",
+                        document={
+                            "type": "image_url",
+                            "image_url": "https://cohere.com/favicon-32x32.png",
+                        },
+                        output_format="blocks",
+                    )
+                    print(response)
+
+
+                asyncio.run(main())
+            - sdk: java
+              name: Blocks
+              code: >
+                package parsev2post; /* (C)2024 */
+
+
+                import com.cohere.api.Cohere;
+
+                import com.cohere.api.resources.v2.requests.ParseRequest;
+
+                import com.cohere.api.types.ParseDocument;
+
+                import com.cohere.api.types.ParseOutputFormat;
+
+                import com.cohere.api.types.ParseResponse;
+
+
+                public class Blocks {
+                  public static void main(String[] args) {
+                    Cohere cohere = Cohere.builder().clientName("snippet").build();
+
+                    ParseResponse response =
+                        cohere
+                            .v2()
+                            .parse(
+                                ParseRequest.builder()
+                                    .model("parse-v5.0")
+                                    .document(
+                                        ParseDocument.builder()
+                                            .imageUrl("https://cohere.com/favicon-32x32.png")
+                                            .build())
+                                    .outputFormat(ParseOutputFormat.BLOCKS)
+                                    .build());
+
+                    System.out.println(response);
+                  }
+                }
+            - sdk: curl
+              name: Blocks
+              code: |
+                curl --request POST \
+                  --url https://api.cohere.com/v2/parse \
+                  --header 'accept: application/json' \
+                  --header 'content-type: application/json' \
+                  --header "Authorization: bearer $CO_API_KEY" \
+                  --data '{
+                    "model": "parse-v5.0",
+                    "document": {
+                      "type": "image_url",
+                      "image_url": "https://cohere.com/favicon-32x32.png"
+                    },
+                    "output_format": "blocks"
+                  }'
+          request:
+            model: parse-v5.0
+            document:
+              type: image_url
+              image_url: https://cohere.com/favicon-32x32.png
+            output_format: blocks
+          response:
+            body:
+              id: 1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809
+              pages:
+                - index: 0
+                  type: blocks
+                  blocks:
+                    - type: text
+                      text:
+                        content: '# Sample Document'
+                    - type: text
+                      text:
+                        content: Cohere builds AI that understands language.
+                    - type: image
+                      image:
+                        id: img-0
+                        description: Company logo
+                        category: logo
+                        bounding_box:
+                          top_left_x: 12
+                          top_left_y: 8
+                          bottom_right_x: 48
+                          bottom_right_y: 44
+                        bounding_box_normalized:
+                          top_left_x: 0.04
+                          top_left_y: 0.03
+                          bottom_right_x: 0.15
+                          bottom_right_y: 0.14
+              meta:
+                api_version:
+                  version: '2'
+                billed_units:
+                  pages: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - model
+                - document
+              properties:
+                model:
+                  type: string
+                  description: The name of a compatible Cohere parse model.
+                document:
+                  $ref: "#/components/schemas/ParseDocument"
+                output_format:
+                  $ref: "#/components/schemas/ParseOutputFormat"
+              x-fern-type-name: ParseRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParseResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "429":
+          $ref: "#/components/responses/RateLimit"
+        "498":
+          $ref: "#/components/responses/InvalidToken"
+        "499":
+          $ref: "#/components/responses/RequestCancelled"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "501":
+          $ref: "#/components/responses/NotImplemented"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
   /v1/generate:
     post:
       deprecated: true
@@ -23230,9 +23680,7 @@ components:
       oneOf: []
       discriminator:
         propertyName: type
-        mapping:
-          auto: "#/components/schemas/TruncationStrategyAutoPreserveOrder"
-          none: "#/components/schemas/TruncationStrategyNone"
+        mapping: {}
       x-fern-type-name: TruncationStrategy
     ResponseFormatTypeV2:
       x-fern-audiences:
@@ -24046,7 +24494,6 @@ components:
         mapping:
           blocks: "#/components/schemas/ParseBlocksPageVariant"
           markdown: "#/components/schemas/ParseMarkdownPageVariant"
-          raw_generation: "#/components/schemas/ParseRawGenerationPageVariant"
       x-fern-type-name: ParsePage
     ParseResponse:
       type: object
