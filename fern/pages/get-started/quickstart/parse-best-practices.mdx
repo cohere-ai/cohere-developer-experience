@@ -1,0 +1,60 @@
+---
+title: Document Parsing - best practices
+slug: /docs/parse-best-practices
+
+description: "Best practices for image format, resolution, and throughput when using the Cohere Parse API."
+image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, document parsing, parse, image format, best practices, throughput"
+---
+
+## Quick Recommendations
+
+| Use Case | Format | Resize | Notes |
+|----------|--------|--------|-------|
+| General Parsing (recommended) | WebP 90 | 2048/1536px long side | Good balance for most workloads |
+| Tables, financial, high precision docs | PNG or JPEG 95 | 2048px long side | Preserves fine lines and cell borders |
+
+**For throughput**: resize to 1536px on the long side before sending. Minimal loss in parsing quality while significantly improving throughput.
+
+## Resize and Convert
+
+The key operation is `thumbnail` which resizes in-place while preserving aspect ratio:
+
+```python PYTHON
+from PIL import Image
+
+IMG_MAX_SIZE = 2048
+
+with Image.open("page.png") as img:
+    img.thumbnail(
+        (IMG_MAX_SIZE, IMG_MAX_SIZE), Image.Resampling.LANCZOS
+    )
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+    img.save("page.webp", format="WEBP", quality=90)
+```
+
+## Send a Parse Request
+
+```python PYTHON
+import os
+import base64
+import cohere
+
+co = cohere.Client(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
+
+with open("page.webp", "rb") as f:
+    b64 = base64.b64encode(f.read()).decode()
+
+data_uri = f"data:image/webp;base64,{b64}"
+
+response = co.parse(
+    model="parse-v5.0",
+    document={"type": "image_url", "image_url": data_uri},
+)
+
+for page in response.pages:
+    print(page.markdown.content)
+```

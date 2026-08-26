@@ -137,6 +137,48 @@ results = co.rerank(
 print(result)
 ```
 
+### Parsing
+
+You can use this code to invoke Cohere's Parse model on Amazon SageMaker. Resize and convert the image to WEBP first so the data URI stays under the payload limit.
+
+```python PYTHON
+from PIL import Image
+import base64
+import cohere
+
+IMG_MAX_SIZE = 2048
+with Image.open("page.png") as img:
+    img.thumbnail(
+        (IMG_MAX_SIZE, IMG_MAX_SIZE), Image.Resampling.LANCZOS
+    )
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+    img.save("page.webp", format="WEBP", quality=90)
+
+with open("page.webp", "rb") as f:
+    b64 = base64.b64encode(f.read()).decode()
+image_url = f"data:image/webp;base64,{b64}"
+
+co = cohere.SagemakerClientV2(
+    aws_region="us-east-1",
+    aws_access_key="...",
+    aws_secret_key="...",
+    aws_session_token="...",
+)
+
+# Invoke the model and print the response
+result = co.parse(
+    model="<YOUR PARSE ENDPOINT NAME>",  # On SageMaker, you create a model name that you'll pass here.
+    document={
+        "type": "image_url",
+        "image_url": image_url,
+    },
+    output_format="markdown",  # or "blocks"
+)
+
+print(result)
+```
+
 ## Access Via Amazon SageMaker Jumpstart
 
 Cohere's models are also available on Amazon SageMaker Jumpstart, which makes it easy to access the models with just a few clicks.
