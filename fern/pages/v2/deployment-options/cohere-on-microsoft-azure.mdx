@@ -12,7 +12,7 @@ createdAt: "Mon Apr 08 2024 14:53:59 GMT+0000 (Coordinated Universal Time)"
 updatedAt: "Tue Feb 25 2025 13:15:36 Mountain Standard Time (MST)"
 ---
 
-In this document, you learn how to use [Azure AI Foundry](https://ai.azure.com/) to deploy the Cohere Command, Embed, and Rerank models on Microsoft's Azure cloud computing platform. You can read more about Azure AI Foundry in [its documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-azure-ai-foundry).
+In this document, you learn how to use [Azure AI Foundry](https://ai.azure.com/) to deploy the Cohere Command, Embed, Rerank, and Parse models on Microsoft's Azure cloud computing platform. You can read more about Azure AI Foundry in [its documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-azure-ai-foundry).
 
 The following models are available through Azure AI Foundry with pay-as-you-go, token-based billing:
 
@@ -23,20 +23,20 @@ The following models are available through Azure AI Foundry with pay-as-you-go, 
 - Cohere Rerank V4.0 Pro
 - Cohere Rerank V4.0 Fast
 
+The following model is available through Azure AI Foundry with pay-as-you-go, page-based billing: 
+
+- Parse v5 
+
 ## Prerequisites
 
-Whether you're using Command, Embed, or Rerank, the initial set up is the same. You'll need:
+Whether you're using Command, Embed, Rerank, or Parse the initial set up is the same. You'll need:
 
 - An Azure subscription with a valid payment method. Free or trial Azure subscriptions won't work. If you don't have an Azure subscription, create a [paid Azure account](https://azure.microsoft.com/pricing/purchase-options/pay-as-you-go) to begin.
 - An [Azure AI hub resource](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-azure-ai-resource). Note: for Cohere models, the pay-as-you-go deployment offering is only available with AI hubs created in the `East US`, `East US 2`, `North Central US`, `South Central US`, `Sweden Central`, `West US` or `West US 3` regions.
 - An [Azure AI project](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/create-projects) in Azure AI Studio.
 - Azure role-based access controls (Azure RBAC) are used to grant access to operations in Azure AI Studio. To perform the required steps, your user account must be assigned the Azure AI Developer role on the resource group. For more information on permissions, see [Role-based access control in Azure AI Studio](https://learn.microsoft.com/en-us/azure/ai-studio/concepts/rbac-ai-studio).
 
-For workflows based around Command, Embed, or Rerank, you'll also need to create a deployment and consume the model. Here are links for more information:
-
-- **Command:** [create a Command deployment](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-command#create-a-new-deployment) and then [consume the Command model](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-command#create-a-new-deployment).
-- **Embed:** [create an Embed deployment](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-embed#create-a-new-deployment) and [consume the Embed model](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-embed#consume-the-cohere-embed-models-as-a-service).
-- **Rerank**: [create a Rerank deployment](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-rerank) and [consume the Rerank model](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-cohere-rerank#consume-the-cohere-rerank-models-as-a-service).
+For workflows based around Command, Embed, Rerank, or Parse you'll also need to create a deployment and consume the model. [Here is a link for more information on how to deploy a Foundry model](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/how-to/deploy-foundry-models). 
 
 ## Text Generation
 
@@ -204,6 +204,45 @@ response = co.rerank(
 )
 ```
 
+## Parse
+
+You can use the Cohere SDK to invoke Parse on Azure AI Foundry. Parse converts document images into structured Markdown. Resize and convert the image to WEBP first so the data URI stays under the payload limit.
+
+```python PYTHON
+from PIL import Image
+import base64
+import cohere
+
+IMG_MAX_SIZE = 2048
+with Image.open("page.png") as img:
+    img.thumbnail(
+        (IMG_MAX_SIZE, IMG_MAX_SIZE), Image.Resampling.LANCZOS
+    )
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+    img.save("page.webp", format="WEBP", quality=90)
+
+with open("page.webp", "rb") as f:
+    b64 = base64.b64encode(f.read()).decode()
+image_url = f"data:image/webp;base64,{b64}"
+
+co = cohere.ClientV2(
+    api_key="<key>",
+    base_url="https://<endpoint>.<region>.inference.ai.azure.com/",
+)
+
+response = co.parse(
+    model="parse-v5.0",
+    document={
+        "type": "image_url",
+        "image_url": image_url,
+    },
+    output_format="markdown",  # or "blocks"
+)
+
+print(response)
+```
+
 ## Using the Cohere SDK
 
 You can use the Cohere SDK client to consume Cohere models that are deployed via Azure AI Foundry. This means you can leverage the SDK's features such as RAG, tool use, structured outputs, and more.
@@ -233,6 +272,12 @@ co_embed = cohere.Client(
 co_rerank = cohere.Client(
     api_key="AZURE_INFERENCE_CREDENTIAL",
     base_url="AZURE_MODEL_ENDPOINT",  # Example - https://cohere-rerank-v4-pro-xyz.eastus.models.ai.azure.com/
+)
+
+# For Parse models
+co_parse = cohere.ClientV2(
+    api_key="AZURE_INFERENCE_CREDENTIAL",
+    base_url="AZURE_MODEL_ENDPOINT",  # Example - https://cohere-parse-v5-xyz.eastus.models.ai.azure.com/
 )
 ```
 
@@ -302,6 +347,21 @@ results = co_rerank.rerank(
     top_n=2,
     model="rerank-v4.0-pro",
 )
+```
+
+### Parse
+
+```python PYTHON
+response = co_parse.parse(
+    model="parse-v5.0",
+    document={
+        "type": "image_url",
+        "image_url": image_url,  # data URI; see the Parse section above
+    },
+    output_format="markdown",  # or "blocks"
+)
+
+print(response)
 ```
 
 Here are some other examples for [Command](https://github.com/Azure/azureml-examples/blob/main/sdk/python/foundation-models/cohere/cohere-cmdR.ipynb) and [Embed](https://github.com/Azure/azureml-examples/blob/main/sdk/python/foundation-models/cohere/cohere-embed.ipynb). 

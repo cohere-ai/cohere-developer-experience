@@ -1,0 +1,154 @@
+---
+title: Document Parsing
+slug: /docs/parse-quickstart
+
+description: "A quickstart guide for parsing documents with Cohere's Parse model."
+image: "../../../assets/images/f1cc130-cohere_meta_image.jpg"  
+keywords: "Cohere, document parsing, vision language model, PDF parsing, parse"
+---
+Cohere's Parse model converts unstructured enterprise documents (PDFs, images, slides) into structured Markdown output. It extracts text, tables, lists, forms, images, captions, and bounding box coordinates.
+
+This quickstart guide shows you how to parse a document image with the Parse endpoint.
+
+<Steps>
+### Setup
+First, install the Cohere Python SDK with the following command.
+
+```bash
+pip install -U cohere
+```
+
+Next, import the library and create a client.
+
+<Tabs>
+<Tab title="Cohere Platform">
+
+```python PYTHON
+import cohere
+
+co = cohere.ClientV2(
+    "COHERE_API_KEY"
+)  # Get your free API key here: https://dashboard.cohere.com/api-keys
+```
+
+</Tab>
+<Tab title="Private Deployment">
+
+```python PYTHON
+import cohere
+
+co = cohere.ClientV2(
+    api_key="",  # Leave this blank
+    base_url="<YOUR_DEPLOYMENT_URL>",
+)
+```
+
+</Tab>
+
+<Tab title="SageMaker">
+
+```python PYTHON
+import cohere
+
+co = cohere.SagemakerClientV2(
+    aws_region="AWS_REGION",
+    aws_access_key="AWS_ACCESS_KEY_ID",
+    aws_secret_key="AWS_SECRET_ACCESS_KEY",
+    aws_session_token="AWS_SESSION_TOKEN",
+)
+```
+
+</Tab>
+
+</Tabs>
+
+## Prepare the Document
+
+Parse accepts documents as base64-encoded data URIs. Convert your image to a data URI.
+
+```python PYTHON
+import base64
+
+with open("document.png", "rb") as f:
+    b64 = base64.b64encode(f.read()).decode("utf-8")
+
+data_uri = f"data:image/png;base64,{b64}"
+```
+
+### Parse the Document
+
+Pass the document to the Parse endpoint. By default, the response contains Markdown output.
+
+<Tabs>
+<Tab title="Cohere Platform">
+
+```python PYTHON
+response = co.parse(
+    model="parse-v5.0",
+    document={"type": "image_url", "image_url": data_uri},
+)
+
+for page in response.pages:
+    print(page.markdown.content)
+```
+
+</Tab>
+
+<Tab title="Private Deployment">
+
+```python PYTHON
+response = co.parse(
+    model="parse-v5.0",
+    document={"type": "image_url", "image_url": data_uri},
+)
+
+for page in response.pages:
+    print(page.markdown.content)
+```
+
+</Tab>
+
+<Tab title="SageMaker">
+
+```python PYTHON
+response = co.parse(
+    model="YOUR_ENDPOINT_NAME",
+    document={"type": "image_url", "image_url": data_uri},
+)
+
+for page in response.pages:
+    print(page.markdown.content)
+```
+
+</Tab>
+
+</Tabs>
+
+### Blocks Output
+
+To get structured content blocks, set `output_format` to `"blocks"`. Each block has a `type` (e.g. `text`, `table`) with type-specific fields including bounding boxes for tables.
+
+```python PYTHON
+response = co.parse(
+    model="parse-v5.0",
+    document={"type": "image_url", "image_url": data_uri},
+    output_format="blocks",
+)
+
+for page in response.pages:
+    for block in page.blocks:
+        if block.type == "text":
+            print(block.text.content)
+        elif block.type == "table":
+            print(f"[Table] bbox={block.table.bounding_box}")
+            print(block.table.html)
+            print(block.table.description)
+        print()
+```
+
+</Steps>
+
+## Further Resources
+
+- [Parse model documentation](/docs/parse)
+- [SageMaker notebook](https://github.com/cohere-ai/cohere-developer-experience/blob/main/notebooks/sagemaker/Parse%20Models.ipynb)
