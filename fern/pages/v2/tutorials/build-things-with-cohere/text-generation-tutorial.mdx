@@ -335,7 +335,7 @@ The Chat endpoint also provides streaming support. In a streamed response, the e
 
 To activate it, use `co.chat_stream()` instead of `co.chat()`.
 
-In streaming mode, the endpoint will generate a series of objects. To get the actual text contents, we take objects whose `event_type` is `content-delta`.
+In streaming mode, the endpoint will generate a series of objects. To get the actual text contents, we take objects whose `event.type` is `content-delta`.
 
 
 ```python PYTHON
@@ -349,9 +349,9 @@ response = co.chat_stream(
 )
 
 for event in response:
-    if event:
-        if event.type == "content-delta":
-            print(event.delta.message.content.text, end="")
+    if event and event.type == "content-delta":
+        if event.delta.message.content.text:
+            print(event.delta.message.content.text, end="", flush=True)
 ```
 
 ```
