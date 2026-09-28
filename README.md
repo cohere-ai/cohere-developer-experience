@@ -14,6 +14,13 @@ This repository is organized into the following sections:
 - `cohere-openapi.yaml` contains the OpenAPI spec for the Cohere platform API
 - `snippets/` contains code snippets for using Cohere in various environments
 
+## Deprecations
+
+> [!WARNING]
+> The `Steps`, `Step`, `CardGroup`, `Card`, and `Icon` React components are deprecated and should not be used.
+> Instead, flatten them into standard Markdown so the source remains portable.
+> Support for these components will be fully removed at a future date.
+
 ## Other developer resources
 
 ### SDKs
