@@ -923,8 +923,12 @@ main[data-theme="default"] {
 /* --- Content card: fixed white card that fills remaining space, scrolls internally ---
    Targets every direct child of main except sidebar-related elements.
    data-theme="default" is ON the main element, so use main[data-theme=...].
-   This covers: .canvas-wrapper, .fern-layout-*, CustomLayout (.width-before-scroll-bar), etc. */
-main[data-theme="default"] > *:not(#fern-sidebar):not(#fern-sidebar-spacer):not(#fern-toc) {
+   This covers: .canvas-wrapper, .fern-layout-*, CustomLayout (.width-before-scroll-bar), etc.
+   On some layouts (the changelog) Fern nests the content in an <astro-island>, which is
+   display: contents and so generates no box of its own; match through it as well, or the
+   real content element never becomes a scroll container. */
+main[data-theme="default"] > *:not(#fern-sidebar):not(#fern-sidebar-spacer):not(#fern-toc),
+main[data-theme="default"] > astro-island > *:not(#fern-toc) {
   background: var(--header-background) !important;
   border: 1px solid var(--border) !important;
   border-radius: 8px !important;
@@ -938,14 +942,16 @@ main[data-theme="default"] > *:not(#fern-sidebar):not(#fern-sidebar-spacer):not(
 /* --- Hide empty TOC (e.g. changelog entry pages) ---
    When the TOC has no children, hide it so it doesn't show as an empty card,
    and restore the content card's right border-radius. */
-main[data-theme="default"] > #fern-toc:empty {
+main[data-theme="default"] > #fern-toc:empty,
+main[data-theme="default"] > astro-island > #fern-toc:empty {
   display: none !important;
 }
 
 /* --- TOC: visually merge with the content card ---
    The TOC (#fern-toc) is a sibling of the content in main. Give it the same
    card background and merge borders so TOC + content look like one card. */
-main[data-theme="default"] > #fern-toc:not(:empty) {
+main[data-theme="default"] > #fern-toc:not(:empty),
+main[data-theme="default"] > astro-island > #fern-toc:not(:empty) {
   background: var(--header-background) !important;
   border: 1px solid var(--border) !important;
   border-left: none !important;
@@ -959,11 +965,13 @@ main[data-theme="default"] > #fern-toc:not(:empty) {
 /* When TOC is visible and non-empty (xl+), close the gap and merge cards */
 @media only screen and (min-width: 1280px) {
   /* Negative margin on TOC to eat the flex gap so it merges flush with content */
-  main[data-theme="default"]:has(> #fern-toc:not(:empty)) > #fern-toc:not(:empty) {
+  main[data-theme="default"]:has(> #fern-toc:not(:empty)) > #fern-toc:not(:empty),
+  main[data-theme="default"] > astro-island:has(> #fern-toc:not(:empty)) > #fern-toc:not(:empty) {
     margin-left: -12px !important;
   }
 
-  main[data-theme="default"]:has(> #fern-toc:not(:empty)) > *:not(#fern-sidebar):not(#fern-sidebar-spacer):not(#fern-toc) {
+  main[data-theme="default"]:has(> #fern-toc:not(:empty)) > *:not(#fern-sidebar):not(#fern-sidebar-spacer):not(#fern-toc),
+  main[data-theme="default"] > astro-island:has(> #fern-toc:not(:empty)) > *:not(#fern-toc) {
     border-right: none !important;
     border-top-right-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
@@ -977,12 +985,15 @@ main[data-theme="default"] .fern-layout-page {
   flex: 1 !important;
 }
 
+/* The changelog is itself the content card, not something inside one, so it has to be
+   allowed to shrink below its content height in order to scroll. */
 main[data-theme="default"] .fern-layout-changelog {
-  min-height: 100% !important;
+  min-height: 0 !important;
   flex: 1 !important;
 }
 
-main[data-theme="default"] > #fern-toc:not(:empty) {
+main[data-theme="default"] > #fern-toc:not(:empty),
+main[data-theme="default"] > astro-island > #fern-toc:not(:empty) {
   min-height: 100% !important;
 }
 
@@ -999,15 +1010,24 @@ main[data-theme="default"] > #fern-toc:not(:empty) {
     left: 12px !important;
     bottom: 12px !important;
     top: calc(var(--header-height) + 12px) !important;
+    /* Height comes from stretching to main's content box, not from the top/bottom insets
+       above: Fern renders the sidebar position: sticky, and under sticky those insets
+       position the element without constraining it, so height alone would grow to fit
+       the nav and overflow the viewport. */
+    align-self: stretch !important; 
     height: auto !important;
     margin-top: 12px !important;
   }
 
+  /* Scrolling happens here rather than on the sidebar itself, which keeps overflow: clip
+     above so the rounded corners still crop their contents. */
   #fern-sidebar[data-viewport="desktop"] #fern-sidebar-scroll-area {
     padding-left: 8px !important;
     padding-right: 8px !important;
     padding-top: 24px !important;
     padding-bottom: 48px !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
   }
 }
 
