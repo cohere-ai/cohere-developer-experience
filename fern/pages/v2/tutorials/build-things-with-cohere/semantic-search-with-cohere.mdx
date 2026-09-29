@@ -51,7 +51,7 @@ For semantic search, there are two types of documents we need to turn into embed
 
 Right now, we are doing the former. We call the Embed endpoint using `co.embed()` and pass the following arguments:
 
-- `model`: Here we choose `embed-v4.0`
+- `model`: Here we choose `embed-v5.0-pro`
 - `input_type`: We choose `search_document` to ensure the model treats these as the documents for search
 - `texts`: The list of texts (the FAQs)
 - `embedding_types`: We choose `float` to get the float embeddings.
@@ -94,7 +94,7 @@ faqs_long = [
 
 # Embed the documents
 doc_emb = co.embed(
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     input_type="search_document",
     texts=[doc["text"] for doc in documents],
 ).embeddings
@@ -120,7 +120,7 @@ query = "How do I stay connected to what's happening at the company?"
 
 # Embed the query
 query_emb = co.embed(
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     input_type="search_query",
     texts=[query],
 ).embeddings
@@ -157,12 +157,12 @@ return_results(query_emb, doc_emb, documents)
 
 ```
 Rank: 1
-Score: 0.352135965228231
+Score: 0.41000436434403353
 Document: {'text': 'Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.'}
 
 Rank: 2
-Score: 0.31995661889273097
-Document: {'text': 'Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours.'}
+Score: 0.3134998454537644
+Document: {'text': 'Proposing New Ideas: Innovation is welcomed! Share your brilliant ideas at our weekly team meetings or directly with your team lead.'}
 ```
 
 ## Multilingual semantic search
@@ -175,7 +175,7 @@ Multilingual search happens when the query and the result are of the same langua
 
 Cross-lingual search happens when the query and the result are of a different language. For example, a Hindi query of “खाने की जगह” (places to eat) returning an English result of “Bob's Burgers.”
 
-In the example below, we repeat the steps of performing semantic search with one difference – changing the model type to the multilingual version. Here, we use the `embed-v4.0` model. Here, we are searching a French version of the FAQ list using an English query.
+In the example below, we repeat the steps of performing semantic search with one difference – we are searching a French version of the FAQ list using an English query. No model change is needed, since `embed-v5.0-pro` is multilingual by default.
 
 ```python PYTHON
 # Define the documents
@@ -198,7 +198,7 @@ documents = faqs_short_fr
 
 # Embed the documents
 doc_emb = co.embed(
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     input_type="search_document",
     texts=[doc["text"] for doc in documents],
 ).embeddings
@@ -208,7 +208,7 @@ query = "What's your remote-working policy?"
 
 # Embed the query
 query_emb = co.embed(
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     input_type="search_query",
     texts=[query],
 ).embeddings
@@ -219,12 +219,12 @@ return_results(query_emb, doc_emb, documents)
 
 ```
 Rank: 1
-Score: 0.442758615743984
+Score: 0.30793095824368866
 Document: {'text': "Travailler de l'étranger : Il est possible de travailler à distance depuis un autre pays. Il suffit de coordonner avec votre responsable et de vous assurer d'être disponible pendant les heures de travail."}
 
 Rank: 2
-Score: 0.32783563708365726
-Document: {'text': 'Avantages pour la santé et le bien-être : Nous nous soucions de votre bien-être et proposons des adhésions à des salles de sport, des cours de yoga sur site et une assurance santé complète.'}
+Score: 0.10616636825251569
+Document: {'text': 'Fréquence des évaluations de performance : Nous organisons des bilans informels tous les trimestres et des évaluations formelles deux fois par an.'}
 ```   
 
 ### Further reading
@@ -239,7 +239,7 @@ A typical embedding model generates embeddings as float32 format (consuming 4 by
 
 We can go even further and use the binary format (1 bit), which reduces the needed memory 32x while keeping 90-98% of the original search quality.
 
-The Embed endpoint supports the following formats: `float`, `int8`, `unint8`, `binary`, and `ubinary`. You can get these different compression levels by passing the `embedding_types` parameter.
+The Embed endpoint supports the following formats: `float`, `int8`, `uint8`, `binary`, and `ubinary`. You can get these different compression levels by passing the `embedding_types` parameter.
 
 In the example below, we embed the documents in two formats: `float` and `int8`.
 
@@ -249,7 +249,7 @@ documents = faqs_long
 
 # Embed the documents with the given embedding types
 doc_emb = co.embed(
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     embedding_types=["float", "int8"],
     input_type="search_document",
     texts=[doc["text"] for doc in documents],
@@ -260,7 +260,7 @@ query = "How do I stay connected to what's happening at the company?"
 
 # Embed the query
 query_emb = co.embed(
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     embedding_types=["float", "int8"],
     input_type="search_query",
     texts=[query],
@@ -276,12 +276,12 @@ return_results(query_emb.float, doc_emb.float, faqs_long)
 
 ```
 Rank: 1
-Score: 0.352135965228231
+Score: 0.41000436434403353
 Document: {'text': 'Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.'}
 
 Rank: 2
-Score: 0.31995661889273097
-Document: {'text': 'Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours.'}
+Score: 0.3134998454537644
+Document: {'text': 'Proposing New Ideas: Innovation is welcomed! Share your brilliant ideas at our weekly team meetings or directly with your team lead.'}
 ```
 
 And here are the search results of using the `int8` embeddings.
@@ -293,12 +293,12 @@ return_results(query_emb.int8, doc_emb.int8, documents)
 
 ```
 Rank: 1
-Score: 563583
+Score: 935114
 Document: {'text': 'Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.'}
 
 Rank: 2
-Score: 508692
-Document: {'text': 'Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours.'}
+Score: 751981
+Document: {'text': 'Proposing New Ideas: Innovation is welcomed! Share your brilliant ideas at our weekly team meetings or directly with your team lead.'}
 ```
 
 ## Further reading
