@@ -13,8 +13,8 @@ text_inputs = [
 
 response = co.embed(
     inputs=text_inputs,
-    model="embed-v4.0",
-    input_type="classification",
+    model="embed-v5.0-fast",
+    input_type="search_document",
     embedding_types=["float"],
 )
 print(response)

@@ -15,8 +15,8 @@ public class EmbedPost {
             .v2()
             .embed(
                 V2EmbedRequest.builder()
-                    .model("embed-v4.0")
-                    .inputType(EmbedInputType.CLASSIFICATION)
+                    .model("embed-v5.0-fast")
+                    .inputType(EmbedInputType.SEARCH_DOCUMENT)
                     .texts(List.of("hello", "goodbye"))
                     .build());
 

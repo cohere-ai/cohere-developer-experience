@@ -39,8 +39,8 @@ func main() {
 		context.TODO(),
 		&cohere.V2EmbedRequest{
 			Images:         []string{imageBase64},
-			Model:          "embed-v4.0",
-			InputType:      cohere.EmbedInputTypeImage,
+			Model:          "embed-v5.0-fast",
+			InputType:      cohere.EmbedInputTypeSearchDocument,
 			EmbeddingTypes: []cohere.EmbeddingType{cohere.EmbeddingTypeFloat},
 		},
 	)

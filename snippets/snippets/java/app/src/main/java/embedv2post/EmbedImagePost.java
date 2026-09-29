@@ -39,8 +39,8 @@ public class EmbedImagePost {
               .v2()
               .embed(
                   V2EmbedRequest.builder()
-                      .model("embed-v4.0")
-                      .inputType(EmbedInputType.IMAGE)
+                      .model("embed-v5.0-fast")
+                      .inputType(EmbedInputType.SEARCH_DOCUMENT)
                       .images(List.of(imageBase64))
                       .embeddingTypes(List.of(EmbeddingType.FLOAT))
                       .build());
