@@ -1047,7 +1047,7 @@ print("Source document has been broken down to {} chunks".format(len(documents))
 """
 Embed document chunks
 """
-document_embeddings = co.embed(texts=documents, model="embed-v4.0", input_type="search_document").embeddings
+document_embeddings = co.embed(texts=documents, model="embed-v5.0-pro", input_type="search_document").embeddings
 ```
 
 ```python PYTHON
@@ -1057,7 +1057,7 @@ Create document index and add embedded chunks
 
 import hnswlib
 
-index = hnswlib.Index(space='ip', dim=1536) # space: inner product
+index = hnswlib.Index(space='ip', dim=2048) # space: inner product
 index.init_index(max_elements=len(document_embeddings), ef_construction=512, M=64)
 index.add_items(document_embeddings, list(range(len(document_embeddings))))
 print("Count:", index.element_count)
@@ -1077,7 +1077,7 @@ Embed search query
 Fetch k nearest neighbors
 """
 
-query_emb = co.embed(texts=[prompt], model='embed-v4.0', input_type="search_query").embeddings
+query_emb = co.embed(texts=[prompt], model='embed-v5.0-pro', input_type="search_query").embeddings
 default_knn = 10
 knn = default_knn if default_knn <= index.element_count else index.element_count
 result = index.knn_query(query_emb, k=knn)

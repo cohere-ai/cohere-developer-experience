@@ -14,7 +14,7 @@ updatedAt: 'Tue May 28 2024 19:14:00 GMT+0000 (Coordinated Universal Time)'
 
 Embeddings are a way to represent the meaning of texts, images, or information as a list of numbers. Using a simple comparison function, we can then calculate a similarity score for two embeddings to figure out whether two pieces of information are about similar things. Common use-cases for embeddings include semantic search, clustering, and classification.
 
-In the example below we use the `embed-v4.0` model to generate embeddings for 3 phrases and compare them using a similarity function. The two similar phrases have a high similarity score, and the embeddings for two unrelated phrases have a low similarity score:
+In the example below we use the `embed-v5.0-pro` model to generate embeddings for 3 phrases and compare them using a similarity function. The two similar phrases have a high similarity score, and the embeddings for two unrelated phrases have a low similarity score:
 
 ```python PYTHON
 import cohere
@@ -25,7 +25,7 @@ co = cohere.ClientV2(api_key="YOUR_API_KEY")
 # get the embeddings
 phrases = ["i love soup", "soup is my favorite", "london is far away"]
 
-model = "embed-v4.0"
+model = "embed-v5.0-pro"
 input_type = "search_query"
 
 res = co.embed(
@@ -59,11 +59,11 @@ Cohere embeddings are optimized for different types of inputs.
 - When using embeddings for [semantic search](/docs/semantic-search), the search query should be embedded by setting `input_type="search_query"`
 - When using embeddings for semantic search, the text passages that are being searched over should be embedded with `input_type="search_document"`.
 - When using embedding for `classification` and `clustering` tasks, you can set `input_type` to either 'classification' or 'clustering' to optimize the embeddings appropriately.
-- When `input_type='image'` for `embed-v3.0`, the expected input to be embedded is an image instead of text. If you use `input_type=images` with `embed-v4.0` it will default to `search_document`. We recommend using `search_document` when working with `embed-v4.0`.
+- When `input_type='image'` for `embed-v3.0`, the expected input to be embedded is an image instead of text. If you use `input_type=images` with `embed-v5.0-pro` it will default to `search_document`. We recommend using `search_document` when working with `embed-v5.0-pro`.
 
 ## Multilingual Support
 
-`embed-v4.0` is a best-in-class best-in-class multilingual model with support for over 100 languages, including Korean, Japanese, Arabic, Chinese, Spanish, and French.
+`embed-v5.0-pro` is a best-in-class multilingual model with support for over 100 languages, including Korean, Japanese, Arabic, Chinese, Spanish, and French.
 
 ```python PYTHON
 import cohere
@@ -83,7 +83,7 @@ texts = [
 ]
 
 response = co.embed(
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     texts=texts,
     input_type="classification",
     output_dimension=1024,
@@ -96,7 +96,7 @@ print(embeddings[0][:5])  # Print embeddings for the first text
 
 ## Image Embeddings
 
-The Cohere Embedding platform supports image embeddings for `embed-v4.0` and the `embed-v3.0` family. There are two ways to access this functionality: 
+The Cohere Embedding platform supports image embeddings for `embed-v5.0-pro` and the `embed-v3.0` family. There are two ways to access this functionality: 
 
 - Pass `image` to the `input_type` parameter. Here are the steps:
   - Pass image to the `input_type` parameter 
@@ -115,9 +115,9 @@ Be aware that image embedding has the following restrictions:
 - If `input_type='image'`, the `texts` field must be empty.
 - The original image file type must be in a `png`, `jpeg`, `webp`, or `gif` format and can be up to 5 MB in size.
 - The image must be base64 encoded and sent as a Data URL to the `images` parameter.
-- Our API currently does not support batch image embeddings for `embed-v3.0` models. For `embed-v4.0`, however, you can submit up to 96 images.
+- Our API currently does not support batch image embeddings for `embed-v3.0` models. For `embed-v5.0-pro`, however, you can submit up to 96 images.
 
-When using the `inputs` parameter the following restrictions exist (note these restrictions apply to `embed-v4.0`):
+When using the `inputs` parameter the following restrictions exist (note these restrictions apply to `embed-v5.0-pro`):
 
 - The maximum size of payload is 20mb
 - All images larger than 2,458,624 pixels will be downsampled to 2,458,624 pixels
@@ -166,7 +166,7 @@ input = {
 }
 
 res = co.embed(
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     embedding_types=["float"],
     input_type="search_document",
     inputs=[input],
@@ -210,7 +210,7 @@ processed_image = image_to_base64_data_url("<PATH_TO_IMAGE>")
 
 res = co.embed(
     images=[processed_image],
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     embedding_types=["float"],
     input_type="image",
 )
@@ -220,9 +220,9 @@ res.embeddings.float
 
 ## Support for Mixed Content Embeddings
 
-`embed-v4.0` supports text and content-rich images such as figures, slide decks, document screen shots (i.e. screenshots of PDF pages). This eliminates the need for complex text extraction or ETL pipelines. Unlike our previous `embed-v3.0` model family, `embed-v4.0` is capable of processing both images and texts together; the inputs can either be an image that contains both text and visual content, or text and images that youd like to compress into a single vector representation. 
+`embed-v5.0-pro` supports text and content-rich images such as figures, slide decks, document screen shots (i.e. screenshots of PDF pages). This eliminates the need for complex text extraction or ETL pipelines. Unlike our previous `embed-v3.0` model family, `embed-v5.0-pro` is capable of processing both images and texts together; the inputs can either be an image that contains both text and visual content, or text and images that youd like to compress into a single vector representation. 
 
-Here's a code sample illustrating how `embed-v4.0` could be used to work with fused images and texts like the following:
+Here's a code sample illustrating how `embed-v5.0-pro` could be used to work with fused images and texts like the following:
 
 ![Fused image and texts](../../assets/images/embed-cat.png)
 
@@ -245,7 +245,7 @@ example_doc = [
 ]  # This is where we're fusing text and images.
 
 res = co.embed(
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     inputs=[{"content": example_doc}],
     input_type="search_document",
     embedding_types=["float"],
@@ -259,13 +259,13 @@ res
 
 ## Matryoshka Embeddings
 
-Matryoshka learning creates embeddings with coarse-to-fine representation within a single vector; `embed-v4.0` supports multiple output dimensions in the following values: `[256,512,1024,1536]`. To access this, you specify the parameter `output_dimension` when creating the embeddings. 
+Matryoshka learning creates embeddings with coarse-to-fine representation within a single vector; `embed-v5.0-pro` supports multiple output dimensions in the following values: `[256,512,768,1024,1536,2048]`. To access this, you specify the parameter `output_dimension` when creating the embeddings. 
 
 ```python PYTHON
 texts = ["hello"]
 
 response = co.embed(
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     texts=texts,
     output_dimension=1024,
     input_type="classification",
@@ -284,7 +284,7 @@ The following embedding types are supported:
 
 - `float`
 - `int8`
-- `unint8`
+- `uint8`
 - `binary`
 - `ubinary`
 
@@ -293,7 +293,7 @@ We recommend being explicit about the `embedding type(s)`. To specify an embeddi
 ```python PYTHON
 res = co.embed(
     texts=["hello_world"],
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     input_type="search_document",
     embedding_types=["int8"],
 )
@@ -304,7 +304,7 @@ You can specify multiple embedding types in a single call. For example, the foll
 ```python PYTHON
 res = co.embed(
     texts=phrases,
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     input_type=input_type,
     embedding_types=["int8", "float"],
 )
@@ -319,14 +319,14 @@ When doing binary compression, there's a subtlety worth pointing out: because Co
 
 ```python PYTHON
 res = co.embed(
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     texts=["hello"],
     input_type="search_document",
     embedding_types=["ubinary"],
     output_dimension=1024,
 )
 print(
-    f"Embed v4 Binary at 1024 dimensions results in length {len(res.embeddings.ubinary[0])}"
+    f"Embed v5 Binary at 1024 dimensions results in length {len(res.embeddings.ubinary[0])}"
 )
 
 query_emb_bin = np.asarray(res.embeddings.ubinary[0], dtype="uint8")
@@ -335,6 +335,6 @@ query_emb_unpacked = np.unpackbits(query_emb_bin, axis=-1).astype(
 )
 query_emb_unpacked = 2 * query_emb_unpacked - 1
 print(
-    f"Embed v4 Binary at 1024 unpacked will have dimensions:{len(query_emb_unpacked)}"
+    f"Embed v5 Binary at 1024 unpacked will have dimensions:{len(query_emb_unpacked)}"
 )
 ```

@@ -220,7 +220,7 @@ class Vectorstore:
             texts = [item["data"]["text"] for item in batch]
             docs_embs_batch = co_embed.embed(
                 texts=texts,
-                model="embed-v4.0",
+                model="embed-v5.0-pro",
                 input_type="search_document",
                 embedding_types=["float"],
             ).embeddings.float
@@ -232,7 +232,7 @@ class Vectorstore:
         """
         print("Indexing document chunks...")
 
-        self.idx = hnswlib.Index(space="ip", dim=1024)
+        self.idx = hnswlib.Index(space="ip", dim=2048)
         self.idx.init_index(
             max_elements=self.docs_len, ef_construction=512, M=64
         )
@@ -258,7 +258,7 @@ class Vectorstore:
         # Dense retrieval
         query_emb = co_embed.embed(
             texts=[query],
-            model="embed-v4.0",
+            model="embed-v5.0-pro",
             input_type="search_query",
             embedding_types=["float"],
         ).embeddings.float
