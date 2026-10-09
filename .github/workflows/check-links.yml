@@ -86,12 +86,17 @@ jobs:
           # page's slug wrongly prepended (e.g. /docs/integrations/v2/docs/foo instead
           # of /v2/docs/foo). Metadata only - no <a> tag uses these, not fixable from
           # our side. Excluding these from the check.
+          #
+          # Fern also renders year and year/month changelog archive links on changelog
+          # entries, but never serves those routes. Real <a> tags, still not fixable
+          # from our side.
 
           ./.github/scripts/run-muffet-with-transient-retries.sh \
             muffet "${BASE_URL}/" \
             -i "^${ESCAPED_BASE_URL}/(v1/|v2/)?(docs|reference|changelog|page)(/|$)" \
             -e "^${ESCAPED_BASE_URL}/(_next|_vercel|_local)/" \
             -e "^${ESCAPED_BASE_URL}/docs/.+/v[12]/(docs|reference)/" \
+            -e "^${ESCAPED_BASE_URL}/(v1/|v2/)?changelog/[0-9]{4}(/[0-9]{1,2})?/?$" \
             --ignore-fragments \
             --max-connections "${MUFFET_MAX_CONNECTIONS}" \
             --max-connections-per-host "${MUFFET_MAX_CONNECTIONS_PER_HOST}" \
