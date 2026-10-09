@@ -404,7 +404,8 @@ for (const file of pageFiles) {
         sourceFile &&
         ((fileToRoutes.get(sourceFile) || []).length > 0 || navFiles.has(sourceFile));
       const renderedRoutes = renderedRouteTargets(file, target);
-      const renderedOk = renderedRoutes.length > 0 && renderedRoutes.every(routeExists);
+      const brokenRoutes = renderedRoutes.filter((r) => !routeExists(r));
+      const renderedOk = renderedRoutes.length > 0 && brokenRoutes.length === 0;
 
       if (!sourceFileIsLive && !renderedOk) {
         const why = sourceFile
@@ -415,7 +416,7 @@ for (const file of pageFiles) {
         report(
           "error",
           `${file}:${line}: unresolved relative link "${target}" (${why})` +
-          (renderedRoutes.length ? `; rendered candidates: ${renderedRoutes.join(", ")}` : "")
+          (brokenRoutes.length ? `; unresolved renderings: ${brokenRoutes.join(", ")}` : "")
         );
       }
     }
