@@ -38,8 +38,8 @@ public class EmbedImagePost {
           cohere.embed(
               EmbedRequest.builder()
                   .images(List.of(imageBase64))
-                  .model("embed-v4.0")
-                  .inputType(EmbedInputType.IMAGE)
+                  .model("embed-v5.0-fast")
+                  .inputType(EmbedInputType.SEARCH_DOCUMENT)
                   .embeddingTypes(List.of(EmbeddingType.FLOAT))
                   .build());
 

@@ -36,7 +36,7 @@ For semantic search, there are two types of documents we need to turn into embed
 We call the Embed endpoint using `co.embed()` and pass the required arguments:
 
 - `texts`: The list of texts
-- `model`: Here we choose `embed-v4.0`
+- `model`: Here we choose `embed-v5.0-pro`
 - `input_type`: We choose `search_document` to ensure the model treats these as the documents for search
 - `embedding_types`: We choose `float` to get a float array as the output
 
@@ -67,7 +67,7 @@ embed_input = [
 # Embed the documents
 doc_emb = co.embed(
     inputs=embed_input,
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     output_dimension=1024,
     input_type="search_document",
     embedding_types=["float"],
@@ -83,7 +83,7 @@ query_input = [{"content": [{"type": "text", "text": query}]}]
 # Embed the query
 query_emb = co.embed(
     inputs=query_input,
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     input_type="search_query",
     output_dimension=1024,
     embedding_types=["float"],
@@ -114,19 +114,19 @@ Rank: 2
 Document: Joining Slack Channels: You will receive an invite via email. Be sure to join relevant channels to stay informed and engaged.
 ```   
 
-## Content quality measure with Embed v4
+## Content quality measure with Embed v5
 
 A standard text embeddings model is optimized for only topic similarity between a query and candidate documents. But in many real-world applications, you have redundant information with varying content quality.
 
 For instance, consider a user query of “COVID-19 Symptoms” and compare that to candidate document, “COVID-19 has many symptoms”. This document does not offer high-quality and rich information. However, with a typical embedding model, it will appear high on search results because it is highly similar to the query.
 
-The Embed v4 model is trained to capture both content quality and topic similarity. Through this approach, a search system can extract richer information from documents and is robust against noise.
+The Embed v5 model is trained to capture both content quality and topic similarity. Through this approach, a search system can extract richer information from documents and is robust against noise.
 
 As an example below, give a query (“COVID-19 Symptoms”), the document with the highest quality (“COVID-19 symptoms can include: a high temperature or shivering…”) is ranked first.
 
 Another document (“COVID-19 has many symptoms”) is arguably more similar to the query based on what information it contains, yet it is ranked lower as it doesn’t contain that much information.
 
-This demonstrates how Embed v4 helps to surface high-quality documents for a given query.
+This demonstrates how Embed v5 helps to surface high-quality documents for a given query.
 
 
 ```python PYTHON
@@ -151,7 +151,7 @@ embed_input = [
 # Embed the documents
 doc_emb = co.embed(
     inputs=embed_input,
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     output_dimension=1024,
     input_type="search_document",
     embedding_types=["float"],
@@ -167,7 +167,7 @@ query_input = [{"content": [{"type": "text", "text": query}]}]
 # Embed the query
 query_emb = co.embed(
     inputs=query_input,
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     input_type="search_query",
     output_dimension=1024,
     embedding_types=["float"],
@@ -209,7 +209,7 @@ Document: COVID-19 symptoms are not nice
 
 ## Multilingual semantic search
 
-The Embed endpoint also supports multilingual semantic search via `embed-v4.0` and previous `embed-multilingual-...` models. This means you can perform semantic search on texts in different languages.
+The Embed endpoint also supports multilingual semantic search via `embed-v5.0-pro` and previous `embed-multilingual-...` models. This means you can perform semantic search on texts in different languages.
 
 Specifically, you can do both multilingual and cross-lingual searches using one single model.
 
@@ -231,7 +231,7 @@ embed_input = [
 # Embed the documents
 doc_emb = co.embed(
     inputs=embed_input,
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     output_dimension=1024,
     input_type="search_document",
     embedding_types=["float"],
@@ -247,7 +247,7 @@ query_input = [{"content": [{"type": "text", "text": query}]}]
 # Embed the query
 query_emb = co.embed(
     inputs=query_input,
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     input_type="search_query",
     output_dimension=1024,
     embedding_types=["float"],
@@ -288,7 +288,7 @@ Document: Remboursement des frais de voyage : Gérez facilement vos frais de voy
 
 Handling PDF files, which often contain a mix of text, images, and layout information, presents a challenge for traditional embedding methods. This usually requires a multimodal generative model to pre-process the documents into a format that is suitable for the embedding model. This intermediate text representations can lose critical information; for example, the structure and precise content of tables or complex layouts might not be accurately rendered
 
-Embed v4 solves this problem as it is designed to natively understand mixed-modality inputs. Embed v4 can directly process the PDF content, including text and images, in a single step. It generates a unified embedding that captures the semantic meaning derived from both the textual and visual elements.
+Embed v5 solves this problem as it is designed to natively understand mixed-modality inputs. Embed v5 can directly process the PDF content, including text and images, in a single step. It generates a unified embedding that captures the semantic meaning derived from both the textual and visual elements.
 
 Here's an example of how to use the Embed endpoint to perform multimodal PDF search.
 
@@ -305,7 +305,7 @@ import cohere
 Next, turn a PDF file into a list of images, with one image per page. Then format these images into the content structure expected by the Embed endpoint.
 
 ```python PYTHON
-pdf_path = "PDF_FILE_PATH"  # https://github.com/cohere-ai/cohere-developer-experience/raw/main/notebooks/guide/embed-v4-pdf-search/data/Samsung_Home_Theatre_HW-N950_ZA_FullManual_02_ENG_180809_2.pdf
+pdf_path = "PDF_FILE_PATH"  # https://github.com/cohere-ai/cohere-developer-experience/raw/main/notebooks/guides/embed-v4-pdf-search/data/Samsung_Home_Theatre_HW-N950_ZA_FullManual_02_ENG_180809_2.pdf
 pages = convert_from_path(pdf_path, dpi=200)
 
 input_array = []
@@ -330,7 +330,7 @@ Next, generate the embeddings for these pages and store them in a vector databas
 embeddings = []
 for i in range(0, len(input_array)):
     res = co.embed(
-        model="embed-v4.0",
+        model="embed-v5.0-pro",
         input_type="search_document",
         embedding_types=["float"],
         inputs=[input_array[i]],
@@ -357,7 +357,7 @@ query = "Do the speakers come with an optical cable?"
 
 # Generate the query embedding
 query_embeddings = co.embed(
-    model="embed-v4.0",
+    model="embed-v5.0-pro",
     input_type="search_query",
     embedding_types=["float"],
     texts=[query],

@@ -21,8 +21,8 @@ image_inputs = [
 ]
 
 response = co.embed(
-    model="embed-v4.0",
-    input_type="image",
+    model="embed-v5.0-fast",
+    input_type="search_document",
     embedding_types=["float"],
     inputs=image_inputs
 )

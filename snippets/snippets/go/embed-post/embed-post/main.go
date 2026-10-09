@@ -16,7 +16,7 @@ func main() {
 		context.TODO(),
 		&cohere.EmbedRequest{
 			Texts:     []string{"hello", "goodbye"},
-			Model:     cohere.String("embed-v4.0"),
+			Model:     cohere.String("embed-v5.0-fast"),
 			InputType: cohere.EmbedInputTypeSearchDocument.Ptr(),
 		},
 	)

@@ -5,8 +5,8 @@ const cohere = new CohereClient({});
 (async () => {
   const embed = await cohere.embed({
     texts: ['hello', 'goodbye'],
-    model: 'embed-v4.0',
-    inputType: 'classification',
+    model: 'embed-v5.0-fast',
+    inputType: 'search_document',
     embeddingTypes: ['float'],
   });
   console.log(embed);

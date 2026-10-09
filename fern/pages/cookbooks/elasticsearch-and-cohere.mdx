@@ -89,7 +89,7 @@ client.inference.put_model(
         "service": "cohere",
         "service_settings": {
             "api_key": COHERE_API_KEY,
-            "model_id": "embed-v4.0",
+            "model_id": "embed-v5.0-pro",
             "embedding_type": "int8",
             "similarity": "cosine"
         },
@@ -134,6 +134,8 @@ Let's note a few important parameters from that API call:
 
 The mapping of the destination index – the index that contains the embeddings that the model will create based on your input text – must be created. The destination index must have a field with the [dense_vector](https://www.elastic.co/guide/en/elasticsearch/reference/current/dense-vector.html) field type to index the output of the Cohere model.
 
+`embed-v5.0-pro` defaults to 2,048 dimensions, so map `text_embedding` with `dims` set to `2048`.
+
 Let's create an index named `cohere-wiki-embeddings` with the mappings we need.
 
 ```python PYTHON
@@ -145,7 +147,7 @@ client.indices.create(
         "properties": {
             "text_embedding": {
                 "type": "dense_vector",
-                "dims": 1024,
+                "dims": 2048,
                 "element_type": "byte"
             },
             "text": {"type": "text"},

@@ -14,8 +14,8 @@ public class EmbedPost {
         cohere.embed(
             EmbedRequest.builder()
                 .texts(List.of("hello", "goodbye"))
-                .model("embed-v4.0")
-                .inputType(EmbedInputType.CLASSIFICATION)
+                .model("embed-v5.0-fast")
+                .inputType(EmbedInputType.SEARCH_DOCUMENT)
                 .build());
 
     System.out.println(response);

@@ -27,7 +27,7 @@ We'll use Cohere's Embed model deployed on Azure to demonstrate these capabiliti
 
 First, you will need to deploy the Embed model on Azure via Azure AI Foundry. The deployment will create a serverless API with pay-as-you-go token based billing. You can find more information on how to deploy models in the [Azure documentation](https://learn.microsoft.com/en-us/azure/ai-studio/how-to/deploy-models-serverless?tabs=azure-ai-studio).
 
-In the example below, we are deploying the Embed v4 model.
+In the example below, we are deploying the Embed 5 Pro model.
 
 Once the model is deployed, you can access it via Cohere's Python SDK. Let's now install the Cohere SDK and set up our client.
 
@@ -44,7 +44,7 @@ import cohere
 
 co = cohere.Client(
     api_key="AZURE_API_KEY_EMBED",
-    base_url="AZURE_ENDPOINT_EMBED",  # example: "https://cohere-embed-v4-xyz.eastus.models.ai.azure.com/"
+    base_url="AZURE_ENDPOINT_EMBED",  # example: "https://cohere-embed-v5-pro-xyz.eastus.models.ai.azure.com/"
 )
 ```
 
@@ -103,7 +103,7 @@ Name: count, dtype: int64
 
 ## Embed and index documents
 
-Let's embed our documents and store the embeddings. These embeddings are high-dimensional vectors (1,024 dimensions) that capture the semantic meaning of each document. We'll use Cohere's `embed-v4.0` model that we have defined in the client setup.
+Let's embed our documents and store the embeddings. These embeddings are high-dimensional vectors (2,048 dimensions) that capture the semantic meaning of each document. We'll use Cohere's `embed-v5.0-pro` model that we have defined in the client setup.
  
 The v4.0 embedding models require us to specify an `input_type` parameter that indicates what we're embedding. For semantic search, we use `search_document` for the documents we want to search through, and `search_query` for the search queries we'll make later.
 
@@ -124,7 +124,7 @@ doc_embs = co.embed(
 ).embeddings
 
 # Create a search index
-index = hnswlib.Index(space="ip", dim=1024)
+index = hnswlib.Index(space="ip", dim=2048)
 index.init_index(
     max_elements=len(doc_embs), ef_construction=512, M=64
 )

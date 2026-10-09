@@ -10,8 +10,8 @@ content_type = image.headers["Content-Type"]
 image_base64 = f"data:{content_type};base64,{stringified_buffer}"
 
 response = co.embed(
-    model="embed-v4.0",
-    input_type="image",
+    model="embed-v5.0-fast",
+    input_type="search_document",
     embedding_types=["float"],
     images=[image_base64],
 )
