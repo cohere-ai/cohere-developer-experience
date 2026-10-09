@@ -218,6 +218,7 @@ function isNonsenseTarget(url) {
 // (API spec, marketing site, blog) — we cannot verify them here.
 const EXTERNAL_ROUTE_PREFIXES = [
   "/reference/",    // Fern-generated API reference pages (v1)
+  "/v1/reference/", // Fern-generated API reference pages (v1, explicit prefix)
   "/v2/reference/", // Fern-generated API reference pages (v2)
   "/page/",         // Cohere marketing / cookbook pages
   "/blog/",         // Cohere blog posts
@@ -403,7 +404,8 @@ for (const file of pageFiles) {
         sourceFile &&
         ((fileToRoutes.get(sourceFile) || []).length > 0 || navFiles.has(sourceFile));
       const renderedRoutes = renderedRouteTargets(file, target);
-      const renderedOk = renderedRoutes.some(routeExists);
+      const brokenRoutes = renderedRoutes.filter((r) => !routeExists(r));
+      const renderedOk = renderedRoutes.length > 0 && brokenRoutes.length === 0;
 
       if (!sourceFileIsLive && !renderedOk) {
         const why = sourceFile
@@ -414,7 +416,7 @@ for (const file of pageFiles) {
         report(
           "error",
           `${file}:${line}: unresolved relative link "${target}" (${why})` +
-          (renderedRoutes.length ? `; rendered candidates: ${renderedRoutes.join(", ")}` : "")
+          (brokenRoutes.length ? `; unresolved renderings: ${brokenRoutes.join(", ")}` : "")
         );
       }
     }

@@ -3,10 +3,15 @@ name: preview-docs
 on:
   pull_request_target:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   run:
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       pull-requests: write  # Only for commenting
       contents: read       # For checking out code
@@ -42,9 +47,19 @@ jobs:
         env:
           FERN_TOKEN: ${{ secrets.FERN_TOKEN }}
         run: |
-          OUTPUT=$(pnpm run docs:preview 2>&1) || true
+          set -uo pipefail
+          STATUS=0
+          OUTPUT=$(pnpm run docs:preview 2>&1) || STATUS=$?
           echo "$OUTPUT"
-          URL=$(echo "$OUTPUT" | grep -oP 'Published docs to \K.*(?= \()')
+          if [[ "${STATUS}" -ne 0 ]]; then
+            echo "::error::fern docs preview failed with exit code ${STATUS}"
+            exit "${STATUS}"
+          fi
+          URL=$(printf '%s\n' "$OUTPUT" | grep -oP 'Published docs to \K.*(?= \()' || true)
+          if [[ -z "${URL}" ]]; then
+            echo "::error::Could not parse a preview URL from the fern output above"
+            exit 1
+          fi
           echo "Preview URL: $URL"
           echo "🌿 Preview your docs: $URL" > preview_url.txt
           echo "preview_url=$URL" >> "$GITHUB_OUTPUT"
@@ -62,3 +77,25 @@ jobs:
     uses: ./.github/workflows/check-links.yml
     with:
       preview_url: ${{ needs.run.outputs.preview_url }}
+
+  link-check:
+    needs: [run, check-links]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Report link check outcome
+        env:
+          PREVIEW_RESULT: ${{ needs.run.result }}
+          LINKS_RESULT: ${{ needs.check-links.result }}
+        run: |
+          echo "preview=${PREVIEW_RESULT} links=${LINKS_RESULT}"
+          # Fork PRs skip preview generation, so there is no preview to crawl.
+          if [[ "${PREVIEW_RESULT}" == "skipped" ]]; then
+            exit 0
+          fi
+          if [[ "${LINKS_RESULT}" != "success" ]]; then
+            echo "::error::Link check did not pass (preview=${PREVIEW_RESULT}, links=${LINKS_RESULT})"
+            exit 1
+          fi
