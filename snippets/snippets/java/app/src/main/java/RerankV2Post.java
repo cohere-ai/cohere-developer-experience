@@ -2,6 +2,8 @@
 import com.cohere.api.Cohere;
 import com.cohere.api.resources.v2.requests.V2RerankRequest;
 import com.cohere.api.resources.v2.types.V2RerankResponse;
+import com.cohere.api.types.RerankRelevantSpans;
+import com.cohere.api.types.RerankRelevantSpansMode;
 import java.util.List;
 
 public class RerankV2Post {
@@ -13,7 +15,7 @@ public class RerankV2Post {
             .v2()
             .rerank(
                 V2RerankRequest.builder()
-                    .model("rerank-v4.0-pro")
+                    .model("rerank-v5.0-pro")
                     .query("What is the capital of the United States?")
                     .documents(
                         List.of(
@@ -26,10 +28,16 @@ public class RerankV2Post {
                             "Washington, D.C. (also known as simply Washington or D.C., and"
                                 + " officially as the District of Columbia) is the capital of the"
                                 + " United States. It is a federal district.",
-                            "Capital punishment has existed in the United States since before the"
-                                + " United States was a country. As of 2017, capital punishment is"
-                                + " legal in 30 of the 50 states."))
+                            "Capital gains are profits from the sale of an asset such as stocks or"
+                                + " real estate. In the United States, long-term capital gains are"
+                                + " taxed at lower rates than ordinary income."))
                     .topN(3)
+                    .relevantSpans(
+                        RerankRelevantSpans.builder()
+                            .mode(RerankRelevantSpansMode.ENABLED)
+                            .threshold(0.1f)
+                            .maxSpans(3)
+                            .build())
                     .build());
 
     System.out.println(response);
