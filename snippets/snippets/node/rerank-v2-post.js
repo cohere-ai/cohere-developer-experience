@@ -14,7 +14,10 @@ const cohere = new CohereClient({});
     query: 'What is the capital of the United States?',
     topN: 3,
     model: 'rerank-v5.0-pro',
+<<<<<<< ours
     relevantSpans: { mode: 'enabled', threshold: 0.1, maxSpans: 3 },
+=======
+>>>>>>> theirs
   });
 
   console.log(rerank);
