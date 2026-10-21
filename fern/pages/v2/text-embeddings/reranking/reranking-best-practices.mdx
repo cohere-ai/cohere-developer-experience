@@ -16,7 +16,8 @@ In the following tables, you'll find recommendations for getting the best perfor
 | Constraint                    | Minimum | Maximum                                                                                                 | Default Value |
 | ----------------------------- | ------- | ------------------------------------------------------------------------------------------------------- | :------------ |
 | Number of Documents           | 1       | 10,000                                                                                                  | N/A           |
-| Max Number of Chunks          | 1       | N/A                                                                                                     | 1             |
+| `max_tokens_per_doc` (v5.0)   | 1       | N/A                                                                                                     | 4096          |
+| `max_chunks_per_doc` (earlier models) | 1 | N/A                                                                                             | 1             |
 | Number of Tokens per Document | 1       | N/A (see [below](/docs/reranking-best-practices#document-chunking)for more info)                       | N/A           |
 | Number of Tokens per Query    | 1       | 2048                                                                                                    | N/A           |
 
@@ -50,9 +51,14 @@ If you would like more control over how chunking is done, we recommend that you 
 
 ## Max Number of Documents
 
-When using rerank-v5.0-pro, rerank-v5.0-fast, rerank-v4.0-pro, rerank-v4.0-fast, rerank-v3.5 and rerank-v3.0 models, the endpoint will throw an error if the user attempts to pass more than 10,000 documents at a time. The maximum number of documents that can be passed to the endpoint is calculated with the following inequality: Number of documents * max_chunks_per_doc >10,000.
+For `rerank-v5.0-pro` and `rerank-v5.0-fast`, you can pass up to 10,000 documents in one request. The endpoint
+returns an error above that limit. Long documents are truncated to `max_tokens_per_doc`, which defaults to `4096`.
 
-If Number of documents * max_chunks_per_doc exceeds 10,000, the endpoint will return an error. By default, the max_chunks_per_doc is set to 1 for rerank models.
+For `rerank-v4.0-pro`, `rerank-v4.0-fast`, `rerank-v3.5`, and `rerank-v3.0`, the maximum number of documents
+is calculated with this inequality: `Number of documents * max_chunks_per_doc > 10,000`.
+
+If `Number of documents * max_chunks_per_doc` exceeds `10,000`, the endpoint returns an error.
+By default, `max_chunks_per_doc` is set to `1`.
 
 ## Queries
 
