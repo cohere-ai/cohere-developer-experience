@@ -26,7 +26,7 @@ The Cohere OHTTP proxy comes in two forms, and which one you use determines whic
 
 In all cases, the Cohere OHTTP proxy does the same two things on your behalf:
 
-- **Verifies attestation**: it fetches the environment's attestation token and OHTTP public key, confirms the token was genuinely signed by Intel Trust Authority, checks that the attested measurements match the approved policy, and confirms the OHTTP key is bound to that attested environment.
+- **Verifies attestation**: it fetches the environment's OHTTP public key with its attestation material, confirms that the material is genuine (by appraising the raw evidence locally, or by checking that the attestation token was signed by Intel Trust Authority), checks that the attested measurements match the approved policy, and confirms the OHTTP key is bound to that attested environment. See [Remote Attestation](../../../docs/model-vault/encrypted/attestation) for details on the attestation process.
 - **Encrypts end to end**: it encrypts every request to the attested environment using OHTTP and decrypts the response, so the load balancer and network only ever see ciphertext.
 
 ## Option 1: Cohere OHTTP proxy with any client
@@ -104,7 +104,7 @@ print(response.choices[0].message.content)
 ```
 
 <Note>
-Embed and Rerank calls work the same way through the Cohere OHTTP proxy: keep the client or proxy in place and call
+Embed and Rerank calls work the same way through the Cohere OHTTP proxy: keep the proxy or Python wrapper in place and call
 `co.embed(...)` or `co.rerank(...)` (or the corresponding HTTP/OpenAI-compatible endpoints) with your
 vault's model name.
 </Note>
@@ -174,11 +174,12 @@ print(response.choices[0].message.content)
 The Cohere OHTTP proxy enforces a strict order: **no plaintext leaves your environment until attestation passes.**
 On each session it confirms the environment is genuine confidential-VM CPU and NVIDIA GPU hardware, that debug
 modes are off, that firmware and code measurements match the approved policy, and that the encryption
-key belongs to that environment. Only then does it encrypt and send your request. Attestation tokens
-are short-lived and refreshed periodically, so the guarantee reflects the environment's current state.
+key belongs to that environment. Only then does it encrypt and send your request. Attestation is
+repeated whenever the encryption key is refreshed, using fresh evidence or a new short-lived token, so
+the guarantee reflects the environment's current state.
 
 Verification is not limited to setup time: With the Cohere Python OHTTP wrapper (conseel), every inference response 
-includes an attestation certificate (under the `x-tng-attestation-token` header) that your client can check programmatically,
+includes an attestation certificate (under the `x-tng-attestation-token` header) that your application can check programmatically,
 so you can inspect proof of the policy, CPU, GPU, and software for the environment that served each response.
 
 For the full list of what is checked and how to inspect it, see
