@@ -47,16 +47,17 @@ Remote ATtestation procedureS (RATS) architecture.
 
 In the **background check model**, the verifier obtains the evidence directly from the deployment and
 evaluates it, rather than relying on a credential the deployment presents. Here, the verifier is the
-Cohere OHTTP proxy running in your environment. The proxy sends the deployment a fresh challenge (a nonce), receives the raw evidence in
-return, and verifies that evidence against the approved policy. For the GPU, it uses **NVIDIA's
-Remote Attestation Service (NRAS)** to compare the GPU's measurements against NVIDIA's signed
-reference values, and checks NVIDIA's signature on the verdict before applying the policy to it.
+Cohere OHTTP proxy running in your environment. The proxy sends the deployment a fresh challenge (a
+nonce), receives the raw evidence in return, and verifies that evidence against the approved policy.
+For the GPU, it uses **NVIDIA's Remote Attestation Service (NRAS)** to compare the GPU's measurements
+against NVIDIA's signed reference values, and checks NVIDIA's signature on the verdict before applying
+the policy to it.
 
 ### Passport model (Intel TDX)
 
 In the **passport model**, each trusted environment obtains a signed attestation token (its
 "passport") from **Intel Trust Authority (ITA)**, an external attestation service operated by Intel.
-The Cohere OHTTP proxy verifies that passport rather than re-evaluating raw hardware evidence itself.
+The Cohere OHTTP proxy then verifies that passport.
 
 End-to-end encryption between the Cohere OHTTP proxy and the deployment uses **Oblivious HTTP
 (OHTTP)**, so the load balancer and network only ever see ciphertext. The OHTTP keys are generated
@@ -116,9 +117,11 @@ response. The load balancer never sees plaintext at any point.
 The Cohere OHTTP proxy checks that the CPU evidence is authentic against AMD's certificate chain, and
 the GPU evidence through NRAS, then evaluates the approved policy over the resulting claims. Because
 the appraisal runs on your machine, the only external verifier you rely on is NVIDIA, for the GPU. The
-result is recorded as a token signed by a key that exists only inside the running proxy, so it is a
-record of the proxy's own appraisal rather than a credential issued by a third party. If the policy
-does not match, the appraisal fails and the connection is refused.
+proxy also fetches policy releases from Integritee on GitHub, but installs one only after verifying its
+Sigstore signature, so GitHub is an availability dependency rather than a trust dependency. The result
+is recorded as a token signed by a key that exists only inside the running proxy, so it is a record of
+the proxy's own appraisal rather than a credential issued by a third party. If the policy does not
+match, the appraisal fails and the connection is refused.
 
 ### Intel TDX: token from Intel Trust Authority
 
