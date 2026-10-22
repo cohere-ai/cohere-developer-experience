@@ -3,8 +3,8 @@ title: Remote Attestation
 slug: "docs/model-vault/encrypted/attestation"
 
 hidden: false
-description: "How remote attestation and the Passport model with Intel Trust Authority prove which code is running inside a Model Vault Encrypted deployment."
-keywords: "remote attestation, intel trust authority, passport model, OHTTP, Cohere OHTTP proxy, attestation token, model vault encrypted"
+description: "How remote attestation proves which code runs inside a encrypted vault deployment, on AMD SEV-SNP or on Intel TDX with Intel Trust Authority."
+keywords: "remote attestation, background check model, AMD SEV-SNP, intel trust authority, passport model, Intel TDX, OHTTP, Cohere OHTTP proxy, attestation token, model vault encrypted, encrypted model vault"
 ---
 
 Remote attestation lets you cryptographically confirm that a Model Vault Encrypted deployment is a
@@ -15,9 +15,11 @@ For background on TEEs, see the
 [Confidential Computing Primer](../../../docs/model-vault/encrypted/confidential-computing).
 
 <Note>
-The flow below describes Model Vault Encrypted's Intel TDX deployment with Intel Trust Authority as the
-attestation service. Other confidential-VM platforms (for example, AMD SEV-SNP) provide the same
-guarantees through equivalent mechanisms, with platform-specific evidence formats and verifiers.
+Model Vault Encrypted has two attestation paths, depending on the deployment's confidential-VM
+platform: **AMD SEV-SNP** deployments use the background check model, with the evidence appraised
+directly by the Cohere OHTTP proxy on your side, and **Intel TDX** deployments use the passport
+model, with the evidence appraised by Intel Trust Authority. The Cohere OHTTP proxy supports both and
+follows whichever path the deployment uses.
 </Note>
 
 ## What attestation proves
@@ -28,20 +30,38 @@ this evidence and issues a signed **attestation result** that clients can verify
 Encrypted uses **composite attestation** that covers both the CPU and the GPU, together answering
 three questions:
 
-- **Is this genuine TEE hardware?** The evidence is rooted in keys embedded by the hardware manufacturers (Intel for the TDX CPU, NVIDIA for the GPU), so it cannot be forged by software pretending to be a secure environment.
-- **Is it configured securely?** The evidence confirms the security-critical configuration: that the Intel TDX VM is not debuggable, that the GPU booted with debug disabled, and that confidential-computing mode is active.
+- **Is this genuine TEE hardware?** The evidence is rooted in keys embedded by the hardware manufacturers (AMD for an SEV-SNP CPU or Intel for a TDX CPU, NVIDIA for the GPU), so it cannot be forged by software pretending to be a secure environment.
+- **Is it configured securely?** The evidence confirms the security-critical configuration: that the confidential VM is not debuggable, that the GPU booted with debug disabled, and that confidential-computing mode is active.
 - **Is it running the expected code?** The evidence contains cryptographic measurements (in effect, a fingerprint) of the firmware, kernel, inference workload, and container policy that were loaded, plus the GPU's firmware and driver measurements. If anything differs, the fingerprint differs.
 
-## The Passport model with Intel Trust Authority
+## Attestation models
 
-Model Vault Encrypted uses the **Passport attestation model**. Each trusted environment obtains a
-signed attestation token (its "passport") from **Intel Trust Authority (ITA)**, an external
-attestation service operated by Intel. Clients verify that passport rather than re-evaluating raw
-hardware evidence themselves.
+In both models, the deployment's evidence is verified before any data is sent; the models differ in
+where that verification takes place. On AMD SEV-SNP, the Cohere OHTTP proxy verifies the evidence
+directly in your environment. On Intel TDX, Intel Trust Authority verifies the evidence and issues a
+signed token, which the proxy then validates. The proxy supports both models and selects the
+appropriate one automatically; no configuration is required. Both models are defined in the IETF
+Remote ATtestation procedureS (RATS) architecture.
 
-End-to-end encryption between the client and the deployment uses **Oblivious HTTP (OHTTP)**, so the
-load balancer and network only ever see ciphertext. The OHTTP keys are generated inside the confidential
-VMs and are never shared with Cohere.
+### Background check model (AMD SEV-SNP)
+
+In the **background check model**, the verifier obtains the evidence directly from the deployment and
+evaluates it, rather than relying on a credential the deployment presents. Here, the verifier is the
+Cohere OHTTP proxy running in your environment. The proxy sends the deployment a fresh challenge (a
+nonce), receives the raw evidence in return, and verifies that evidence against the approved policy.
+For the GPU, it uses **NVIDIA's Remote Attestation Service (NRAS)** to compare the GPU's measurements
+against NVIDIA's signed reference values, and checks NVIDIA's signature on the verdict before applying
+the policy to it.
+
+### Passport model (Intel TDX)
+
+In the **passport model**, each trusted environment obtains a signed attestation token (its
+"passport") from **Intel Trust Authority (ITA)**, an external attestation service operated by Intel.
+The Cohere OHTTP proxy then verifies that passport.
+
+End-to-end encryption between the Cohere OHTTP proxy and the deployment uses **Oblivious HTTP
+(OHTTP)**, so the load balancer and network only ever see ciphertext. The OHTTP keys are generated
+inside the confidential VMs and are never shared with Cohere.
 
 ## End-to-end attestation and request flow
 
@@ -55,12 +75,15 @@ later checked against an approved policy. The evidence is rooted in hardware key
 and GPU, so the host or application software cannot forge different measurements and make them look
 valid.
 
-### ITA attestation (per VM)
+### Attestation (per VM)
 
-The deployment generates an OHTTP key pair inside the trusted environment and binds the public key to
-the attestation evidence. Intel Trust Authority validates the CPU and GPU evidence against the hardware
-vendors' roots of trust and checks the measured values against the registered policy. If the evidence
-matches, ITA returns a signed attestation token. The token is refreshed periodically.
+An OHTTP key pair is generated and rotated inside the trusted environment, and the public key is bound
+to the attestation evidence. In the background check model, the deployment produces fresh evidence for
+each challenge from the proxy and returns it with the public key, and the proxy verifies the evidence
+before using the key. In the passport model, the deployment produces fresh evidence for ITA's
+challenge, and ITA verifies it and issues a signed attestation token, which is refreshed periodically.
+In both cases, the verifier validates the CPU and GPU evidence against the hardware vendors' roots of
+trust and checks the measured values against the approved policy.
 
 ### Fleet-level trust
 
@@ -71,27 +94,42 @@ client-side verification and end-to-end encryption guarantees.
 
 ### Client key discovery
 
-The client-side Cohere OHTTP proxy fetches the deployment's OHTTP public key and attestation token. It
-verifies that the token was signed by ITA, that the measurements match the approved policy, and that
-the OHTTP key is cryptographically bound to the attested environment. Only after those checks pass does
-the client trust the key.
+The client-side Cohere OHTTP proxy fetches the deployment's OHTTP public key together with its
+attestation evidence (background check) or token (passport). On AMD SEV-SNP, it appraises the evidence
+directly and confirms the evidence answers its own challenge; on Intel TDX, it verifies that the token
+was signed by ITA. In both cases, it checks that the measurements match the approved policy and
+that the OHTTP key is cryptographically bound to the attested environment. Only after those checks
+pass does the proxy trust the key.
 
 ### Encrypted request serving
 
-The client encrypts the request with OHTTP using the attested public key and sends it through the load
+The proxy encrypts the request with OHTTP using the attested public key and sends it through the load
 balancer. The payload stays encrypted end to end; intermediate infrastructure can route the request but
 cannot decrypt it. The request is decrypted only inside an attested environment, inference runs there,
 and the response is encrypted before it leaves. The client-side Cohere OHTTP proxy decrypts the
 response. The load balancer never sees plaintext at any point.
 </Steps>
 
-## How Intel Trust Authority verifies
+## How the attestation material is verified
 
-ITA issues each attestation token as a **JSON Web Token (JWT) signed with PS384**. Your client verifies
-that token's signature against ITA's published public keys (JWKS), so it can confirm the result without
-trusting Cohere or the host. A non-empty set of matched policies is the single most important signal: it
-means the hardware was genuine and the measured software matched the approved values. If the policy did
-not match, no token is issued and the connection is refused.
+### AMD SEV-SNP: appraisal in the Cohere OHTTP proxy
+
+The Cohere OHTTP proxy checks that the CPU evidence is authentic against AMD's certificate chain, and
+the GPU evidence through NRAS, then evaluates the approved policy over the resulting claims. Because
+the appraisal runs on your machine, the only external verifier you rely on is NVIDIA, for the GPU. The
+proxy also fetches policy releases from Integritee on GitHub, but installs one only after verifying its
+Sigstore signature, so GitHub is an availability dependency rather than a trust dependency. The result
+is recorded as a token signed by a key that exists only inside the running proxy, so it is a record of
+the proxy's own appraisal rather than a credential issued by a third party. If the policy does not
+match, the appraisal fails and the connection is refused.
+
+### Intel TDX: token from Intel Trust Authority
+
+ITA issues each attestation token as a **JSON Web Token (JWT) signed with PS384**. The Cohere OHTTP
+proxy verifies that token's signature against ITA's published public keys (JWKS), so it can confirm the
+result without trusting Cohere or the host. A non-empty set of matched policies is the single most
+important signal: it means the hardware was genuine and the measured software matched the approved
+values. If the policy did not match, no token is issued and the connection is refused.
 
 <Note title="Verifying the verifier">
 Intel also offers a **Faithful Verification** service: you can submit an attestation token to Intel and
@@ -106,20 +144,27 @@ Attestation also protects against a host that tries to sit in the middle of the 
 impersonate the environment:
 
 - At startup, the confidential VM generates an OHTTP encryption key pair. The private key stays inside the TEE's protected memory, and the public key is bound into the attestation evidence (carried in the report's data field).
-- The client encrypts requests to the attested public key, so only a genuine, attested TEE can decrypt them.
+- The Cohere OHTTP proxy encrypts requests to the attested public key, so only a genuine, attested TEE can decrypt them.
 
-Because the public key is covered by the signed attestation, the client knows the key really belongs to
+Because the public key is covered by the signed attestation, the proxy knows the key really belongs to
 the attested environment and not to the host or load balancer. For scaled deployments, this trust model
 extends across the serving fleet without exposing plaintext to intermediate infrastructure.
 
 ## Matching measurements to expected code
 
-A fingerprint is only meaningful if you know what it is supposed to be. The ITA policy encodes the
-expected measurements for a given software version, produced by a reproducible build of the vault image
-and registered before deployment, so a passing attestation means your vault is running exactly that
-approved stack. The token also reports supporting detail you can inspect, such as the TDX measurement
-registers (MRTD, RTMR0 to RTMR3), the GPU firmware and driver measurement results, the TEE's
-security-version and patch level, and the policy that was evaluated. See
+A fingerprint is only meaningful if you know what it is supposed to be. The attestation policy encodes
+the expected measurements for a given software version, produced by a build of the vault image. The
+policies are published as signed releases in Cohere's public
+[Integritee](https://github.com/cohere-ai/integritee) repository, so a passing attestation means your
+vault is running exactly that approved stack.
+
+- **AMD SEV-SNP (appraised by the Cohere OHTTP proxy)**: the proxy downloads the policies and installs a release only after verifying its Sigstore signature, which ties it to Integritee's release workflow and the public Rekor transparency log.
+- **Intel TDX (appraised by Intel Trust Authority)**: the policy is registered with Intel Trust Authority, and the attestation token contains the name and hash of the policy that was evaluated.
+
+The result also reports supporting detail you can inspect, such as the CPU measurements (the SEV-SNP
+launch measurement and virtual TPM PCRs, or the TDX measurement registers MRTD and RTMR0 to RTMR3), the
+GPU firmware and driver measurement results, the TEE's security-version and patch level, and the
+policy that was evaluated. See
 [Verifying Your Deployment](../../../docs/model-vault/encrypted/verifying-deployment) for what each field means.
 
 ### What you are actually trusting
@@ -130,17 +175,17 @@ code, but its trustworthiness does not rest on Cohere's word. Two properties let
 yourself:
 
 - **The code is open source and built reproducibly.** Cohere authors the vault image, the container policy, and the workload, but they are open and reproducibly built, so you (or an independent party) can rebuild the artifacts and confirm that the measurements in the attestation policy correspond to inspectable source, not to a black box.
-- **An independent party enforces the check.** The expected measurements are registered with Intel Trust Authority, which appraises the evidence and issues the token. Cohere supplies the policy, but it cannot forge a passing result, and you can verify the verifier itself with Intel's Faithful Verification service.
+- **Checks are enforced independently of Cohere.** On AMD SEV-SNP, the Cohere OHTTP proxy running in your environment appraises the evidence against a policy whose every release is signed and publicly logged. On Intel TDX, Intel Trust Authority appraises the evidence against a policy registered with it and published in the same signed releases, and you can verify the verifier itself with Intel's Faithful Verification service.
 
 In other words, you do not trust Cohere's word that the right code is running; you trust hardware
 roots, an independent verifier, and source you can inspect.
 
 ## When attestation runs
 
-- **Per session**: the client verifies attestation before exchanging any data, and **refuses the connection** if the evidence is invalid or the measurements do not match.
-- **Short-lived and refreshed**: attestation tokens are valid for only a few minutes and are refreshed periodically, so the result reflects the environment's current state rather than a one-time check at deploy time.
+- **Per session**: the Cohere OHTTP proxy verifies attestation before exchanging any data, and **refuses the connection** if the evidence is invalid or the measurements do not match.
+- **Fresh and refreshed**: in the background check model, the proxy challenges the deployment with a new nonce each time it fetches the OHTTP key; in the passport model, tokens are valid for only a few minutes and are refreshed periodically. Either way, the result reflects the environment's current state rather than a one-time check at deploy time.
 - **In the Model Vault app**: an encrypted vault carries a verification badge that reflects its current attestation status, so you can see it at a glance alongside your other vaults.
-- **Available through the API**: verification is not limited to the Model Vault app. Every inference response includes an attestation certificate that your client can check programmatically, confirming proof of the policy, CPU, GPU, and software before you trust a response.
+- **Available through the API**: verification is not limited to the Model Vault app. Every inference response includes an attestation certificate that your application can check programmatically, confirming proof of the policy, CPU, GPU, and software before you trust a response.
 
 ## Related pages
 

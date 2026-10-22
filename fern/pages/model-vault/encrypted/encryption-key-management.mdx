@@ -15,14 +15,14 @@ the trusted execution environment (TEE) and are **never shared with Cohere**.
 
 ## Data in transit
 
-Requests are end-to-end encrypted from your client all the way into the TEE using Oblivious HTTP
-(OHTTP):
+Requests are end-to-end encrypted from the Cohere OHTTP proxy on your side all the way into the TEE
+using Oblivious HTTP (OHTTP):
 
-- Your client encrypts each request to the vault's OHTTP public key, which is cryptographically bound to the attested environment (see [Remote Attestation](../../../docs/model-vault/encrypted/attestation)).
+- The proxy encrypts each request to the vault's OHTTP public key, which is cryptographically bound to the attested environment (see [Remote Attestation](../../../docs/model-vault/encrypted/attestation)).
 - The encrypted request travels through the untrusted load balancer and network, which only ever see ciphertext. In OHTTP the payload stays encrypted while routing headers remain in the clear.
-- Only a genuine, attested TEE holds the matching private key, so only it can decrypt the request. The response is encrypted the same way back to your client.
+- Only a genuine, attested TEE holds the matching private key, so only it can decrypt the request. The response is encrypted the same way back to the proxy.
 
-Because the client verifies attestation before encrypting, it will only ever encrypt to a verified
+Because the proxy verifies attestation before encrypting, it will only ever encrypt to a verified
 environment, never to the host or a man-in-the-middle.
 
 ## Data in use

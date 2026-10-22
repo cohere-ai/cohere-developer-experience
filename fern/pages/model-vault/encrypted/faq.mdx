@@ -44,8 +44,11 @@ operational, debug, or support paths that bypass the TEE boundary.
 
 <Accordion title="Can I get evidence for an audit?">
 Yes. Each attestation token identifies the environment, the policy evaluated, and when verification
-occurred, giving you a verifiable record. For the strongest assurance, Intel's Faithful Verification
-service lets you confirm the attestation service itself ran genuine, unmodified code. See
+occurred, and every attestation policy release is signed and publicly logged. On Intel TDX, the token
+is signed by Intel Trust Authority, so a third party can verify it later, and for the strongest
+assurance, Intel's Faithful Verification service also lets you confirm the attestation service itself
+ran genuine, unmodified code. On AMD SEV-SNP, the open-source Cohere OHTTP proxy performs the
+verification itself. See
 [Compliance](../../../docs/model-vault/encrypted/compliance).
 </Accordion>
 </AccordionGroup>
@@ -106,7 +109,7 @@ Confidential computing does not eliminate every risk. Residual risks include har
 attacks (timing, cache, microarchitectural leaks), attacks requiring deep physical access to the
 hardware, metadata and traffic-pattern observation (request timing, sizes, the model called), and
 availability (the operator still controls scheduling and can stop or restart the environment). These
-depend on the correctness of the underlying Intel and NVIDIA hardware.
+depend on the correctness of the underlying CPU (AMD or Intel) and NVIDIA hardware.
 </Accordion>
 
 <Accordion title="How is this different from a Standard Vault?">
@@ -136,9 +139,10 @@ with peer environments that pass attestation. See
 </Accordion>
 
 <Accordion title="How is my data protected end to end?">
-Requests are end-to-end encrypted from your client into the TEE with Oblivious HTTP (in transit),
-processed inside a hardware-based confidential VM and an NVIDIA GPU in confidential-computing mode (in
-use), and the vault boots from an integrity-protected, read-only image (at rest). Plaintext exists
+Requests are end-to-end encrypted from the Cohere OHTTP proxy on your side into the TEE with Oblivious
+HTTP (in transit), processed inside a hardware-based confidential VM and an NVIDIA GPU in
+confidential-computing mode (in use), and the vault boots from an integrity-protected, read-only image
+(at rest). Plaintext exists
 only inside the TEE, only for the duration of the request.
 </Accordion>
 </AccordionGroup>
@@ -154,29 +158,39 @@ which is what makes the privacy guarantee verifiable rather than contractual. Se
 </Accordion>
 
 <Accordion title="What does attestation actually prove?">
-That the environment is **genuine TEE hardware** (rooted in keys from Intel and NVIDIA), that it is
-**configured securely** (debug disabled, confidential-computing mode on), and that it is **running the
-expected code** (measured firmware, kernel, inference workload, container policy, and GPU firmware). If
-anything differs, the measurements differ and attestation does not pass.
+That the environment is **genuine TEE hardware** (rooted in keys from AMD or Intel, and NVIDIA), that
+it is **configured securely** (debug disabled, confidential-computing mode on), and that it is
+**running the expected code** (measured firmware, kernel, inference workload, container policy, and
+GPU firmware). If anything differs, the measurements differ and attestation does not pass.
+</Accordion>
+
+<Accordion title="Who verifies the attestation?">
+It depends on the deployment's hardware. AMD SEV-SNP deployments use the background check model, and
+the evidence is appraised directly by the Cohere OHTTP proxy on your side, which relies on NVIDIA's
+Remote Attestation Service only for the GPU. On Intel TDX, Intel Trust Authority appraises the evidence
+and issues a signed token that the proxy verifies (the passport model). The proxy supports both. See
+[Remote Attestation](../../../docs/model-vault/encrypted/attestation).
 </Accordion>
 
 <Accordion title="Do I have to do anything to verify, or is it automatic?">
-It is automatic. The client SDK, or proxy, verifies attestation on your behalf and refuses the connection if anything is wrong. Every
-inference response also includes an attestation certificate your client checks, confirming proof of the
-policy, CPU, GPU, and software for the environment that served it. You can also inspect the result
+It is automatic. The Cohere OHTTP proxy, whether run standalone or as the Python wrapper, verifies
+attestation on your behalf and refuses the connection if anything is wrong. Every inference response
+also includes an attestation certificate your application can check, confirming proof of the policy,
+CPU, GPU, and software for the environment that served it. You can also inspect the result
 visually in the Model Vault app. See
 [Verifying Your Deployment](../../../docs/model-vault/encrypted/verifying-deployment).
 </Accordion>
 
 <Accordion title="Can I verify a past request, or only before data is sent?">
-Both. The client sdk or proxy verifies attestation before sending data, and every inference response
-includes an attestation certificate you can retain as a verifiable record of the exact environment that
-served the request. See [Compliance](../../../docs/model-vault/encrypted/compliance).
+Both. The Cohere OHTTP proxy verifies attestation before sending data, and every inference response
+includes an attestation certificate you can retain as a record of the exact environment that served the
+request. On Intel TDX, the certificate is signed by Intel Trust Authority, so a third party can verify it
+later. See [Compliance](../../../docs/model-vault/encrypted/compliance).
 </Accordion>
 
 <Accordion title="What happens if verification fails?">
-The client refuses the connection and does not send your request, so your data is never exposed to an
-unverified environment. Verification failing is the safe outcome by design.
+The Cohere OHTTP proxy refuses the connection and does not send your request, so your data is never
+exposed to an unverified environment. Verification failing is the safe outcome by design.
 </Accordion>
 
 <Accordion title="What happens when a model or the vault software is updated?">
@@ -188,10 +202,10 @@ verification rather than silently serving traffic.
 
 <Accordion title="Can a load balancer or proxy in front of the vault read my data or route me to untrusted hardware?">
 No. The load balancer and network only ever carry [Oblivious HTTP (OHTTP)](../../../docs/model-vault/encrypted/encryption-key-management)
-ciphertext and cannot decrypt it. Your client verifies attestation and encrypts only to an OHTTP key
-that is cryptographically bound to a genuine, attested environment, so a host or proxy cannot route you
-to untrusted hardware or impersonate the vault: traffic sent to anything that has not passed
-attestation simply cannot be decrypted.
+ciphertext and cannot decrypt it. The Cohere OHTTP proxy verifies attestation and encrypts only to an
+OHTTP key that is cryptographically bound to a genuine, attested environment, so a host or proxy
+cannot route you to untrusted hardware or impersonate the vault: traffic sent to anything that has not
+passed attestation simply cannot be decrypted.
 </Accordion>
 </AccordionGroup>
 
@@ -210,16 +224,16 @@ gap with non-confidential execution.
 </Accordion>
 
 <Accordion title="What hardware does it run on?">
-Inference runs inside a hardware-based confidential VM (for example, Intel TDX or AMD SEV-SNP) paired
-with a confidential-computing-capable NVIDIA GPU. To confirm the options available for your model,
-capacity, and region, contact Cohere.
+Inference runs inside a hardware-based confidential VM (AMD SEV-SNP on Azure, or Intel TDX) paired
+with a confidential-computing-capable NVIDIA GPU, such as the H100. To confirm the options available
+for your model, capacity, and region, contact Cohere.
 </Accordion>
 
 <Accordion title="Do I use the same API as a standard vault?">
-Yes, the API is the same. The only difference is that your traffic goes through the Cohere client or
-proxy, which verifies attestation before any data is sent, then encrypts your requests and decrypts
-your responses end to end using OHTTP. Your application code stays unchanged. See
-[Using the API with an Encrypted Vault](../../../docs/model-vault/encrypted/api-usage).
+Yes, the API is the same. The only difference is that your traffic goes through the Cohere OHTTP
+proxy (standalone or as the Python wrapper), which verifies attestation before any data is sent, then
+encrypts your requests and decrypts your responses end to end using OHTTP. Your application code stays
+unchanged. See [Using the API with an Encrypted Vault](../../../docs/model-vault/encrypted/api-usage).
 </Accordion>
 </AccordionGroup>
 

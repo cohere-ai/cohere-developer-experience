@@ -4,7 +4,7 @@ slug: "docs/model-vault/encrypted/verifying-deployment"
 
 hidden: false
 description: "How to verify a Model Vault Encrypted deployment: automatic client-side checks and the attestation details you can inspect in the Model Vault app."
-keywords: "attestation verification, intel trust authority, TDX measurements, GPU attestation, policy, TCB status, model vault encrypted"
+keywords: "attestation verification, AMD SEV-SNP, background check model, intel trust authority, TDX measurements, GPU attestation, policy, TCB status, model vault encrypted"
 ---
 
 This page covers how you verify a Model Vault Encrypted deployment in practice. For the underlying
@@ -16,21 +16,25 @@ connect if anything is wrong. Separately, the Model Vault app displays a vault's
 for at-a-glance status and audit. That display is informational; it is the client-side check, not the
 app view, that gates your traffic.
 
-## Automatic verification (the client)
+## Automatic verification (the Cohere OHTTP proxy)
 
 You do not have to do anything manually for verification to occur. The client-side **Cohere OHTTP
 proxy**, whether run as a standalone proxy or used as a Python package, runs the full check on every
 session and **refuses the connection** if anything is wrong:
 
-1. It fetches the deployment's attestation token and OHTTP public key.
-2. It verifies the token's signature against Intel Trust Authority's published public keys (JWKS), confirming Intel genuinely issued it and it was not tampered with.
+1. It fetches the deployment's OHTTP public key together with its attestation evidence (on AMD SEV-SNP, using the background check model) or its attestation token (on Intel TDX, using the passport model).
+2. It confirms the result is **authentic**. On AMD SEV-SNP, it appraises the raw evidence directly, checking the SEV-SNP report against AMD's certificate chain and the GPU evidence through NVIDIA's Remote Attestation Service (NRAS). On Intel TDX, it verifies the token's signature against Intel Trust Authority's published public keys (JWKS), confirming Intel genuinely issued it and it was not tampered with.
 3. It confirms the attestation **policy matched**, meaning the hardware was genuine and the measured software matched the approved values.
 4. It confirms the OHTTP public key is cryptographically **bound to the attested TEE**, so it is encrypting only to the genuine environment.
-5. It checks the token is still within its short validity window.
+5. It confirms the result is **fresh**: the evidence answers the proxy's own nonce (background check), or the token is still within its short validity window (passport).
 
-Only if all of these pass does the client encrypt and send your request.
+Only if all of these pass does the proxy encrypt and send your request.
 
-In the Passport model the client does not run its own nonce challenge against the deployment. Freshness
+In the background check model, freshness comes from the proxy's own challenge: each time the proxy
+fetches the OHTTP key, it sends a new nonce, and the evidence must contain it, so a recording of an
+earlier attestation cannot pass.
+
+In the passport model the proxy does not run its own nonce challenge against the deployment. Freshness
 is instead guaranteed by the token's short lifetime: Intel Trust Authority issues a token only after a
 nonce exchange with the VM that produced the evidence, so a valid, unexpired token attests that the
 underlying evidence was fresh when ITA appraised it. Tokens are valid for only a few minutes and are
@@ -44,21 +48,22 @@ checks:
 
 <img src="../../../assets/images/model-vault/model-vault-attestation.png" />
 
-The single most important field is the **policy result**: if the attested evidence matched a registered
-policy, the overall verdict is secure. The sections below explain what each group of fields tells you.
+The single most important field is the **policy result**: if the attested evidence matched an approved
+policy, the overall verdict is secure. The sections below explain what each group of fields tells you;
+where the AMD SEV-SNP and Intel TDX paths differ, both are listed.
 
 <Note title="The app view is informational, not the security boundary">
 What you see in the Model Vault app is a convenient status display, not proof of the environment that
 served a particular request: nothing about the rendered details binds them to your actual connection,
 so they should not be relied on as a standalone guarantee. The tamper-resistant guarantee comes from
-the client-side Cohere OHTTP proxy check, which binds the attestation to the OHTTP key it encrypts to on every
-connection, and from the per-response attestation certificate your client can verify. Use the app view
-for review and the client-side verification for trust decisions.
+the client-side Cohere OHTTP proxy check, which binds the attestation to the OHTTP key it encrypts to
+on every connection, and from the per-response attestation certificate your application can verify.
+Use the app view for review and the client-side verification for trust decisions.
 </Note>
 
-### Overall token
+### Token Metadata (Intel TDX)
 
-These fields describe the attestation token itself.
+On Intel TDX, the **Token Metadata** section describes fields of the token issued by Intel Trust Authority.
 
 | Field | What it tells you | Expected |
 | --- | --- | --- |
@@ -66,12 +71,28 @@ These fields describe the attestation token itself.
 | Signature algorithm | How the token is signed | PS384 |
 | Issued / expires | When attestation was performed and its validity window | Recent, short window (a few minutes) |
 | Token ID | Unique identifier, useful for audit trails | Present |
-| Protocol version | Version of the ITA attestation protocol | Present |
+| Token version | Version of the token format | Present |
 
-### CPU confidentiality (Intel TDX)
+### CPU confidentiality
 
-These fields describe the confidential VM the workload runs inside. They are shown here for the Intel
-TDX deployment; other confidential-VM platforms expose equivalent fields with platform-specific names.
+These fields describe the confidential VM the workload runs inside.
+
+#### AMD SEV-SNP (Azure)
+
+| Field | What it tells you | Look for |
+| --- | --- | --- |
+| Platform | The CPU TEE technology | Azure confidential VM (vTPM) |
+| Debug mode | Whether the guest policy permits the host to debug the VM | `Disabled` |
+| Migration agent | Whether a migration agent could move the VM to another host | `Not allowed` |
+| Platform SMT | Whether the platform shares CPU cores between threads, a side-channel risk | `Disabled` |
+| TCB | Security-version numbers of the AMD secure processor's bootloader, TEE, SNP firmware, and microcode | At or above the policy's minimum |
+| Guest policy ABI | The minimum SEV-SNP firmware interface version the VM requires | Informational |
+| Launch measurement | Fingerprint of the Azure paravisor firmware that runs the VM's virtual TPM | One of the approved values |
+| Report data | Ties the hardware report to the VM's virtual TPM keys, which sign the PCRs | Present |
+
+The virtual TPM's PCRs are listed under **Software and firmware integrity** below.
+
+#### Intel TDX
 
 | Field | What it tells you | Look for |
 | --- | --- | --- |
@@ -91,15 +112,15 @@ The measurement registers record what was loaded, in stages:
 - **`RTMR3`**: runtime, workload-specific measurements (for example, the inference stack and configuration).
 
 <Note>
-A **TCB status** of `OutOfDate` means the platform firmware is not at the very latest patch level. It
-appears as a warning rather than a failure: it can still be acceptable depending on the listed security
-advisories, but it is worth reviewing for sensitive workloads.
+On Intel TDX, a **TCB status** of `OutOfDate` means the platform firmware is not at the very latest
+patch level. It appears as a warning rather than a failure: it can still be acceptable depending on
+the listed security advisories, but it is worth reviewing for sensitive workloads.
 </Note>
 
 ### GPU security
 
 These fields prove the GPU is genuine hardware running verified firmware. The GPU evidence is checked by
-**NVIDIA's Remote Attestation Service (NRAS)** and folded into the composite token.
+**NVIDIA's Remote Attestation Service (NRAS)** on both paths and folded into the composite token.
 
 | Field | What it tells you | Look for |
 | --- | --- | --- |
@@ -111,8 +132,23 @@ These fields prove the GPU is genuine hardware running verified firmware. The GP
 
 ### Software and firmware integrity
 
-Attestation verifies the integrity of the whole stack, not just the GPU. The evidence and the ITA
-policy together confirm both the CPU/VM side and the GPU side.
+Attestation verifies the integrity of the whole stack, not just the GPU. The evidence and the
+attestation policy together confirm both the CPU/VM side and the GPU side.
+
+**CPU and virtual machine (AMD SEV-SNP on Azure):**
+
+- The Azure paravisor firmware that hosts the VM's virtual TPM, captured in the SEV-SNP launch measurement.
+- The boot chain, kernel, `initrd`, and boot configuration, captured in the virtual TPM's PCRs.
+- The read-only root filesystem (`dm-verity`) and the enforced Kata container policy, so only the approved image, containers, and processes can run.
+
+On AMD SEV-SNP, this section of the app lists the virtual TPM's PCRs, which record what was loaded, in
+stages. The attestation policy pins each of them to approved values:
+
+- **`PCR4`**: the boot chain, meaning the unified kernel image (UKI) and the kernel it carries.
+- **`PCR5`**: the GPT partition table.
+- **`PCR8`**: the deployment's `initdata`, which carries the enforced Kata agent policy and the guest configuration.
+- **`PCR9`**: the kernel command line and `initrd`. The command line carries the `dm-verity` root hash, so this also pins the root filesystem.
+- **`PCR11`**: every section of the UKI, which identifies the OS image.
 
 **CPU and virtual machine (Intel TDX):**
 
@@ -133,28 +169,36 @@ approved, measured stack, not just that the underlying hardware is genuine.
 
 | Field | What it tells you |
 | --- | --- |
-| Policy matched | Whether the evidence satisfied a registered security policy. Non-empty means PASS; empty means FAIL. |
-| Policy ID / version | Which policy was evaluated |
-| Policy hash | Lets you confirm the policy rules have not changed |
+| Policy matched | Whether the evidence satisfied an approved security policy. On Intel TDX, a non-empty list of matched policies means PASS. On AMD SEV-SNP, the CPU and GPU appraisals must each have the status `affirming`. |
+| Policy ID / version | Which policy was evaluated. On AMD SEV-SNP, the ID is `trustee_policy` and the version is the Integritee release it came from. |
+| Policy hash | A fingerprint of the exact policy rules that were evaluated. On AMD SEV-SNP, there is one hash per appraisal (CPU and GPU). |
+
+On AMD SEV-SNP, each policy hash is the SHA-256 digest of the policy file, prefixed with `sha256:`.
+To confirm that the deployment was appraised against the published policy and nothing else, compare
+the CPU hash with the digest of `trustee_policy_cpu.rego`, and the GPU hash with the digest of
+`trustee_policy_gpu.rego`, in the [Integritee](https://github.com/cohere-ai/integritee) release named
+by the policy version. The release's signed `predicate.json` also records these digests under
+`trustee_policies`. A mismatch means the policy differs from the one Cohere published.
 
 ## Deeper audit (advanced)
 
 For security teams who want to go further:
 
-- **Faithful Verification report**: submit your attestation token to Intel to obtain cryptographic proof that every ITA microservice involved in issuing it ran unmodified code inside genuine Intel SGX enclaves. This protects you even against a compromised or rogue attestation operator.
-- **Raw measurements and collateral**: the token exposes the full TDX measurement registers, security-version numbers, and quote-verification collateral so you can independently compare them against expected values.
+- **Policy provenance (AMD SEV-SNP)**: every policy release in Cohere's public [Integritee](https://github.com/cohere-ai/integritee) repository is Sigstore-signed and recorded in the public Rekor transparency log, and lists the measurements of each approved workload. You can verify a release with standard Sigstore tooling and compare its values against your own measurements of the guest OS image and guest configuration data (initdata).
+- **Faithful Verification report (Intel TDX)**: submit your attestation token to Intel to obtain cryptographic proof that every ITA microservice involved in issuing it ran unmodified code inside genuine Intel SGX enclaves. This protects you even against a compromised or rogue attestation operator.
+- **Raw measurements and collateral**: the result exposes the full CPU measurements (the SEV-SNP launch measurement and virtual TPM PCRs, or the TDX measurement registers), security-version numbers, and verification collateral so you can independently compare them against expected values.
 
 ## Troubleshooting verification failures
 
-If the client fails to connect, it is by design: verification failed and no data was sent. Common
+If the proxy refuses to connect, it is by design: verification failed and no data was sent. Common
 causes:
 
-- **Invalid token signature**: the token was not genuinely signed by Intel Trust Authority. Do not send data.
-- **Policy did not match**: the measured firmware, kernel, workload, or GPU firmware differs from the approved stack, so no token was issued.
+- **Invalid evidence or token signature**: the SEV-SNP evidence did not chain to AMD's roots of trust, or the token was not genuinely signed by Intel Trust Authority. Do not send data.
+- **Policy did not match**: the measured firmware, kernel, workload, or GPU firmware differs from the approved stack, so the appraisal failed.
 - **Key not bound to the TEE**: the OHTTP public key was not cryptographically tied to the attested environment, which can indicate an attempted interception.
-- **Expired or replayed token**: the token is past its short validity window or the nonce did not match.
+- **Expired or replayed attestation material**: the evidence did not answer the proxy's nonce, or the token is past its short validity window.
 
-In all cases the safe behavior is the one that happens automatically: the client refuses to connect. If
+In all cases the safe behavior is the one that happens automatically: the proxy refuses to connect. If
 a vault consistently fails verification, check its status in the Model Vault app and contact Cohere support.
 
 ## Related pages
