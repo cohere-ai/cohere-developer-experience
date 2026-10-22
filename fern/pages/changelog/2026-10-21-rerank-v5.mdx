@@ -1,0 +1,70 @@
+---
+title: Announcing Cohere's Rerank 5 Models
+slug: "changelog/rerank-v5"
+createdAt: "Wed Oct 21 2026 09:00:00 (EST)"
+hidden: false
+description: >-
+  Announcement for Rerank 5 Pro and Fast, Cohere's most advanced reranking models for enterprise retrieval, with Context Focus and calibrated relevance scores.
+---
+
+We're pleased to announce the release of [Rerank 5](/docs/rerank), Cohere's most advanced reranking models for enterprise retrieval: sharper search, with fewer tokens sent to your LLM.
+
+Rerank 5 Pro delivers our highest reranking quality yet, with its largest gains on reasoning-intensive retrieval and in enterprise domains such as finance, healthcare, and scientific research. Rerank 5 Fast brings that quality to latency- and cost-sensitive workloads, and outperforms our previous-generation Rerank 4 Pro model.
+
+## Key features
+
+- **Two model variants available:**
+  - `rerank-v5.0-pro`: Optimized for the highest ranking quality, particularly for complex, reasoning-heavy queries and long or domain-specific documents.
+  - `rerank-v5.0-fast`: Optimized for low latency and high throughput, particularly for high-volume search and agents that run many searches per task.
+- **Context Focus**: An optional capability that returns the most relevant passages within each document, as scored character spans, in the same Rerank call. Pass only those passages to your LLM to cut token costs, or highlight them to show users why a result matched.
+- **Calibrated relevance scores**: Scores are consistent across queries and domains, so you can set one threshold to decide which results reach your LLM.
+- **Multilingual support**: Supports over 100 languages.
+- **Extended context length**: 32k token context window.
+- **Semi-structured data support**: Rerank JSON, tables, and other records formatted as YAML strings.
+
+## Upgrading
+
+Rerank reads raw text at query time, so upgrading doesn't require re-indexing or re-embedding your corpus. To upgrade from an earlier Rerank model, update the `model` parameter to `rerank-v5.0-pro` or `rerank-v5.0-fast`. Context Focus is off by default.
+
+## Example query with Context Focus
+
+```bash cURL
+curl --request POST \
+  --url https://api.cohere.com/v2/rerank \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --header "Authorization: bearer $CO_API_KEY" \
+  --data '{
+    "model": "rerank-v5.0-pro",
+    "query": "What is the capital of the United States?",
+    "top_n": 3,
+    "documents": [
+      "Carson City is the capital city of the American state of Nevada.",
+      "The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.",
+      "Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.",
+      "Capitalization or capitalisation in English grammar is the use of a capital letter at the start of a word. English usage varies from capitalization in other languages.",
+      "Capital punishment has existed in the United States since before the United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states."
+    ],
+    "relevant_spans": {
+      "mode": "enabled",
+      "threshold": 0.3,
+      "max_spans": 10
+    }
+  }'
+```
+
+Each result includes its `relevance_score` and, where passages meet the `threshold`, a `relevant_spans` list with the `start` and `end` character offsets of each passage in the original document and its `score`.
+
+## Availability
+
+Rerank 5 is available through the [Rerank API](/reference/rerank), as well as Microsoft Foundry
+([Pro](https://ai.azure.com/catalog/models/Cohere-rerank-v5-pro),
+[Fast](https://ai.azure.com/catalog/models/Cohere-rerank-v5-fast)) and Amazon SageMaker
+([Pro](https://aws.amazon.com/marketplace/pp/prodview-6hcingojlkj32),
+[Fast](https://aws.amazon.com/marketplace/pp/prodview-uu644hmeoibm2)).
+For single-tenant deployment, Rerank 5 is also available in Cohere's [Model Vault](/docs/model-vault)
+(see [Standard Vault pricing](/docs/model-vault/standard/pricing)). For private deployments in your own VPC or on-premises,
+[contact our sales team](https://cohere.com/contact-sales).
+
+For more details, see the [model documentation](/docs/rerank), the [Rerank overview](/docs/rerank-overview),
+and the [best practices guide](/docs/reranking-best-practices).

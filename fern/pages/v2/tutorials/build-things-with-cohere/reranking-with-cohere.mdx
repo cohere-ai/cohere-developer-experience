@@ -47,24 +47,16 @@ This is where Rerank can help. We call the endpoint using `co.rerank()` and pass
 - `query`: The user query
 - `documents`: The list of documents
 - `top_n`: The top reranked documents to select
-- `model`: We choose Rerank English 3
+- `model`: We choose Rerank 5 Pro (`rerank-v5.0-pro`)
 
 
 ```python PYTHON
 # Define the documents
 faqs = [
-    {
-        "text": "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward."
-    },
-    {
-        "text": "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours."
-    },
-    {
-        "text": "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance."
-    },
-    {
-        "text": "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year."
-    },
+    "Reimbursing Travel Expenses: Easily manage your travel expenses by submitting them through our finance tool. Approvals are prompt and straightforward.",
+    "Working from Abroad: Working remotely from another country is possible. Simply coordinate with your manager and ensure your availability during core hours.",
+    "Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.",
+    "Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year.",
 ]
 ```
 
@@ -75,7 +67,7 @@ query = "Are there fitness-related perks?"
 
 # Rerank the documents
 results = co.rerank(
-    model="rerank-v4.0-pro",
+    model="rerank-v5.0-pro",
     query=query,
     documents=faqs,
     top_n=1,
@@ -85,7 +77,7 @@ print(results)
 ```
 
 ```
-id='2fa5bc0d-28aa-4c99-8355-7de78dbf3c86' results=[RerankResponseResultsItem(document=None, index=2, relevance_score=0.01798621), RerankResponseResultsItem(document=None, index=3, relevance_score=8.463939e-06)] meta=ApiMeta(api_version=ApiMetaApiVersion(version='1', is_deprecated=None, is_experimental=None), billed_units=ApiMetaBilledUnits(input_tokens=None, output_tokens=None, search_units=1.0, classifications=None), tokens=None, warnings=None)
+id='a0f8c264-63d4-4965-9123-a49f19789ce4' results=[V2RerankResponseResultsItem(document=None, index=2, relevance_score=0.11591089)] meta=ApiMeta(api_version=ApiMetaApiVersion(version='2', is_deprecated=None, is_experimental=None), billed_units=ApiMetaBilledUnits(images=None, input_tokens=None, output_tokens=None, search_units=1.0, classifications=None), tokens=None, warnings=None)
 ```
 
 
@@ -98,17 +90,13 @@ def return_results(results, documents):
         print(f"Document: {documents[result.index]}\n")
 
 
-return_results(results, faqs_short)
+return_results(results, faqs)
 ```
 
 ```
 Rank: 1
-Score: 0.01798621
-Document: {'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}
-
-Rank: 2
-Score: 8.463939e-06
-Document: {'text': 'Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year.'}
+Score: 0.11591089
+Document: Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.
 ```
 
 
@@ -122,7 +110,8 @@ Further reading:
 
 ## Reranking semi-structured data
 
-The Rerank 3 model supports multi-aspect and semi-structured data like emails, invoices, JSON documents, code, and tables. By setting the rank fields, you can select which fields the model should consider for reranking.
+Rerank models support multi-aspect and semi-structured data like emails, invoices, JSON documents, code,
+and tables. The model considers fields in the order they appear in the YAML string.
 
 In the following example, we'll use an email data example. It is a semi-stuctured data that contains a number of fields – `from`, `to`, `date`, `subject`, and `text`. 
 
@@ -159,6 +148,8 @@ emails = [
 
 
 ```python PYTHON
+import yaml
+
 # Convert the documents to YAML format
 yaml_docs = [yaml.dump(doc, sort_keys=False) for doc in emails]
 
@@ -167,7 +158,7 @@ query = "Any email about check ins?"
 
 # Rerank the documents
 results = co.rerank(
-    model="rerank-v4.0-pro",
+    model="rerank-v5.0-pro",
     query=query,
     documents=yaml_docs,
     top_n=2,
@@ -189,7 +180,7 @@ Document: {'from': 'hr@co1t.com', 'to': 'david@co1t.com', 'date': '2024-06-24', 
 
 ## Reranking tabular data
 
-Many enterprises rely on tabular data, such as relational databases, CSVs, and Excel. To perform reranking, you can transform a dataframe into a list of JSON records and use Rerank 3's JSON capabilities to rank them. We follow the same steps in the previous example, where we convert the data into YAML format before passing it to the Rerank endpoint.
+Many enterprises rely on tabular data, such as relational databases, CSVs, and Excel. To perform reranking, you can transform a dataframe into a list of JSON records and use Rerank's JSON capabilities to rank them. We follow the same steps in the previous example, where we convert the data into YAML format before passing it to the Rerank endpoint.
 
 Here's an example of reranking a CSV file that contains employee information.
 
@@ -232,7 +223,7 @@ query = "Any full-time product designers who joined recently?"
 
 # Rerank the documents
 results = co.rerank(
-    model="rerank-v4.0-pro",
+    model="rerank-v5.0-pro",
     query=query,
     documents=yaml_docs,
     top_n=1,
@@ -249,9 +240,9 @@ Document: {'name': 'Emma Williams', 'role': 'Product Designer', 'join_date': '20
 
 ## Multilingual reranking
 
-The Rerank models (`rerank-v4.0-pro`, `rerank-v4.0-fast`, `rerank-v3.5` and `rerank-multilingual-v3.0`) support 100+ languages. This means you can perform semantic search on texts in different languages.
+The Rerank models (`rerank-v5.0-pro`, `rerank-v5.0-fast`, `rerank-v4.0-pro`, `rerank-v4.0-fast`, `rerank-v3.5` and `rerank-multilingual-v3.0`) support 100+ languages. This means you can perform semantic search on texts in different languages.
 
-In the example below, we repeat the steps of performing reranking with one difference – changing the model type to a multilingual one. Here, we use the `rerank-v4.0` model. Here, we are reranking the FAQ list using an Arabic query.
+In the example below, we repeat the steps of performing reranking with one difference – changing the model type to a multilingual one. Here, we use the `rerank-v5.0-pro` model. Here, we are reranking the FAQ list using an Arabic query.
 
 ```python PYTHON
 # Define the query
@@ -259,7 +250,7 @@ query = "هل هناك مزايا تتعلق باللياقة البدنية؟" 
 
 # Rerank the documents
 results = co.rerank(
-    model="rerank-v4.0-pro",
+    model="rerank-v5.0-pro",
     query=query,
     documents=faqs,
     top_n=1,
@@ -270,12 +261,8 @@ return_results(results, faqs)
 
 ```
 Rank: 1
-Score: 0.42232594
-Document: {'text': 'Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.'}
-
-Rank: 2
-Score: 0.00025118678
-Document: {'text': 'Performance Reviews Frequency: We conduct informal check-ins every quarter and formal performance reviews twice a year.'}
+Score: 0.22882831
+Document: Health and Wellness Benefits: We care about your well-being and offer gym memberships, on-site yoga classes, and comprehensive health insurance.
 ```   
 
 
