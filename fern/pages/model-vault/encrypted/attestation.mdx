@@ -36,15 +36,18 @@ three questions:
 
 ## Attestation models
 
-An encrypted vault uses one of two attestation models from the IETF RATS architecture. They differ in
-what the deployment presents to the Cohere OHTTP proxy: its raw evidence, or a token from an
-attestation service that has already appraised that evidence.
+In both models, the deployment's evidence is verified before any data is sent; the models differ in
+where that verification takes place. On AMD SEV-SNP, the Cohere OHTTP proxy verifies the evidence
+directly in your environment. On Intel TDX, Intel Trust Authority verifies the evidence and issues a
+signed token, which the proxy then validates. The proxy supports both models and selects the
+appropriate one automatically; no configuration is required. Both models are defined in the IETF
+Remote ATtestation procedureS (RATS) architecture.
 
 ### Background check model (AMD SEV-SNP)
 
-In the **background check model** (here, with verification on your side), the Cohere OHTTP proxy
-receives the deployment's raw evidence and appraises it, rather than receiving a token that was issued
-in advance. The proxy sends the deployment a fresh challenge (a nonce), receives the raw evidence in
+In the **background check model**, the verifier obtains the evidence directly from the deployment and
+evaluates it, rather than relying on a credential the deployment presents. Here, the verifier is the
+Cohere OHTTP proxy running in your environment. The proxy sends the deployment a fresh challenge (a nonce), receives the raw evidence in
 return, and verifies that evidence against the approved policy. For the GPU, it uses **NVIDIA's
 Remote Attestation Service (NRAS)** to compare the GPU's measurements against NVIDIA's signed
 reference values, and checks NVIDIA's signature on the verdict before applying the policy to it.
