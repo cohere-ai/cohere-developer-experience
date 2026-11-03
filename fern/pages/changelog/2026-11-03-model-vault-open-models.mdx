@@ -1,0 +1,50 @@
+---
+title: Open Models and Regional Serving in Model Vault
+slug: "changelog/model-vault-open-models"
+createdAt: "Tue Nov 03 2026 09:00:00 (EST)"
+hidden: false
+description: >-
+  Model Vault now runs leading open models alongside Cohere's models, with Zero Data Retention by default and serving in the US, EU, and Canada.
+---
+
+[Model Vault](/docs/model-vault) and [Model Vault Encrypted](/docs/model-vault/encrypted) now run
+leading third-party open models alongside Cohere's models, on fully managed, dedicated
+infrastructure. You can choose the right model for each task and run every one of them with the same
+protections.
+
+## Key features
+
+- **Open models in Model Vault**: deploy models from DeepSeek, Z.ai (GLM), Xiaomi (MiMo), NVIDIA (Nemotron), Google (Gemma), OpenAI (GPT-OSS), Microsoft (Phi), Alibaba (Qwen), and Mistral AI. See [Standard Vault supported models](/docs/model-vault/standard/supported-models).
+- **Open models in Model Vault Encrypted**: run Gemma, GPT-OSS, Phi, Qwen, Devstral, and Ministral with confidential computing, so not even Cohere or the cloud provider can see your prompts or responses. See [Encrypted Vault supported models](/docs/model-vault/encrypted/supported-models).
+- **Zero Data Retention by default**: prompts and responses are not retained in Model Vault.
+- **Regional serving**: Model Vault runs in the United States, the European Union, and Canada. Model Vault Encrypted runs in the United States, with the European Union and Canada coming soon. See [Regions](/docs/model-vault/regions).
+
+## Calling open models
+
+Open models are served through the OpenAI-compatible Chat Completions API at your vault endpoint:
+
+```python PYTHON
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="<COHERE_API_KEY>",
+    base_url="<YOUR_VAULT_ENDPOINT_URL>/v1",
+)
+
+response = client.chat.completions.create(
+    model="deepseek-v4-1-flash",
+    messages=[{"role": "user", "content": "Hello from Model Vault!"}],
+)
+
+print(response.choices[0].message.content)
+```
+
+See [Calling a Standard Vault over the API](/docs/model-vault/standard/api-access#calling-open-models)
+and [Calling an Encrypted Vault over the API](/docs/model-vault/encrypted/api-usage#calling-open-models).
+
+## Availability
+
+Open models are available today in the [Model Vault app](https://vault.cohere.com/). Model Vault is
+priced per GPU, per hour, for both Standard and Encrypted Vaults; see the
+[pricing page](https://cohere.com/pricing). For reserved capacity,
+[contact our sales team](https://cohere.com/contact-sales).

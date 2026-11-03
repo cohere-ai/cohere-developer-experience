@@ -3,17 +3,25 @@ title: Calling a Standard Vault over the API
 slug: "docs/model-vault/standard/api-access"
 
 hidden: false
-description: "Call a Standard Vault with the Cohere SDK, raw HTTP, or an OpenAI-compatible client by pointing requests at your vault endpoint URL."
-keywords: "standard vault, model vault, api, endpoint, inference, cohere sdk, openai compatible, http, rest"
+description: "Call a Standard Vault with the Cohere SDK, raw HTTP, or an OpenAI-compatible client at your vault endpoint URL. Open models use the OpenAI-compatible API."
+keywords: "standard vault, model vault, api, endpoint, inference, cohere sdk, openai compatible, open models, chat completions, http, rest"
 ---
 
 Once your Standard Vault is set up in the Model Vault app, use the **Vault endpoint URL** and **model
 name** shown in the model card (see [Managing Vaults](../../../docs/model-vault/managing-vaults)) in your API
 calls. You authenticate with your Cohere API key.
 
-You can call a Standard Vault three ways: the **Cohere SDK**, **raw HTTP**, or an **OpenAI-compatible**
-client. In every case you point the request directly at your vault endpoint instead of the default
-Cohere API base URL.
+In every case you point the request directly at your vault endpoint instead of the default Cohere API
+base URL. The APIs a model accepts depend on whether it's a Cohere model or a third-party open model:
+
+| Model | Cohere SDK and Cohere API (`/v2/*`) | OpenAI-compatible base URL |
+| --- | --- | --- |
+| Cohere models | Yes | `<YOUR_VAULT_ENDPOINT_URL>/compatibility/v1` |
+| [Open models](../../../docs/model-vault/standard/supported-models#open-models) | No | `<YOUR_VAULT_ENDPOINT_URL>/v1` |
+
+Cohere models can be called three ways: the **Cohere SDK**, **raw HTTP**, or an **OpenAI-compatible**
+client. Open models only accept OpenAI-compatible requests; see
+[Calling open models](#calling-open-models).
 
 <Note>
 This page covers **Standard Vaults**, where clients connect directly to the vault endpoint. An
@@ -83,6 +91,43 @@ print(response.choices[0].message.content)
 The chat example above points the SDK at your vault. Embed and Rerank requests work the same way:
 keep the `base_url` pointed at your vault endpoint and call `co.embed(...)` or `co.rerank(...)` with
 your vault's model name.
+
+## Calling open models
+
+Third-party open models, such as DeepSeek, GLM, Gemma, GPT-OSS, and Qwen, are served through the
+OpenAI-compatible Chat Completions API at `<YOUR_VAULT_ENDPOINT_URL>/v1`. They don't accept Cohere API
+(`/v2/*`) or `/compatibility/v1` requests, so use an OpenAI-compatible client with your Cohere API key:
+
+```python PYTHON
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="<COHERE_API_KEY>",
+    base_url="<YOUR_VAULT_ENDPOINT_URL>/v1",
+)
+
+response = client.chat.completions.create(
+    model="deepseek-v4-1-flash",
+    messages=[{"role": "user", "content": "Hello from Model Vault!"}],
+)
+
+print(response.choices[0].message.content)
+```
+
+Or call the endpoint over HTTP:
+
+```bash cURL
+curl "<YOUR_VAULT_ENDPOINT_URL>/v1/chat/completions" \
+  -H "Authorization: Bearer <COHERE_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "deepseek-v4-1-flash",
+    "messages": [{"role": "user", "content": "Hello from Model Vault!"}]
+  }'
+```
+
+Set `model` to the model name shown on your vault's model card. For the model names of every open
+model, see [Supported Models](../../../docs/model-vault/standard/supported-models#open-models).
 
 ## Next steps
 
