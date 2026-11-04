@@ -1,0 +1,90 @@
+---
+title: "Using Cohere Models on OpenRouter"
+slug: "docs/cohere-on-openrouter"
+
+hidden: false
+
+description: "Use Cohere's Command, Embed, Rerank, and North models through OpenRouter, including the newly added Embed 5 and Rerank 5 models."
+image: "../../assets/images/f1cc130-cohere_meta_image.jpg"
+keywords: "generative AI, large language models, OpenRouter, Command, embeddings, rerank"
+
+createdAt: "Wed Nov 04 2026 00:00:00 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Wed Nov 04 2026 00:00:00 GMT+0000 (Coordinated Universal Time)"
+---
+
+Cohere models are supported on [OpenRouter](https://openrouter.ai), which provides a single API for models from many
+providers. You can use Cohere's Command, Embed, Rerank, and North models through OpenRouter with an OpenRouter API key.
+Browse them on [Cohere's OpenRouter page](https://openrouter.ai/cohere).
+
+## Benefits
+
+- **One API and API key**: Use Cohere models alongside models from other providers, with one API key and one account
+  for billing.
+- **Easy switching**: Move between models by changing the `model` parameter, without changing your integration.
+- **Served by Cohere**: Cohere is the provider for its models on OpenRouter, so OpenRouter forwards your requests to the
+  Cohere API.
+
+## Latest additions: Embed 5 and Rerank 5
+
+The latest Cohere models on OpenRouter are Embed 5 and Rerank 5, each available in Pro and Fast variants:
+
+- **Embed 5** (`cohere/embed-5-pro`, `cohere/embed-5-fast`): Embeds text, images, and mixed text-and-image inputs such
+  as PDF pages, with a 128k-token context window. Pro and Fast share an embedding space, so you can index with Pro and
+  query with Fast.
+- **Rerank 5** (`cohere/rerank-5-pro`, `cohere/rerank-5-fast`): Reranks text with calibrated relevance scores, with a
+  32,768-token context window for each query and document combined.
+
+For more, see the [announcement](/changelog/embed-rerank-v5-openrouter) and the [Embed](/docs/cohere-embed) and
+[Rerank](/docs/rerank) model pages.
+
+## Available models
+
+| Model                                                                       | OpenRouter model ID             | Cohere API model ID      |
+| --------------------------------------------------------------------------- | ------------------------------- | ------------------------ |
+| [Embed 5 Pro](https://openrouter.ai/cohere/embed-5-pro)                     | `cohere/embed-5-pro`            | `embed-v5.0-pro`         |
+| [Embed 5 Fast](https://openrouter.ai/cohere/embed-5-fast)                   | `cohere/embed-5-fast`           | `embed-v5.0-fast`        |
+| [Rerank 5 Pro](https://openrouter.ai/cohere/rerank-5-pro)                   | `cohere/rerank-5-pro`           | `rerank-v5.0-pro`        |
+| [Rerank 5 Fast](https://openrouter.ai/cohere/rerank-5-fast)                 | `cohere/rerank-5-fast`          | `rerank-v5.0-fast`       |
+| [Rerank 4 Pro](https://openrouter.ai/cohere/rerank-4-pro)                   | `cohere/rerank-4-pro`           | `rerank-v4.0-pro`        |
+| [Rerank 4 Fast](https://openrouter.ai/cohere/rerank-4-fast)                 | `cohere/rerank-4-fast`          | `rerank-v4.0-fast`       |
+| [Rerank v3.5](https://openrouter.ai/cohere/rerank-v3.5)                     | `cohere/rerank-v3.5`            | `rerank-v3.5`            |
+| [Command A+](https://openrouter.ai/cohere/command-a-plus)                   | `cohere/command-a-plus`         | `command-a-plus-05-2026` |
+| [Command A](https://openrouter.ai/cohere/command-a)                         | `cohere/command-a`              | `command-a-03-2025`      |
+| [Command R+ (08-2024)](https://openrouter.ai/cohere/command-r-plus-08-2024) | `cohere/command-r-plus-08-2024` | `command-r-plus-08-2024` |
+| [Command R (08-2024)](https://openrouter.ai/cohere/command-r-08-2024)       | `cohere/command-r-08-2024`      | `command-r-08-2024`      |
+| [Command R7B (12-2024)](https://openrouter.ai/cohere/command-r7b-12-2024)   | `cohere/command-r7b-12-2024`    | `command-r7b-12-2024`    |
+| [North Mini Code](https://openrouter.ai/cohere/north-mini-code)             | `cohere/north-mini-code:free`   | `north-mini-code-1.0`    |
+
+For pricing, see each model's OpenRouter page. For model details, see the [models overview](/docs/models).
+
+## Setup checklist
+
+1. Create an OpenRouter account and an [API key](https://openrouter.ai/settings/keys), and set the key as the
+   `OPENROUTER_API_KEY` environment variable.
+2. Install the [OpenRouter Python SDK](https://openrouter.ai/docs/client-sdks/python/overview) with
+   `pip install openrouter` (Python 3.10 or later; [source on GitHub](https://github.com/OpenRouterTeam/python-sdk)),
+   or call OpenRouter's HTTP API directly.
+3. Choose a model from the table above and pass its OpenRouter model ID as the `model` parameter. Each model's
+   OpenRouter page includes example requests.
+4. Call the API for the model type:
+   - Command and North models: [Chat](https://openrouter.ai/docs/client-sdks/python/sdks/chat/README)
+   - Embed models: [Embeddings](https://openrouter.ai/docs/client-sdks/python/sdks/embeddings/README)
+   - Rerank models: [Rerank](https://openrouter.ai/docs/client-sdks/python/sdks/rerank/README)
+5. To combine embeddings, reranking, and generation in one pipeline, follow OpenRouter's
+   [RAG cookbook](https://openrouter.ai/docs/cookbook/evaluate-and-optimize/rag).
+
+## Differences from the Cohere API
+
+OpenRouter's APIs use OpenRouter's request and response formats rather than Cohere's, and support a subset of the
+Cohere API's parameters:
+
+- **Chat**: OpenRouter's chat API is OpenAI-compatible. Supported parameters vary by model; for example, tool use
+  (`tools`) is available for Command A+, Command R+ (08-2024), Command R (08-2024), and North Mini Code, but not for
+  Command A or Command R7B.
+- **Embeddings**: OpenRouter supports `input`, `input_type`, `dimensions`, and `encoding_format` (`float` or `base64`).
+  Embeddings are returned in `data[].embedding`. To embed images, use OpenRouter's
+  [multimodal input format](https://openrouter.ai/docs/api_reference/embeddings). For `int8` or `binary` embeddings, use
+  the [Cohere Embed API](/reference/embed).
+- **Rerank**: OpenRouter supports `query`, `documents`, and `top_n`. Results are returned in `results[]`, each with an
+  `index`, `relevance_score`, and `document`. [Context Focus](/docs/rerank#context-focus) (`relevant_spans`) isn't part
+  of OpenRouter's Rerank API; to use it, call the [Cohere Rerank API](/reference/rerank).
