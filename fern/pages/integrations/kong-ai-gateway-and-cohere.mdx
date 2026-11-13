@@ -1,0 +1,225 @@
+---
+title: "Kong AI Gateway and Cohere (Integration Guide)"
+slug: "docs/kong-ai-gateway-and-cohere"
+
+hidden: false
+
+description: "Send Cohere Chat, Embed, and Rerank requests through Kong AI Gateway with the Cohere Python SDK."
+image: "../../assets/images/f1cc130-cohere_meta_image.jpg"
+keywords: "Kong AI Gateway, AI gateway, Cohere SDK, Command, Embed, Rerank"
+
+createdAt: "Thu Nov 12 2026 00:00:00 GMT+0000 (Coordinated Universal Time)"
+updatedAt: "Thu Nov 12 2026 00:00:00 GMT+0000 (Coordinated Universal Time)"
+---
+
+You can send requests to Cohere's Command, Embed, and Rerank models through
+[Kong AI Gateway](https://developer.konghq.com/ai-gateway/) with the Cohere Python SDK. Requests and responses keep
+the Cohere API format, so your code changes only where you create the client.
+
+An AI gateway sits between your applications and the model providers they call. Because all model traffic passes
+through one place, the gateway can hold provider API keys, record token usage, and apply policies such as rate limits
+without changes to application code.
+
+## How it works
+
+```txt
+Your app (Cohere SDK) ==> Kong AI Gateway ==> Cohere
+```
+
+Your application sends its Cohere requests to Kong AI Gateway, which adds your Cohere API key and forwards each
+request to Cohere. Cohere's response comes back through the gateway unchanged.
+
+## Prerequisites
+
+To use Cohere with Kong AI Gateway, you will need:
+
+- Cohere's SDK. To install it, run `pip install cohere`.
+- A Cohere API key. When you create an account with Cohere, we automatically create a trial API key for you, which you
+  can copy from the [API Keys](https://dashboard.cohere.com/api-keys) section of the dashboard.
+- A Kong AI Gateway running version 2.2 or later. The quickstart script in Kong's
+  [AI Gateway get started guide](https://developer.konghq.com/ai-gateway/get-started/) sets one up and runs it in Docker
+  on your machine.
+- [`kongctl`](https://developer.konghq.com/kongctl/), Kong's command-line tool, logged in with
+  `kongctl login`.
+
+## Add Cohere to your AI Gateway
+
+Kong AI Gateway connects to Cohere through two entities:
+
+- An AI Model Provider of type `cohere` stores your Cohere API key. The gateway adds the key to each request that it
+  sends to Cohere.
+- An AI Model is the endpoint that your application calls.
+
+Save both in a file named `cohere-kong.yaml`:
+
+```yaml YAML
+ai_gateway_model_providers:
+  - ref: cohere
+    ai_gateway: !lookup {id: !env AI_GATEWAY_ID}
+    name: cohere
+    display_name: Cohere
+    type: cohere
+    config:
+      auth:
+        type: basic
+        headers:
+          - name: Authorization
+            value: !secret {source: !env COHERE_AUTH_HEADER}
+
+ai_gateway_models:
+  - ref: cohere-api
+    ai_gateway: !lookup {id: !env AI_GATEWAY_ID}
+    name: cohere-api
+    display_name: Cohere API
+    type: model
+    formats:
+      - type: passthrough
+    capabilities:
+      - generate
+    config:
+      route:
+        paths:
+          - /cohere
+    targets:
+      - name: command-a-plus-05-2026
+        provider: cohere
+        config:
+          type: cohere
+```
+
+In this file:
+
+- `!lookup {id: !env AI_GATEWAY_ID}` adds both entities to your existing AI Gateway, and
+  `!secret {source: !env COHERE_AUTH_HEADER}` reads the `Authorization` header from an environment variable, so your
+  key stays out of the file.
+- The `passthrough` format forwards requests and responses unchanged. A request to `/cohere/v2/chat` on the gateway
+  goes to `https://api.cohere.com/v2/chat`, and the same applies to Embed, Rerank, and the other Cohere endpoints, so
+  `capabilities` needs only `generate`.
+- `targets[].name` is the model name that the gateway records usage under. Each request still goes to the model that
+  it names.
+
+Set the environment variables and apply the file. The quickstart script prints your AI Gateway ID, and
+`kongctl get ai-gateways` lists it:
+
+```bash
+export AI_GATEWAY_ID="<your AI Gateway ID>"
+export COHERE_AUTH_HEADER="Bearer <your Cohere API key>"
+kongctl apply -f cohere-kong.yaml --auto-approve
+```
+
+`kongctl` creates the provider first, because the model references it. The output ends with:
+
+```mdx wordWrap
+[1/2] [namespace: default] Creating ai_gateway_model_provider: cohere... ✓
+[2/2] [namespace: default] Creating ai_gateway_model: cohere-api... ✓
+
+Complete.
+Executed 2 changes.
+```
+
+The gateway picks up the new configuration within a few seconds.
+
+## Create a client
+
+Point the Cohere client at the AI Model's route on your gateway. The quickstart gateway listens on
+`http://localhost:8000`:
+
+```python PYTHON
+import cohere
+
+co = cohere.ClientV2(
+    api_key="unused",  # placeholder, replaced by the gateway
+    base_url="http://localhost:8000/cohere",
+)
+```
+
+Your Cohere API key is already stored on the AI Model Provider from the previous section, so the client doesn't need
+it. The Cohere SDK still requires an `api_key` value to create a client, so the example passes the placeholder
+`unused`. The gateway replaces the client's `Authorization` header with your stored key, so the placeholder never
+reaches Cohere.
+
+<Warning>
+This AI Model accepts requests from any client that can reach the gateway. Before you expose the gateway to other
+machines, add an [AI Auth Strategy](https://developer.konghq.com/ai-gateway/entities/ai-auth-strategy/) so that
+each application has to send its own key.
+</Warning>
+
+## Chat
+
+```python PYTHON
+response = co.chat(
+    model="command-a-plus-05-2026",
+    messages=[
+        {
+            "role": "user",
+            "content": "Write a title for a blog post about API gateways. Only output the title text.",
+        }
+    ],
+)
+
+for content in response.message.content:
+    if content.type == "text":
+        print(content.text)
+```
+
+Example output:
+
+```mdx wordWrap
+API Gateways: The Backbone of Modern Microservices Architecture
+```
+
+Command A+ returns its [reasoning](/docs/reasoning) as `thinking` content before the answer, so the example prints only
+the `text` content. Streaming with `co.chat_stream` works through the same client.
+
+## Embed
+
+```python PYTHON
+response = co.embed(
+    model="embed-v5.0-pro",
+    texts=["Kong AI Gateway forwards requests to the Cohere API."],
+    input_type="search_document",
+    embedding_types=["float"],
+)
+
+print(response.embeddings.float_[0][:5])
+```
+
+Example output:
+
+```mdx wordWrap
+[-0.0012351603, -0.015904805, 0.026124487, -0.0007867802, 0.0072079217]
+```
+
+## Rerank
+
+```python PYTHON
+docs = [
+    "Carson City is the capital city of the American state of Nevada.",
+    "Washington, D.C. is the capital of the United States.",
+    "Capital punishment has existed in the United States since before it was a country.",
+]
+
+response = co.rerank(
+    model="rerank-v5.0-pro",
+    query="What is the capital of the United States?",
+    documents=docs,
+    top_n=2,
+)
+
+for result in response.results:
+    print(result.index, result.relevance_score)
+```
+
+Example output:
+
+```mdx wordWrap
+1 0.8431885
+0 0.08598249
+```
+
+## Next steps
+
+- [Cohere provider reference](https://developer.konghq.com/ai-gateway/ai-providers/cohere/): other formats and options
+  that Kong AI Gateway supports for Cohere.
+- [Kong AI Gateway policies](https://developer.konghq.com/ai-gateway/policies/): add rate limits, logging, and other
+  controls to the AI Model.
